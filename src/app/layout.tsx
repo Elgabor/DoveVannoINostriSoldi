@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Navigation } from "@/components/navigation";
 import "./globals.css";
+import "./design-system.css";
 
 export const metadata: Metadata = {
   title: {

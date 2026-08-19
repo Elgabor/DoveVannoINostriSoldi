@@ -30,5 +30,21 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Impeccable design detector
+        id: impeccable
+        continue-on-error: true
+        run: npm run design:check
+
       - name: Build
         run: npm run build
+
+      - name: Design quality summary
+        if: always()
+        run: |
+          if [ "${{ steps.impeccable.outcome }}" = "failure" ]; then
+            echo "::warning::Impeccable found design issues. The detector is diagnostic in this phase; fix or document them before turning it into a blocking gate."
+          elif [ "${{ steps.impeccable.outcome }}" = "success" ]; then
+            echo "Impeccable detector passed."
+          else
+            echo "Impeccable detector did not run because an earlier required step failed."
+          fi

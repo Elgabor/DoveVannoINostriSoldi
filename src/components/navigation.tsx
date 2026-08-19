@@ -1,12 +1,12 @@
 import Link from "next/link";
 
 const primary = [
-  { href: "/#spese", label: "Spese" },
+  { href: "/#dashboard", label: "Dashboard" },
+  { href: "/enti", label: "Enti" },
   { href: "/#appalti", label: "Appalti" },
   { href: "/#territori", label: "Territori" },
   { href: "/#parlamento", label: "Parlamento" },
   { href: "/fonti", label: "Fonti" },
-  { href: "/metodologia", label: "Metodologia" },
 ];
 
 export function Navigation() {
@@ -33,8 +33,8 @@ export function Navigation() {
           ))}
         </nav>
 
-        <Link href="/fonti" className="source-button">
-          Fonti ufficiali
+        <Link href="/metodologia" className="source-button">
+          Metodologia
         </Link>
       </div>
     </header>

@@ -1,0 +1,93 @@
+# Fonti dati
+
+Questa è la mappa iniziale delle fonti. Il criterio è semplice: prima fonti istituzionali nazionali, strutturate e con identificativi stabili; poi portali territoriali e documenti meno standardizzati.
+
+## Tier 1 — infrastrutture nazionali
+
+### SIOPE / SIOPE+
+**Titolari/gestori:** RGS e Banca d'Italia.  
+**Uso:** incassi e pagamenti degli enti pubblici.  
+**Join:** ente, periodo, codifica gestionale/contabile.  
+**Nota:** SIOPE contiene dati per oltre 10.000 enti. SIOPE+ è l'infrastruttura degli ordinativi di pagamento e incasso; non va confusa la frequenza del flusso operativo con la frequenza del dato pubblico esposto dalla dashboard.
+
+### OpenBDAP
+**Titolare:** Ragioneria Generale dello Stato.  
+**Uso:** bilancio dello Stato, spesa, SIOPE, opere pubbliche, PNRR e altri domini.  
+**Accesso:** catalogo CKAN con API ufficiali.  
+**Primo endpoint implementato:** `GET /api/fonti/bdap`, proxy con timeout e metadati di osservazione.
+
+### BDNCP / ANAC
+**Titolare:** ANAC.  
+**Uso:** contratti pubblici, CIG, stazioni appaltanti, aggiudicazioni e ciclo di vita.  
+**Freschezza:** il cruscotto Analytics ANAC dichiara aggiornamento settimanale. Le pubblicazioni open data hanno una propria periodicità.
+
+### IPA
+**Titolare:** AgID.  
+**Uso:** anagrafe canonica degli enti, Codice IPA, codice fiscale, sito istituzionale, categoria.  
+**Freschezza:** dataset Enti con aggiornamento giornaliero.  
+**Ruolo:** base per scoprire i siti istituzionali e alimentare il crawler di Amministrazione Trasparente.
+
+## Tier 2 — trasparenza distribuita
+
+### Dati sui pagamenti art. 4-bis
+Nel 2026 ANAC ha pubblicato uno schema di riferimento per i dati sui pagamenti nella sezione “Amministrazione Trasparente”.
+
+Campi centrali dello schema:
+
+```text
+amministrazione.codiceFiscale
+amministrazione.denominazione
+dataPrimaPubblicazione
+dataUltimaModifica
+anno
+trimestre
+categoria
+tipologia
+importo
+beneficiario
+```
+
+Strategia:
+
+1. enumerare gli enti IPA;
+2. ottenere il sito istituzionale;
+3. individuare la sezione Amministrazione Trasparente;
+4. cercare le risorse art. 4-bis;
+5. preferire JSON/CSV/XML;
+6. validare rispetto allo schema;
+7. salvare fonte e hash;
+8. non fare OCR di PDF se esiste un formato strutturato;
+9. pubblicare un indice di copertura separato dalla spesa.
+
+ANAC TrasparenzAI dimostra che il monitoraggio automatico della struttura di Amministrazione Trasparente è tecnicamente applicabile su scala IPA. Trasparenza Italia non deve duplicare il giudizio di conformità ANAC: deve usare la stessa idea di discovery per aggregare i dati effettivamente pubblicati.
+
+## Tier 3 — investimenti
+
+### ReGiS / PNRR
+Gli open data PNRR sono pubblicati come estrazioni periodiche da ReGiS e comprendono informazioni finanziarie, fisiche e procedurali. Useremo CUP come una delle chiavi fondamentali.
+
+### OpenCoesione
+L'API e gli open data espongono progetti e soggetti, con tabelle relazionali per localizzazioni, pagamenti, impegni, fasi e indicatori. I dati sono pubblicati con licenza CC BY 4.0.
+
+## Tier 4 — incarichi e istituzioni
+
+### Consulenti Pubblici
+Il Dipartimento della Funzione Pubblica pubblica gli incarichi comunicati dalle amministrazioni nell'Anagrafe delle prestazioni. Sono esposti, tra gli altri, compenso lordo, ammontare erogato e data di aggiornamento del singolo incarico.
+
+### Camera dei deputati
+Camera Trasparente pubblica informazioni su bilancio, amministrazione e procedure di gara. L'integrazione deve distinguere il trattamento economico “previsto” dagli importi individualmente e realmente erogati quando questi ultimi non siano esposti dalla fonte.
+
+### Senato della Repubblica
+La sezione Spese e trasparenza pubblica bilancio, conto consuntivo e informazioni sul trattamento economico dei senatori. Vale la stessa cautela sulla granularità individuale.
+
+## Fonti successive
+
+Da valutare nella fase 2:
+
+- sovvenzioni e contributi art. 26/27 D.Lgs. 33/2013;
+- patrimonio e partecipazioni pubbliche;
+- tempi di pagamento e debiti commerciali;
+- personale pubblico;
+- sanità;
+- dati regionali e comunali con maggiore granularità;
+- Corte dei conti per contesto e referti, senza confondere contestazioni, sentenze e dati di spesa.

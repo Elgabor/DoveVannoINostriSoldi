@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const primary = [
-  { href: "/#dashboard", label: "Dashboard" },
+  { href: "/spese", label: "Spese" },
   { href: "/enti", label: "Enti" },
   { href: "/#appalti", label: "Appalti" },
   { href: "/#territori", label: "Territori" },

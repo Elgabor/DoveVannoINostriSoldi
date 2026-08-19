@@ -1,0 +1,59 @@
+.figure {
+  margin: 0;
+}
+
+.chart {
+  width: 100%;
+  min-height: 300px;
+}
+
+.tooltip {
+  max-width: 320px;
+  padding: 11px 12px;
+  border: 1px solid rgba(139, 174, 194, .22);
+  border-radius: 7px;
+  color: #d9e6ed;
+  background: rgba(5, 18, 29, .97);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .22);
+}
+
+.tooltip span,
+.tooltip strong,
+.tooltip b {
+  display: block;
+}
+
+.tooltip .code {
+  margin-bottom: 5px;
+  color: #7694a5;
+  font: 650 11px ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.tooltip strong {
+  color: #b8cbd5;
+  font-size: 12px;
+  font-weight: 560;
+  line-height: 1.45;
+}
+
+.tooltip b {
+  margin-top: 6px;
+  color: #f0f6f9;
+  font-size: 14px;
+  font-weight: 680;
+}
+
+.empty {
+  display: grid;
+  min-height: 300px;
+  place-items: center;
+  color: #718c9d;
+  font-size: 12px;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .chart {
+    overflow: hidden;
+  }
+}

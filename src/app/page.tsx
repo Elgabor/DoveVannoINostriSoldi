@@ -3,9 +3,9 @@ import { ItalyVisual } from "@/components/italy-visual";
 import { publicSources, sourceCounts } from "@/lib/sources";
 
 const priorities = [
-  { name: "IPA · anagrafe enti", cadence: "giornaliera", state: "Integrazione" },
+  { name: "IPA · anagrafe enti", cadence: "giornaliera", state: "Attiva" },
+  { name: "RGS · pagamenti Bilancio Stato", cadence: "per rilascio", state: "Dashboard attiva" },
   { name: "ANAC · contratti pubblici", cadence: "settimanale / periodica", state: "Integrazione" },
-  { name: "OpenBDAP · catalogo RGS", cadence: "per dataset", state: "Connettore API" },
   { name: "Pagamenti art. 4-bis", cadence: "per amministrazione", state: "Crawler" },
 ];
 
@@ -57,8 +57,8 @@ export default function HomePage() {
         </p>
 
         <div className="hero-actions">
-          <a href="#dashboard" className="button button-primary">Esplora la dashboard</a>
-          <Link href="/fonti" className="button button-secondary">Vedi tutte le fonti</Link>
+          <Link href="/spese" className="button button-primary">Apri le spese dello Stato</Link>
+          <Link href="/enti" className="button button-secondary">Cerca un ente pubblico</Link>
         </div>
       </section>
 
@@ -69,7 +69,7 @@ export default function HomePage() {
               <span className="panel-kicker">COPERTURA</span>
               <h2>Dati collegati</h2>
             </div>
-            <span className="live-dot">IN COSTRUZIONE</span>
+            <span className="live-dot">IN ESPANSIONE</span>
           </div>
 
           <div className="big-stat">
@@ -79,7 +79,7 @@ export default function HomePage() {
 
           <div className="mini-grid">
             <div><b>{sourceCounts.total}</b><span>fonti ufficiali mappate</span></div>
-            <div><b>52</b><span>regole strutturali TrasparenzAI</span></div>
+            <div><b>2</b><span>domini con dati già collegati</span></div>
             <div><b>{sourceCounts.integrating}</b><span>integrazioni prioritarie</span></div>
             <div><b>0</b><span>numeri economici simulati</span></div>
           </div>
@@ -87,7 +87,7 @@ export default function HomePage() {
           <div className="panel-divider" />
           <p className="microcopy">
             I conteggi descrivono la copertura delle fonti, non il totale della spesa.
-            I valori economici entreranno solo dopo validazione del relativo ingestore.
+            Un valore economico appare solo dopo la validazione del relativo ingestore.
           </p>
         </aside>
 
@@ -103,7 +103,7 @@ export default function HomePage() {
           <ItalyVisual />
 
           <div className="map-bottom">
-            <div><b>SIOPE</b><span>flussi di cassa</span></div>
+            <div><b>RGS</b><span>bilancio e pagamenti</span></div>
             <div><b>BDNCP</b><span>contratti pubblici</span></div>
             <div><b>CUP / PNRR</b><span>progetti e opere</span></div>
           </div>
@@ -189,8 +189,8 @@ export default function HomePage() {
         <span>OPEN SOURCE · OPEN DATA · ACCOUNTABILITY</span>
         <h2>La trasparenza funziona quando il dato è semplice da trovare e difficile da fraintendere.</h2>
         <div className="hero-actions">
-          <Link href="/fonti" className="button button-primary">Esplora le fonti</Link>
-          <Link href="/metodologia" className="button button-secondary">Come costruiamo gli indicatori</Link>
+          <Link href="/spese" className="button button-primary">Esplora i pagamenti dello Stato</Link>
+          <Link href="/fonti" className="button button-secondary">Verifica le fonti</Link>
         </div>
       </section>
     </main>

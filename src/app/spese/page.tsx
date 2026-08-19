@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { SpendingBarChart } from "@/components/charts/spending-bar-chart";
+import {
+  StateSpendingHistoryFallback,
+  StateSpendingHistorySection,
+} from "@/components/state-spending-history-section";
 import {
   getStateSpendingSnapshot,
   type BdapDataset,
@@ -13,7 +18,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Spese dello Stato",
   description:
-    "Pagamenti del Bilancio dello Stato aggregati da fonti ufficiali RGS/OpenBDAP, con missioni, amministrazioni, classificazione economica e provenienza.",
+    "Pagamenti del Bilancio dello Stato aggregati da fonti ufficiali RGS/OpenBDAP, con andamento nel tempo, missioni, amministrazioni, classificazione economica e provenienza.",
 };
 
 const exactEuro = new Intl.NumberFormat("it-IT", {
@@ -96,7 +101,7 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
           <h1 className={styles.title}>Dove va la spesa dello Stato.</h1>
           <p className={styles.lead}>
             Uniamo i dataset ufficiali della Ragioneria Generale dello Stato per leggere lo stesso
-            snapshot per missione, amministrazione e natura economica. Nessuna stima e nessun dato dimostrativo.
+            dato per andamento nel tempo, missione, amministrazione e natura economica. Nessuna stima e nessun dato dimostrativo.
           </p>
         </div>
 
@@ -128,14 +133,13 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
         <div className={styles.primaryMetric}>
           <div className={styles.metricLabel}>
             <i aria-hidden="true" />
-            Totale pagato nello snapshot
+            Pagamenti cumulati da inizio anno
           </div>
           <strong>{compactEuro(snapshot.totalPaid)}</strong>
           <span>Somma del campo ufficiale “Totale Pagato” per tutte le missioni.</span>
           <p>
-            Lo chiamiamo <b>snapshot</b> perché il rilascio RGS è riferito a un mese contabile.
-            Finché non validiamo in modo definitivo la natura periodale o cumulativa della serie,
-            non trasformiamo automaticamente due snapshot in una “spesa mensile”.
+            RGS descrive il rilascio come pagamenti effettuati <b>dal 1° gennaio fino al mese contabile di riferimento</b>.
+            Il valore è quindi cumulativo; nella serie temporale il singolo mese viene derivato sottraendo due snapshot consecutivi.
           </p>
         </div>
 
@@ -159,6 +163,10 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
         </div>
       </section>
 
+      <Suspense fallback={<StateSpendingHistoryFallback />}>
+        <StateSpendingHistorySection />
+      </Suspense>
+
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
           <div>
@@ -167,7 +175,7 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
           </div>
           <p>
             Le missioni rappresentano le principali funzioni e finalità perseguite attraverso la spesa pubblica.
-            Qui mostriamo le prime dodici nello snapshot disponibile.
+            Qui mostriamo le prime dodici nel cumulato disponibile.
           </p>
         </div>
 
@@ -178,12 +186,12 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
           </div>
           <SpendingBarChart
             data={snapshot.missions}
-            ariaLabel={`Prime missioni del Bilancio dello Stato per totale pagato, ${snapshot.period.label}`}
+            ariaLabel={`Prime missioni del Bilancio dello Stato per totale pagato cumulato, ${snapshot.period.label}`}
             maxItems={12}
             height={500}
           />
           <p className={styles.chartCaption}>
-            Valori in euro. Ordinamento calcolato da Trasparenza Italia sul campo “Totale Pagato” del dataset RGS per Missione.
+            Valori cumulati in euro. Ordinamento calcolato da Trasparenza Italia sul campo “Totale Pagato” del dataset RGS per Missione.
           </p>
         </div>
       </section>
@@ -195,7 +203,7 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
             <h2>Amministrazioni e natura economica</h2>
           </div>
           <p>
-            Due letture indipendenti dello stesso periodo: amministrazioni centrali e categorie economiche.
+            Due letture indipendenti dello stesso cumulato: amministrazioni centrali e categorie economiche.
             Se una fonte secondaria del periodo non è disponibile, la relativa visualizzazione resta vuota.
           </p>
         </div>
@@ -210,7 +218,7 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
             </div>
             <SpendingBarChart
               data={snapshot.administrations}
-              ariaLabel={`Amministrazioni centrali per totale pagato, ${snapshot.period.label}`}
+              ariaLabel={`Amministrazioni centrali per totale pagato cumulato, ${snapshot.period.label}`}
               maxItems={10}
               height={430}
             />
@@ -225,7 +233,7 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
             </div>
             <SpendingBarChart
               data={snapshot.economicCategories}
-              ariaLabel={`Categorie economiche per totale pagato, ${snapshot.period.label}`}
+              ariaLabel={`Categorie economiche per totale pagato cumulato, ${snapshot.period.label}`}
               maxItems={10}
               height={430}
             />
@@ -241,7 +249,7 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
           </div>
           <p>
             Composizione delle modalità incluse da RGS nel “Totale Pagato”. La barra più lunga corrisponde
-            al canale con valore maggiore nello snapshot, non a una soglia normativa.
+            al canale con valore maggiore nel cumulato, non a una soglia normativa.
           </p>
         </div>
 

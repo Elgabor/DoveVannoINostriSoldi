@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import type { StateSpendingHistoryPoint } from "@/lib/bdap-history";
 import styles from "./spending-history-chart.module.css";
+import { ChartDataTable } from "./chart-data-table";
 
 const exactEuro = new Intl.NumberFormat("it-IT", {
   style: "currency",
@@ -111,6 +112,14 @@ export function SpendingHistoryChart({
         <figcaption>
           Ogni punto è il totale ufficiale dal 1° gennaio fino alla fine del mese indicato.
         </figcaption>
+        <ChartDataTable
+          label="Pagamenti cumulati del Bilancio dello Stato"
+          columns={["Totale da gennaio"]}
+          rows={data.map((point) => ({
+            label: `${point.monthName} ${point.year}`,
+            values: [point.cumulativePaid === null ? "Non disponibile" : exactEuro.format(point.cumulativePaid)],
+          }))}
+        />
       </figure>
 
       <figure className={styles.figure}>
@@ -159,6 +168,14 @@ export function SpendingHistoryChart({
         <figcaption>
           Da febbraio sottraiamo il totale del mese precedente. Se manca uno dei due mesi, non calcoliamo il valore.
         </figcaption>
+        <ChartDataTable
+          label="Pagamenti mensili calcolati del Bilancio dello Stato"
+          columns={["Pagamento del mese"]}
+          rows={data.map((point) => ({
+            label: `${point.monthName} ${point.year}`,
+            values: [point.monthlyPaid === null ? "Non calcolabile" : exactEuro.format(point.monthlyPaid)],
+          }))}
+        />
       </figure>
     </div>
   );

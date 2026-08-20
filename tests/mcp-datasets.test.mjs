@@ -62,6 +62,24 @@ test("OpenBDAP month cannot be detached from its reference year", async () => {
   );
 });
 
+test("dataset adapters reject filters they do not implement", async () => {
+  await assert.rejects(
+    queryPublicDataset({ dataset: "siope_comuni", year: 2025, month: 1 }),
+    /Filtri non supportati.*month/,
+  );
+  await assert.rejects(
+    queryPublicDataset({ dataset: "opencoesione_progetti", year: 2025 }),
+    /Filtri non supportati.*year/,
+  );
+});
+
+test("IPA entity lookup does not silently ignore an ambiguous search filter", async () => {
+  await assert.rejects(
+    queryPublicDataset({ dataset: "ipa_enti", code: "agid", query: "ministero" }),
+    /code oppure query, non entrambi/,
+  );
+});
+
 test("every snapshot-backed MCP adapter returns real structured data", async () => {
   const [cohesion, participations, appointments, parliament, controls, sources] = await Promise.all([
     queryPublicDataset({ dataset: "opencoesione_progetti" }),

@@ -162,7 +162,7 @@ export default async function MoneyPage({
 
           <section className="panel">
             <h2 className="panel-title">Flusso e cumulato · mld €</h2>
-            <div className="table-scroll">
+            <div className="table-scroll" role="region" aria-label="Flusso mensile e cumulato delle spese" tabIndex={0}>
               <table className="table">
                 <thead>
                   <tr>

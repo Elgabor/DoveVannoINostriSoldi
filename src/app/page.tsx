@@ -270,7 +270,7 @@ export default async function HomePage({
             <h2 className="panel-title">Le regioni che pagano di più</h2>
             <span className={styles.headNote}>Comuni con sede nella regione</span>
           </div>
-          <div className="table-scroll">
+          <div className="table-scroll" role="region" aria-label="Spese dei principali Comuni" tabIndex={0}>
             <table className="table">
               <thead>
                 <tr>

@@ -85,8 +85,8 @@ function SourceRow({ dataset }: { dataset: BdapDataset }) {
         <small>Identificativo {dataset.packageId}</small>
       </div>
       <div className={styles.provenanceActions}>
-        <a href={dataset.csvUrl} target="_blank" rel="noreferrer">CSV RGS ↗</a>
-        <a href={dataset.apiUrl} target="_blank" rel="noreferrer">API ↗</a>
+        <a href={dataset.csvUrl} target="_blank" rel="noreferrer" aria-label={`Scarica il CSV RGS ${datasetLabel(dataset)} (si apre in una nuova scheda)`}>CSV RGS ↗</a>
+        <a href={dataset.apiUrl} target="_blank" rel="noreferrer" aria-label={`Apri l’API OpenBDAP ${datasetLabel(dataset)} (si apre in una nuova scheda)`}>API ↗</a>
       </div>
     </div>
   );
@@ -127,7 +127,7 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
           </div>
           <div className={styles.sourceSummaryRow}>
             <span>File originale</span>
-            <a href={snapshot.sources.mission.csvUrl} target="_blank" rel="noreferrer">apri CSV ufficiale ↗</a>
+            <a href={snapshot.sources.mission.csvUrl} target="_blank" rel="noreferrer" aria-label="Scarica il CSV RGS delle missioni (si apre in una nuova scheda)">apri CSV ufficiale ↗</a>
           </div>
         </aside>
       </header>
@@ -185,7 +185,7 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
         <div className={styles.chartBlock}>
           <div className={styles.chartTitle}>
             <h3>Missioni principali, {snapshot.period.label}</h3>
-            <a href={snapshot.sources.mission.csvUrl} target="_blank" rel="noreferrer">fonte CSV ↗</a>
+            <a href={snapshot.sources.mission.csvUrl} target="_blank" rel="noreferrer" aria-label="Scarica il CSV RGS delle missioni (si apre in una nuova scheda)">fonte CSV ↗</a>
           </div>
           <SpendingBarChart
             data={snapshot.missions}
@@ -216,7 +216,7 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
             <div className={styles.chartTitle}>
               <h3>Amministrazioni</h3>
               {snapshot.sources.missionAdministration && (
-                <a href={snapshot.sources.missionAdministration.csvUrl} target="_blank" rel="noreferrer">CSV ↗</a>
+                <a href={snapshot.sources.missionAdministration.csvUrl} target="_blank" rel="noreferrer" aria-label="Scarica il CSV RGS delle amministrazioni (si apre in una nuova scheda)">CSV ↗</a>
               )}
             </div>
             <SpendingBarChart
@@ -225,7 +225,7 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
               maxItems={10}
               height={430}
             />
-            <div className={`table-scroll ${styles.administrationTable}`} tabIndex={0}>
+            <div className={`table-scroll ${styles.administrationTable}`} role="region" aria-label="Amministrazioni per totale pagato" tabIndex={0}>
               <table className="table">
                 <thead>
                   <tr>
@@ -267,7 +267,7 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
             <div className={styles.chartTitle}>
               <h3>Categorie economiche</h3>
               {snapshot.sources.administrationEconomic && (
-                <a href={snapshot.sources.administrationEconomic.csvUrl} target="_blank" rel="noreferrer">CSV ↗</a>
+                <a href={snapshot.sources.administrationEconomic.csvUrl} target="_blank" rel="noreferrer" aria-label="Scarica il CSV RGS delle categorie economiche (si apre in una nuova scheda)">CSV ↗</a>
               )}
             </div>
             <SpendingBarChart

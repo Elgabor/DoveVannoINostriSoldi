@@ -6,7 +6,7 @@
   color: var(--color-neutral-600);
 }
 .breadcrumb a { color: var(--color-neutral-700); }
-.breadcrumb a:hover { color: var(--color-accent); }
+.breadcrumb a:hover { color: var(--color-accent-800); }
 
 .split {
   display: grid;

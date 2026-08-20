@@ -43,8 +43,9 @@ export default function RootLayout({
   return (
     <html lang="it" className={archivo.variable}>
       <body>
+        <a className="skip-link" href="#contenuto-principale">Salta al contenuto principale</a>
         <Navigation />
-        {children}
+        <div id="contenuto-principale" tabIndex={-1}>{children}</div>
         <footer className="shell site-footer">
           <div className="footer-row">
             <span>Ultimo controllo dei dati: {lastCheckedLabel}</span>

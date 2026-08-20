@@ -31,9 +31,14 @@ Un adapter non deve accettare URL arbitrari, SQL, percorsi file o nomi di funzio
 - Nessuna credenziale di ingestione passa al client.
 - Il body HTTP dichiarato è limitato a 1 MB.
 - Se `Origin` è presente, deve coincidere con l'origine del deployment o con una voce esplicita in `MCP_ALLOWED_ORIGINS`.
+- Le richieste browser ricevono una preflight CORS solo per origini autorizzate. La superficie HTTP pubblica è intenzionalmente stateless e limitata a `POST` e `OPTIONS`; non espone sessioni SSE tramite `GET` o `DELETE`.
+- In produzione gli host pubblici ammessi vanno dichiarati, separati da virgola, in `MCP_ALLOWED_HOSTS`. Su Vercel vengono considerati anche `VERCEL_PROJECT_PRODUCTION_URL` e `VERCEL_URL`.
+- Ogni dataset accetta soltanto i filtri dichiarati nel catalogo. Un filtro incompatibile produce un errore esplicito e non viene ignorato.
 - Le risposte non sono memorizzate in cache condivise dal route handler MCP.
 - L'autenticazione MCP non è richiesta finché la superficie resta composta esclusivamente da dati pubblici e operazioni read-only. Prima di introdurre dati privati o mutazioni occorre aggiungere OAuth 2.1 e Protected Resource Metadata.
 
 ## Limiti operativi
 
 Le fonti live possono essere indisponibili o lente. In quel caso il tool restituisce un errore esplicito e non sostituisce il dato con valori simulati. I limiti e le date di riferimento delle singole fonti restano quelli documentati nel catalogo del portale.
+
+Il rate limiting va applicato a livello edge o con uno storage distribuito: una mappa in memoria nel processo non garantirebbe limiti coerenti in un deployment serverless. Allo stesso modo, prima di ampliare gli adapter live con catene di fetch più costose va introdotto un budget temporale complessivo propagato tramite `AbortSignal`, oltre ai timeout delle singole fonti già presenti.

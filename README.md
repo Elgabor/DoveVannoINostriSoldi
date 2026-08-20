@@ -74,7 +74,7 @@ curl -X POST http://localhost:3000/api/mcp \
   --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
-L'accesso anonimo è intenzionale perché il server espone esclusivamente dati pubblici e operazioni read-only. Le richieste hanno input limitati, paginazione massima e controllo dell'header `Origin`; eventuali origini browser aggiuntive si configurano con `MCP_ALLOWED_ORIGINS`. Non vengono esposte credenziali di ingestione.
+L'accesso anonimo è intenzionale perché il server espone esclusivamente dati pubblici e operazioni read-only. Le richieste hanno input limitati, paginazione massima e controlli sugli header `Origin` e `Host`; eventuali origini browser aggiuntive si configurano con `MCP_ALLOWED_ORIGINS`, mentre i domini pubblici ammessi si dichiarano in `MCP_ALLOWED_HOSTS`. I filtri estranei al dataset vengono rifiutati esplicitamente, senza produrre risultati che sembrino filtrati ma non lo siano. Non vengono esposte credenziali di ingestione.
 
 Per aggiungere una fonte all'MCP si registra la descrizione in `src/lib/mcp/catalog.ts` e l'adapter in `src/lib/mcp/datasets.ts`. Gli strumenti restano gli stessi, quindi i client non devono essere riconfigurati quando il catalogo cresce. Dettagli e checklist sono in [docs/MCP.md](docs/MCP.md).
 

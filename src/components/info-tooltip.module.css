@@ -8,20 +8,34 @@
 .trigger {
   display: grid;
   place-items: center;
-  width: 18px;
-  height: 18px;
+  width: 44px;
+  height: 44px;
   padding: 0;
-  border: 1px solid var(--color-neutral-400);
-  background: var(--color-raised);
+  border: 0;
+  background: transparent;
   color: var(--color-neutral-700);
   font-size: 11px;
   font-weight: 600;
   line-height: 1;
   cursor: help;
+  position: relative;
+  isolation: isolate;
 }
-.trigger:hover {
-  color: var(--color-accent);
-  border-color: var(--color-accent);
+.trigger::before {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border: 1px solid var(--color-neutral-400);
+  background: var(--color-raised);
+  z-index: -1;
+}
+.trigger:hover,
+.trigger[aria-expanded="true"] {
+  color: var(--color-accent-700);
+}
+.trigger:hover::before,
+.trigger[aria-expanded="true"]::before {
+  border-color: var(--color-accent-700);
 }
 
 .tooltip {
@@ -48,9 +62,8 @@
   display: block;
   margin-top: 6px;
 }
-.tooltip b { color: #ffffff; }
+.tooltip b { color: var(--color-raised); }
 
-.wrapper:hover .tooltip,
-.trigger:focus-visible + .tooltip {
+.tooltip[data-open="true"] {
   display: block;
 }

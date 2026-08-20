@@ -1,4 +1,27 @@
-import type { DatasetQuery } from "@/lib/mcp/catalog";
+import { datasetCatalog, type DatasetQuery } from "@/lib/mcp/catalog";
+
+const datasetFilters = new Map(datasetCatalog.map((dataset) => [dataset.id, new Set(dataset.filters)]));
+
+function rejectUnsupportedFilters(query: DatasetQuery) {
+  const supported = datasetFilters.get(query.dataset) ?? new Set<string>();
+  const provided = Object.entries(query)
+    .filter(([key, value]) => key !== "dataset" && value !== undefined)
+    .map(([key]) => key);
+  const unsupported = provided.filter((key) => !supported.has(key));
+  if (unsupported.length > 0) {
+    const accepted = [...supported];
+    throw new Error(
+      `Filtri non supportati per ${query.dataset}: ${unsupported.join(", ")}. ` +
+      `Filtri ammessi: ${accepted.length > 0 ? accepted.join(", ") : "nessuno"}.`,
+    );
+  }
+}
+
+function rejectAmbiguousFilters(query: DatasetQuery) {
+  if (query.dataset === "ipa_enti" && query.code !== undefined && query.query !== undefined) {
+    throw new Error("Per ipa_enti usa code oppure query, non entrambi.");
+  }
+}
 
 function boundedInteger(value: number | undefined, fallback: number, minimum: number, maximum: number) {
   if (!Number.isFinite(value)) return fallback;
@@ -26,6 +49,8 @@ function jsonSafe<T>(value: T): T {
 }
 
 export async function queryPublicDataset(query: DatasetQuery): Promise<unknown> {
+  rejectUnsupportedFilters(query);
+  rejectAmbiguousFilters(query);
   const limit = boundedInteger(query.limit, 50, 1, 100);
   const offset = boundedInteger(query.offset, 0, 0, 100_000);
 

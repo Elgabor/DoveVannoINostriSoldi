@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function McpPage() {
   return (
-    <main className="shell page-shell">
+    <main className="shell page">
       <header className="page-intro">
         <span className="eyebrow">Dati per assistenti AI</span>
         <h1>Interroga il portale con MCP</h1>
@@ -52,7 +52,7 @@ export default function McpPage() {
       <section className="panel" aria-labelledby="datasets-title">
         <span className={styles.index}>04</span>
         <h2 id="datasets-title">{datasetCatalog.length} dataset interrogabili</h2>
-        <div className="table-scroll">
+        <div className="table-scroll" role="region" aria-label="Catalogo dei dataset MCP" tabIndex={0}>
           <table className={styles.datasetTable}>
             <thead><tr><th>Dataset</th><th>Aggiornamento</th><th>Filtri</th></tr></thead>
             <tbody>

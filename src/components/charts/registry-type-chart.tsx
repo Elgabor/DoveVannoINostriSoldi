@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import type { IpaTypeStat } from "@/lib/ipa-stats";
 import styles from "./registry-type-chart.module.css";
+import { ChartDataTable } from "./chart-data-table";
 
 const integerFormatter = new Intl.NumberFormat("it-IT", { useGrouping: "always" });
 
@@ -107,6 +108,14 @@ export function RegistryTypeChart({ data }: { data: IpaTypeStat[] }) {
         Conteggio dei record per le tipologie più presenti nel datastore IPA. Il grafico viene calcolato
         tramite query SQL sull&apos;API ufficiale, non da un campione locale.
       </figcaption>
+      <ChartDataTable
+        label="Distribuzione dei record IPA per tipologia di ente"
+        columns={["Record"]}
+        rows={chartData.map((record) => ({
+          label: record.label,
+          values: [integerFormatter.format(record.value)],
+        }))}
+      />
     </figure>
   );
 }

@@ -46,8 +46,8 @@ function SourceRow({ dataset }: { dataset: BdapDataset }) {
         <small>Identificativo {dataset.packageId}</small>
       </div>
       <div className={styles.provenanceActions}>
-        <a href={dataset.csvUrl} target="_blank" rel="noreferrer">CSV RGS ↗</a>
-        <a href={dataset.apiUrl} target="_blank" rel="noreferrer">API ↗</a>
+        <a href={dataset.csvUrl} target="_blank" rel="noreferrer" aria-label={`Scarica il CSV RGS ${datasetLabel(dataset)} (si apre in una nuova scheda)`}>CSV RGS ↗</a>
+        <a href={dataset.apiUrl} target="_blank" rel="noreferrer" aria-label={`Apri l’API OpenBDAP ${datasetLabel(dataset)} (si apre in una nuova scheda)`}>API ↗</a>
       </div>
     </div>
   );
@@ -156,7 +156,7 @@ function AdministrationDashboard({ data }: { data: StateAdministrationSpending }
           <div className={styles.chartBlock}>
             <div className={styles.chartTitle}>
               <h3>Missioni principali</h3>
-              <a href={data.sources.missionAdministration.csvUrl} target="_blank" rel="noreferrer">CSV ↗</a>
+              <a href={data.sources.missionAdministration.csvUrl} target="_blank" rel="noreferrer" aria-label="Scarica il CSV RGS delle missioni dell’amministrazione (si apre in una nuova scheda)">CSV ↗</a>
             </div>
             <SpendingBarChart
               data={data.missions}
@@ -169,7 +169,7 @@ function AdministrationDashboard({ data }: { data: StateAdministrationSpending }
             <div className={styles.chartTitle}>
               <h3>Tipi di spesa</h3>
               {data.sources.administrationEconomic && (
-                <a href={data.sources.administrationEconomic.csvUrl} target="_blank" rel="noreferrer">CSV ↗</a>
+                <a href={data.sources.administrationEconomic.csvUrl} target="_blank" rel="noreferrer" aria-label="Scarica il CSV RGS delle categorie economiche dell’amministrazione (si apre in una nuova scheda)">CSV ↗</a>
               )}
             </div>
             {data.economicCategories.length > 0 ? (

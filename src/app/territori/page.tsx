@@ -55,7 +55,7 @@ export default async function TerritoriesPage({
       <div className={styles.split}>
         <section className="panel">
           <h2 className="panel-title">Tutte le {regions.length} regioni</h2>
-          <div className="table-scroll">
+          <div className="table-scroll" role="region" aria-label="Pagamenti di tutte le regioni" tabIndex={0}>
             <table className="table">
               <thead>
                 <tr>
@@ -89,7 +89,7 @@ export default async function TerritoriesPage({
         <div className={styles.aside}>
           <section className="panel">
             <h2 className="panel-title">I {topByVolume.length} Comuni che pagano di più</h2>
-            <div className="table-scroll">
+            <div className="table-scroll" role="region" aria-label="Comuni con i pagamenti più alti" tabIndex={0}>
               <table className="table">
                 <thead>
                   <tr>
@@ -126,7 +126,7 @@ export default async function TerritoriesPage({
 
           <section className="panel">
             <h2 className="panel-title">Top {topByPerCapita.length} per abitante</h2>
-            <div className="table-scroll">
+            <div className="table-scroll" role="region" aria-label="Comuni con i pagamenti pro capite più alti" tabIndex={0}>
               <table className="table">
                 <thead>
                   <tr>

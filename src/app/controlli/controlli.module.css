@@ -28,7 +28,7 @@
 .yearFilter a {
   display: grid;
   min-width: 56px;
-  min-height: 38px;
+  min-height: 44px;
   place-items: center;
   padding-inline: 10px;
   color: var(--color-neutral-700);
@@ -49,7 +49,7 @@
 
 .yearFilter a[aria-current="page"] {
   color: var(--color-raised);
-  background: var(--color-accent);
+  background: var(--color-accent-700);
 }
 
 .signals article {
@@ -90,7 +90,7 @@
 .readingGuide dl {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 0 var(--space-5);
+  gap: 0 var(--space-6);
   border-top: 1px solid var(--color-neutral-300);
 }
 

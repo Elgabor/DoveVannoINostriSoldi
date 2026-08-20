@@ -15,7 +15,7 @@ const querySchema = z.object({
   chamber: z.enum(["camera", "senato"]).optional(),
   limit: z.number().int().min(1).max(100).optional(),
   offset: z.number().int().min(0).max(100_000).optional(),
-});
+}).strict();
 
 function toolResult(value: unknown) {
   return {

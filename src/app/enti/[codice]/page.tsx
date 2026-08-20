@@ -175,7 +175,7 @@ export default async function EntityPage({ params }: PageProps) {
                 </dl>
 
                 {structure.unitaOrganizzative.records.length > 0 ? (
-                  <div className="table-scroll">
+                  <div className="table-scroll" role="region" aria-label="Unità organizzative dell’ente" tabIndex={0}>
                     <table className="table">
                       <thead>
                         <tr>

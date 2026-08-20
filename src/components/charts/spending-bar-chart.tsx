@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import styles from "./spending-bar-chart.module.css";
 import { chartColor } from "@/lib/chart-colors";
+import { ChartDataTable } from "./chart-data-table";
 
 export type SpendingChartPoint = {
   label: string;
@@ -119,6 +120,14 @@ export function SpendingBarChart({
           </BarChart>
         </ResponsiveContainer>
       </div>
+      <ChartDataTable
+        label={`${ariaLabel}: valori esatti`}
+        columns={["Importo"]}
+        rows={chartData.map((point) => ({
+          label: point.code ? `${point.label} (${point.code})` : point.label,
+          values: [exactEuro.format(point.value)],
+        }))}
+      />
     </figure>
   );
 }

@@ -133,6 +133,9 @@ export default function CivilInvalidityPage() {
           tabIndex={0}
         >
           <table className="table">
+            <caption className={styles.visuallyHidden}>
+              Spesa nazionale INPS per prestazioni di invalidità civile dal 2021 al 2025.
+            </caption>
             <thead>
               <tr>
                 <th scope="col">Anno</th>
@@ -170,6 +173,9 @@ export default function CivilInvalidityPage() {
           tabIndex={0}
         >
           <table className="table">
+            <caption className={styles.visuallyHidden}>
+              Nuove pensioni di invalidità civile per regione nel 2023 completo e nel 2024 parziale.
+            </caption>
             <thead>
               <tr>
                 <th scope="col">Regione</th>
@@ -261,8 +267,11 @@ export default function CivilInvalidityPage() {
               >
                 {source.title} ↗
               </a>
-              <span>{source.owner} · data documento {longDate(source.documentDate)}</span>
-              <code title={source.locator}>sha256:{source.sha256.slice(0, 16)}…</code>
+              <span>
+                {source.owner} · documento {longDate(source.documentDate)} · controllato il{" "}
+                {longDate(source.observedAt)} · {source.locator}
+              </span>
+              <code>sha256:{source.sha256}</code>
             </li>
           ))}
         </ul>

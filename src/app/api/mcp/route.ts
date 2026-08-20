@@ -56,7 +56,12 @@ function normalizedHost(value: string): string | null {
   return candidate;
 }
 
+function isLoopbackHost(value: string): boolean {
+  return /^(?:localhost|127\.0\.0\.1|\[::1\])(?::\d{1,5})?$/.test(value);
+}
+
 function allowedHosts(request: Request): Set<string> {
+  const requestUrl = new URL(request.url);
   const configured = [
     ...(process.env.MCP_ALLOWED_HOSTS ?? "").split(","),
     process.env.VERCEL_PROJECT_PRODUCTION_URL,
@@ -67,8 +72,24 @@ function allowedHosts(request: Request): Set<string> {
     .map(normalizedHost)
     .filter((value): value is string => value !== null);
 
-  if (configured.length > 0) return new Set(configured);
-  return new Set([new URL(request.url).host.toLocaleLowerCase("en-US")]);
+  const allowed = new Set(configured);
+  if (
+    configured.length === 0 ||
+    requestUrl.hostname === "localhost" ||
+    requestUrl.hostname === "127.0.0.1" ||
+    requestUrl.hostname === "[::1]"
+  ) {
+    allowed.add(requestUrl.host.toLocaleLowerCase("en-US"));
+  }
+  const requestHost = normalizedHost(request.headers.get("host") ?? "");
+  if (
+    requestHost &&
+    isLoopbackHost(requestHost) &&
+    isLoopbackHost(requestUrl.host.toLocaleLowerCase("en-US"))
+  ) {
+    allowed.add(requestHost);
+  }
+  return allowed;
 }
 
 function validateRequest(request: Request): Response | null {

@@ -53,8 +53,24 @@ Il server espone:
 - `list_datasets`, per elencare dataset, filtri, freschezza e cautele interpretative;
 - `query_dataset`, per interrogare snapshot verificati e fonti ufficiali live con filtri e paginazione;
 - la risorsa `dvns://datasets`, che contiene il catalogo machine-readable.
+- la risorsa `dvns://related-mcp-services`, che segnala servizi pubblici complementari senza
+  confonderli con gli adapter gestiti dal portale.
 
 Tra i dataset c'è `anac_cig_snapshot`: espone copertura annuale, conteggi, procedure, fasce di importo, hash degli input e cautele della replica CIG 2025. `inps_invalidita_civile` tiene separate spesa nazionale, stock di prestazioni e nuove decorrenze regionali, senza inferire dati comunali o responsabilità individuali. `opencoesione_progetti` include anche quota del costo pubblico, rapporto pagamenti/costo e costo medio per progetto per tema, natura e stato.
+
+Per il dettaglio civico per singolo Comune segnaliamo anche il MCP pubblico di
+[Cruscotto Italia](https://cruscotto-italia.dati.gov.it/about.html#accesso-mcp), gestito da AgID:
+
+```text
+https://cruscotto-italia-mcp.agid.workers.dev/mcp
+```
+
+È un servizio esterno pubblico, al momento senza autenticazione o tariffa dichiarata, da collegare
+direttamente al proprio client. DVNS non ne inoltra le chiamate, non ne duplica le pipeline e non
+ne presenta gli aggregati come dati validati localmente. Il percorso consigliato è
+`search_comune`, poi `comune_kpi`; `comune_dashboard` va usato solo quando servono serie o elenchi
+di dettaglio. Codice e architettura sono nel
+[repository ufficiale AgID](https://github.com/AgID/cruscotto-italia).
 
 Esempio di configurazione per un client che accetta server HTTP remoti:
 
@@ -79,6 +95,10 @@ curl -X POST http://localhost:3000/api/mcp \
 ```
 
 L'accesso anonimo è intenzionale perché il server espone esclusivamente dati pubblici e operazioni read-only. Le richieste hanno input limitati, paginazione massima e controlli sugli header `Origin` e `Host`; eventuali origini browser aggiuntive si configurano con `MCP_ALLOWED_ORIGINS`, mentre i domini pubblici ammessi si dichiarano in `MCP_ALLOWED_HOSTS`. I filtri estranei al dataset vengono rifiutati esplicitamente, senza produrre risultati che sembrino filtrati ma non lo siano. Non vengono esposte credenziali di ingestione.
+
+Il repository non simula un rate limit distribuito con memoria locale: sul deployment la regola edge
+per `/api/mcp` va attivata e verificata separatamente. Finché non è attiva, questa protezione non va
+considerata presente; la configurazione proposta è documentata in [docs/MCP.md](docs/MCP.md).
 
 Per aggiungere una fonte all'MCP si registra la descrizione in `src/lib/mcp/catalog.ts` e l'adapter in `src/lib/mcp/datasets.ts`. Gli strumenti restano gli stessi, quindi i client non devono essere riconfigurati quando il catalogo cresce. Dettagli e checklist sono in [docs/MCP.md](docs/MCP.md).
 

@@ -62,8 +62,60 @@
   white-space: nowrap;
 }
 
+.sectionIntro {
+  max-width: 78ch;
+  margin: 0;
+  color: var(--color-neutral-700);
+}
+
+.relatedService {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-neutral-300);
+}
+.relatedService > p { max-width: 90ch; color: var(--color-neutral-800); }
+.relatedServiceHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.relatedServiceHead h3 { margin: 0; font-size: 18px; }
+.relatedServiceHead p { margin: 3px 0 0; color: var(--color-neutral-700); }
+.externalEndpoint {
+  display: block;
+  max-width: 100%;
+  margin-top: var(--space-3);
+  padding: 12px 14px;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--color-neutral-300);
+  background: var(--color-neutral-100);
+}
+.serviceFacts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: var(--space-4) 0 0;
+  border-top: 1px solid var(--color-neutral-200);
+}
+.serviceFacts > div { padding: 11px 0; border-bottom: 1px solid var(--color-neutral-200); }
+.serviceFacts > div:nth-child(odd) { padding-right: var(--space-4); }
+.serviceFacts > div:nth-child(even) { padding-left: var(--space-4); border-left: 1px solid var(--color-neutral-200); }
+.serviceFacts dt { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--color-neutral-600); }
+.serviceFacts dd { margin: 4px 0 0; color: var(--color-neutral-800); }
+.externalCaveat { margin: var(--space-3) 0 0; font-size: 12px; }
+.serviceLinks { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+
 @media (max-width: 760px) {
   .columns { grid-template-columns: 1fr; }
   .endpointRow { align-items: stretch; flex-direction: column; }
   .endpointRow button { width: 100%; }
+  .serviceFacts { grid-template-columns: minmax(0, 1fr); }
+  .serviceFacts > div:nth-child(odd),
+  .serviceFacts > div:nth-child(even) { padding-inline: 0; border-left: 0; }
+}
+
+@media (max-width: 480px) {
+  .relatedServiceHead { flex-direction: column; align-items: stretch; }
+  .serviceLinks { flex-direction: column; }
+  .serviceLinks a { width: 100%; }
 }

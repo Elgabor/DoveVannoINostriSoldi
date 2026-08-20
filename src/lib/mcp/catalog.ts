@@ -49,12 +49,31 @@ export type DatasetDescriptor = {
   }>;
   freshness: "snapshot" | "live";
   filters: string[];
+  exampleQuery: DatasetQuery;
   caveat?: string;
 };
 
-type DatasetDescriptorInput = Omit<DatasetDescriptor, "sources">;
+type DatasetDescriptorInput = Omit<DatasetDescriptor, "sources" | "exampleQuery">;
 
 const sourceById = new Map(publicSources.map((source) => [source.slug, source]));
+
+const exampleQueries = {
+  siope_comuni: { dataset: "siope_comuni", year: 2025, region: "Calabria" },
+  openbdap_spesa_stato: { dataset: "openbdap_spesa_stato", year: 2026, month: 6 },
+  openbdap_amministrazione: { dataset: "openbdap_amministrazione", code: "2", year: 2026 },
+  openbdap_opere_pubbliche: { dataset: "openbdap_opere_pubbliche", cup: "I39B05000060005" },
+  opencivitas_fabbisogni: { dataset: "opencivitas_fabbisogni", region: "CALABRIA", limit: 20 },
+  opencoesione_progetti: { dataset: "opencoesione_progetti" },
+  anac_cig_snapshot: { dataset: "anac_cig_snapshot", year: 2025 },
+  inps_invalidita_civile: { dataset: "inps_invalidita_civile", year: 2023, region: "Calabria" },
+  ipa_enti: { dataset: "ipa_enti", query: "Agenzia per l'Italia Digitale", limit: 10 },
+  ipa_struttura: { dataset: "ipa_struttura", code: "agid", limit: 20 },
+  mef_partecipazioni: { dataset: "mef_partecipazioni" },
+  consulenti_incarichi: { dataset: "consulenti_incarichi", year: 2024 },
+  parlamento_bilanci: { dataset: "parlamento_bilanci", chamber: "camera", year: 2024 },
+  controlli_segnali: { dataset: "controlli_segnali", area: "appalti", year: 2025 },
+  registro_fonti: { dataset: "registro_fonti", query: "SIOPE" },
+} as const satisfies Record<DatasetId, DatasetQuery>;
 
 const datasetDescriptors: DatasetDescriptorInput[] = [
   { id: "siope_comuni", title: "Pagamenti dei Comuni", summary: "Pagamenti di cassa SIOPE, serie mensile, titoli, regioni e principali Comuni.", sourceIds: ["siope", "ipa"], freshness: "snapshot", filters: ["year", "region"], caveat: "Gli aggregati regionali coprono tutti i Comuni abbinati; le liste comunali contengono soltanto i primi 100 nazionali per totale o pro capite." },
@@ -76,6 +95,7 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
 
 export const datasetCatalog: DatasetDescriptor[] = datasetDescriptors.map((dataset) => ({
   ...dataset,
+  exampleQuery: exampleQueries[dataset.id],
   sources: dataset.sourceIds.map((sourceId) => {
     const source = sourceById.get(sourceId);
     if (!source) throw new Error(`Fonte MCP non registrata: ${sourceId}`);

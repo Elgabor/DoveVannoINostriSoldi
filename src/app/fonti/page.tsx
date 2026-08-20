@@ -66,7 +66,12 @@ export default function SourcesPage() {
                 return (
                   <tr id={source.slug} key={source.slug}>
                     <th scope="row">
-                      <a href={source.url} target="_blank" rel="noreferrer">
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`${source.name}, fonte ufficiale, si apre in una nuova scheda`}
+                      >
                         {source.name} ↗
                       </a>
                       <small>{source.area}</small>
@@ -123,7 +128,12 @@ export default function SourcesPage() {
         <ul className={styles.linkList}>
           {publicSources.map((source) => (
             <li key={source.slug}>
-              <a href={source.url} target="_blank" rel="noreferrer">
+              <a
+                href={source.url}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`${source.name} di ${source.owner}, si apre in una nuova scheda`}
+              >
                 {source.name} · {source.owner} <i aria-hidden="true">↗</i>
               </a>
             </li>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { McpEndpoint } from "@/components/mcp-endpoint";
 import { datasetCatalog } from "@/lib/mcp/catalog";
+import { relatedMcpServices } from "@/lib/mcp/related-services";
 import styles from "./mcp.module.css";
 
 export const metadata: Metadata = {
@@ -76,7 +77,16 @@ export default function McpPage() {
                         ))
                       : "Fonti indicate nella risposta"}
                   </td>
-                  <td>{dataset.freshness === "live" ? "Fonte ufficiale interrogabile, con cache" : "Snapshot verificato"}</td>
+                  <td>
+                    {dataset.freshness === "live"
+                      ? "Fonte ufficiale interrogabile, con cache"
+                      : "Snapshot verificato"}
+                    {dataset.sources.length > 0 ? (
+                      <small>
+                        Cadenza: {[...new Set(dataset.sources.map((source) => source.cadence))].join(" · ")}
+                      </small>
+                    ) : null}
+                  </td>
                   <td>{dataset.filters.length > 0 ? dataset.filters.join(", ") : "nessuno"}</td>
                   <td>{dataset.caveat ?? "Consulta fonte e metodologia nella risposta."}</td>
                 </tr>
@@ -84,6 +94,66 @@ export default function McpPage() {
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section className="panel" aria-labelledby="related-mcp-title">
+        <h2 id="related-mcp-title">MCP pubblici complementari</h2>
+        <p className={styles.sectionIntro}>
+          Questi servizi non sono adapter del portale e non vengono inoltrati dal nostro endpoint.
+          Li segnaliamo separatamente per mantenere chiari proprietario, disponibilità e provenienza.
+        </p>
+        {relatedMcpServices.map((service) => (
+          <article className={styles.relatedService} key={service.id}>
+            <div className={styles.relatedServiceHead}>
+              <div>
+                <h3>{service.name}</h3>
+                <p>{service.owner}</p>
+              </div>
+              <span className="tag tag-neutral">Servizio esterno</span>
+            </div>
+            <p>{service.scope}</p>
+            <code className={styles.externalEndpoint}>{service.endpoint}</code>
+            <dl className={styles.serviceFacts}>
+              <div>
+                <dt>Accesso</dt>
+                <dd>{service.access}</dd>
+              </div>
+              <div>
+                <dt>Limite dichiarato</dt>
+                <dd>{service.rateLimit}</dd>
+              </div>
+              <div>
+                <dt>Sequenza consigliata</dt>
+                <dd>{service.preferredWorkflow.join(" → ")}</dd>
+              </div>
+              <div>
+                <dt>Verificato da noi</dt>
+                <dd>{new Intl.DateTimeFormat("it-IT", { dateStyle: "long", timeZone: "Europe/Rome" }).format(new Date(service.lastVerifiedAt))}</dd>
+              </div>
+            </dl>
+            <p className={styles.externalCaveat}>{service.caveats.join(" ")}</p>
+            <div className={styles.serviceLinks}>
+              <a
+                className="btn btn-secondary"
+                href={service.aboutUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`Istruzioni MCP di ${service.name}, si apre in una nuova scheda`}
+              >
+                Istruzioni ufficiali ↗
+              </a>
+              <a
+                className="btn btn-secondary"
+                href={service.repositoryUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`Codice sorgente di ${service.name} su GitHub, si apre in una nuova scheda`}
+              >
+                Codice AgID ↗
+              </a>
+            </div>
+          </article>
+        ))}
       </section>
     </main>
   );

@@ -13,6 +13,10 @@ test("MCP catalog has one descriptor per stable dataset id and valid source refe
   for (const dataset of datasetCatalog) {
     assert.ok(dataset.title.length > 0);
     assert.ok(dataset.summary.length > 0);
+    assert.equal(dataset.exampleQuery.dataset, dataset.id);
+    for (const key of Object.keys(dataset.exampleQuery)) {
+      if (key !== "dataset") assert.ok(dataset.filters.includes(key), `${dataset.id}: ${key}`);
+    }
     for (const sourceId of dataset.sourceIds) assert.ok(knownSources.has(sourceId), sourceId);
     assert.equal(dataset.sources.length, dataset.sourceIds.length);
     for (const source of dataset.sources) {
@@ -116,6 +120,13 @@ test("every snapshot-backed MCP adapter returns real structured data", async () 
   assert.ok(parliament.chambers.length > 0);
   assert.ok(controls.signals.length > 0);
   assert.ok(sources.length > 0);
+});
+
+test("every snapshot catalog example is executable offline", async () => {
+  for (const dataset of datasetCatalog.filter((item) => item.freshness === "snapshot")) {
+    const result = await queryPublicDataset(dataset.exampleQuery);
+    assert.notEqual(result, undefined, dataset.id);
+  }
 });
 
 test("MCP fails closed for an unknown runtime dataset", async () => {

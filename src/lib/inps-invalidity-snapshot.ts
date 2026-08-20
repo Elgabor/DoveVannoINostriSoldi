@@ -15,7 +15,13 @@ export const availableInpsSpendingYears = inpsCivilInvaliditySnapshot.spending.s
 export const availableInpsRegionalYears = inpsCivilInvaliditySnapshot.regionalNewPensions.years;
 
 function normalizedRegion(value: string): string {
-  return value.trim().toLocaleLowerCase("it-IT").replace(/[‐‑‒–—]/g, "-");
+  return value
+    .normalize("NFKC")
+    .trim()
+    .toLocaleLowerCase("it-IT")
+    .replace(/[‘’`´]/g, "'")
+    .replace(/[‐‑‒–—]/g, "-")
+    .replace(/\s+/g, " ");
 }
 
 export type InpsCivilInvalidityQuery = {

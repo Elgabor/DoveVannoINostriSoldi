@@ -8,6 +8,13 @@ const {
   inpsCivilInvaliditySnapshot,
   queryInpsCivilInvalidity,
 } = await import("../src/lib/inps-invalidity-snapshot.ts");
+const { validateInpsCivilInvaliditySnapshot } = await import(
+  "../src/lib/data/inps-invalidity-contract.ts"
+);
+
+function cloneSnapshot() {
+  return structuredClone(inpsCivilInvaliditySnapshot);
+}
 
 test("INPS snapshot reconciles national spending, stock and every regional year", () => {
   assert.deepEqual(availableInpsSpendingYears, [2021, 2022, 2023, 2024, 2025]);
@@ -60,7 +67,41 @@ test("INPS query filters only supported years and regions without fabricating co
     () => queryInpsCivilInvalidity({ region: "Valle d'Aosta" }),
     /non è inclusa nella serie INPS/,
   );
+  assert.throws(
+    () => queryInpsCivilInvalidity({ region: "Valle d’Aosta" }),
+    /non è inclusa nella serie INPS/,
+  );
   assert.throws(() => queryInpsCivilInvalidity({ region: "Atlantide" }), /Regione INPS non disponibile/);
+});
+
+test("INPS contract rejects malformed metadata, years and management values", () => {
+  const invalidDate = cloneSnapshot();
+  invalidDate.generatedAt = "non-una-data";
+  assert.throws(
+    () => validateInpsCivilInvaliditySnapshot(invalidDate),
+    /generatedAt non valida/,
+  );
+
+  const fractionalYear = cloneSnapshot();
+  fractionalYear.spending.series[0].year = 2021.5;
+  assert.throws(
+    () => validateInpsCivilInvaliditySnapshot(fractionalYear),
+    /serie di spesa non valida/,
+  );
+
+  const negativeManagementValue = cloneSnapshot();
+  negativeManagementValue.managementDetail2024.attendanceAllowances = -1;
+  assert.throws(
+    () => validateInpsCivilInvaliditySnapshot(negativeManagementValue),
+    /accompagnamenti nel dettaglio 2024 non valido/,
+  );
+
+  const missingRights = cloneSnapshot();
+  missingRights.sources[0].rightsNote = " ";
+  assert.throws(
+    () => validateInpsCivilInvaliditySnapshot(missingRights),
+    /nota diritti fonte.*mancante/,
+  );
 });
 
 test("INPS snapshot publishes territorial limits and no individual records", () => {

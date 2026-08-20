@@ -37,7 +37,7 @@ function fakeLiveHealth(sourceId) {
   };
 }
 
-test("source health registry covers every operational source, including ANAC", () => {
+test("source health registry covers every operational source, including ANAC and INPS", () => {
   const snapshots = getSnapshotManagedSourceHealth();
   const snapshotIds = new Set(snapshots.map((entry) => entry.sourceId));
   const live = SOURCE_IDS
@@ -50,6 +50,10 @@ test("source health registry covers every operational source, including ANAC", (
   assert.equal(anac?.reachability, "not-probed");
   assert.equal(anac?.recordCount, 1_453_918);
   assert.match(anac?.detail ?? "", /12 distribuzioni mensili/);
+  const inps = overview.find((entry) => entry.sourceId === "inps");
+  assert.equal(inps?.reachability, "not-probed");
+  assert.equal(inps?.recordCount, 167);
+  assert.match(inps?.detail ?? "", /spesa nazionale 2021-2025/);
 });
 
 test("source health registry fails closed when an adapter is omitted", () => {

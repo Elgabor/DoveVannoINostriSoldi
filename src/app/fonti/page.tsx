@@ -7,6 +7,7 @@ import { openCivitasSnapshot } from "@/lib/opencivitas-snapshot";
 import { consulentiSnapshot } from "@/lib/consulenti-snapshot";
 import { parliamentSnapshot } from "@/lib/parliament-snapshot";
 import { siopeMunicipalSnapshot } from "@/lib/siope-snapshot";
+import { inpsCivilInvaliditySnapshot } from "@/lib/inps-invalidity-snapshot";
 import { publicSources, sourceCounts } from "@/lib/sources";
 import styles from "./fonti.module.css";
 
@@ -25,6 +26,7 @@ const latestDataBySlug: Record<string, string | null> = {
   "partecipazioni-pubbliche": mefParticipationsSnapshot.publishedAt,
   consulenti: consulentiSnapshot.source.observedAt,
   camera: parliamentSnapshot.observedAt,
+  inps: inpsCivilInvaliditySnapshot.sources.map((source) => source.documentDate).sort().at(-1) ?? null,
 };
 
 export default function SourcesPage() {

@@ -70,6 +70,11 @@ export async function queryPublicDataset(query: DatasetQuery): Promise<unknown> 
         topMunicipalities: snapshot.topMunicipalities.filter((item) => item.region.toLocaleLowerCase("it-IT") === region),
         topMunicipalitiesByValue: snapshot.topMunicipalitiesByValue.filter((item) => item.region.toLocaleLowerCase("it-IT") === region),
         topMunicipalitiesByPerCapita: snapshot.topMunicipalitiesByPerCapita.filter((item) => item.region.toLocaleLowerCase("it-IT") === region),
+        queryLimitations: {
+          regionAggregateComplete: true,
+          municipalityLists:
+            "Sottoinsieme dei primi 100 Comuni nazionali per totale o pro capite, non elenco completo della regione.",
+        },
       });
     }
     case "openbdap_spesa_stato": {
@@ -137,6 +142,10 @@ export async function queryPublicDataset(query: DatasetQuery): Promise<unknown> 
       const { getAnacCigSnapshot } = await import("@/lib/anac-cig-snapshot");
       return jsonSafe(getAnacCigSnapshot(query.year));
     }
+    case "inps_invalidita_civile": {
+      const { queryInpsCivilInvalidity } = await import("@/lib/inps-invalidity-snapshot");
+      return jsonSafe(queryInpsCivilInvalidity({ year: query.year, region: query.region }));
+    }
     case "ipa_enti": {
       const { getIpaEntityByCode, searchIpaEntities } = await import("@/lib/ipa");
       if (query.code?.trim()) {
@@ -198,6 +207,10 @@ export async function queryPublicDataset(query: DatasetQuery): Promise<unknown> 
       const term = query.query?.trim().toLocaleLowerCase("it-IT");
       return jsonSafe(publicSources.filter((source) => !term || [source.name, source.owner, source.area, source.note]
         .some((value) => value.toLocaleLowerCase("it-IT").includes(term))));
+    }
+    default: {
+      const unsupported: never = query.dataset;
+      throw new Error(`Dataset non supportato: ${String(unsupported)}.`);
     }
   }
 }

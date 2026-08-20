@@ -3,6 +3,7 @@ export type SourceId =
   | "ipa-struttura"
   | "openbdap"
   | "anac"
+  | "inps"
   | "siope"
   | "opencoesione"
   | "opencivitas"
@@ -108,6 +109,21 @@ export const SOURCE_POLICIES: Readonly<Record<SourceId, SourcePolicy>> = {
     timeoutMs: 20_000,
     maxRetries: 1,
     tags: ["source:anac", "domain:public-procurement"],
+  },
+  inps: {
+    id: "inps",
+    label: "INPS",
+    owner: "Istituto Nazionale della Previdenza Sociale",
+    sourceUrl: "https://www.inps.it/it/it/dati-e-bilanci.html",
+    cadence: "su-pubblicazione",
+    cadenceNote:
+      "Rendiconti e analisi statistiche seguono la pubblicazione istituzionale; ogni nuova edizione richiede la riconciliazione del contratto dati.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: null,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    tags: ["source:inps", "domain:social-benefits"],
   },
   siope: {
     id: "siope",

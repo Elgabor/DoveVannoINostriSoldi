@@ -43,11 +43,24 @@
 .datasetTable { width: 100%; border-collapse: collapse; text-align: left; }
 .datasetTable th,
 .datasetTable td { padding: 11px 12px; border-bottom: 1px solid var(--color-neutral-200); vertical-align: top; }
-.datasetTable th { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--color-neutral-600); }
+.datasetTable thead th { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--color-neutral-600); }
 .datasetTable td { font-size: 13px; }
 .datasetTable strong,
 .datasetTable small { display: block; }
 .datasetTable small { margin-top: 3px; max-width: 70ch; color: var(--color-neutral-600); }
+.datasetTable tbody th { min-width: 220px; font-size: 13px; text-align: left; }
+.source { display: block; min-width: 180px; }
+.source + .source { margin-top: var(--space-2); }
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 
 @media (max-width: 760px) {
   .columns { grid-template-columns: 1fr; }

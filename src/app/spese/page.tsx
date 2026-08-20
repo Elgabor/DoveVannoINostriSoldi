@@ -33,7 +33,7 @@ export default async function MoneyPage({
   const monthLabel = data.latestMonthLabel.toLocaleLowerCase("it-IT");
   const passThrough =
     data.titles.find((title) => title.code === PASS_THROUGH_TITLE_CODE)?.value ?? 0;
-  const realSpending = data.totalPaid - passThrough;
+  const netPayments = data.totalPaid - passThrough;
 
   /* The running month is still filling up, so it would drag the average down.
      A closed year has no running month and counts all twelve. */
@@ -75,9 +75,9 @@ export default async function MoneyPage({
           <span className="stat-note">{exactEuro(data.totalPaid)} esatti</span>
         </div>
         <div>
-          <span className="stat-label">Spesa vera, senza giroconti</span>
-          <span className="stat-value">{compactEuro(realSpending)}</span>
-          <span className="stat-note">tolte le partite di giro</span>
+          <span className="stat-label">Pagamenti al netto delle partite di giro</span>
+          <span className="stat-value">{compactEuro(netPayments)}</span>
+          <span className="stat-note">totale meno le uscite per conto terzi</span>
         </div>
         <div>
           <span className="stat-label">Media dei mesi completi</span>
@@ -96,10 +96,23 @@ export default async function MoneyPage({
       <div className="notice">
         <strong>Quali spese vuoi vedere?</strong>
         <p>
-          Questa pagina riguarda i Comuni. Per gli altri livelli puoi aprire le{" "}
+          Questa pagina mostra uscite di cassa dei Comuni, non le tasse pagate dai residenti. Per
+          il dettaglio geografico apri i <Link href={`/territori?anno=${year}`}>pagamenti per
+          regione e le classifiche comunali pubblicate</Link>. Il dataset attuale non contiene una
+          ripartizione provinciale né ogni voce di spesa per singolo Comune. Per gli altri livelli
+          puoi aprire le{" "}
           <Link href="/stato">spese delle amministrazioni centrali</Link> oppure le{" "}
           <Link href="/parlamento">spese del Parlamento</Link>. I totali restano separati perché
           arrivano da contabilità diverse.
+        </p>
+      </div>
+
+      <div className="notice">
+        <strong>Quanto spende l’INPS per l’invalidità civile?</strong>
+        <p>
+          È una contabilità diversa da SIOPE e resta separata. Abbiamo verificato spesa nazionale,
+          prestazioni vigenti e nuove pensioni per regione nei documenti ufficiali INPS.{" "}
+          <Link href="/spese/invalidita">Apri i dati sull’invalidità civile →</Link>
         </p>
       </div>
 

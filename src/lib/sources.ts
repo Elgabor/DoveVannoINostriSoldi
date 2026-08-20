@@ -48,6 +48,18 @@ export const publicSources: PublicSource[] = [
     joinKeys: ["CIG", "OCID", "codice fiscale stazione appaltante", "CUP"],
   },
   {
+    slug: "inps",
+    name: "INPS · invalidità civile",
+    owner: "Istituto Nazionale della Previdenza Sociale",
+    area: "Prestazioni assistenziali e invalidità civile",
+    cadence: "Secondo pubblicazione di rendiconti e analisi statistiche",
+    coverage: "Spesa nazionale 2021-2025 e nuove pensioni per 18 regioni 2016-2024",
+    format: "PDF istituzionali · snapshot JSON verificato",
+    url: "https://www.inps.it/it/it/dati-e-bilanci.html",
+    note: "La spesa, lo stock di prestazioni e le nuove decorrenze regionali restano misure separate. Il 2024 territoriale è parziale; i dati pubblici verificati non consentono attribuzioni individuali.",
+    joinKeys: ["regione", "anno"],
+  },
+  {
     slug: "ipa",
     name: "Indice PA (IPA)",
     owner: "AgID",

@@ -14,6 +14,11 @@ test("MCP catalog has one descriptor per stable dataset id and valid source refe
     assert.ok(dataset.title.length > 0);
     assert.ok(dataset.summary.length > 0);
     for (const sourceId of dataset.sourceIds) assert.ok(knownSources.has(sourceId), sourceId);
+    assert.equal(dataset.sources.length, dataset.sourceIds.length);
+    for (const source of dataset.sources) {
+      assert.match(source.url, /^https:\/\//);
+      assert.ok(source.owner.length > 0);
+    }
   }
 });
 
@@ -29,6 +34,8 @@ test("SIOPE query validates years and can filter a region", async () => {
   assert.ok(result.topMunicipalities.every((item) => item.region === "Lazio"));
   assert.ok(result.topMunicipalitiesByValue.every((item) => item.region === "Lazio"));
   assert.ok(result.topMunicipalitiesByPerCapita.every((item) => item.region === "Lazio"));
+  assert.equal(result.queryLimitations.regionAggregateComplete, true);
+  assert.match(result.queryLimitations.municipalityLists, /non elenco completo/i);
 });
 
 test("OpenCivitas query bounds pagination and rejects unavailable years", async () => {
@@ -83,9 +90,10 @@ test("IPA entity lookup does not silently ignore an ambiguous search filter", as
 });
 
 test("every snapshot-backed MCP adapter returns real structured data", async () => {
-  const [cohesion, anac, participations, appointments, parliament, controls, sources] = await Promise.all([
+  const [cohesion, anac, inps, participations, appointments, parliament, controls, sources] = await Promise.all([
     queryPublicDataset({ dataset: "opencoesione_progetti" }),
     queryPublicDataset({ dataset: "anac_cig_snapshot", year: 2025 }),
+    queryPublicDataset({ dataset: "inps_invalidita_civile", year: 2023, region: "Calabria" }),
     queryPublicDataset({ dataset: "mef_partecipazioni" }),
     queryPublicDataset({ dataset: "consulenti_incarichi" }),
     queryPublicDataset({ dataset: "parlamento_bilanci" }),
@@ -102,10 +110,19 @@ test("every snapshot-backed MCP adapter returns real structured data", async () 
   assert.equal(anac.coverage.completeYear, true);
   assert.equal(anac.inputs.length, 12);
   assert.ok(participations.totals.participationRecords > 0);
+  assert.deepEqual(inps.regionalNewPensions.regions, [{ region: "Calabria", values: [8789] }]);
+  assert.match(inps.methodology.interpretation, /non provano frode/i);
   assert.ok(appointments.externalAppointments.length > 0);
   assert.ok(parliament.chambers.length > 0);
   assert.ok(controls.signals.length > 0);
   assert.ok(sources.length > 0);
+});
+
+test("MCP fails closed for an unknown runtime dataset", async () => {
+  await assert.rejects(
+    queryPublicDataset({ dataset: "dataset_inesistente" }),
+    /Dataset non supportato/,
+  );
 });
 
 test("ANAC snapshot rejects unavailable years instead of returning stale data", async () => {

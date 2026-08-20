@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon } from "@hugeicons/core-free-icons";
 
@@ -18,6 +19,19 @@ const primary = [
 
 export function Navigation() {
   const pathname = usePathname();
+  const navigationRef = useRef<HTMLElement>(null);
+  const activeLinkRef = useRef<HTMLAnchorElement>(null);
+
+  useEffect(() => {
+    const navigation = navigationRef.current;
+    const activeLink = activeLinkRef.current;
+    if (!navigation || !activeLink) return;
+    const navigationBox = navigation.getBoundingClientRect();
+    const activeBox = activeLink.getBoundingClientRect();
+    if (activeBox.left < navigationBox.left || activeBox.right > navigationBox.right) {
+      activeLink.scrollIntoView({ block: "nearest", inline: "center" });
+    }
+  }, [pathname]);
 
   return (
     <header className="site-header">
@@ -66,7 +80,7 @@ export function Navigation() {
       </div>
 
       <div className="shell nav-row">
-        <nav className="primary-nav" aria-label="Navigazione principale">
+        <nav className="primary-nav" aria-label="Navigazione principale" ref={navigationRef}>
           {primary.map((item) => {
             const active =
               item.href === "/"
@@ -74,7 +88,12 @@ export function Navigation() {
                 : pathname.startsWith(item.href) ||
                   item.aliases?.some((alias) => pathname.startsWith(alias));
             return (
-              <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined}>
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                ref={active ? activeLinkRef : undefined}
+              >
                 {item.label}
               </Link>
             );

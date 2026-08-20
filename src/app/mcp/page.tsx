@@ -49,12 +49,34 @@ export default function McpPage() {
         <h2 id="datasets-title">{datasetCatalog.length} dataset interrogabili</h2>
         <div className="table-scroll" role="region" aria-label="Catalogo dei dataset MCP" tabIndex={0}>
           <table className={styles.datasetTable}>
-            <thead><tr><th>Dataset</th><th>Aggiornamento</th><th>Filtri</th><th>Limiti</th></tr></thead>
+            <caption className={styles.visuallyHidden}>
+              Dataset disponibili nel server MCP, fonti ufficiali, modalità di aggiornamento,
+              filtri e limiti interpretativi.
+            </caption>
+            <thead><tr><th scope="col">Dataset</th><th scope="col">Fonte</th><th scope="col">Aggiornamento</th><th scope="col">Filtri</th><th scope="col">Limiti</th></tr></thead>
             <tbody>
               {datasetCatalog.map((dataset) => (
                 <tr key={dataset.id}>
-                  <td><strong>{dataset.title}</strong><small>{dataset.summary}</small></td>
-                  <td>{dataset.freshness === "live" ? "Fonte live" : "Snapshot verificato"}</td>
+                  <th scope="row"><strong>{dataset.title}</strong><small>{dataset.summary}</small></th>
+                  <td>
+                    {dataset.sources.length > 0
+                      ? dataset.sources.map((source, index) => (
+                          <span className={styles.source} key={source.id}>
+                            {index > 0 ? " · " : ""}
+                            <a
+                              href={source.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label={`${source.name}, fonte ufficiale, si apre in una nuova scheda`}
+                            >
+                              {source.name} ↗
+                            </a>
+                            <small>{source.owner}</small>
+                          </span>
+                        ))
+                      : "Fonti indicate nella risposta"}
+                  </td>
+                  <td>{dataset.freshness === "live" ? "Fonte ufficiale interrogabile, con cache" : "Snapshot verificato"}</td>
                   <td>{dataset.filters.length > 0 ? dataset.filters.join(", ") : "nessuno"}</td>
                   <td>{dataset.caveat ?? "Consulta fonte e metodologia nella risposta."}</td>
                 </tr>

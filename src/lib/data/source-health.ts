@@ -16,6 +16,7 @@ import { consulentiSnapshot } from "@/lib/consulenti-snapshot";
 import { openCivitasSnapshot } from "@/lib/opencivitas-snapshot";
 import { parliamentSnapshot } from "@/lib/parliament-snapshot";
 import { anacCigSnapshot } from "@/lib/anac-cig-snapshot";
+import { inpsCivilInvaliditySnapshot } from "@/lib/inps-invalidity-snapshot";
 
 export type SourceIntegrationState = "active";
 export type SourceReachability = "up" | "down" | "not-probed";
@@ -339,6 +340,25 @@ function snapshotManagedAnac(): SourceHealth {
   };
 }
 
+function snapshotManagedInps(): SourceHealth {
+  const latestSourceDate = inpsCivilInvaliditySnapshot.sources
+    .map((source) => source.documentDate)
+    .sort()
+    .at(-1) ?? null;
+  const regionalRecords =
+    inpsCivilInvaliditySnapshot.regionalNewPensions.regions.length *
+    inpsCivilInvaliditySnapshot.regionalNewPensions.years.length;
+  return {
+    ...baseHealth("inps"),
+    reachability: "not-probed",
+    freshness: freshnessFor("inps", latestSourceDate),
+    latencyMs: null,
+    detail:
+      "Snapshot verificato · spesa nazionale 2021-2025 · nuove pensioni per regione 2016-2024",
+    recordCount: regionalRecords + inpsCivilInvaliditySnapshot.spending.series.length,
+  };
+}
+
 function snapshotManagedMefParticipations(): SourceHealth {
   return {
     ...baseHealth("partecipazioni-pubbliche"),
@@ -388,6 +408,7 @@ function snapshotManagedCamera(): SourceHealth {
 export function getSnapshotManagedSourceHealth(): SourceHealth[] {
   return [
     snapshotManagedAnac(),
+    snapshotManagedInps(),
     snapshotManagedOpenCoesione(),
     snapshotManagedOpenCivitas(),
     snapshotManagedMefParticipations(),

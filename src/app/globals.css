@@ -421,6 +421,9 @@ main { display: block; }
   .header-actions .header-action:first-child { display: none; }
   .header-action { padding-inline: 14px; }
   .primary-nav a { padding: 12px 12px; font-size: 13px; }
+  .primary-nav { scrollbar-width: thin; }
+  .primary-nav::-webkit-scrollbar { display: block; height: 3px; }
+  .primary-nav::-webkit-scrollbar-thumb { background: var(--color-neutral-400); }
   .page-intro h1 { font-size: 24px; }
   .stat-strip { grid-template-columns: 1fr; }
   .stat-strip > div { border-right: 0; border-bottom: 1px solid var(--color-neutral-200); }

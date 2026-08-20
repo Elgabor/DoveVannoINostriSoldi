@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import importlib.util
+import io
 import sys
 import unittest
+import urllib.error
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 MODULE_PATH = ROOT / "scripts/etl/parliament_sources.py"
@@ -17,6 +21,15 @@ FIXTURES = ROOT / "tests/fixtures/parliament"
 
 
 class ParliamentSourceParserTests(unittest.TestCase):
+    def run_main_with_online_error(self, error: Exception) -> int:
+        with (
+            patch.object(sys, "argv", ["parliament_sources.py"]),
+            patch.object(MODULE, "online_check", side_effect=error),
+            redirect_stdout(io.StringIO()),
+            redirect_stderr(io.StringIO()),
+        ):
+            return MODULE.main()
+
     def test_camera_discovers_only_primary_documents(self) -> None:
         documents = MODULE.parse_camera_documents(
             (FIXTURES / "camera.html").read_text(encoding="utf-8")
@@ -41,6 +54,49 @@ class ParliamentSourceParserTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(MODULE.StructuralError, "titolo.*non riconosciuto"):
             MODULE.parse_senate_documents(payload)
+
+    def test_main_marks_http_503_as_temporarily_unavailable(self) -> None:
+        error = urllib.error.HTTPError(
+            "https://example.invalid", 503, "unavailable", {}, io.BytesIO()
+        )
+        self.addCleanup(error.close)
+        self.assertEqual(self.run_main_with_online_error(error), 2)
+
+    def test_main_keeps_the_snapshot_when_a_runner_is_blocked(self) -> None:
+        error = urllib.error.HTTPError(
+            "https://example.invalid", 403, "forbidden", {}, io.BytesIO()
+        )
+        self.addCleanup(error.close)
+        self.assertEqual(self.run_main_with_online_error(error), 2)
+
+    def test_main_marks_network_errors_as_temporarily_unavailable(self) -> None:
+        self.assertEqual(
+            self.run_main_with_online_error(urllib.error.URLError("timeout")),
+            2,
+        )
+
+    def test_main_fails_on_http_404(self) -> None:
+        error = urllib.error.HTTPError(
+            "https://example.invalid", 404, "not found", {}, io.BytesIO()
+        )
+        self.addCleanup(error.close)
+        self.assertEqual(self.run_main_with_online_error(error), 1)
+
+    def test_main_fails_on_structural_drift(self) -> None:
+        self.assertEqual(
+            self.run_main_with_online_error(MODULE.StructuralError("nuovo documento")),
+            1,
+        )
+
+    def test_check_mode_never_calls_the_network(self) -> None:
+        with (
+            patch.object(sys, "argv", ["parliament_sources.py", "--check"]),
+            patch.object(MODULE, "online_check") as online_check,
+            redirect_stdout(io.StringIO()),
+            redirect_stderr(io.StringIO()),
+        ):
+            self.assertEqual(MODULE.main(), 0)
+        online_check.assert_not_called()
 
 
 if __name__ == "__main__":

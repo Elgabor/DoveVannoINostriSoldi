@@ -33,6 +33,7 @@ MAX_HTML_BYTES = 2_000_000
 MAX_CSV_BYTES = 8_000_000
 CAMERA_HOSTS = {"trasparenza.camera.it", "documenti.camera.it", "www.camera.it", "camera.it"}
 SENATE_HOSTS = {"dati.senato.it", "www.senato.it", "senato.it"}
+SOURCE_UNAVAILABLE_HTTP_CODES = {403, 408, 425, 429, 500, 502, 503, 504}
 SENATE_DOCUMENT_TYPE = "Rendiconto delle entrate e delle spese e progetto di bilancio interno del Senato"
 
 
@@ -464,7 +465,13 @@ def main() -> int:
     except StructuralError as error:
         print(f"errore strutturale: {error}", file=sys.stderr)
         return 1
-    except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, socket.timeout) as error:
+    except urllib.error.HTTPError as error:
+        if error.code not in SOURCE_UNAVAILABLE_HTTP_CODES:
+            print(f"errore permanente dalla fonte ufficiale: HTTP {error.code}", file=sys.stderr)
+            return 1
+        print(f"fonte ufficiale temporaneamente non raggiungibile: {error}", file=sys.stderr)
+        return 2
+    except (urllib.error.URLError, TimeoutError, socket.timeout) as error:
         print(f"fonte ufficiale temporaneamente non raggiungibile: {error}", file=sys.stderr)
         return 2
     print(

@@ -106,6 +106,12 @@ La ricerca delle opere pubbliche non dipende da alias OData scritti a mano. Il c
 
 Il refresh orario invalida il tag OpenBDAP e la route `/api/opere`. Al primo accesso successivo vengono ricontrollati metadati e schema; i dati di una singola ricerca CUP hanno cache di 6 ore e possono essere serviti per altre 24 ore mentre avviene la riconvalida. La risposta espone separatamente data della fonte e momento del controllo della piattaforma.
 
+### Parlamento
+
+Il monitor controlla ogni 6 ore i registri ufficiali di Camera e Senato. La validazione offline dello snapshot e del manifesto resta sempre obbligatoria. Un nuovo documento, un formato cambiato o un errore HTTP permanente interrompono il workflow e richiedono una revisione.
+
+Timeout, errori di rete, risposte `408`, `425`, `429` e alcuni errori `5xx` vengono ritentati. I siti parlamentari possono inoltre rispondere con `403` ai runner automatici: in quel caso il controllo viene segnato come non riuscito e genera un avviso, ma non invalida l'ultimo snapshot verificato. Il timestamp pubblico non viene aggiornato durante questi fallimenti.
+
 ## Policy iniziali
 
 | Fonte | Cadenza sorgente | Discovery DoveVannoINostriSoldi | Dati |

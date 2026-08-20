@@ -1,51 +1,16 @@
 import Link from "next/link";
-import { MunicipalSpendingTrendChart } from "@/components/charts/municipal-spending-trend-chart";
+import type { Metadata } from "next";
 import { PeriodSelector } from "@/components/period-selector";
-import { SpendingBarChart } from "@/components/charts/spending-bar-chart";
-import {
-  availableSiopeYears,
-  getSiopeMunicipalSnapshot,
-  regionsByPerCapita,
-} from "@/lib/siope-snapshot";
+import { compactEuroLike, exactEuro, integer, longDate } from "@/lib/format";
+import { municipalityName } from "@/lib/municipality-name";
+import { availableSiopeYears, getSiopeMunicipalSnapshot } from "@/lib/siope-snapshot";
 import styles from "./territori.module.css";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Territori",
   description:
-    "Pagamenti di cassa SIOPE dei Comuni italiani: flussi mensili, regioni, categorie e principali amministrazioni.",
+    "Quanto pagano i Comuni regione per regione: totali, euro per abitante e le amministrazioni con i volumi più alti.",
 };
-
-const euro = new Intl.NumberFormat("it-IT", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 2,
-});
-
-const integer = new Intl.NumberFormat("it-IT", {
-  maximumFractionDigits: 0,
-});
-
-function compactEuro(value: number): string {
-  const absolute = Math.abs(value);
-  if (absolute >= 1_000_000_000) {
-    return `${(value / 1_000_000_000).toLocaleString("it-IT", { maximumFractionDigits: 2 })} mld €`;
-  }
-  if (absolute >= 1_000_000) {
-    return `${(value / 1_000_000).toLocaleString("it-IT", { maximumFractionDigits: 1 })} mln €`;
-  }
-  return euro.format(value);
-}
-
-function dateTime(value: string | null): string {
-  if (!value) return "non disponibile";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("it-IT", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Europe/Rome",
-  }).format(date);
-}
 
 function selectedYear(value: string | string[] | undefined): number {
   const parsed = Number.parseInt(Array.isArray(value) ? value[0] ?? "" : value ?? "", 10);
@@ -59,272 +24,176 @@ export default async function TerritoriesPage({
 }) {
   const year = selectedYear((await searchParams).anno);
   const data = getSiopeMunicipalSnapshot(year);
-  const regionTotalData = data.regions.map((region) => ({
-    label: region.region,
-    value: region.value,
-    code: `${integer.format(region.municipalities)} Comuni`,
-  }));
-  const regionPerCapitaData = regionsByPerCapita(data).map((region) => ({
-    label: region.region,
-    value: region.perCapita ?? 0,
-    code: `${integer.format(region.municipalities)} Comuni`,
-  }));
-  const titleData = data.titles.map((title) => ({
-    label: title.label,
-    value: title.value,
-    code: `Titolo ${title.code}`,
-  }));
-  const coverageRatio = data.coverage.activeSiopeMunicipalities > 0
-    ? (data.coverage.withMovements / data.coverage.activeSiopeMunicipalities) * 100
-    : 0;
+  const monthLabel = data.latestMonthLabel.toLocaleLowerCase("it-IT");
+
+  const regions = [...data.regions].sort((left, right) => right.value - left.value);
+  const topByVolume = data.topMunicipalities.slice(0, 20);
+  const regionScale = regions[0]?.value ?? 0;
+  const municipalityScale = topByVolume[0]?.value ?? 0;
+  const topByPerCapita = [...data.topMunicipalities]
+    .filter((municipality) => municipality.perCapita !== null)
+    .sort((left, right) => (right.perCapita ?? 0) - (left.perCapita ?? 0))
+    .slice(0, 10);
 
   return (
-    <main className={styles.page}>
-      <section className={styles.hero}>
-        <div className={styles.heroCopy}>
-          <div className={styles.eyebrow}>
-            <span aria-hidden="true" /> SIOPE · CASSA DEI COMUNI
-          </div>
-          <h1>Dove spendono i Comuni italiani.</h1>
+    <main className="shell page">
+      <div className={styles.intro}>
+        <div className="page-intro">
+          <h1>Quanto paga il tuo territorio</h1>
           <p>
-            Pagamenti pubblicati da SIOPE e riuniti per territorio. La vista regionale raggruppa
-            i Comuni in base alla sede dell&apos;ente: non dice necessariamente dove è avvenuta la spesa.
+            Pagamenti dei Comuni con sede nella regione, da gennaio a {monthLabel} {data.year}. Media
+            italiana:{" "}
+            {data.nationalPerCapita === null
+              ? "non disponibile"
+              : `${exactEuro(data.nationalPerCapita)} per abitante`}
+            .
           </p>
         </div>
+        <PeriodSelector activeYear={year} years={availableSiopeYears} pathname="/territori" />
+      </div>
 
-        <div className={styles.heroMeta}>
-          <PeriodSelector activeYear={year} years={availableSiopeYears} pathname="/territori" />
-          <span>Ultimo mese disponibile</span>
-          <strong>{data.latestMonthLabel} {data.year}</strong>
-          <small>Dati preparati il {dateTime(data.generatedAt)}</small>
-        </div>
-      </section>
-
-      <section className={styles.metricStrip} aria-label="Indicatori SIOPE dei Comuni">
-        <article className={styles.primaryMetric}>
-          <span>PAGAMENTI DA GENNAIO</span>
-          <strong>{compactEuro(data.totalPaid)}</strong>
-          <small>{euro.format(data.totalPaid)} · cassa SIOPE</small>
-        </article>
-        <article>
-          <span>PER ABITANTE COPERTO</span>
-          <strong>{data.nationalPerCapita === null ? "Non disponibile" : euro.format(data.nationalPerCapita)}</strong>
-          <small>rapporto descrittivo, non costo individuale</small>
-        </article>
-        <article>
-          <span>COMUNI CON MOVIMENTI</span>
-          <strong>{integer.format(data.coverage.withMovements)}</strong>
-          <small>{coverageRatio.toLocaleString("it-IT", { maximumFractionDigits: 2 })}% degli enti comunali attivi SIOPE</small>
-        </article>
-        <article>
-          <span>RIGHE ELABORATE</span>
-          <strong>{integer.format(data.coverage.includedMovementRows)}</strong>
-          <small>{integer.format(data.coverage.movementRows)} movimenti letti dalla fonte</small>
-        </article>
-      </section>
-
-      <section className={styles.section}>
-        <div className={styles.sectionHeading}>
-          <div>
-            <h2>Il ritmo dei pagamenti durante l&apos;anno</h2>
+      <div className={styles.split}>
+        <section className="panel">
+          <h2 className="panel-title">Tutte le {regions.length} regioni</h2>
+          <div className="table-scroll">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">Regione</th>
+                  <th scope="col" className="num">Totale</th>
+                  <th scope="col" className="num">Per abitante</th>
+                  <th scope="col" className="num">Abitanti</th>
+                  <th scope="col" className="num">Comuni</th>
+                </tr>
+              </thead>
+              <tbody>
+                {regions.map((region) => (
+                  <tr key={region.region}>
+                    <th scope="row">{region.region}</th>
+                    <td className="num">{compactEuroLike(region.value, regionScale)}</td>
+                    <td className="num">
+                      {region.perCapita === null ? "n.d." : exactEuro(region.perCapita)}
+                    </td>
+                    <td className="num">
+                      {region.population === null ? "n.d." : integer(region.population)}
+                    </td>
+                    <td className="num">{integer(region.municipalities)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <p>
-            Qui ogni barra mostra i pagamenti registrati nel singolo mese. Il totale da gennaio
-            è la somma dei mesi già disponibili.
-          </p>
-        </div>
-        <MunicipalSpendingTrendChart data={data.monthly} />
-      </section>
+          <p className={styles.note}>Nota di metodo: {data.methodology.warning}</p>
+        </section>
 
-      <section className={styles.section}>
-        <div className={styles.sectionHeading}>
-          <div>
-            <h2>Confrontare volume e intensità</h2>
-          </div>
-          <p>
-            Le regioni più grandi tendono ad avere totali maggiori. Per questo mostriamo anche
-            gli euro per abitante della popolazione coperta.
-          </p>
-        </div>
-
-        <div className={styles.chartPair}>
-          <article className={styles.chartPanel}>
-            <header>
-              <div>
-                <span>TOTALE PAGATO</span>
-                <h3>Regioni per pagamenti comunali</h3>
-              </div>
-              <b>{data.regions.length} regioni</b>
-            </header>
-            <SpendingBarChart
-              data={regionTotalData}
-              ariaLabel="Regioni italiane ordinate per pagamenti SIOPE dei Comuni"
-              maxItems={10}
-              height={430}
-            />
-            <p className={styles.chartNote}>Prime 10 per totale da gennaio.</p>
-          </article>
-
-          <article className={styles.chartPanel}>
-            <header>
-              <div>
-              <span>CONFRONTO PER ABITANTE</span>
-                <h3>Euro per abitante coperto</h3>
-              </div>
-              <b>€/abitante</b>
-            </header>
-            <SpendingBarChart
-              data={regionPerCapitaData}
-              ariaLabel="Regioni italiane ordinate per pagamenti comunali SIOPE per abitante"
-              maxItems={10}
-              height={430}
-            />
-            <p className={styles.chartNote}>
-              Rapporto tra pagamenti dei Comuni aggregati e popolazione delle anagrafiche SIOPE abbinate.
-            </p>
-          </article>
-        </div>
-      </section>
-
-      <section className={styles.splitSection}>
-        <div className={styles.categoryPanel}>
-          <div className={styles.panelHeading}>
-            <div>
-              <h2>Che tipo di uscita è</h2>
+        <div className={styles.aside}>
+          <section className="panel">
+            <h2 className="panel-title">I {topByVolume.length} Comuni che pagano di più</h2>
+            <div className="table-scroll">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Comune</th>
+                    <th scope="col" className="num">Totale</th>
+                    <th scope="col" className="num">Per abitante</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topByVolume.map((municipality) => (
+                    <tr key={municipality.codiceFiscale}>
+                      <th scope="row">
+                        {municipalityName(municipality.name)}
+                        <small>
+                          {municipality.population === null
+                            ? "abitanti non disponibili"
+                            : `${integer(municipality.population)} abitanti`}
+                        </small>
+                      </th>
+                      <td className="num">
+                        {compactEuroLike(municipality.value, municipalityScale)}
+                      </td>
+                      <td className="num">
+                        {municipality.perCapita === null
+                          ? "n.d."
+                          : exactEuro(municipality.perCapita)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
-          <SpendingBarChart
-            data={titleData}
-            ariaLabel="Pagamenti dei Comuni per titolo SIOPE"
-            maxItems={10}
-            height={365}
-          />
-          <p className={styles.chartNote}>
-            Raggruppamento secondo i titoli usati da SIOPE. Il dettaglio delle singole voci sarà aggiunto alle pagine degli enti.
-          </p>
-        </div>
+          </section>
 
-        <aside className={styles.coveragePanel}>
-          <span className={styles.sectionIndex}>COPERTURA</span>
-          <h2>Quanto del registro stiamo leggendo</h2>
-          <div className={styles.coverageNumber}>
-            <strong>{coverageRatio.toLocaleString("it-IT", { maximumFractionDigits: 2 })}%</strong>
-            <span>{integer.format(data.coverage.withMovements)} / {integer.format(data.coverage.activeSiopeMunicipalities)} enti</span>
+          <section className="panel">
+            <h2 className="panel-title">Top {topByPerCapita.length} per abitante</h2>
+            <div className="table-scroll">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Comune</th>
+                    <th scope="col">Regione</th>
+                    <th scope="col" className="num">Per abitante</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topByPerCapita.map((municipality) => (
+                    <tr key={municipality.codiceFiscale}>
+                      <th scope="row">{municipalityName(municipality.name)}</th>
+                      <td>{municipality.region}</td>
+                      <td className="num">
+                        {municipality.perCapita === null
+                          ? "n.d."
+                          : exactEuro(municipality.perCapita)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className={styles.note}>
+              Valori alti spesso legati a turismo, ricostruzioni o servizi per non residenti.
+            </p>
+          </section>
+
+          <div className="notice">
+            <strong>Perché non è una classifica di merito</strong>
+            <p>
+              Un Comune turistico serve molte più persone dei suoi residenti, e un Comune che
+              ricostruisce dopo un terremoto spende per opere che dureranno decenni. Il numero alto
+              non è una colpa e quello basso non è un merito.
+            </p>
           </div>
-          <div className={styles.coverageTrack} aria-hidden="true">
-            <i style={{ width: `${Math.min(coverageRatio, 100)}%` }} />
-          </div>
+        </div>
+      </div>
+
+      <section className="panel">
+        <h2 className="panel-title">Quanto del registro stiamo leggendo</h2>
+        <div className={styles.coverage}>
           <dl className={styles.coverageList}>
             <div>
-              <dt>Abbinati a regione IPA</dt>
-              <dd>{integer.format(data.coverage.matchedToIpaRegion)}</dd>
+              <dt>Comuni con movimenti</dt>
+              <dd>{integer(data.coverage.withMovements)}</dd>
             </div>
             <div>
-              <dt>Non abbinati automaticamente</dt>
-              <dd>{integer.format(data.coverage.unmatchedToIpaRegion)}</dd>
+              <dt>Comuni attivi in SIOPE</dt>
+              <dd>{integer(data.coverage.activeSiopeMunicipalities)}</dd>
+            </div>
+            <div>
+              <dt>Non abbinati a una regione</dt>
+              <dd>{integer(data.coverage.unmatchedToIpaRegion)}</dd>
             </div>
             <div>
               <dt>Righe malformate</dt>
-              <dd>{integer.format(data.coverage.malformedRows)}</dd>
-            </div>
-            <div>
-              <dt>Popolazione coperta</dt>
-              <dd>{integer.format(data.populationCovered)}</dd>
+              <dd>{integer(data.coverage.malformedRows)}</dd>
             </div>
           </dl>
           <p>
-            Gli enti non abbinati restano fuori dai totali regionali. Non assegniamo una regione senza una corrispondenza ufficiale.
-          </p>
-        </aside>
-      </section>
-
-      <section className={styles.section}>
-        <div className={styles.sectionHeading}>
-          <div>
-            <h2>I maggiori volumi comunali</h2>
-          </div>
-          <p>
-            È una classifica per volume di pagamenti di cassa, non una classifica di efficienza,
-            merito o spreco. Dimensione, funzioni e popolazione rendono i Comuni non direttamente equivalenti.
+            Gli enti non abbinati restano fuori dai totali regionali: non assegniamo una regione
+            senza una corrispondenza ufficiale. Fonte SIOPE · {data.source.siopeOwner}, scaricata il{" "}
+            {longDate(data.source.observedAt)}.{" "}
+            <Link href="/fonti/stato">Stato di tutte le fonti →</Link>
           </p>
         </div>
-
-        <div className={styles.tableWrap}>
-          <table className={styles.dataTable}>
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">Comune</th>
-                <th scope="col">Regione</th>
-                <th scope="col">Pagamenti da gennaio</th>
-                <th scope="col">€/abitante</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.topMunicipalities.slice(0, 15).map((municipality, index) => (
-                <tr key={municipality.codiceFiscale}>
-                  <td>{String(index + 1).padStart(2, "0")}</td>
-                  <th scope="row">
-                    <strong>{municipality.name}</strong>
-                    <small>CF {municipality.codiceFiscale}</small>
-                  </th>
-                  <td>{municipality.region}</td>
-                  <td>{euro.format(municipality.value)}</td>
-                  <td>{municipality.perCapita === null ? "Non disponibile" : euro.format(municipality.perCapita)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className={styles.provenance}>
-        <div className={styles.provenanceIntro}>
-          <h2>Controlla i dati originali</h2>
-          <p>
-            Conserviamo i collegamenti ai file usati. Il controllo gira spesso, ma i numeri
-            cambiano solo quando SIOPE pubblica un aggiornamento.
-          </p>
-          <Link href="/fonti/stato" className={styles.inlineLink}>
-            Stato di tutte le fonti <span aria-hidden="true">→</span>
-          </Link>
-        </div>
-
-        <div className={styles.sourceLedger}>
-          <a href={data.source.siopeMovementsUrl} target="_blank" rel="noreferrer">
-            <span>01</span>
-            <div>
-              <strong>SIOPE · movimenti di uscita {data.year}</strong>
-              <small>Fonte principale. Aggiornata {dateTime(data.source.siopeMovementsLastModified)}</small>
-            </div>
-            <i aria-hidden="true">↗</i>
-          </a>
-          <a href={data.source.siopeRegistryUrl} target="_blank" rel="noreferrer">
-            <span>02</span>
-            <div>
-              <strong>SIOPE · anagrafiche</strong>
-              <small>Ente, codice fiscale e popolazione. Aggiornata {dateTime(data.source.siopeRegistryLastModified)}</small>
-            </div>
-            <i aria-hidden="true">↗</i>
-          </a>
-          <a href={data.source.ipaUrl} target="_blank" rel="noreferrer">
-            <span>03</span>
-            <div>
-              <strong>Indice PA · amministrazioni</strong>
-              <small>Il codice fiscale collega ogni ente alla regione. Aggiornata {dateTime(data.source.ipaLastModified)}</small>
-            </div>
-            <i aria-hidden="true">↗</i>
-          </a>
-        </div>
-      </section>
-
-      <section className={styles.methodologyNotice}>
-        <div>
-          <span>COME LEGGERE QUESTI NUMERI</span>
-          <strong>{data.methodology.measure}</strong>
-        </div>
-        <p>{data.methodology.warning}</p>
-        <Link href="/metodologia">Metodologia completa →</Link>
       </section>
     </main>
   );

@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { HierarchyIcon, LegalDocument01Icon } from "@hugeicons/core-free-icons";
 import {
   getIpaEntityByCode,
   IPA_ENTI_DATASET_URL,
@@ -15,7 +13,7 @@ import {
   IPA_UO_DATASET_URL,
   type IpaOrganizationStructure,
 } from "@/lib/ipa-structure";
-import styles from "../enti.module.css";
+import styles from "./scheda.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -79,35 +77,34 @@ export default async function EntityPage({ params }: PageProps) {
   );
 
   return (
-    <main className={styles.page}>
+    <main className="shell page">
       <nav className={styles.breadcrumb} aria-label="Percorso">
         <Link href="/">Home</Link>
-        <span>→</span>
-        <Link href="/enti">Enti</Link>
-        <span>→</span>
+        <span aria-hidden="true">/</span>
+        <Link href="/enti">Enti e società</Link>
+        <span aria-hidden="true">/</span>
         <span>{entity.codiceIpa}</span>
       </nav>
 
-      <header className={styles.detailHeader}>
-        <div>
-          <span className={styles.kicker}>SCHEDA ENTE · INDICE PA</span>
-          <h1 className={styles.detailTitle}>{entity.denominazione}</h1>
-          <p className={styles.detailSubtitle}>
+      <div className={styles.head}>
+        <div className="page-intro">
+          <h1>{entity.denominazione}</h1>
+          <p>
             Codice IPA <strong>{entity.codiceIpa}</strong>
             {entity.acronimo ? `, ${entity.acronimo}` : ""}
             {entity.dataAggiornamento ? `, aggiornato ${entity.dataAggiornamento}` : ""}
           </p>
           <div className={styles.badges}>
-            {entity.tipologia && <i className={styles.badge}>{entity.tipologia}</i>}
+            {entity.tipologia && <span className="tag tag-neutral">{entity.tipologia}</span>}
             {entity.inLiquidazione && (
-              <i className={`${styles.badge} ${styles.badgeWarning}`}>ente in liquidazione</i>
+              <span className="tag tag-accent">ente in liquidazione</span>
             )}
           </div>
         </div>
 
         {entity.sitoIstituzionale && (
           <a
-            className={styles.officialButton}
+            className="btn btn-secondary"
             href={entity.sitoIstituzionale}
             target="_blank"
             rel="noreferrer"
@@ -115,222 +112,248 @@ export default async function EntityPage({ params }: PageProps) {
             Sito istituzionale ↗
           </a>
         )}
-      </header>
+      </div>
 
-      <div className={styles.detailGrid}>
-        <div className={styles.detailMain}>
-          <section className={styles.section}>
-            <div className={styles.sectionHeading}>
-              <h2>Identità amministrativa</h2>
-              <span>fonte IPA</span>
-            </div>
-            <dl className={styles.definitionGrid}>
-              <div className={styles.definition}>
+      <div className={styles.split}>
+        <div className={styles.main}>
+          <section className="panel">
+            <h2 className="panel-title">Identità amministrativa</h2>
+            <dl className={styles.definitions}>
+              <div>
                 <dt>Codice IPA</dt>
                 <dd>{entity.codiceIpa}</dd>
               </div>
-              <div className={styles.definition}>
+              <div>
                 <dt>Codice fiscale</dt>
                 <dd>{show(entity.codiceFiscale)}</dd>
               </div>
-              <div className={styles.definition}>
+              <div>
                 <dt>Tipologia</dt>
                 <dd>{show(entity.tipologia)}</dd>
               </div>
-              <div className={styles.definition}>
+              <div>
                 <dt>Codice ISTAT ente</dt>
                 <dd>{show(entity.codiceIstat)}</dd>
               </div>
-              <div className={styles.definition}>
+              <div>
                 <dt>Categoria</dt>
                 <dd>{show(entity.codiceCategoria)}</dd>
               </div>
-              <div className={styles.definition}>
+              <div>
                 <dt>Natura giuridica</dt>
                 <dd>{show(entity.codiceNatura)}</dd>
               </div>
-              <div className={styles.definition}>
+              <div>
                 <dt>Codice ATECO</dt>
                 <dd>{show(entity.codiceAteco)}</dd>
               </div>
-              <div className={styles.definition}>
+              <div>
                 <dt>Responsabile</dt>
                 <dd>{responsible}</dd>
               </div>
             </dl>
           </section>
 
-          <section className={styles.section}>
-            <div className={styles.sectionHeading}>
-              <div className={styles.headingWithIcon}>
-                <HugeiconsIcon icon={HierarchyIcon} size={21} strokeWidth={1.5} aria-hidden="true" />
-              <h2 id="struttura-ipa">Struttura dichiarata in IPA</h2>
-              </div>
-              <span>UO e AOO · fonte AgID</span>
-            </div>
+          <section className="panel" id="struttura-ipa">
+            <h2 className="panel-title">Struttura dichiarata in IPA · UO e AOO</h2>
 
             {structure ? (
               <>
-                <div className={styles.structureSummary}>
-                  <div><strong>{structure.unitaOrganizzative.total}</strong><span>unità organizzative</span></div>
-                  <div><strong>{structure.areeOrganizzativeOmogenee.total}</strong><span>aree di protocollo</span></div>
-                  <div><strong>giornaliera</strong><span>cadenza dichiarata</span></div>
-                </div>
+                <dl className={styles.structureSummary}>
+                  <div>
+                    <dt>Unità organizzative</dt>
+                    <dd>{structure.unitaOrganizzative.total}</dd>
+                  </div>
+                  <div>
+                    <dt>Aree di protocollo</dt>
+                    <dd>{structure.areeOrganizzativeOmogenee.total}</dd>
+                  </div>
+                  <div>
+                    <dt>Cadenza dichiarata</dt>
+                    <dd>giornaliera</dd>
+                  </div>
+                </dl>
 
                 {structure.unitaOrganizzative.records.length > 0 ? (
-                  <div className={styles.structureList}>
-                    {structure.unitaOrganizzative.records.slice(0, 24).map((unit) => (
-                      <article className={styles.structureRow} key={unit.codice}>
-                        <span className={styles.structureMark} aria-hidden="true"><i /></span>
-                        <div>
-                          <strong>{unit.denominazione}</strong>
-                          <small>
-                            UO {unit.codice}
-                            {unit.codicePadre ? ` · dipende dalla UO ${unit.codicePadre}` : " · livello padre non indicato"}
-                          </small>
-                        </div>
-                        {unit.codiceAoo && <code>AOO {unit.codiceAoo}</code>}
-                      </article>
-                    ))}
+                  <div className="table-scroll">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Unità organizzativa</th>
+                          <th scope="col">Codice UO</th>
+                          <th scope="col">AOO</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {structure.unitaOrganizzative.records.slice(0, 24).map((unit) => (
+                          <tr key={unit.codice}>
+                            <th scope="row">
+                              {unit.denominazione}
+                              <small>
+                                {unit.codicePadre
+                                  ? `dipende dalla UO ${unit.codicePadre}`
+                                  : "livello padre non indicato"}
+                              </small>
+                            </th>
+                            <td>
+                              <code>{unit.codice}</code>
+                            </td>
+                            <td>{unit.codiceAoo ? <code>{unit.codiceAoo}</code> : "non indicata"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 ) : (
-                  <p className={styles.disclaimer}>IPA non pubblica Unità Organizzative per questo ente.</p>
-                )}
-
-                {structure.unitaOrganizzative.total > 24 && (
-                  <p className={styles.structureLimit}>
-                    Mostriamo le prime 24 unità in ordine alfabetico. L&apos;API espone pagine fino a 500 record tramite <code>limit</code> e <code>offset</code>.
+                  <p className={styles.note}>
+                    IPA non pubblica Unità Organizzative per questo ente.
                   </p>
                 )}
 
-                <div className={styles.structureLinks}>
-                  <a href={IPA_UO_DATASET_URL} target="_blank" rel="noreferrer">Dataset UO <span>↗</span></a>
-                  <a href={IPA_AOO_DATASET_URL} target="_blank" rel="noreferrer">Dataset AOO <span>↗</span></a>
-                  <Link href={`/api/enti/${encodeURIComponent(entity.codiceIpa)}/struttura`}>
-                    API struttura <span>→</span>
+                {structure.unitaOrganizzative.total > 24 && (
+                  <p className={styles.note}>
+                    Mostriamo le prime 24 unità in ordine alfabetico. L&apos;API espone pagine fino a
+                    500 record tramite <code>limit</code> e <code>offset</code>.
+                  </p>
+                )}
+
+                <div className={styles.actions}>
+                  <a className="btn btn-secondary" href={IPA_UO_DATASET_URL} target="_blank" rel="noreferrer">
+                    Dataset UO ↗
+                  </a>
+                  <a className="btn btn-secondary" href={IPA_AOO_DATASET_URL} target="_blank" rel="noreferrer">
+                    Dataset AOO ↗
+                  </a>
+                  <Link
+                    className="btn btn-secondary"
+                    href={`/api/enti/${encodeURIComponent(entity.codiceIpa)}/struttura`}
+                  >
+                    API struttura →
                   </Link>
                 </div>
               </>
             ) : (
-              <div className={styles.structureUnavailable}>
-                <HugeiconsIcon icon={LegalDocument01Icon} size={22} strokeWidth={1.5} aria-hidden="true" />
-                <div>
-                  <strong>La struttura IPA non risponde in questo momento.</strong>
-                  <p>La scheda anagrafica resta valida; non sostituiamo UO e AOO con una gerarchia inferita dai nomi.</p>
-                </div>
+              <div className="notice warning-notice">
+                <strong>La struttura IPA non risponde in questo momento</strong>
+                <p>
+                  La scheda anagrafica resta valida; non sostituiamo UO e AOO con una gerarchia
+                  inferita dai nomi.
+                </p>
               </div>
             )}
 
-            <p className={styles.disclaimer}>
-              Le UO non sono automaticamente “dipartimenti”: IPA descrive uffici e relazioni dichiarate dall&apos;ente.
-              Per direzioni generali e strutture giuridiche fanno fede anche regolamenti e pagine di Amministrazione trasparente.
+            <p className={styles.note}>
+              Le UO non sono automaticamente “dipartimenti”: IPA descrive uffici e relazioni
+              dichiarate dall&apos;ente. Per direzioni generali e strutture giuridiche fanno fede anche
+              regolamenti e pagine di Amministrazione trasparente.
             </p>
           </section>
 
-          <section className={styles.section}>
-            <div className={styles.sectionHeading}>
-              <h2>Sede e contatti pubblicati</h2>
-              <span>fonte IPA</span>
-            </div>
-            <div className={styles.contactList}>
-              <div className={styles.contact}>
-                <span>Indirizzo</span>
-                <b>{show(entity.sede.indirizzo)}</b>
+          <section className="panel">
+            <h2 className="panel-title">Sede e contatti pubblicati</h2>
+            <dl className={styles.definitions}>
+              <div>
+                <dt>Indirizzo</dt>
+                <dd>{show(entity.sede.indirizzo)}</dd>
               </div>
-              <div className={styles.contact}>
-                <span>CAP</span>
-                <b>{show(entity.sede.cap)}</b>
+              <div>
+                <dt>CAP</dt>
+                <dd>{show(entity.sede.cap)}</dd>
               </div>
-              <div className={styles.contact}>
-                <span>Comune ISTAT</span>
-                <b>{show(entity.sede.codiceComuneIstat)}</b>
+              <div>
+                <dt>Comune ISTAT</dt>
+                <dd>{show(entity.sede.codiceComuneIstat)}</dd>
               </div>
               {entity.email.map((mail) => (
-                <div className={styles.contact} key={`${mail.indirizzo}-${mail.tipo ?? "mail"}`}>
-                  <span>{mail.tipo ?? "email"}</span>
-                  <a href={`mailto:${mail.indirizzo}`}>{mail.indirizzo}</a>
+                <div key={`${mail.indirizzo}-${mail.tipo ?? "mail"}`}>
+                  <dt>{mail.tipo ?? "email"}</dt>
+                  <dd>
+                    <a href={`mailto:${mail.indirizzo}`}>{mail.indirizzo}</a>
+                  </dd>
                 </div>
               ))}
-            </div>
+            </dl>
           </section>
 
-          <section className={styles.section}>
-            <div className={styles.sectionHeading}>
-              <h2>Dati economici</h2>
-              <span>collegamenti in corso</span>
-            </div>
-            <div className={styles.futureData}>
-              <div className={styles.futureRow}>
-                <strong>Pagamenti e serie storiche</strong>
-                <span>SIOPE / OpenBDAP</span>
+          <section className="panel">
+            <h2 className="panel-title">Dati economici · collegamenti in corso</h2>
+            <dl className={styles.definitions}>
+              <div>
+                <dt>Pagamenti e serie storiche</dt>
+                <dd>SIOPE / OpenBDAP</dd>
               </div>
-              <div className={styles.futureRow}>
-                <strong>Contratti e fornitori</strong>
-                <span>ANAC / BDNCP</span>
+              <div>
+                <dt>Contratti e fornitori</dt>
+                <dd>ANAC / BDNCP</dd>
               </div>
-              <div className={styles.futureRow}>
-                <strong>Progetti, opere e PNRR</strong>
-                <span>CUP / ReGiS / OpenCoesione</span>
+              <div>
+                <dt>Progetti, opere e PNRR</dt>
+                <dd>CUP / ReGiS / OpenCoesione</dd>
               </div>
-              <div className={styles.futureRow}>
-                <strong>Consulenze e incarichi</strong>
-                <span>Funzione Pubblica</span>
+              <div>
+                <dt>Consulenze e incarichi</dt>
+                <dd>Funzione Pubblica</dd>
               </div>
-            </div>
-            <p className={styles.disclaimer}>
+            </dl>
+            <p className={styles.note}>
               Mostreremo un grafico economico solo quando riusciremo a collegare questo ente a una
               fonte ufficiale. Non usiamo valori stimati o abbinamenti basati solo sul nome.
             </p>
           </section>
         </div>
 
-        <aside className={styles.detailSide}>
-          <section className={styles.section}>
-            <div className={styles.sectionHeading}>
-              <h2>Da dove arrivano i dati</h2>
-              <span>fonte originale</span>
-            </div>
-            <div className={styles.provenance}>
-              <div className={styles.provenanceRow}>
-                <span>Fonte</span>
-                <a href={IPA_ENTI_DATASET_URL} target="_blank" rel="noreferrer">Indice PA · Enti ↗</a>
+        <aside className={styles.side}>
+          <section className="panel">
+            <h2 className="panel-title">Da dove arrivano i dati</h2>
+            <dl className={styles.sideList}>
+              <div>
+                <dt>Fonte</dt>
+                <dd>
+                  <a href={IPA_ENTI_DATASET_URL} target="_blank" rel="noreferrer">
+                    Indice PA · Enti ↗
+                  </a>
+                </dd>
               </div>
-              <div className={styles.provenanceRow}>
-                <span>Titolare</span>
-                <b>Agenzia per l&apos;Italia Digitale</b>
+              <div>
+                <dt>Titolare</dt>
+                <dd>Agenzia per l&apos;Italia Digitale</dd>
               </div>
-              <div className={styles.provenanceRow}>
-                <span>Identificativo del file</span>
-                <b>{IPA_ENTI_RESOURCE_ID}</b>
+              <div>
+                <dt>Identificativo del file</dt>
+                <dd>
+                  <code>{IPA_ENTI_RESOURCE_ID}</code>
+                </dd>
               </div>
-              <div className={styles.provenanceRow}>
-                <span>Licenza</span>
-                <b>{IPA_LICENSE}</b>
+              <div>
+                <dt>Licenza</dt>
+                <dd>{IPA_LICENSE}</dd>
               </div>
-              <div className={styles.provenanceRow}>
-                <span>Frequenza</span>
-                <b>giornaliera</b>
+              <div>
+                <dt>Frequenza</dt>
+                <dd>giornaliera</dd>
               </div>
-              <div className={styles.provenanceRow}>
-                <span>Data del dato</span>
-                <b>{show(entity.dataAggiornamento)}</b>
+              <div>
+                <dt>Data del dato</dt>
+                <dd>{show(entity.dataAggiornamento)}</dd>
               </div>
-            </div>
+            </dl>
           </section>
 
-          <section className={styles.section}>
-            <div className={styles.sectionHeading}>
-              <h2>Usa questi dati</h2>
-              <span>formato JSON</span>
-            </div>
-            <div className={styles.provenanceRow}>
-              <span>Indirizzo per altre applicazioni</span>
-              <Link href={`/api/enti/${encodeURIComponent(entity.codiceIpa)}`}>
-                /api/enti/{entity.codiceIpa} →
-              </Link>
-            </div>
-            <p className={styles.disclaimer}>
-              Il servizio rende i campi più facili da usare, ma non cambia ciò che IPA ha pubblicato.
+          <section className="panel">
+            <h2 className="panel-title">Usa questi dati · formato JSON</h2>
+            <dl className={styles.sideList}>
+              <div>
+                <dt>Indirizzo per altre applicazioni</dt>
+                <dd>
+                  <Link href={`/api/enti/${encodeURIComponent(entity.codiceIpa)}`}>
+                    /api/enti/{entity.codiceIpa} →
+                  </Link>
+                </dd>
+              </div>
+            </dl>
+            <p className={styles.note}>
+              Il servizio rende i campi più facili da usare, ma non cambia ciò che IPA ha
+              pubblicato.
             </p>
           </section>
         </aside>

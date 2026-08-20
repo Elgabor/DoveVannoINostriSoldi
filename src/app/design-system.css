@@ -1,33 +1,253 @@
+/*
+ * Modernist — token layer and component primitives.
+ *
+ * Retuning the look starts here: every surface in the app reads these
+ * variables instead of hard-coding a colour. See DESIGN.md for the rules that
+ * govern when each token applies.
+ */
+
 :root {
+  --color-bg: #f3f2f2;
+  --color-surface: #eae9e9;
+  --color-raised: #ffffff;
+  --color-text: #201e1d;
+  --color-accent: #ec3013;
+  --color-accent-2: #e15b47;
+  --color-divider: color-mix(in srgb, #201e1d 40%, transparent);
+
+  /* Tonal ramps — generated in OKLCH on one shared lightness scale, so the
+     same step of any role matches the others in visual value. */
+  --color-neutral-100: #f8f4f4;
+  --color-neutral-200: #eae7e7;
+  --color-neutral-300: #d7d3d3;
+  --color-neutral-400: #bab6b6;
+  --color-neutral-500: #9b9797;
+  --color-neutral-600: #7d7979;
+  --color-neutral-700: #605d5d;
+  --color-neutral-800: #444141;
+  --color-neutral-900: #2d2b2b;
+
+  --color-accent-100: #fff2ef;
+  --color-accent-200: #ffe0d9;
+  --color-accent-300: #ffc4b8;
+  --color-accent-400: #ff9783;
+  --color-accent-500: #ff563c;
+  --color-accent-600: #dd2b0f;
+  --color-accent-700: #ae1800;
+  --color-accent-800: #7c1405;
+  --color-accent-900: #4d170e;
+
+  --color-accent-2-100: #fff2ef;
+  --color-accent-2-200: #ffe0da;
+  --color-accent-2-300: #ffc4b9;
+  --color-accent-2-400: #ff9784;
+  --color-accent-2-500: #ef6853;
+  --color-accent-2-600: #c94b39;
+  --color-accent-2-700: #9e3526;
+  --color-accent-2-800: #71261b;
+  --color-accent-2-900: #471d16;
+
+  /* Status — reused by freshness badges and source health. Kept inside the
+     neutral/accent value range so a status chip never outshouts a number. */
+  --color-positive: #1f6b46;
+  --color-positive-bg: #e8f3ed;
+  --color-positive-border: #b4d8c5;
+  --color-warning: #8a5a06;
+  --color-warning-bg: #fbf1de;
+  --color-warning-border: #e6cf9d;
+  --color-critical: var(--color-accent-700);
+  --color-critical-bg: var(--color-accent-100);
+  --color-critical-border: var(--color-accent-300);
+
+  --font-heading: var(--font-archivo), system-ui, sans-serif;
+  --font-heading-weight: 800;
+  --font-body: var(--font-archivo), system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+
+  /* Elevation — derived from the ground: soft ink-tinted shadows on a
+     light theme. */
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #2d2b2b 14%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #2d2b2b 16%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #2d2b2b 22%, transparent);
+
+  /* Layout — the shell is fluid; these only bound it on very wide screens. */
+  --max: 1560px;
+  --gutter: 28px;
+
+  --chart-primary: var(--color-accent);
+  --chart-secondary: var(--color-neutral-800);
+  --chart-tertiary: var(--color-neutral-500);
+  --chart-quaternary: var(--color-neutral-400);
+  --chart-quinary: var(--color-accent-300);
+  --chart-negative: var(--color-accent-700);
+
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-
-  --chart-primary: #43b69a;
-  --chart-secondary: #e3b65a;
-  --chart-tertiary: #9c83d3;
-  --chart-negative: #d97979;
-
-  --focus-ring: rgba(117, 178, 210, .68);
+  --focus-ring: var(--color-accent);
 }
 
-body {
-  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+/* — rules — */
+.hr {
+  height: 2px;
+  border: 0;
+  margin: var(--space-4) 0;
+  background: var(--color-divider);
 }
 
-.button,
-.source-button {
-  transition: transform 140ms var(--ease-out), background-color 140ms ease, border-color 140ms ease;
+/* — buttons — */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 13px;
+  line-height: 1.2;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 7px var(--space-3);
+  border-radius: var(--radius-md);
+}
+.btn svg { display: block; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-primary { background: var(--color-accent); color: var(--color-bg); }
+.btn-primary:hover { background: var(--color-accent-600); }
+.btn-primary:active { background: var(--color-accent-700); }
+.btn-secondary { border-color: var(--color-neutral-400); }
+.btn-secondary:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.btn-secondary:active { background: color-mix(in srgb, var(--color-text) 14%, transparent); }
+.btn-ghost { color: var(--color-accent); padding-inline: var(--space-1); }
+.btn-ghost:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+.btn-block {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid var(--color-neutral-400);
+  font-size: 12px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--color-accent-700);
+}
+.btn-block:hover { background: var(--color-accent-100); border-color: var(--color-accent); }
+
+/* — forms — */
+.input {
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--color-text);
+  caret-color: var(--color-accent);
+  background: var(--color-raised);
+  border: 1px solid var(--color-neutral-400);
+  border-radius: var(--radius-md);
+}
+.input::placeholder { color: var(--color-neutral-600); opacity: 1; }
+.input:hover { border-color: var(--color-neutral-500); }
+.input:focus-visible { border-color: var(--color-accent); outline-offset: 0; }
+
+/* — surfaces — */
+.panel {
+  min-width: 0;
+  padding: 18px;
+  background: var(--color-raised);
+  border: 1px solid var(--color-neutral-300);
+}
+.panel-accent {
+  background: var(--color-neutral-100);
+  border-color: var(--color-accent-300);
+}
+.panel-title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: var(--font-heading-weight);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.elev-sm { box-shadow: var(--shadow-sm); }
+.elev-md { box-shadow: var(--shadow-md); }
+.elev-lg { box-shadow: var(--shadow-lg); }
+
+/* — tags — */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  letter-spacing: .02em;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+.tag-accent { background: var(--color-accent-100); color: var(--color-accent-800); }
+.tag-neutral { background: var(--color-neutral-200); color: var(--color-neutral-800); }
+.tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent); }
+
+/* — tables — */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+/* Only column headings shout; a row heading is the row's name, not a label. */
+.table thead th {
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--color-neutral-600);
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-neutral-400);
+}
+.table td {
+  padding: 11px var(--space-2);
+  border-bottom: 1px solid var(--color-neutral-200);
+}
+.table tbody tr:hover { background: var(--color-neutral-100); }
+.table th[scope="row"] {
+  text-align: left;
+  padding: 11px var(--space-2);
+  border-bottom: 1px solid var(--color-neutral-200);
+  font-weight: 600;
+}
+/* A row heading may carry one line of context under the name. */
+.table th[scope="row"] small {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--color-neutral-600);
+}
+.table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  /* Figures stay on one line; the wrapper scrolls instead of the number
+     breaking across two rows. */
+  white-space: nowrap;
 }
 
-.button:active,
-.source-button:active {
-  transform: scale(.97);
-}
+/* Numbers are compared far more often than they are read, so every figure in
+   the app aligns on the same digit width. */
+.num-tabular { font-variant-numeric: tabular-nums; }
 
-:where(a, button, input, select, textarea):focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 3px;
-}
+.transition-press { transition: transform 140ms var(--ease-out), background-color 140ms ease, border-color 140ms ease; }
+.transition-press:active { transform: scale(.98); }
 
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -12,13 +12,14 @@ import {
 import type { IpaTypeStat } from "@/lib/ipa-stats";
 import styles from "./registry-type-chart.module.css";
 
-const integerFormatter = new Intl.NumberFormat("it-IT");
+const integerFormatter = new Intl.NumberFormat("it-IT", { useGrouping: "always" });
 
 function compact(value: number): string {
   return new Intl.NumberFormat("it-IT", {
     notation: "compact",
     maximumFractionDigits: 1,
-  }).format(value);
+  useGrouping: "always",
+}).format(value);
 }
 
 function shortLabel(label: string): string {
@@ -60,12 +61,12 @@ export function RegistryTypeChart({ data }: { data: IpaTypeStat[] }) {
             layout="vertical"
             margin={{ top: 4, right: 18, bottom: 2, left: 4 }}
           >
-            <CartesianGrid horizontal={false} stroke="rgba(145, 174, 192, 0.12)" />
+            <CartesianGrid horizontal={false} stroke="var(--color-neutral-300)" />
             <XAxis
               type="number"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: "#8098a7", fontSize: 11 }}
+              tick={{ fill: "var(--color-neutral-600)", fontSize: 11 }}
               tickFormatter={compact}
             />
             <YAxis
@@ -74,7 +75,7 @@ export function RegistryTypeChart({ data }: { data: IpaTypeStat[] }) {
               axisLine={false}
               tickLine={false}
               width={176}
-              tick={{ fill: "#b6c8d2", fontSize: 11 }}
+              tick={{ fill: "var(--color-neutral-600)", fontSize: 11 }}
             />
             <Tooltip
               content={({ active, payload }) => {
@@ -90,7 +91,7 @@ export function RegistryTypeChart({ data }: { data: IpaTypeStat[] }) {
                   </div>
                 );
               }}
-              cursor={{ fill: "rgba(255,255,255,0.025)" }}
+              cursor={{ fill: "var(--color-neutral-100)" }}
               animationDuration={140}
             />
             <Bar

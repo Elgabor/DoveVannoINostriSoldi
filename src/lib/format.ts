@@ -1,0 +1,117 @@
+/**
+ * Number and date formatting shared by every page.
+ *
+ * The site shows the same figure in two registers: a compact headline people
+ * can hold in their head ("70,94 mld €") and the exact value underneath, so a
+ * reader can always reconcile what we print with the source file.
+ */
+
+/*
+ * Italian CLDR sets minimumGroupingDigits to 2, so four-digit numbers come out
+ * as "7893" and "1203,55". Public-finance documents always group thousands and
+ * so does the design, so grouping is forced on everywhere.
+ */
+const euroFormatter = new Intl.NumberFormat("it-IT", {
+  style: "currency",
+  currency: "EUR",
+  maximumFractionDigits: 2,
+  useGrouping: "always",
+});
+
+const integerFormatter = new Intl.NumberFormat("it-IT", {
+  maximumFractionDigits: 0,
+  useGrouping: "always",
+});
+
+export function exactEuro(value: number): string {
+  return euroFormatter.format(value);
+}
+
+export function integer(value: number): string {
+  return integerFormatter.format(value);
+}
+
+export function compactEuro(value: number): string {
+  const absolute = Math.abs(value);
+  if (absolute >= 1_000_000_000) {
+    /* Two decimals even when they are zeros, so a column of billions lines up. */
+    return `${(value / 1_000_000_000).toLocaleString("it-IT", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      useGrouping: "always",
+    })} mld €`;
+  }
+  if (absolute >= 1_000_000) {
+    return `${(value / 1_000_000).toLocaleString("it-IT", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+      useGrouping: "always",
+    })} mln €`;
+  }
+  return euroFormatter.format(value);
+}
+
+/**
+ * Formats a value in the unit that suits `reference`.
+ *
+ * A ranked column that switches from "mld" to "mln" halfway down forces the
+ * reader to re-scale every row, so a table picks one unit from its largest
+ * figure and keeps it for all of them.
+ */
+export function compactEuroLike(value: number, reference: number): string {
+  const scale = Math.abs(reference);
+  if (scale >= 1_000_000_000) {
+    return `${(value / 1_000_000_000).toLocaleString("it-IT", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      useGrouping: "always",
+    })} mld €`;
+  }
+  if (scale >= 1_000_000) {
+    return `${(value / 1_000_000).toLocaleString("it-IT", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+      useGrouping: "always",
+    })} mln €`;
+  }
+  return euroFormatter.format(value);
+}
+
+export function billions(value: number): string {
+  return (value / 1_000_000_000).toLocaleString("it-IT", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    useGrouping: "always",
+  });
+}
+
+export function percent(value: number, digits = 1): string {
+  return `${value.toLocaleString("it-IT", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  })}%`;
+}
+
+export function longDate(value: string | null | undefined): string {
+  if (!value) return "non disponibile";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "non disponibile";
+  return new Intl.DateTimeFormat("it-IT", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Europe/Rome",
+  }).format(parsed);
+}
+
+export function shortDate(value: string | null | undefined): string {
+  if (!value) return "non disponibile";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "non disponibile";
+  return new Intl.DateTimeFormat("it-IT", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Europe/Rome",
+  }).format(parsed);
+}

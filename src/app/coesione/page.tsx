@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CohesionExplorerChart } from "@/components/charts/cohesion-explorer-chart";
 import { CohesionHistoryChart } from "@/components/charts/cohesion-history-chart";
+import { compactEuro, exactEuro, integer, longDate, percent } from "@/lib/format";
 import {
   openCoesionePaymentCostRatio,
   openCoesioneSnapshot as snapshot,
@@ -9,167 +9,284 @@ import {
 import styles from "./coesione.module.css";
 
 export const metadata: Metadata = {
-  title: "Politiche di coesione",
+  title: "Fondi e progetti",
   description:
-    "Costo pubblico, pagamenti e progetti delle politiche di coesione in Italia, con temi, nature, stati, serie storica e provenienza OpenCoesione.",
+    "Costo previsto, pagamenti e progetti delle politiche di coesione in Italia, per tema, natura e stato, con la serie storica OpenCoesione.",
 };
 
-const integer = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 0 });
-const exactEuro = new Intl.NumberFormat("it-IT", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
-
-function compactEuro(cents: number): string {
-  const value = cents / 100;
-  if (Math.abs(value) >= 1_000_000_000) {
-    return `${(value / 1_000_000_000).toLocaleString("it-IT", {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 2,
-    })} mld €`;
-  }
-  if (Math.abs(value) >= 1_000_000) {
-    return `${(value / 1_000_000).toLocaleString("it-IT", { maximumFractionDigits: 1 })} mln €`;
-  }
-  return exactEuro.format(value);
+/** The snapshot keeps money in cents; every figure on the page starts here. */
+function euros(cents: number): number {
+  return cents / 100;
 }
 
-function formatDate(value: string): string {
-  const date = new Date(`${value}T00:00:00Z`);
-  return new Intl.DateTimeFormat("it-IT", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(date);
+function share(paid: number, cost: number): number {
+  return cost > 0 ? (paid / cost) * 100 : 0;
 }
 
-function formatDateTime(value: string): string {
-  return new Intl.DateTimeFormat("it-IT", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Europe/Rome",
-  }).format(new Date(value));
-}
-
-function reconciliationLabel(value: number): string {
-  if (value === 0) return "0 €";
-  return `${value > 0 ? "+" : "−"}${exactEuro.format(Math.abs(value) / 100)}`;
+/** A signed euro delta, so "we reconciled and it matched" is visible as 0 €. */
+function reconciliationLabel(cents: number): string {
+  if (cents === 0) return "0 €";
+  return `${cents > 0 ? "+" : "−"}${exactEuro(Math.abs(euros(cents)))}`;
 }
 
 export default function CohesionPage() {
   const ratio = openCoesionePaymentCostRatio * 100;
-  const latestAnnual = snapshot.annualSeries.at(-1);
+
+  const themes = [...snapshot.themes].sort(
+    (left, right) => right.publicCostCents - left.publicCostCents,
+  );
+  const natures = [...snapshot.natures].sort(
+    (left, right) => right.publicCostCents - left.publicCostCents,
+  );
+  const statuses = [...snapshot.statuses].sort((left, right) => right.projects - left.projects);
+  const maxStatusProjects = Math.max(...statuses.map((status) => status.projects), 0);
+
+  const themesByShare = [...themes]
+    .map((theme) => ({
+      ...theme,
+      paidShare: share(theme.paymentsCents, theme.publicCostCents),
+    }))
+    .sort((left, right) => right.paidShare - left.paidShare);
+
+  /* The full series starts in 1990; the table only shows the recent years,
+     where the numbers actually move. */
+  const recentYears = snapshot.annualSeries.slice(-5);
 
   return (
-    <main className={styles.page}>
-      <nav className={styles.breadcrumb} aria-label="Percorso">
-        <Link href="/">Home</Link><span aria-hidden="true">/</span><span>Politiche di coesione</span>
-      </nav>
+    <main className="shell page">
+      <div className="page-intro">
+        <h1>Fondi e progetti finanziati</h1>
+        <p>
+          {integer(snapshot.totals.projects)} progetti seguiti da OpenCoesione dal 1990 a oggi.
+          Dati al {longDate(`${snapshot.referenceDate}T00:00:00Z`)}, controllati il{" "}
+          {longDate(snapshot.source.observedAt)}.
+        </p>
+      </div>
 
-      <header className={styles.header}>
+      <div className="stat-strip">
         <div>
-          <h1>Dove si concentrano gli investimenti per la coesione.</h1>
-          <p>
-            Un quadro nazionale dei progetti monitorati da OpenCoesione: costo pubblico, pagamenti,
-            temi, natura e stato. I valori arrivano dal servizio ufficiale e conserviamo l&apos;ultimo
-            dato controllato anche se la fonte è temporaneamente irraggiungibile.
-          </p>
+          <span className="stat-label">Soldi messi sul piatto</span>
+          <span className="stat-value">{compactEuro(euros(snapshot.totals.publicCostCents))}</span>
+          <span className="stat-note">
+            di cui {compactEuro(euros(snapshot.totals.cohesionPublicCostCents))} da fondi di
+            coesione
+          </span>
         </div>
-        <aside className={styles.freshness} aria-label="Freschezza e provenienza del dato">
-          <div><span>Fonte</span><strong>OpenCoesione</strong></div>
-          <div><span>Dato aggiornato dalla fonte</span><strong>{formatDate(snapshot.referenceDate)}</strong></div>
-          <div><span>Scaricato da noi</span><strong>{formatDateTime(snapshot.generatedAt)}</strong></div>
-          <div><span>Quanto spesso cambia</span><strong>{snapshot.source.declaredCadence}</strong></div>
-          <div><span>Controllo automatico</span><strong>{snapshot.source.platformCheckCadence}</strong></div>
-          <div><span>Come lo leggiamo</span><strong>Servizio ufficiale e copia controllata</strong></div>
-          <div><span>Licenza</span><strong>{snapshot.source.license}</strong></div>
-          <a href={snapshot.source.endpoint} target="_blank" rel="noreferrer">Apri l’aggregato originale ↗</a>
-        </aside>
-      </header>
-
-      <section className={styles.overview} aria-label="Quadro nazionale OpenCoesione">
-        <div className={styles.primaryMetric}>
-          <span>Costo pubblico dei progetti monitorati</span>
-          <strong>{compactEuro(snapshot.totals.publicCostCents)}</strong>
-          <p>
-            Totale nazionale pubblicato dalla fonte. Include la componente di coesione e le altre
-            risorse pubbliche associate ai progetti monitorati.
-          </p>
-        </div>
-        <div className={styles.facts}>
-          <div><span>Pagamenti monitorati</span><strong>{compactEuro(snapshot.totals.paymentsCents)}</strong></div>
-          <div><span>Progetti</span><strong>{integer.format(snapshot.totals.projects)}</strong></div>
-          <div><span>Quota pagamenti / costo</span><strong>{ratio.toLocaleString("it-IT", { maximumFractionDigits: 2 })}%</strong></div>
-        </div>
-      </section>
-
-      <section className={styles.ratioSection} aria-labelledby="ratio-title">
         <div>
-          <h2 id="ratio-title">Quanto è stato pagato rispetto al costo monitorato</h2>
-          <p>
-            Il rapporto confronta i pagamenti pubblicati con il costo pubblico totale. Non dice
-            quante opere sono finite né se sono state realizzate bene.
-          </p>
+          <span className="stat-label">Soldi già pagati</span>
+          <span className="stat-value">{compactEuro(euros(snapshot.totals.paymentsCents))}</span>
+          <span className="stat-note">
+            di cui {compactEuro(euros(snapshot.totals.cohesionPaymentsCents))} da fondi di coesione
+          </span>
         </div>
-        <div className={styles.ratioVisual}>
-          <div className={styles.ratioTrack} aria-hidden="true">
-            <span style={{ width: `${Math.min(100, ratio)}%` }} />
+        <div>
+          <span className="stat-label">Pagato sul costo previsto</span>
+          <span className="stat-value">{percent(ratio)}</span>
+          <span className="stat-note">rapporto finanziario, non fisico</span>
+        </div>
+        <div>
+          <span className="stat-label">Progetti seguiti</span>
+          <span className="stat-value">{integer(snapshot.totals.projects)}</span>
+          <span className="stat-note">dal 1990 a oggi</span>
+        </div>
+      </div>
+
+      <div className={styles.tables}>
+        <section className="panel">
+          <h2 className="panel-title">Dove vanno questi soldi · per tema</h2>
+          <div className="table-scroll">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">Tema</th>
+                  <th scope="col" className="num">Costo previsto</th>
+                  <th scope="col" className="num">Già pagato</th>
+                  <th scope="col" className="num">Progetti</th>
+                </tr>
+              </thead>
+              <tbody>
+                {themes.map((theme) => (
+                  <tr key={theme.slug}>
+                    <th scope="row">{theme.label}</th>
+                    <td className="num">{compactEuro(euros(theme.publicCostCents))}</td>
+                    <td className="num">{compactEuro(euros(theme.paymentsCents))}</td>
+                    <td className="num">{integer(theme.projects)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <div><strong>{ratio.toLocaleString("it-IT", { maximumFractionDigits: 2 })}%</strong><span>rapporto aggregato</span></div>
-        </div>
+        </section>
+
+        <section className="panel">
+          <h2 className="panel-title">Come vengono spesi · per natura</h2>
+          <div className="table-scroll">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">Natura della spesa</th>
+                  <th scope="col" className="num">Costo previsto</th>
+                  <th scope="col" className="num">Già pagato</th>
+                  <th scope="col" className="num">Progetti</th>
+                </tr>
+              </thead>
+              <tbody>
+                {natures.map((nature) => (
+                  <tr key={nature.slug}>
+                    <th scope="row">{nature.label}</th>
+                    <td className="num">{compactEuro(euros(nature.publicCostCents))}</td>
+                    <td className="num">{compactEuro(euros(nature.paymentsCents))}</td>
+                    <td className="num">{integer(nature.projects)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <section className="panel">
+        <h2 className="panel-title">A che punto sono i progetti</h2>
+        <ul className={styles.statusList}>
+          {statuses.map((status) => (
+            <li key={status.slug}>
+              <span>{status.label}</span>
+              <i aria-hidden="true">
+                <b
+                  style={{
+                    width:
+                      maxStatusProjects > 0
+                        ? `${(status.projects / maxStatusProjects) * 100}%`
+                        : "0%",
+                  }}
+                />
+              </i>
+              <b>
+                {integer(status.projects)} · {compactEuro(euros(status.publicCostCents))}
+              </b>
+            </li>
+          ))}
+        </ul>
+        <p className={styles.note}>
+          Le barre confrontano il numero di progetti; gli importi sono il costo pubblico previsto.
+        </p>
       </section>
 
-      <section className={styles.section} aria-labelledby="explorer-title">
-        <div className={styles.sectionHeader}>
+      <div className={styles.tables}>
+        <section className="panel">
+          <h2 className="panel-title">La serie storica · cumulata</h2>
+          <CohesionHistoryChart data={snapshot.annualSeries} />
+          <div className="table-scroll">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">Anno</th>
+                  <th scope="col" className="num">Impegni</th>
+                  <th scope="col" className="num">Pagamenti</th>
+                  <th scope="col" className="num">Pagato</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentYears.map((point) => (
+                  <tr key={point.year}>
+                    <th scope="row">{point.year}</th>
+                    <td className="num">{compactEuro(euros(point.commitmentsCents))}</td>
+                    <td className="num">{compactEuro(euros(point.paymentsCents))}</td>
+                    <td className="num">
+                      {percent(share(point.paymentsCents, point.commitmentsCents))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className={styles.note}>
+            La serie cresce nel tempo perché è cumulata dal 1990: non è la spesa del singolo anno.
+          </p>
+        </section>
+
+        <section className="panel">
+          <h2 className="panel-title">Quanto è già stato pagato · per tema</h2>
+          <ul className={styles.shareList}>
+            {themesByShare.map((theme) => (
+              <li key={theme.slug}>
+                <span>{theme.label}</span>
+                <i aria-hidden="true">
+                  <b style={{ width: `${Math.min(theme.paidShare, 100)}%` }} />
+                </i>
+                <b>{percent(theme.paidShare)}</b>
+              </li>
+            ))}
+          </ul>
+          <p className={styles.note}>
+            I lavori pubblici (trasporti, ambiente) pagano più lentamente: durano anni. I contributi
+            a persone e imprese escono più in fretta.
+          </p>
+        </section>
+      </div>
+
+      <div className="notice">
+        <strong>Cosa non dice questo dato</strong>
+        <p>
+          “Pagato” vuol dire che i soldi sono usciti, non che l&apos;opera è finita.{" "}
+          {snapshot.methodology.territorialWarning}
+        </p>
+      </div>
+
+      <section className="panel">
+        <h2 className="panel-title">Fonte e verifica</h2>
+        <dl className={styles.sourceGrid}>
           <div>
-            <h2 id="explorer-title">Esplora la composizione dei progetti</h2>
-            <p>Ordina per costo pubblico e passa fra tema, natura dell’intervento e stato del progetto.</p>
+            <dt>Fonte</dt>
+            <dd>{snapshot.source.owner}</dd>
           </div>
-          <span>Costo pubblico · euro correnti</span>
-        </div>
-        <CohesionExplorerChart
-          themes={snapshot.themes}
-          natures={snapshot.natures}
-          statuses={snapshot.statuses}
-        />
-      </section>
-
-      <section className={styles.section} aria-labelledby="history-title">
-        <div className={styles.sectionHeader}>
           <div>
-            <h2 id="history-title">Come sono cresciuti i totali nel tempo</h2>
-            <p>Ogni punto mostra il totale registrato dalla fonte fino all&apos;anno indicato.</p>
+            <dt>Dataset</dt>
+            <dd>{snapshot.source.dataset}</dd>
           </div>
-          {latestAnnual && <span>Serie fino al {latestAnnual.year}</span>}
-        </div>
-        <CohesionHistoryChart data={snapshot.annualSeries} />
-      </section>
-
-      <section className={styles.method} aria-labelledby="method-title">
-        <div>
-          <h2 id="method-title">Come leggere e verificare questi numeri</h2>
-          <p>
-            Conserviamo gli importi al centesimo e confrontiamo ogni gruppo con il totale nazionale.
-            La fonte arrotonda alcuni valori all&apos;euro: accettiamo al massimo due euro di differenza
-            e nessuna differenza nel numero dei progetti.
-          </p>
-        </div>
-        <dl>
-          <div><dt>Stati</dt><dd>{reconciliationLabel(snapshot.reconciliation.statuses.publicCostDeltaCents)}</dd></div>
-          <div><dt>Temi</dt><dd>{reconciliationLabel(snapshot.reconciliation.themes.publicCostDeltaCents)}</dd></div>
-          <div><dt>Nature</dt><dd>{reconciliationLabel(snapshot.reconciliation.natures.publicCostDeltaCents)}</dd></div>
+          <div>
+            <dt>Licenza</dt>
+            <dd>{snapshot.source.license}</dd>
+          </div>
+          <div>
+            <dt>Cadenza dichiarata</dt>
+            <dd>{snapshot.source.declaredCadence}</dd>
+          </div>
+          <div>
+            <dt>Controllo automatico</dt>
+            <dd>{snapshot.source.platformCheckCadence}</dd>
+          </div>
+          <div>
+            <dt>Ultimo controllo</dt>
+            <dd>{longDate(snapshot.source.observedAt)}</dd>
+          </div>
         </dl>
-        <div className={styles.warning}>
-          <strong>Perché non sommiamo ancora i territori</strong>
-          <p>{snapshot.methodology.territorialWarning}</p>
-        </div>
+        <p className={styles.note}>
+          Ricontiamo ogni raggruppamento contro il totale nazionale: differenza sugli stati{" "}
+          {reconciliationLabel(snapshot.reconciliation.statuses.publicCostDeltaCents)}, sui temi{" "}
+          {reconciliationLabel(snapshot.reconciliation.themes.publicCostDeltaCents)}, sulle nature{" "}
+          {reconciliationLabel(snapshot.reconciliation.natures.publicCostDeltaCents)}. La fonte
+          arrotonda all&apos;euro: accettiamo al massimo due euro di scarto e nessuna differenza nel
+          numero dei progetti.
+        </p>
         <div className={styles.actions}>
-          <a href={snapshot.source.endpoint} target="_blank" rel="noreferrer">API OpenCoesione ↗</a>
-          <Link href="/api/coesione">Dati pronti per altre applicazioni</Link>
-          <Link href="/fonti">Registro delle fonti</Link>
-          <Link href="/metodologia">Metodologia</Link>
+          <a
+            className="btn btn-secondary"
+            href={snapshot.source.endpoint}
+            target="_blank"
+            rel="noreferrer"
+          >
+            API OpenCoesione ↗
+          </a>
+          <Link className="btn btn-secondary" href="/api/coesione">
+            Dati pronti per altre applicazioni
+          </Link>
+          <Link className="btn btn-secondary" href="/fonti">
+            Registro delle fonti
+          </Link>
+          <Link className="btn btn-secondary" href="/metodologia">
+            Metodologia
+          </Link>
         </div>
       </section>
     </main>

@@ -1,369 +1,210 @@
-import type { Metadata } from "next";
 import Link from "next/link";
-import { Suspense } from "react";
-import { SpendingBarChart } from "@/components/charts/spending-bar-chart";
+import type { Metadata } from "next";
+import { PeriodSelector } from "@/components/period-selector";
+import { billions, compactEuro, exactEuro, integer, percent, longDate } from "@/lib/format";
+import { PASS_THROUGH_TITLE_CODE, siopeTitleCopy } from "@/lib/siope-titles";
 import {
-  StateSpendingHistoryFallback,
-  StateSpendingHistorySection,
-} from "@/components/state-spending-history-section";
-import {
-  getStateSpendingSnapshot,
-  type BdapDataset,
-  type StateSpendingSnapshot,
-} from "@/lib/bdap-payments";
+  availableSiopeYears,
+  completedMonths,
+  getSiopeMunicipalSnapshot,
+  partialMonth,
+} from "@/lib/siope-snapshot";
 import styles from "./spese.module.css";
 
-export const dynamic = "force-dynamic";
-
-const PAGE_DATA_BUDGET_MS = 8_000;
-
 export const metadata: Metadata = {
-  title: "Spese dello Stato",
+  title: "Soldi",
   description:
-    "Pagamenti del Bilancio dello Stato da RGS/OpenBDAP, spiegati con grafici, date e fonti.",
+    "Per cosa vengono spesi i soldi dei Comuni: le voci di uscita dei pagamenti di cassa SIOPE, mese per mese.",
 };
 
-const exactEuro = new Intl.NumberFormat("it-IT", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 2,
-});
-
-function compactEuro(value: number): string {
-  const absolute = Math.abs(value);
-  if (absolute >= 1_000_000_000) {
-    return `${(value / 1_000_000_000).toLocaleString("it-IT", {
-      maximumFractionDigits: 1,
-    })} mld €`;
-  }
-  if (absolute >= 1_000_000) {
-    return `${(value / 1_000_000).toLocaleString("it-IT", {
-      maximumFractionDigits: 1,
-    })} mln €`;
-  }
-  return exactEuro.format(value);
+function selectedYear(value: string | string[] | undefined): number {
+  const parsed = Number.parseInt(Array.isArray(value) ? value[0] ?? "" : value ?? "", 10);
+  return availableSiopeYears.includes(parsed) ? parsed : availableSiopeYears[0];
 }
 
-function formatDateTime(value: string | null): string {
-  if (!value) return "non disponibile";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
+export default async function MoneyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ anno?: string | string[] }>;
+}) {
+  const year = selectedYear((await searchParams).anno);
+  const data = getSiopeMunicipalSnapshot(year);
 
-  return new Intl.DateTimeFormat("it-IT", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Europe/Rome",
-  }).format(date);
-}
+  const monthLabel = data.latestMonthLabel.toLocaleLowerCase("it-IT");
+  const passThrough =
+    data.titles.find((title) => title.code === PASS_THROUGH_TITLE_CODE)?.value ?? 0;
+  const realSpending = data.totalPaid - passThrough;
 
-function differenceLabel(value: number | null): string {
-  if (value === null) return "non disponibile";
-  if (Math.abs(value) < 0.005) return "0,00%";
-  const sign = value > 0 ? "+" : "";
-  return `${sign}${value.toLocaleString("it-IT", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}%`;
-}
+  /* The running month is still filling up, so it would drag the average down.
+     A closed year has no running month and counts all twelve. */
+  const runningMonth = partialMonth(data);
+  const settledMonths = completedMonths(data);
+  const completedAverage =
+    settledMonths.length > 0
+      ? settledMonths.reduce((sum, point) => sum + point.flow, 0) / settledMonths.length
+      : 0;
+  const completedRange =
+    settledMonths.length > 0
+      ? `da ${settledMonths[0].label.toLocaleLowerCase("it-IT")} a ${settledMonths[settledMonths.length - 1].label.toLocaleLowerCase("it-IT")} ${data.year}`
+      : "nessun mese completo";
 
-function datasetLabel(dataset: BdapDataset): string {
-  if (dataset.dimension === "mission") return "Missione";
-  if (dataset.dimension === "missionAdministration") return "Missione e amministrazione";
-  return "Amministrazione e tipo di spesa";
-}
-
-function SourceRow({ dataset }: { dataset: BdapDataset }) {
-  return (
-    <div className={styles.provenanceRow}>
-      <div>
-        <strong>{datasetLabel(dataset)}</strong>
-        <small>{dataset.productCode}</small>
-      </div>
-      <div>
-        <span>{dataset.title}</span>
-        <small>Identificativo {dataset.packageId}</small>
-      </div>
-      <div className={styles.provenanceActions}>
-        <a href={dataset.csvUrl} target="_blank" rel="noreferrer">CSV RGS ↗</a>
-        <a href={dataset.apiUrl} target="_blank" rel="noreferrer">API ↗</a>
-      </div>
-    </div>
-  );
-}
-
-function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
-  const maxPaymentMethod = snapshot.paymentMethods[0]?.value ?? 0;
-  const sourceUpdatedAt = snapshot.sources.mission.metadataModified;
+  const maxFlow = Math.max(...data.monthly.map((point) => point.flow), 0);
+  const titles = data.titles.map((title) => ({
+    ...title,
+    copy: siopeTitleCopy(title.code),
+    share: data.totalPaid > 0 ? (title.value / data.totalPaid) * 100 : 0,
+  }));
 
   return (
-    <>
-      <header className={styles.header}>
+    <main className="shell page">
+      <div className={styles.intro}>
+        <div className="page-intro">
+          <h1>Per cosa vengono spesi i soldi</h1>
+          <p>
+            Pagamenti dei Comuni da gennaio a {monthLabel} {data.year}, divisi per tipo di uscita.
+            Fonte SIOPE, file del {longDate(data.source.siopeMovementsLastModified)}.
+          </p>
+        </div>
+        <PeriodSelector activeYear={year} years={availableSiopeYears} pathname="/spese" />
+      </div>
+
+      <div className="stat-strip">
         <div>
-          <span className={styles.kicker}>RGS / OPENBDAP · PAGAMENTI DEL BILANCIO DELLO STATO</span>
-          <h1 className={styles.title}>Dove va la spesa dello Stato.</h1>
-          <p className={styles.lead}>
-            Leggiamo i dati ufficiali della Ragioneria Generale dello Stato per mostrare come cambia
-            la spesa, chi la gestisce e per quale funzione. Non usiamo stime o valori dimostrativi.
-          </p>
+          <span className="stat-label">Totale pagato</span>
+          <span className="stat-value">{compactEuro(data.totalPaid)}</span>
+          <span className="stat-note">{exactEuro(data.totalPaid)} esatti</span>
         </div>
-
-        <aside className={styles.sourceSummary} aria-label="Metadati della fonte">
-          <div className={styles.sourceSummaryRow}>
-            <span>Periodo</span>
-            <strong>{snapshot.period.label}</strong>
-          </div>
-          <div className={styles.sourceSummaryRow}>
-            <span>Fonte</span>
-            <strong>RGS · OpenBDAP</strong>
-          </div>
-          <div className={styles.sourceSummaryRow}>
-            <span>Pubblicato</span>
-            <strong>{formatDateTime(sourceUpdatedAt)}</strong>
-          </div>
-          <div className={styles.sourceSummaryRow}>
-            <span>Acquisito</span>
-            <strong>{formatDateTime(snapshot.observedAt)}</strong>
-          </div>
-          <div className={styles.sourceSummaryRow}>
-            <span>File originale</span>
-            <a href={snapshot.sources.mission.csvUrl} target="_blank" rel="noreferrer">apri CSV ufficiale ↗</a>
-          </div>
-        </aside>
-      </header>
-
-      <section className={styles.overview} aria-label="Quadro sintetico">
-        <div className={styles.primaryMetric}>
-          <div className={styles.metricLabel}>
-            <i aria-hidden="true" />
-            Pagamenti da inizio anno
-          </div>
-          <strong>{compactEuro(snapshot.totalPaid)}</strong>
-          <span>Somma del campo ufficiale “Totale Pagato” per tutte le missioni.</span>
-          <p>
-            RGS descrive il rilascio come pagamenti effettuati <b>dal 1° gennaio fino al mese contabile di riferimento</b>.
-            Il valore è il totale da gennaio. Nel grafico mensile sottraiamo il totale del mese precedente.
-          </p>
+        <div>
+          <span className="stat-label">Spesa vera, senza giroconti</span>
+          <span className="stat-value">{compactEuro(realSpending)}</span>
+          <span className="stat-note">tolte le partite di giro</span>
         </div>
-
-        <div className={styles.facts}>
-          <div className={styles.fact}>
-            <span>Missioni presenti</span>
-            <strong>{snapshot.counts.missions.toLocaleString("it-IT")}</strong>
-          </div>
-          <div className={styles.fact}>
-            <span>Amministrazioni centrali</span>
-            <strong>{snapshot.counts.administrations > 0 ? snapshot.counts.administrations.toLocaleString("it-IT") : "Non disponibile"}</strong>
-          </div>
-          <div className={styles.fact}>
-            <span>Categorie economiche</span>
-            <strong>{snapshot.counts.economicCategories > 0 ? snapshot.counts.economicCategories.toLocaleString("it-IT") : "Non disponibile"}</strong>
-          </div>
-          <div className={styles.fact}>
-            <span>Frequenza di controllo</span>
-            <strong>6 h</strong>
-          </div>
+        <div>
+          <span className="stat-label">Media dei mesi completi</span>
+          <span className="stat-value">{compactEuro(completedAverage)}</span>
+          <span className="stat-note">{completedRange}</span>
         </div>
-      </section>
-
-      <Suspense fallback={<StateSpendingHistoryFallback />}>
-        <StateSpendingHistorySection />
-      </Suspense>
-
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <div>
-            <span className={styles.kicker}>FUNZIONI PUBBLICHE</span>
-            <h2>Le missioni con più pagamenti</h2>
-          </div>
-          <p>
-            Le missioni rappresentano le principali funzioni e finalità perseguite attraverso la spesa pubblica.
-            Qui mostriamo le dodici con il totale più alto nel periodo disponibile.
-          </p>
+        <div>
+          <span className="stat-label">Per abitante</span>
+          <span className="stat-value">
+            {data.nationalPerCapita === null ? "Non disponibile" : exactEuro(data.nationalPerCapita)}
+          </span>
+          <span className="stat-note">su {integer(data.populationCovered)} abitanti</span>
         </div>
+      </div>
 
-        <div className={styles.chartBlock}>
-          <div className={styles.chartTitle}>
-            <h3>Missioni principali, {snapshot.period.label}</h3>
-            <a href={snapshot.sources.mission.csvUrl} target="_blank" rel="noreferrer">fonte CSV ↗</a>
-          </div>
-          <SpendingBarChart
-            data={snapshot.missions}
-            ariaLabel={`Prime missioni del Bilancio dello Stato per totale pagato cumulato, ${snapshot.period.label}`}
-            maxItems={12}
-            height={500}
-          />
-          <p className={styles.chartCaption}>
-            Totali in euro da gennaio. L&apos;ordine usa il campo “Totale Pagato” del file RGS per Missione.
-          </p>
-        </div>
-      </section>
-
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <div>
-            <span className={styles.kicker}>CHI GESTISCE LA SPESA</span>
-            <h2>Amministrazioni e natura economica</h2>
-          </div>
-          <p>
-            Lo stesso totale viene diviso prima per amministrazione e poi per tipo di spesa.
-            Se manca uno dei file ufficiali, il relativo grafico resta vuoto.
-          </p>
-        </div>
-
-        <div className={styles.chartGrid}>
-          <div className={styles.chartBlock}>
-            <div className={styles.chartTitle}>
-              <h3>Amministrazioni</h3>
-              {snapshot.sources.missionAdministration && (
-                <a href={snapshot.sources.missionAdministration.csvUrl} target="_blank" rel="noreferrer">CSV ↗</a>
-              )}
-            </div>
-            <SpendingBarChart
-              data={snapshot.administrations}
-              ariaLabel={`Amministrazioni centrali per totale pagato cumulato, ${snapshot.period.label}`}
-              maxItems={10}
-              height={430}
-            />
-          </div>
-
-          <div className={styles.chartBlock}>
-            <div className={styles.chartTitle}>
-              <h3>Categorie economiche</h3>
-              {snapshot.sources.administrationEconomic && (
-                <a href={snapshot.sources.administrationEconomic.csvUrl} target="_blank" rel="noreferrer">CSV ↗</a>
-              )}
-            </div>
-            <SpendingBarChart
-              data={snapshot.economicCategories}
-              ariaLabel={`Categorie economiche per totale pagato cumulato, ${snapshot.period.label}`}
-              maxItems={10}
-              height={430}
-            />
-          </div>
-        </div>
-      </section>
-
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <div>
-            <span className={styles.kicker}>COME VIENE PAGATO</span>
-            <h2>Canali di pagamento</h2>
-          </div>
-          <p>
-            Composizione delle modalità incluse da RGS nel “Totale Pagato”. La barra più lunga corrisponde
-            al canale con il totale maggiore. Non indica una soglia prevista dalla legge.
-          </p>
-        </div>
-
-        <div className={styles.methodList}>
-          {snapshot.paymentMethods.map((method) => {
-            const width = maxPaymentMethod > 0 ? Math.max(0.5, (method.value / maxPaymentMethod) * 100) : 0;
-            return (
-              <div className={styles.methodRow} key={method.code ?? method.label}>
-                <span>{method.label}</span>
-                <div className={styles.methodTrack} aria-hidden="true">
-                  <i style={{ width: `${Math.min(width, 100)}%` }} />
+      <div className={styles.split}>
+        <section className="panel">
+          <h2 className="panel-title">Le {data.titles.length} voci di uscita</h2>
+          <ol className={styles.titleList}>
+            {titles.map((title) => (
+              <li key={title.code}>
+                <div className={styles.titleHead}>
+                  <h3>
+                    {title.copy.name}
+                    <small> · {title.copy.official}</small>
+                  </h3>
+                  <b>
+                    {compactEuro(title.value)} · {percent(title.share)}
+                  </b>
                 </div>
-                <strong>{compactEuro(method.value)}</strong>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+                <div className={styles.titleTrack} aria-hidden="true">
+                  <i style={{ width: `${title.share}%` }} />
+                </div>
+                <p>{title.copy.explanation}</p>
+                <small>Valore esatto: {exactEuro(title.value)}.</small>
+              </li>
+            ))}
+          </ol>
+        </section>
 
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <div>
-            <span className={styles.kicker}>CONTROLLO DI COERENZA</span>
-            <h2>Tre viste, un totale da verificare</h2>
-          </div>
-          <p>
-            Confrontiamo i totali ottenuti da file RGS diversi. Se non coincidono, mostriamo la
-            differenza senza correggerla o nasconderla.
-          </p>
-        </div>
-
-        <div className={styles.qualityGrid}>
-          <div className={styles.qualityItem}>
-            <span>Missioni · riferimento</span>
-            <strong>{compactEuro(snapshot.consistency.missionTotal)}</strong>
-            <small>Totale usato per il quadro principale.</small>
-          </div>
-          <div className={styles.qualityItem}>
-            <span>Amministrazioni</span>
-            <strong>{snapshot.consistency.administrationTotal === null ? "non disponibile" : compactEuro(snapshot.consistency.administrationTotal)}</strong>
-            <small>Scarto vs missioni: {differenceLabel(snapshot.consistency.administrationDifferencePct)}</small>
-          </div>
-          <div className={styles.qualityItem}>
-            <span>Classificazione economica</span>
-            <strong>{snapshot.consistency.economicTotal === null ? "non disponibile" : compactEuro(snapshot.consistency.economicTotal)}</strong>
-            <small>Scarto vs missioni: {differenceLabel(snapshot.consistency.economicDifferencePct)}</small>
-          </div>
-        </div>
-      </section>
-
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <div>
-            <h2>Apri sempre il dato originale</h2>
-          </div>
-          <p>
-            I link portano ai file e ai servizi ufficiali RGS usati per costruire questa pagina.
-          </p>
-        </div>
-
-        <div className={styles.provenanceList}>
-          <SourceRow dataset={snapshot.sources.mission} />
-          {snapshot.sources.missionAdministration && <SourceRow dataset={snapshot.sources.missionAdministration} />}
-          {snapshot.sources.administrationEconomic && <SourceRow dataset={snapshot.sources.administrationEconomic} />}
-        </div>
-      </section>
-    </>
-  );
-}
-
-export default async function StateSpendingPage() {
-  let snapshot: StateSpendingSnapshot | null = null;
-  let errorMessage: string | null = null;
-
-  try {
-    snapshot = await getStateSpendingSnapshot({
-      signal: AbortSignal.timeout(PAGE_DATA_BUDGET_MS),
-    });
-  } catch (error) {
-    errorMessage = error instanceof Error ? error.message : "Errore sconosciuto";
-  }
-
-  return (
-    <main className={styles.page}>
-      <nav className={styles.breadcrumb} aria-label="Percorso">
-        <Link href="/">Home</Link>
-        <span>→</span>
-        <span>Spese dello Stato</span>
-      </nav>
-
-      {snapshot ? (
-        <SpendingDashboard snapshot={snapshot} />
-      ) : (
-        <>
-          <header className={styles.header}>
-            <div>
-              <span className={styles.kicker}>RGS / OPENBDAP</span>
-              <h1 className={styles.title}>Spese dello Stato.</h1>
-              <p className={styles.lead}>
-                Questa pagina usa solo dati ufficiali OpenBDAP. Se la fonte non risponde, non
-                sostituiamo i valori con numeri inventati.
+        <div className={styles.aside}>
+          <section className="panel">
+            <h2 className="panel-title">Mese per mese · mld €</h2>
+            <ul className={styles.monthList}>
+              {data.monthly.map((point) => {
+                const running = point.month === runningMonth;
+                return (
+                  <li key={point.month}>
+                    <span>
+                      {point.label}
+                      {running ? "*" : ""}
+                    </span>
+                    <i aria-hidden="true">
+                      <b
+                        className={running ? styles.running : undefined}
+                        style={{ width: maxFlow > 0 ? `${(point.flow / maxFlow) * 100}%` : "0%" }}
+                      />
+                    </i>
+                    <b className="num-tabular">{billions(point.flow)}</b>
+                  </li>
+                );
+              })}
+            </ul>
+            {runningMonth === null ? (
+              <p className={styles.note}>Anno chiuso: tutti i mesi sono definitivi.</p>
+            ) : (
+              <p className={styles.note}>
+                *{data.latestMonthLabel} è ancora in corso: il numero salirà.
               </p>
+            )}
+          </section>
+
+          <section className="panel">
+            <h2 className="panel-title">Flusso e cumulato · mld €</h2>
+            <div className="table-scroll">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Mese</th>
+                    <th scope="col" className="num">Pagato</th>
+                    <th scope="col" className="num">Cumulato</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.monthly.map((point) => (
+                    <tr key={point.month}>
+                      <th scope="row">
+                        {point.label}
+                        {point.month === runningMonth ? "*" : ""}
+                      </th>
+                      <td className="num">{billions(point.flow)}</td>
+                      <td className="num">{billions(point.cumulative)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </header>
-          <div className={styles.errorState}>
-            <strong>Dati temporaneamente non disponibili.</strong>
-            <p>
-              Non siamo riusciti a leggere OpenBDAP. Puoi riprovare più tardi. Dettaglio: {errorMessage ?? "non disponibile"}.
-            </p>
-          </div>
-        </>
-      )}
+          </section>
+        </div>
+      </div>
+
+      <div className="notice warning-notice">
+        <strong>Attenzione</strong>
+        <p>
+          Queste voci arrivano dalla contabilità dei Comuni. Non dicono se una spesa è utile o
+          sprecata: dicono soltanto in quale categoria è stata registrata.
+        </p>
+      </div>
+
+      <details className={styles.method}>
+        <summary>Come sono raccolti questi dati</summary>
+        <p>
+          Misura: {data.methodology.measure}. {data.methodology.periodicity}. Righe lette:{" "}
+          {integer(data.coverage.movementRows)} · incluse:{" "}
+          {integer(data.coverage.includedMovementRows)} · malformate:{" "}
+          {integer(data.coverage.malformedRows)}. Il collegamento territoriale usa il{" "}
+          {data.methodology.territorialJoin}.
+        </p>
+        <p>
+          Fonte:{" "}
+          <a href={data.source.siopeMovementsUrl} target="_blank" rel="noreferrer">
+            SIOPE
+          </a>{" "}
+          · {data.source.siopeOwner} · scaricato il {longDate(data.source.observedAt)}.{" "}
+          <Link href="/metodologia">Come leggiamo i dati →</Link>
+        </p>
+      </details>
     </main>
   );
 }

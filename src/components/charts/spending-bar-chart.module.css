@@ -8,13 +8,12 @@
 }
 
 .tooltip {
-  max-width: 320px;
-  padding: 11px 12px;
-  border: 1px solid rgba(139, 174, 194, .22);
-  border-radius: 7px;
-  color: #d9e6ed;
-  background: rgba(5, 18, 29, .97);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, .22);
+  max-width: 300px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-neutral-400);
+  color: var(--color-neutral-100);
+  background: var(--color-text);
+  box-shadow: var(--shadow-md);
 }
 
 .tooltip span,
@@ -25,12 +24,12 @@
 
 .tooltip .code {
   margin-bottom: 5px;
-  color: #7694a5;
+  color: var(--color-neutral-400);
   font: 650 11px ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .tooltip strong {
-  color: #b8cbd5;
+  color: #ffffff;
   font-size: 12px;
   font-weight: 560;
   line-height: 1.45;
@@ -38,7 +37,7 @@
 
 .tooltip b {
   margin-top: 6px;
-  color: #f0f6f9;
+  color: #ffffff;
   font-size: 14px;
   font-weight: 680;
 }
@@ -47,7 +46,7 @@
   display: grid;
   min-height: 300px;
   place-items: center;
-  color: #718c9d;
+  color: var(--color-neutral-600);
   font-size: 12px;
   text-align: center;
 }

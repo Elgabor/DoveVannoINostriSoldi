@@ -2,11 +2,11 @@
 
 ## 01 Overview
 
-**Direzione: “Il conto pubblico.”**
+**Direzione: “Il registro pubblico.”**
 
-DoveVannoINostriSoldi è un prodotto operativo di consultazione e verifica. Deve sembrare un'infrastruttura civica contemporanea: autorevole, leggibile e densa quanto serve, senza sembrare né un portale ministeriale legacy né una dashboard cyber.
+DoveVannoINostriSoldi è un prodotto operativo di consultazione e verifica. Deve sembrare un documento pubblico contemporaneo: carta chiara, inchiostro nero, un solo accento rosso che indica dove guardare. Niente pannelli traslucidi, niente bagliori, niente angoli arrotondati.
 
-La direzione è **dati subito, fonte vicina, superfici semplici**.
+La direzione è **dati subito, fonte vicina, superfici piatte**.
 
 La schermata deve far capire rapidamente:
 
@@ -17,173 +17,155 @@ La schermata deve far capire rapidamente:
 
 Una sola metrica può dominare una superficie. Le altre diventano confronti, serie, metadata o dettagli. Grafici e mappe devono ridurre il tempo necessario per capire un pattern, mai decorare uno spazio vuoto.
 
-Il tricolore è una firma di identità. Non è la palette predefinita delle visualizzazioni.
+Il tricolore nell'header è una firma di identità. Non è la palette delle visualizzazioni.
+
+I token vivono in `src/app/design-system.css`; la base e la chrome dell'applicazione in `src/app/globals.css`. Nessun colore va scritto a mano in un componente: se manca un token, si aggiunge lì.
 
 ## 02 Colors
 
-La palette è blu-notte istituzionale con accenti freddi desaturati. Evitare nero puro, bianco puro, neon, glow e colori eccessivamente saturi.
+La palette è grigio-carta caldo con un unico rosso di segnalazione. Evitare nero puro, bianco puro come fondo pagina, neon, glow e seconde tinte in competizione con l'accento.
 
 ### Core tokens
 
-- `--bg: #06131f` — fondo applicazione;
-- `--bg-deep: #030c14` — fondo più profondo;
-- `--panel: rgba(8, 29, 46, .84)` — superficie primaria;
-- `--panel-2: rgba(11, 38, 60, .72)` — superficie secondaria;
-- `--line: rgba(123, 184, 221, .16)` — separatore;
-- `--line-strong: rgba(123, 184, 221, .28)` — separatore/focus secondario;
-- `--text: #f4f8fb` — testo principale;
-- `--muted: #93a9b8` — testo secondario;
-- `--blue: #55b8ef` — azione e informazione primaria;
-- `--green: #6ee7a8` — fonte verificata / stato positivo;
-- `--amber: #f0c56c` — attenzione / integrazione incompleta;
-- `--violet: #a78bda` — scenario o scelta di policy;
-- `--red: #ff7a7a` — errore o variazione negativa, non “colpevolezza”.
+- `--color-bg: #f3f2f2` — fondo applicazione;
+- `--color-surface: #eae9e9` — fondo secondario;
+- `--color-raised: #ffffff` — superficie dei pannelli;
+- `--color-text: #201e1d` — testo principale e fondo dei tooltip;
+- `--color-accent: #ec3013` — azione, evidenza, serie primaria;
+- `--color-accent-2: #e15b47` — accento secondario, usato di rado;
+- `--color-divider` — separatore calcolato dal testo.
 
-### Data visualization tokens
+### Rampe tonali
 
-- `--chart-primary: #72aeca`;
-- `--chart-secondary: #78ad8d`;
-- `--chart-tertiary: #c3a66c`;
-- `--chart-policy: #a78bda`;
-- `--chart-negative: #ca7d7d`.
+`--color-neutral-100…900` e `--color-accent-100…900` sono generate in OKLCH su un'unica scala di luminosità: lo stesso passo di due rampe diverse ha lo stesso valore visivo. Le regole d'uso:
 
-Nelle pagine di audit i colori hanno un significato stabile: blu per dati osservati,
-ambra per aree da approfondire, viola per scenari di policy e rosso attenuato per stock
-o passività. Testo e spiegazione accompagnano sempre il colore.
-
-Le serie devono avere luminosità comparabile e il colore deve significare qualcosa. Non usare automaticamente rosso/verde per giudicare enti o persone. Il colore non può essere l'unico mezzo per comunicare uno stato.
-
-Niente gradient text. Niente palette viola/ciano da “AI dashboard”. I gradienti di sfondo già presenti possono essere usati solo come profondità ambientale molto discreta e non come sostituto della gerarchia.
-
-## 03 Typography
-
-Font principale: stack di sistema.
-
-`ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`
-
-Monospace soltanto per identificativi tecnici come CIG, CUP, Codice IPA, codice fiscale, resource ID ed endpoint.
-
-### Ramp
-
-- display: `clamp(44px, 6vw, 76px)`, peso 520–580, tracking negativo controllato;
-- page title: `clamp(34px, 5vw, 62px)`, peso 540–580;
-- section title: 20–28px;
-- component title: 14–18px;
-- body: 13–16px, line-height 1.55–1.75;
-- metadata e label: minimo 11px;
-- identificativi monospace: minimo 11px.
-
-Uppercase soltanto per metadata brevi. Evitare eyebrow celebrativi e marker numerici decorativi. I numeri grandi sono riservati alle metriche che dominano davvero la vista, non a una griglia di KPI tutti equivalenti.
-
-## 04 Elevation
-
-**Flat by default.**
-
-La struttura nasce da ritmo, separatori e differenza di superficie, non da ombre e card annidate.
-
-- radius principale: 8–11px;
-- pill radius ammesso solo per badge/stati;
-- ombre: rare e leggere, principalmente per tooltip, overlay o stato flottante;
-- niente border + shadow pesante sullo stesso contenitore;
-- niente glassmorphism;
-- niente glow sugli accenti;
-- non racchiudere ogni gruppo in una card: usare righe, separatori e definizioni piatte quando basta.
-
-Focus: anello visibile con `--focus-ring`, senza affidarsi al solo cambio colore.
-
-## 05 Components
-
-### Navigation
-
-Header sticky, brand compatto, un livello di navigazione principale. La ricerca globale futura deve diventare un'azione primaria senza trasformare l'header in una toolbar affollata.
-
-### Search
-
-Campo ampio, label accessibile, stato focus evidente, bottone con feedback press `scale(.97)`. Nessuna animazione di apertura per una ricerca usata frequentemente.
-
-### Entity rows
-
-Le liste di enti sono righe navigabili, non “card gallery”. Mostrare denominazione e Codice IPA come identità primaria; tipologia e sede sono colonne secondarie. Su mobile si riduce la densità senza eliminare il percorso al dettaglio.
-
-### Source provenance
-
-Ogni vista dati deve poter mostrare titolare, dataset, data di osservazione, data di riferimento quando disponibile, identificativo sorgente e collegamento originale. Provenance e metodologia non devono essere nascoste in un footer legale.
-
-### Charts
-
-Libreria standard: **Recharts** per dashboard statiche e interattive. Liveline è riservato a vere serie streaming se una sorgente futura le offrirà.
-
-Regole:
-
-- nessun grafico senza fonte, data e unità;
-- nessuna serie economica fittizia o dimostrativa in produzione;
-- niente animazione decorativa dei dati al primo render;
-- grid line secondarie;
-- assi abbreviati, tooltip con valore esatto;
-- tooltip compatto con contrasto elevato;
-- legenda soltanto quando più serie reali la richiedono;
-- distinguere euro, percentuali, pro capite, valori cumulati e valori periodali;
-- esplicitare competenza/cassa quando il dataset lo richiede;
-- stato vuoto leggibile quando il dato non esiste;
-- equivalente semantico/testuale sufficiente per accessibilità.
-
-### Maps
-
-La mappa serve per drill-down territoriale. Confini, colori e marker devono derivare da dati reali o dallo stato di copertura. Vietati punti luminosi puramente decorativi presentati come attività finanziaria.
+- `neutral-200` separatori interni di tabelle ed elenchi;
+- `neutral-300` bordo dei pannelli e delle bande;
+- `neutral-400` bordo dei controlli (input, bottoni secondari);
+- `neutral-600` testo secondario e didascalie;
+- `neutral-700` etichette dei pannelli;
+- `neutral-800` testo di paragrafo dentro un pannello.
 
 ### Status
 
-Vocabolario:
+`--color-positive`, `--color-warning` e `--color-critical` (con i rispettivi `-bg` e `-border`) servono solo agli stati delle fonti e alla freschezza dei dati. Restano dentro il valore tonale del testo: un badge di stato non deve mai gridare più forte di un numero.
 
-- **Fonte attiva**;
-- **In integrazione**;
-- **Dato non disponibile**;
-- **Da verificare**.
+### Token per le visualizzazioni
 
-Non produrre automaticamente etichette come “corrotto”, “illecito” o “spreco”.
+`--chart-primary` è l'accento; `--chart-secondary…quinary` scendono lungo la rampa neutra. Una serie accentata su contesto neutro, mai un arcobaleno.
+
+La coropleta regionale usa cinque passi sequenziali — `accent-200, accent-300, accent-400, accent-600, accent-800` — con contorno `--color-neutral-500` da 1px. Due vincoli, entrambi verificati a schermo:
+
+- **il passo più chiaro deve staccarsi dal pannello bianco.** Partire da `accent-100` rende invisibili le regioni con la spesa più bassa: la rampa parte da `accent-200`;
+- **il contorno non può essere bianco.** Due regioni chiare adiacenti con bordo bianco si leggono come una macchia sola. Il grigio medio funziona sotto tutti e cinque i passi.
+
+Regione selezionata: contorno `--color-text` da 2px. Regione senza dato: `--color-neutral-200`.
+
+## 03 Typography
+
+Un'unica famiglia: **Archivo**, caricata con `next/font/google` e self-hosted. `--font-heading-weight: 800` per titoli ed etichette, 400–600 per il testo.
+
+### Ramp
+
+- `h1` di pagina: 30px, `letter-spacing: -.02em`;
+- numero principale di un pannello: 38px, 800;
+- numero di una banda statistica: 24px, 800;
+- corpo: 14px (13,5px sotto i 620px), `line-height: 1.55`;
+- etichetta di pannello (`.panel-title`): 11px, 800, maiuscolo, `letter-spacing: .09em`;
+- didascalia e nota: 12px, `neutral-600`.
+
+Ogni cifra confrontabile usa `font-variant-numeric: tabular-nums`. Le celle numeriche non vanno a capo: è il contenitore a scorrere.
+
+### Regole sui numeri
+
+Tutto in `src/lib/format.ts`. Sono regole di lettura, non di stile:
+
+- **Separatore delle migliaia sempre** (`useGrouping: "always"`). Il CLDR italiano non raggruppa le cifre a quattro posizioni: “7893” e “1203,55 €” non sono come si scrive un conto pubblico.
+- **Decimali fissi nella forma compatta**: due per i miliardi, uno per i milioni. “5 mld €” in mezzo a “10,74 mld €” rompe l'incolonnamento.
+- **Una sola unità per colonna** (`compactEuroLike`). Una classifica che passa da “mld” a “mln” a metà elenco costringe a ri-scalare ogni riga: la colonna sceglie l'unità dal valore più grande e la tiene per tutti.
+- **Compatto più esatto**: il titolo mostra “70,94 mld €”, la riga sotto “70.936.770.818,54 € esatti”. Il lettore deve poter riconciliare quello che stampiamo con il file della fonte.
+- **Mai un numero al posto di un buco**: “n.d.”, “non disponibile” o “non ancora collegata”, mai una stima travestita da dato.
+
+## 04 Elevation
+
+Il sistema è piatto. `--radius-sm/md/lg` valgono `0px` e non vanno sovrascritti.
+
+La gerarchia si costruisce con il fondo e una linea da 1px, non con l'ombra:
+
+- pannello: `--color-raised` + `1px solid --color-neutral-300`;
+- pannello di avvertenza: `--color-neutral-100` + bordo `--color-accent-300`;
+- riquadro dentro un pannello: `--color-neutral-100` + bordo `--color-neutral-200`.
+
+`--shadow-sm/md/lg` esistono per gli elementi che stanno davvero sopra la pagina — tooltip e overlay — e nient'altro.
+
+## 05 Components
+
+### Shell
+
+`.shell` dà a header, nav, main e footer la stessa misura: larghezza piena, `max-width: --max`, `padding-inline: --gutter`. È **fluida**: nessuna superficie ha una larghezza fissa, così la pagina non lascia mai spazio morto su un lato. Il gutter scende da 28px a 20px e poi a 14px sui breakpoint.
+
+### Navigation
+
+Header su una riga: marchio, tricolore, ricerca, azione. Sotto, la barra delle sezioni con sottolineatura accentata sulla voce corrente. Sotto i 900px l'header va a capo e la ricerca prende tutta la riga; la barra delle sezioni scorre orizzontalmente senza scrollbar visibile.
+
+### Dashboard
+
+La home è una griglia a tre colonne (`288px | 1fr | 300px`). A 1320px la colonna destra diventa una banda di card a piena larghezza; a 900px tutto è in colonna singola.
+
+### Panels
+
+`.panel` più `.panel-title` sono l'unità di base di ogni pagina. Il titolo è un'etichetta, non un titolo tipografico: piccolo, maiuscolo, `neutral-700`.
+
+### Tables
+
+`.table` dentro `.table-scroll`. Le intestazioni di colonna sono maiuscole e piccole; l'intestazione di riga è il nome della riga, in caso normale, con un'eventuale seconda riga di contesto in `small`. Le colonne numeriche usano `.num`.
+
+### Stat strip
+
+`.stat-strip`: una banda bianca divisa in colonne, ognuna con etichetta maiuscola piccola, valore in Archivo 800 e nota esplicativa. Etichetta, valore e nota sono `display: block` e stanno su righe separate — accostati sulla stessa riga il numero si attacca all'etichetta e diventa illeggibile. Quattro colonne su desktop, due sotto i 900px, una sotto i 620px.
+
+### Bar rows
+
+Il pattern ricorrente `etichetta | traccia | valore`: traccia `neutral-200`, riempimento accento, valore tabulare a destra.
+
+**Il mese ancora in corso usa `neutral-500` invece dell'accento** e porta un asterisco: è un numero destinato a salire e non va confrontato con i mesi chiusi. Un anno già concluso non ha nessun mese in corso — tutte le barre sono accento e la nota dice “Anno chiuso: tutti i mesi sono definitivi”. La regola sta in `src/lib/siope-calendar.ts` e decide in base all'anno in cui abbiamo scaricato il file, non al numero del mese.
+
+### Charts
+
+Recharts legge i token: assi e griglia in `--color-neutral-300/600`, serie dai `--chart-*`. I tooltip sono l'unica superficie scura del sistema: fondo `--color-text`, testo `--color-neutral-100`, valore in bianco.
+
+Dove basta, il grafico è HTML e CSS (barre, donut in `conic-gradient`) invece di una libreria: meno JavaScript e stessa leggibilità.
+
+### Source provenance
+
+Ogni pagina dichiara fonte, data del dato e data del nostro controllo. Se un dato manca si scrive “—” o “non disponibile”: mai una stima al posto di un buco.
+
+### Status
+
+`.status-attiva`, `.status-integrazione`, `.status-mappata`: rettangoli con bordo, nessun raggio, testo in colore di stato.
 
 ### Motion
 
-- animare soltanto per feedback, continuità spaziale o comprensione;
-- enter/exit occasionali: `--ease-out: cubic-bezier(0.23, 1, 0.32, 1)`;
-- movimento sullo schermo: `--ease-in-out: cubic-bezier(0.77, 0, 0.175, 1)`;
-- press: `scale(.97)`;
-- UI normalmente sotto 300ms;
-- mai `transition: all`;
-- mai `ease-in` per feedback UI;
-- azioni frequenti devono essere istantanee o quasi;
-- rispettare sempre `prefers-reduced-motion`.
+Transizioni brevi (140ms, `--ease-out`) su colore e sfondo. Nessuna animazione d'ingresso. `prefers-reduced-motion` azzera tutto.
 
 ## 06 Do's and Don'ts
 
 ### Do
 
-- dare più peso visivo al dato che risponde alla domanda della pagina;
-- usare tabelle, righe e piccoli multipli quando sono più leggibili di una card grid;
-- mostrare freschezza e provenienza accanto ai dati;
-- progettare overview → drill-down → fonte originale;
-- conservare sufficiente densità informativa su desktop;
-- mantenere tutte le funzioni essenziali su mobile;
-- usare stati vuoti onesti;
-- usare grafici soltanto quando accelerano un confronto;
-- applicare focus visibile, target principali di circa 44px e supporto tastiera;
-- mantenere il linguaggio sobrio, italiano e verificabile.
+- Usare i token: se serve un colore nuovo, si aggiunge a `design-system.css`.
+- Comporre le pagine con `.panel`, `.table`, `.stat-strip`, `.notice`, `.btn`; il modulo CSS della pagina copre solo ciò che è davvero specifico.
+- Mostrare il valore compatto e quello esatto: “70,94 mld €” con sotto “70.936.770.818,54 € esatti”.
+- Far scorrere il contenuto largo dentro il suo contenitore, mai la pagina.
+- Spiegare in italiano semplice che cosa misura un numero e che cosa non dimostra.
+- Verificare ogni pagina a 320, 375, 768, 1024, 1280 e 1600px: nessun `scrollWidth` maggiore del viewport e nessuno spazio morto asimmetrico.
+- Distinguere un dato provvisorio da uno definitivo, nel colore e nelle parole.
 
 ### Don't
 
-- nested cards non necessarie;
-- status-chip soup;
-- body text o metadata sotto 11px;
-- palette cyan/neon su dark mode;
-- gradient text, glow o glassmorphism;
-- hero di marketing generici nella parte operativa del prodotto;
-- gerarchia piatta con KPI tutti dello stesso peso;
-- bordi, radius e ombre applicati a ogni elemento;
-- micro-animazioni continue;
-- animare numeri finanziari per spettacolo;
-- mappe decorative presentate come dati;
-- copy celebrativo o accusatorio;
-- classifiche individuali quando la fonte non espone davvero valori individuali;
-- inferire colpevolezza da un outlier.
-
-**La qualità visiva deve rendere il dato più facile da capire e verificare, non più facile da spettacolarizzare.**
+- Nessuna larghezza fissa sui contenitori di pagina.
+- Nessun `border-radius`, gradiente decorativo o ombra su una superficie che non sta sopra la pagina.
+- Nessun secondo colore d'accento per “dare varietà”: il rosso indica, il resto è neutro.
+- Nessun colore scritto a mano in un componente o in un modulo CSS.
+- Nessun numero senza fonte e senza data.
+- Nessuna parola che trasformi un segnale in un'accusa.
+- Nessuna etichetta di comodo su un aggregato: se una fetta somma due voci diverse, si chiama con un nome che le contiene entrambe, non con quello della più grande.

@@ -1,69 +1,56 @@
 .wrapper {
   position: relative;
-  display: inline-flex;
-  align-items: center;
+  display: inline-block;
+  flex: none;
+  vertical-align: middle;
 }
 
 .trigger {
-  position: relative;
-  display: inline-grid;
-  width: 22px;
-  height: 22px;
-  padding: 0;
+  display: grid;
   place-items: center;
-  border: 1px solid rgba(143, 174, 192, 0.34);
-  border-radius: 50%;
-  color: #a9bfca;
-  background: transparent;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--color-neutral-400);
+  background: var(--color-raised);
+  color: var(--color-neutral-700);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
   cursor: help;
-  transition: border-color 140ms ease, color 140ms ease, background-color 140ms ease;
 }
-
-.trigger::before {
-  content: "";
-  position: absolute;
-  inset: -11px;
-}
-
-.trigger:hover,
-.trigger:focus-visible {
-  border-color: rgba(117, 178, 210, 0.72);
-  color: #eef6f9;
-  background: rgba(117, 178, 210, 0.08);
+.trigger:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
 .tooltip {
   position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
   z-index: 20;
-  left: 50%;
-  bottom: calc(100% + 9px);
-  width: min(280px, calc(100vw - 32px));
-  padding: 10px 12px;
-  border-radius: 8px;
-  color: #dfe9ee;
-  background: #0b2233;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.36);
+  display: none;
+  width: 280px;
+  max-width: min(280px, calc(100vw - 2 * var(--gutter)));
+  padding: 12px 14px;
+  background: var(--color-text);
+  color: var(--color-neutral-100);
   font-size: 12px;
-  font-weight: 450;
+  font-weight: 400;
   line-height: 1.5;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(-50%) scale(0.98);
-  transform-origin: center bottom;
-  transition: opacity 135ms ease, transform 135ms var(--ease-out);
+  text-transform: none;
+  letter-spacing: normal;
+  box-shadow: var(--shadow-md);
 }
+
+/* Each glossary entry the caller passes in gets its own line. */
+.tooltip > span {
+  display: block;
+  margin-top: 6px;
+}
+.tooltip b { color: #ffffff; }
 
 .wrapper:hover .tooltip,
-.wrapper:focus-within .tooltip {
-  opacity: 1;
-  transform: translateX(-50%) scale(1);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tooltip {
-    transition: none;
-  }
+.trigger:focus-visible + .tooltip {
+  display: block;
 }

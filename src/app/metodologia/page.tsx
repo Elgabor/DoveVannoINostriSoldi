@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import styles from "./metodologia.module.css";
 
 export const metadata: Metadata = {
   title: "Come leggiamo i dati",
@@ -16,32 +17,33 @@ const rules = [
 
 export default function MethodPage() {
   return (
-    <main className="subpage">
-      <header className="page-intro">
+    <main className="shell page">
+      <div className="page-intro">
         <h1>Come leggere i dati</h1>
         <p>
-          Un numero senza contesto può confondere. Per questo mostriamo sempre la fonte,
-          la data, il significato e ciò che quel numero non può dimostrare.
+          Un numero senza contesto può confondere. Per questo mostriamo sempre la fonte, la data,
+          il significato e ciò che quel numero non può dimostrare.
         </p>
-      </header>
+      </div>
 
-      <section className="method-grid">
-        {rules.map(([title, text]) => (
-          <article key={title}>
+      <div className={styles.rules}>
+        {rules.map(([title, text], index) => (
+          <section className="panel" key={title}>
+            <span className={styles.index}>{String(index + 1).padStart(2, "0")}</span>
             <h2>{title}</h2>
             <p>{text}</p>
-          </article>
+          </section>
         ))}
-      </section>
+      </div>
 
-      <section className="notice warning-notice">
-        <strong>Un controllo non è una condanna.</strong>
+      <div className="notice warning-notice">
+        <strong>Un controllo non è una condanna</strong>
         <p>
           DoveVannoINostriSoldi aiuta a trovare dati e segnali da approfondire. Non sostituisce
           ANAC, Corte dei conti, magistratura o verifiche dell&apos;amministrazione. Nessun algoritmo
           attribuisce automaticamente illeciti o responsabilità personali.
         </p>
-      </section>
+      </div>
     </main>
   );
 }

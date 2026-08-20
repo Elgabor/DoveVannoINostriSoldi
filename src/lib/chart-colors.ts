@@ -1,10 +1,17 @@
+/**
+ * Categorical series colours.
+ *
+ * The accent leads, then the neutral ramp carries the rest: a chart should
+ * read as one accented series against supporting context, not as a rainbow
+ * competing with the tricolour in the header.
+ */
 export const CHART_COLORS = [
-  "#4fa3d1",
-  "#43b69a",
-  "#e3b65a",
-  "#d97979",
-  "#9c83d3",
-  "#7fb36e",
+  "#ec3013",
+  "#444141",
+  "#9b9797",
+  "#ef6853",
+  "#605d5d",
+  "#ffc4b8",
 ] as const;
 
 export function chartColor(index: number): string {

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     "Disponibilità e aggiornamento delle fonti ufficiali collegate a DoveVannoINostriSoldi.",
 };
 
-const numberFormatter = new Intl.NumberFormat("it-IT");
+const numberFormatter = new Intl.NumberFormat("it-IT", { useGrouping: "always" });
 const dateFormatter = new Intl.DateTimeFormat("it-IT", {
   dateStyle: "medium",
   timeStyle: "short",
@@ -69,7 +69,7 @@ export default async function SourceStatusPage() {
   const unreachable = sources.filter((source) => source.reachability === "down");
 
   return (
-    <main className={styles.page}>
+    <main className={`shell ${styles.page}`}>
       <nav className={styles.breadcrumb} aria-label="Percorso">
         <Link href="/">Home</Link>
         <span>→</span>

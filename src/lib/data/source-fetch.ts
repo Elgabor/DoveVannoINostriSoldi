@@ -19,6 +19,7 @@ type SourceFetchOptions = Omit<NextFetchOptions, "next" | "signal" | "cache"> & 
 
 const ALLOWED_HOSTS: Readonly<Record<SourceId, readonly string[]>> = {
   ipa: ["indicepa.gov.it", "www.indicepa.gov.it"],
+  "ipa-struttura": ["indicepa.gov.it", "www.indicepa.gov.it"],
   openbdap: ["bdap-opendata.rgs.mef.gov.it", "openbdap.rgs.mef.gov.it"],
   siope: [
     "www.siope.it",
@@ -39,6 +40,11 @@ const ALLOWED_HOSTS: Readonly<Record<SourceId, readonly string[]>> = {
   consulenti: ["consulentipubblici.dfp.gov.it"],
   camera: ["trasparenza.camera.it", "www.camera.it", "camera.it"],
   senato: ["www.senato.it", "senato.it"],
+  "istat-s13": ["bdap-opendata.rgs.mef.gov.it", "www.istat.it", "istat.it"],
+  "partecipazioni-pubbliche": ["www.de.mef.gov.it", "de.mef.gov.it"],
+  "partecipazioni-stato": ["www.de.mef.gov.it", "de.mef.gov.it"],
+  "anac-in-house-storico": ["www.anticorruzione.it", "anticorruzione.it"],
+  "anac-ausa": ["www.anticorruzione.it", "anticorruzione.it", "dati.anticorruzione.it"],
 };
 
 const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);

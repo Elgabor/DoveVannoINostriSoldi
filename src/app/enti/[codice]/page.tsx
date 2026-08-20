@@ -1,12 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { HierarchyIcon, LegalDocument01Icon } from "@hugeicons/core-free-icons";
 import {
   getIpaEntityByCode,
   IPA_ENTI_DATASET_URL,
   IPA_ENTI_RESOURCE_ID,
   IPA_LICENSE,
 } from "@/lib/ipa";
+import {
+  getIpaOrganizationStructure,
+  IPA_AOO_DATASET_URL,
+  IPA_UO_DATASET_URL,
+  type IpaOrganizationStructure,
+} from "@/lib/ipa-structure";
 import styles from "../enti.module.css";
 
 export const dynamic = "force-dynamic";
@@ -49,8 +57,15 @@ export default async function EntityPage({ params }: PageProps) {
   const normalizedCode = decodeURIComponent(codice);
 
   let entity;
+  let structure: IpaOrganizationStructure | null = null;
   try {
-    entity = await getIpaEntityByCode(normalizedCode);
+    const [entityResult, structureResult] = await Promise.allSettled([
+      getIpaEntityByCode(normalizedCode),
+      getIpaOrganizationStructure(normalizedCode),
+    ]);
+    if (entityResult.status === "rejected") throw entityResult.reason;
+    entity = entityResult.value;
+    if (structureResult.status === "fulfilled") structure = structureResult.value;
   } catch {
     throw new Error("Impossibile interrogare la fonte IPA in questo momento.");
   }
@@ -143,6 +158,73 @@ export default async function EntityPage({ params }: PageProps) {
                 <dd>{responsible}</dd>
               </div>
             </dl>
+          </section>
+
+          <section className={styles.section}>
+            <div className={styles.sectionHeading}>
+              <div className={styles.headingWithIcon}>
+                <HugeiconsIcon icon={HierarchyIcon} size={21} strokeWidth={1.5} aria-hidden="true" />
+              <h2 id="struttura-ipa">Struttura dichiarata in IPA</h2>
+              </div>
+              <span>UO e AOO · fonte AgID</span>
+            </div>
+
+            {structure ? (
+              <>
+                <div className={styles.structureSummary}>
+                  <div><strong>{structure.unitaOrganizzative.total}</strong><span>unità organizzative</span></div>
+                  <div><strong>{structure.areeOrganizzativeOmogenee.total}</strong><span>aree di protocollo</span></div>
+                  <div><strong>giornaliera</strong><span>cadenza dichiarata</span></div>
+                </div>
+
+                {structure.unitaOrganizzative.records.length > 0 ? (
+                  <div className={styles.structureList}>
+                    {structure.unitaOrganizzative.records.slice(0, 24).map((unit) => (
+                      <article className={styles.structureRow} key={unit.codice}>
+                        <span className={styles.structureMark} aria-hidden="true"><i /></span>
+                        <div>
+                          <strong>{unit.denominazione}</strong>
+                          <small>
+                            UO {unit.codice}
+                            {unit.codicePadre ? ` · dipende dalla UO ${unit.codicePadre}` : " · livello padre non indicato"}
+                          </small>
+                        </div>
+                        {unit.codiceAoo && <code>AOO {unit.codiceAoo}</code>}
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p className={styles.disclaimer}>IPA non pubblica Unità Organizzative per questo ente.</p>
+                )}
+
+                {structure.unitaOrganizzative.total > 24 && (
+                  <p className={styles.structureLimit}>
+                    Mostriamo le prime 24 unità in ordine alfabetico. L&apos;API espone pagine fino a 500 record tramite <code>limit</code> e <code>offset</code>.
+                  </p>
+                )}
+
+                <div className={styles.structureLinks}>
+                  <a href={IPA_UO_DATASET_URL} target="_blank" rel="noreferrer">Dataset UO <span>↗</span></a>
+                  <a href={IPA_AOO_DATASET_URL} target="_blank" rel="noreferrer">Dataset AOO <span>↗</span></a>
+                  <Link href={`/api/enti/${encodeURIComponent(entity.codiceIpa)}/struttura`}>
+                    API struttura <span>→</span>
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <div className={styles.structureUnavailable}>
+                <HugeiconsIcon icon={LegalDocument01Icon} size={22} strokeWidth={1.5} aria-hidden="true" />
+                <div>
+                  <strong>La struttura IPA non risponde in questo momento.</strong>
+                  <p>La scheda anagrafica resta valida; non sostituiamo UO e AOO con una gerarchia inferita dai nomi.</p>
+                </div>
+              </div>
+            )}
+
+            <p className={styles.disclaimer}>
+              Le UO non sono automaticamente “dipartimenti”: IPA descrive uffici e relazioni dichiarate dall&apos;ente.
+              Per direzioni generali e strutture giuridiche fanno fede anche regolamenti e pagine di Amministrazione trasparente.
+            </p>
           </section>
 
           <section className={styles.section}>

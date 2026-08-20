@@ -8,6 +8,8 @@ import {
   type SourcePolicy,
 } from "@/lib/data/source-policy";
 import { IPA_ENTI_RESOURCE_ID } from "@/lib/ipa";
+import { IPA_AOO_RESOURCE_ID, IPA_UO_RESOURCE_ID } from "@/lib/ipa-structure";
+import { mefParticipationsSnapshot } from "@/lib/mef-participations-snapshot";
 import { openCoesioneSnapshot } from "@/lib/opencoesione-snapshot";
 
 export type SourceIntegrationState = "active" | "mapped";
@@ -50,7 +52,14 @@ type CkanResourceResponse = {
   };
 };
 
-const ACTIVE_SOURCES = new Set<SourceId>(["ipa", "openbdap", "siope", "opencoesione"]);
+const ACTIVE_SOURCES = new Set<SourceId>([
+  "ipa",
+  "ipa-struttura",
+  "openbdap",
+  "siope",
+  "opencoesione",
+  "partecipazioni-pubbliche",
+]);
 
 function text(value: unknown): string | null {
   if (typeof value !== "string") return null;
@@ -165,6 +174,74 @@ async function probeIpa(): Promise<SourceHealth> {
   };
 }
 
+async function getIpaStructureResource(resourceId: string): Promise<{
+  count: number | null;
+  timestamp: string | null;
+}> {
+  const countUrl = `https://indicepa.gov.it/ipa-dati/api/3/action/datastore_search?${new URLSearchParams({
+    resource_id: resourceId,
+    limit: "0",
+  }).toString()}`;
+  const metadataUrl = `https://indicepa.gov.it/ipa-dati/api/3/action/resource_show?${new URLSearchParams({
+    id: resourceId,
+  }).toString()}`;
+  const [countResponse, metadataResponse] = await Promise.all([
+    fetchOfficialSource("ipa-struttura", countUrl, {
+      kind: "discovery",
+      headers: { Accept: "application/json" },
+      tags: ["health:ipa-structure", `resource:${resourceId}`],
+    }),
+    fetchOfficialSource("ipa-struttura", metadataUrl, {
+      kind: "discovery",
+      headers: { Accept: "application/json" },
+      tags: ["health:ipa-structure", `metadata:${resourceId}`],
+    }),
+  ]);
+
+  if (!countResponse.ok || !metadataResponse.ok) {
+    throw new Error(`IPA struttura HTTP ${countResponse.status}/${metadataResponse.status}`);
+  }
+  const countPayload = (await countResponse.json()) as CkanDatastoreHealthResponse;
+  const metadataPayload = (await metadataResponse.json()) as CkanResourceResponse;
+  if (!countPayload.success || !metadataPayload.success || !metadataPayload.result) {
+    throw new Error("Risposta struttura IPA non valida");
+  }
+  return {
+    count: typeof countPayload.result?.total === "number" ? countPayload.result.total : null,
+    timestamp: text(metadataPayload.result.last_modified) ?? text(metadataPayload.result.metadata_modified),
+  };
+}
+
+async function probeIpaStructure(): Promise<SourceHealth> {
+  const base = baseHealth("ipa-struttura");
+  const startedAt = performance.now();
+  try {
+    const [units, areas] = await Promise.all([
+      getIpaStructureResource(IPA_UO_RESOURCE_ID),
+      getIpaStructureResource(IPA_AOO_RESOURCE_ID),
+    ]);
+    const timestamps = [units.timestamp, areas.timestamp].filter((value): value is string => Boolean(value));
+    const oldestTimestamp = timestamps.length === 2 ? timestamps.sort().at(0) ?? null : null;
+    return {
+      ...base,
+      reachability: "up",
+      freshness: freshnessFor("ipa-struttura", oldestTimestamp),
+      latencyMs: Math.round(performance.now() - startedAt),
+      detail: `UO: ${units.count ?? "—"} · AOO: ${areas.count ?? "—"}`,
+      recordCount: (units.count ?? 0) + (areas.count ?? 0),
+    };
+  } catch (error) {
+    return {
+      ...base,
+      reachability: "down",
+      freshness: freshnessFor("ipa-struttura", null),
+      latencyMs: Math.round(performance.now() - startedAt),
+      detail: error instanceof Error ? error.message : "Errore sconosciuto",
+      recordCount: null,
+    };
+  }
+}
+
 async function probeOpenBdap(): Promise<SourceHealth> {
   const base = baseHealth("openbdap");
   const startedAt = performance.now();
@@ -260,17 +337,31 @@ function snapshotManagedOpenCoesione(): SourceHealth {
   };
 }
 
+function snapshotManagedMefParticipations(): SourceHealth {
+  return {
+    ...baseHealth("partecipazioni-pubbliche"),
+    reachability: "not-probed",
+    freshness: freshnessFor("partecipazioni-pubbliche", mefParticipationsSnapshot.publishedAt),
+    latencyMs: null,
+    detail: `Snapshot ETL attivo · rilevazione ${mefParticipationsSnapshot.referenceYear}`,
+    recordCount: mefParticipationsSnapshot.totals.participationRecords,
+  };
+}
+
 export async function getSourceHealthOverview(): Promise<SourceHealth[]> {
-  const [ipa, openbdap, siope] = await Promise.all([
+  const [ipa, ipaStructure, openbdap, siope] = await Promise.all([
     probeIpa(),
+    probeIpaStructure(),
     probeOpenBdap(),
     probeSiope(),
   ]);
   const live = new Map<SourceId, SourceHealth>([
     ["ipa", ipa],
+    ["ipa-struttura", ipaStructure],
     ["openbdap", openbdap],
     ["siope", siope],
     ["opencoesione", snapshotManagedOpenCoesione()],
+    ["partecipazioni-pubbliche", snapshotManagedMefParticipations()],
   ]);
 
   return SOURCE_IDS.map((sourceId) => live.get(sourceId) ?? mappedSource(sourceId));

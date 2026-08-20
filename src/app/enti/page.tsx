@@ -1,6 +1,14 @@
 import Link from "next/link";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  BankIcon,
+  Building06Icon,
+  HierarchyIcon,
+  MapsIcon,
+} from "@hugeicons/core-free-icons";
 import { RegistryTypeChart } from "@/components/charts/registry-type-chart";
 import {
+  getIpaCentralAdministrations,
   getIpaRegistryStats,
   IPA_ENTI_DATASET_URL,
   IPA_ENTI_RESOURCE_ID,
@@ -52,11 +60,13 @@ export default async function EntiPage({ searchParams }: PageProps) {
   let distribution: IpaTypeStat[] = [];
   let distributionObservedAt: string | null = null;
   let result: IpaSearchResult | null = null;
+  let centralAdministrations: IpaSearchResult | null = null;
   let upstreamError = false;
 
-  const [statsResult, distributionResult] = await Promise.allSettled([
+  const [statsResult, distributionResult, centralResult] = await Promise.allSettled([
     getIpaRegistryStats(),
     getIpaTypeDistribution(8),
+    getIpaCentralAdministrations(),
   ]);
 
   if (statsResult.status === "fulfilled") {
@@ -68,7 +78,15 @@ export default async function EntiPage({ searchParams }: PageProps) {
     distributionObservedAt = distributionResult.value.observedAt;
   }
 
-  if (statsResult.status === "rejected" && distributionResult.status === "rejected") {
+  if (centralResult.status === "fulfilled") {
+    centralAdministrations = centralResult.value;
+  }
+
+  if (
+    statsResult.status === "rejected" &&
+    distributionResult.status === "rejected" &&
+    centralResult.status === "rejected"
+  ) {
     upstreamError = true;
   }
 
@@ -85,14 +103,11 @@ export default async function EntiPage({ searchParams }: PageProps) {
     <main className={styles.page}>
       <section className={styles.intro}>
         <div>
-          <span className={styles.kicker}>REGISTRO NAZIONALE · FONTE AGID</span>
-          <h1 className={styles.title}>
-            Ogni ente pubblico, <em>in un solo punto.</em>
-          </h1>
+          <h1 className={styles.title}>Organizzazioni pubbliche</h1>
           <p className={styles.lead}>
-            L&apos;Indice PA è la chiave anagrafica di Trasparenza Italia. Ogni amministrazione viene
-            identificata con il proprio Codice IPA e potrà essere collegata a pagamenti, appalti,
-            progetti, consulenze e documenti mantenendo sempre la provenienza ufficiale.
+            Cerca un&apos;amministrazione, apri la sua struttura interna dichiarata in IPA e segui i
+            collegamenti verso spese, progetti e fonti ufficiali. Enti, uffici e società partecipate
+            restano livelli distinti: non li deduciamo dal nome.
           </p>
         </div>
 
@@ -124,6 +139,29 @@ export default async function EntiPage({ searchParams }: PageProps) {
           </a>
         </aside>
       </section>
+
+      <nav className={styles.organizationPaths} aria-label="Percorsi nel registro delle organizzazioni">
+        <Link href="/enti#amministrazioni-centrali">
+          <HugeiconsIcon icon={BankIcon} size={22} strokeWidth={1.5} aria-hidden="true" />
+          <span><strong>Ministeri e Presidenza</strong><small>17 amministrazioni centrali nella categoria IPA C1</small></span>
+          <b aria-hidden="true">→</b>
+        </Link>
+        <Link href="/enti/PCM#struttura-ipa">
+          <HugeiconsIcon icon={HierarchyIcon} size={22} strokeWidth={1.5} aria-hidden="true" />
+          <span><strong>Dipartimenti e uffici</strong><small>Apri le UO e AOO di Palazzo Chigi; la stessa vista è disponibile per ogni ente</small></span>
+          <b aria-hidden="true">→</b>
+        </Link>
+        <Link href="/enti?q=Regione">
+          <HugeiconsIcon icon={MapsIcon} size={22} strokeWidth={1.5} aria-hidden="true" />
+          <span><strong>Regioni ed enti territoriali</strong><small>Anagrafica IPA e dati territoriali SIOPE</small></span>
+          <b aria-hidden="true">→</b>
+        </Link>
+        <Link href="/partecipazioni">
+          <HugeiconsIcon icon={Building06Icon} size={22} strokeWidth={1.5} aria-hidden="true" />
+          <span><strong>Società partecipate</strong><small>53.656 relazioni dichiarate nel censimento MEF 2023</small></span>
+          <b aria-hidden="true">→</b>
+        </Link>
+      </nav>
 
       <section className={styles.searchSection} aria-labelledby="ricerca-enti">
         <span className={styles.kicker}>CERCA NEL DATASTORE UFFICIALE</span>
@@ -181,13 +219,41 @@ export default async function EntiPage({ searchParams }: PageProps) {
         </div>
       </section>
 
-      {!query && (
+      {!query && centralAdministrations && (
+        <section className={styles.centralDirectory} aria-labelledby="amministrazioni-centrali">
+          <div className={styles.resultsHeader}>
+            <div>
+              <h2 id="amministrazioni-centrali">Ministeri, Presidenza e Avvocatura</h2>
+              <p>Perimetro strutturale IPA: Codice Categoria C1. La natura dell&apos;ente distingue i ministeri dalla PCM.</p>
+            </div>
+            <span>{numberFormatter.format(centralAdministrations.total)} enti · aggiornamento giornaliero</span>
+          </div>
+          <div className={styles.entityList}>
+            {centralAdministrations.records.map((entity) => {
+              const type = entity.codiceIpa === "PCM"
+                ? "Presidenza del Consiglio"
+                : entity.codiceNatura === "2220"
+                  ? "Ministero"
+                  : "Amministrazione centrale";
+              return (
+                <Link className={styles.centralRow} href={`/enti/${encodeURIComponent(entity.codiceIpa)}`} key={entity.codiceIpa}>
+                  <span className={styles.centralIcon} aria-hidden="true">
+                    <HugeiconsIcon icon={BankIcon} size={20} strokeWidth={1.5} />
+                  </span>
+                  <span><strong>{entity.denominazione}</strong><small>{type}</small></span>
+                  <code>{entity.codiceIpa}</code>
+                  <b aria-hidden="true">→</b>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {!query && !centralAdministrations && (
         <div className={styles.empty}>
-          <strong>Cerca un ente per aprire la sua scheda unica.</strong>
-          <p>
-            La scheda contiene già identità, sede, contatti e provenienza IPA. I prossimi ingestori
-            aggiungeranno pagamenti SIOPE, contratti ANAC, CUP, PNRR, OpenCoesione e consulenze.
-          </p>
+          <strong>Il perimetro delle amministrazioni centrali non è disponibile ora.</strong>
+          <p>La ricerca IPA resta utilizzabile; non sostituiamo l&apos;elenco ufficiale con una lista statica.</p>
         </div>
       )}
 

@@ -59,6 +59,10 @@ Entità principali previste:
 
 ```text
 public_entity
+organization_unit
+organization_identifier
+public_holding
+entrusted_service
 payment
 budget_measure
 procurement_procedure
@@ -82,6 +86,8 @@ Chiavi di dominio da mantenere:
 - identificativi nativi della fonte.
 
 Gli identificativi non vengono fusi in un singolo ID opaco: si mantiene una tabella di alias con tipo, fonte e validità temporale.
+
+Per le partecipazioni, amministrazione e società sono due organizzazioni collegate da `public_holding`: anno di rilevazione, partecipazione diretta/indiretta, quota e tipo di controllo appartengono alla relazione, non all'identità della società. Gli affidamenti dichiarati restano record `entrusted_service` datati. Codice IPA, codice fiscale, codice AUSA e REA rimangono schemi di identificazione distinti; i match fuzzy per denominazione non vengono promossi a fatto.
 
 ## 5. Semantic layer
 

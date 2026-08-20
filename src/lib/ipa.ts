@@ -213,6 +213,8 @@ export async function searchIpaEntities(options: {
   query?: string;
   limit?: number;
   offset?: number;
+  categoryCode?: string;
+  natureCode?: string;
 } = {}): Promise<IpaSearchResult> {
   const params = new URLSearchParams();
   params.set("limit", String(clamp(options.limit ?? 20, 0, 100)));
@@ -221,7 +223,18 @@ export async function searchIpaEntities(options: {
   const query = options.query?.trim();
   if (query) params.set("q", query.slice(0, 180));
 
+  const filters: Record<string, string> = {};
+  const categoryCode = options.categoryCode?.trim().slice(0, 20);
+  const natureCode = options.natureCode?.trim().slice(0, 20);
+  if (categoryCode) filters.Codice_Categoria = categoryCode;
+  if (natureCode) filters.Codice_natura = natureCode;
+  if (Object.keys(filters).length > 0) params.set("filters", JSON.stringify(filters));
+
   return datastoreRequest(params);
+}
+
+export async function getIpaCentralAdministrations(): Promise<IpaSearchResult> {
+  return searchIpaEntities({ categoryCode: "C1", limit: 50 });
 }
 
 export async function getIpaEntityByCode(codiceIpa: string): Promise<IpaEntity | null> {

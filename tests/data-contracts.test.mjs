@@ -9,6 +9,7 @@ import {
   SOURCE_IDS,
   SOURCE_POLICIES,
 } from "../src/lib/data/source-policy.ts";
+import { publicSources } from "../src/lib/sources.ts";
 
 test("semicolon parser preserves quoted delimiters and escaped quotes", () => {
   const csv = [
@@ -39,6 +40,11 @@ test("public number parser handles whitespace, decimal comma and empty values", 
 test("every registered source has a complete operational policy", () => {
   assert.equal(new Set(SOURCE_IDS).size, SOURCE_IDS.length);
   assert.ok(SOURCE_IDS.length >= 10);
+  assert.deepEqual(
+    [...publicSources.map((source) => source.slug)].sort(),
+    [...SOURCE_IDS].sort(),
+    "public registry and operational policy registry must stay aligned",
+  );
 
   for (const sourceId of SOURCE_IDS) {
     const policy = SOURCE_POLICIES[sourceId];

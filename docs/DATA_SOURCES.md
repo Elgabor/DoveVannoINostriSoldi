@@ -27,6 +27,15 @@ Questa è la mappa iniziale delle fonti. Il criterio è semplice: prima fonti is
 **Freschezza:** dataset Enti con aggiornamento giornaliero.  
 **Ruolo:** base per scoprire i siti istituzionali e alimentare il crawler di Amministrazione Trasparente.
 
+Risorse integrate:
+
+- Enti: chiave `Codice_IPA`, con codice fiscale e codici territoriali come identificativi separati;
+- Unità Organizzative: chiave globale `Codice_uni_uo`, relazione all'ente via `Codice_IPA` e gerarchia dichiarata via `Codice_uni_uo_padre`;
+- Aree Organizzative Omogenee: chiave globale `Codice_uni_aoo`, relazione all'ente via `Codice_IPA`;
+- amministrazioni centrali: categoria IPA `C1`; i ministeri vengono distinti dalla PCM con i codici natura, non dal testo della denominazione.
+
+Le UO non hanno un campo semantico che certifichi “dipartimento”, “direzione generale” o “ufficio”. Queste qualifiche richiedono un crosswalk ufficiale con regolamenti e sezioni Amministrazione Trasparente.
+
 ## Tier 2 — trasparenza distribuita
 
 ### Dati sui pagamenti art. 4-bis
@@ -74,6 +83,18 @@ La prima integrazione usa l’aggregato nazionale ufficiale `/it/api/aggregati/`
 Ogni dimensione deve riconciliarsi con il totale nazionale, sia per i valori generali sia per la componente coesione: sono tollerati al massimo 2 euro di scarto monetario dovuto agli arrotondamenti della fonte e nessuno scarto nel conteggio dei progetti. Le aggregazioni territoriali non sono ancora sommate perché i progetti multilocalizzati possono comparire in più territori e rendere i valori non additivi.
 
 ## Tier 4 — incarichi e istituzioni
+
+### Partecipazioni pubbliche MEF
+
+La prima integrazione usa il CSV annuale del Dipartimento dell'Economia riferito al 2023. Il file sorgente è delimitato da `;` e usa byte Windows-1252 nonostante header HTTP incoerenti osservati: l'ETL rileva la codifica e conserva l'hash SHA-256.
+
+Lo snapshot pubblico contiene aggregati nazionali e le organizzazioni dichiarate dal maggior numero di amministrazioni. La relazione è identificata tramite codice fiscale dell'amministrazione e della partecipata, insieme all'anno. Non pubblichiamo un booleano “in-house corrente”: controllo analogo e affidamento diretto restano dichiarazioni riferite all'anno di rilevazione.
+
+L'elenco ANAC ex art. 192 è trattato come archivio storico perché ANAC lo dichiara non più operativo dal 1° luglio 2023. AUSA identifica stazioni appaltanti, ma non certifica la natura in-house. Registro Imprese resta fuori dall'ingestione open: l'accesso è contrattuale e le condizioni standard limitano redistribuzione e diffusione.
+
+### Classificazione ISTAT S13
+
+S13 e IPA hanno perimetri diversi. Finché la pubblicazione ufficiale corrente non espone una distribuzione analitica machine-readable verificabile, il portale mantiene S13 come fonte censita e non deduce l'appartenenza dal solo `Codice_ISTAT` presente in IPA.
 
 ### Consulenti Pubblici
 Il Dipartimento della Funzione Pubblica pubblica gli incarichi comunicati dalle amministrazioni nell'Anagrafe delle prestazioni. Sono esposti, tra gli altri, compenso lordo, ammontare erogato e data di aggiornamento del singolo incarico.

@@ -1,5 +1,6 @@
 export type SourceId =
   | "ipa"
+  | "ipa-struttura"
   | "openbdap"
   | "siope"
   | "anac-bdncp"
@@ -8,13 +9,19 @@ export type SourceId =
   | "regis"
   | "consulenti"
   | "camera"
-  | "senato";
+  | "senato"
+  | "istat-s13"
+  | "partecipazioni-pubbliche"
+  | "partecipazioni-stato"
+  | "anac-in-house-storico"
+  | "anac-ausa";
 
 export type SourceCadence =
   | "giornaliera"
   | "settimanale"
   | "mensile"
   | "bimestrale"
+  | "annuale"
   | "periodica"
   | "per-amministrazione"
   | "su-pubblicazione";
@@ -63,6 +70,20 @@ export const SOURCE_POLICIES: Readonly<Record<SourceId, SourcePolicy>> = {
     timeoutMs: 9_000,
     maxRetries: 1,
     tags: ["source:ipa", "domain:entities"],
+  },
+  "ipa-struttura": {
+    id: "ipa-struttura",
+    label: "IPA · UO e AOO",
+    owner: "AgID",
+    sourceUrl: "https://www.indicepa.gov.it/ipa-dati/dataset/unita-organizzative",
+    cadence: "giornaliera",
+    cadenceNote: "I dataset UO e AOO IPA dichiarano aggiornamento giornaliero.",
+    discoveryRevalidateSeconds: HOUR,
+    dataRevalidateSeconds: HOUR,
+    staleAfterSeconds: 2 * DAY,
+    timeoutMs: 9_000,
+    maxRetries: 1,
+    tags: ["source:ipa-struttura", "domain:organization-structure"],
   },
   openbdap: {
     id: "openbdap",
@@ -194,6 +215,76 @@ export const SOURCE_POLICIES: Readonly<Record<SourceId, SourcePolicy>> = {
     timeoutMs: 12_000,
     maxRetries: 1,
     tags: ["source:senato", "domain:parliament"],
+  },
+  "istat-s13": {
+    id: "istat-s13",
+    label: "Classificazione ISTAT S13",
+    owner: "ISTAT · OpenBDAP/RGS",
+    sourceUrl: "https://bdap-opendata.rgs.mef.gov.it/content/anagrafica-enti-classificazione-istat-s13",
+    cadence: "annuale",
+    cadenceNote: "Fonte censita; nessun adapter anagrafico machine-readable attivo.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: null,
+    timeoutMs: 12_000,
+    maxRetries: 1,
+    tags: ["source:istat-s13", "domain:entities"],
+  },
+  "partecipazioni-pubbliche": {
+    id: "partecipazioni-pubbliche",
+    label: "Censimento partecipazioni pubbliche",
+    owner: "MEF · Dipartimento dell'Economia",
+    sourceUrl: "https://www.de.mef.gov.it/it/attivita_istituzionali/partecipazioni_pubbliche/open_data_partecipazioni/index.html",
+    cadence: "annuale",
+    cadenceNote: "Rilevazione annuale con ritardo di pubblicazione variabile; discovery giornaliera.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: null,
+    timeoutMs: 60_000,
+    maxRetries: 1,
+    tags: ["source:partecipazioni-pubbliche", "domain:public-holdings"],
+  },
+  "partecipazioni-stato": {
+    id: "partecipazioni-stato",
+    label: "Partecipazioni dirette dello Stato",
+    owner: "MEF · Dipartimento dell'Economia",
+    sourceUrl: "https://www.de.mef.gov.it/it/attivita_istituzionali/partecipazioni/elenco_partecipazioni/",
+    cadence: "su-pubblicazione",
+    cadenceNote: "Elenco istituzionale corrente senza una cadenza di rilascio garantita.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: null,
+    timeoutMs: 12_000,
+    maxRetries: 1,
+    tags: ["source:partecipazioni-stato", "domain:public-holdings"],
+  },
+  "anac-in-house-storico": {
+    id: "anac-in-house-storico",
+    label: "Elenco ANAC in-house · storico",
+    owner: "ANAC",
+    sourceUrl: "https://www.anticorruzione.it/-/adempimenti-art.-192-del-d.lgs.-n.-50/2016",
+    cadence: "su-pubblicazione",
+    cadenceNote: "Archivio storico: l'elenco non è più operativo dal 1° luglio 2023.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: null,
+    timeoutMs: 12_000,
+    maxRetries: 1,
+    tags: ["source:anac-in-house-storico", "domain:public-holdings"],
+  },
+  "anac-ausa": {
+    id: "anac-ausa",
+    label: "AUSA · Stazioni appaltanti",
+    owner: "ANAC",
+    sourceUrl: "https://www.anticorruzione.it/-/anagrafe-unica-delle-stazioni-appaltanti-ausa-",
+    cadence: "annuale",
+    cadenceNote: "Identificativi aggiornati almeno annualmente; AUSA non certifica lo status in-house.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: null,
+    timeoutMs: 12_000,
+    maxRetries: 1,
+    tags: ["source:anac-ausa", "domain:contracting-authorities"],
   },
 };
 

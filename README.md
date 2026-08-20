@@ -79,6 +79,34 @@ L'Indice PA è la prima anagrafe canonica del progetto.
 - grafico della distribuzione per tipologia;
 - provenienza e licenza esposte insieme al record.
 
+Le schede ente leggono inoltre i dataset IPA **Unità Organizzative** e **Aree Organizzative Omogenee**:
+
+- relazioni UO padre-figlio solo quando dichiarate da IPA;
+- collegamenti UO → AOO tramite gli identificativi ufficiali;
+- conteggi e prime 24 unità nella scheda, fino a 500 record nell'API;
+- endpoint `/api/enti/[codice]/struttura`;
+- nessuna deduzione automatica “UO = dipartimento”.
+
+La pagina `/enti` espone anche l'indice strutturale IPA C1 di ministeri, Presidenza del Consiglio e Avvocatura.
+
+### Partecipazioni pubbliche
+
+`/partecipazioni` usa il CSV ufficiale del censimento MEF riferito al 31 dicembre 2023 e pubblicato il 10 marzo 2026.
+
+- 53.656 relazioni amministrazione–partecipata;
+- 8.360 amministrazioni dichiaranti;
+- 7.979 organizzazioni partecipate;
+- distinzione tra partecipazioni dirette e indirette;
+- segnali dichiarati di controllo analogo e affidamento diretto presentati come evidence datata, non come status legale corrente;
+- provenienza completa con URL, SHA-256, codifica rilevata e licenza;
+- endpoint `/api/partecipazioni`;
+- refresh automatico giornaliero senza commit se il rilascio ufficiale è invariato.
+
+```bash
+python3 scripts/etl/mef_participations_snapshot.py
+python3 scripts/etl/mef_participations_snapshot.py --check
+```
+
 ### Politiche di coesione
 
 `/coesione` usa l’aggregato nazionale dell’API ufficiale OpenCoesione e pubblica uno snapshot verificato, senza numeri dimostrativi.
@@ -149,6 +177,7 @@ I workflow separati fanno poi:
 - **Source refresh**: invalidazione source-scoped ogni ora;
 - **Source health**: probe ogni 6 ore degli adapter inclusi nel monitor applicativo; OpenCoesione è controllata dal workflow snapshot dedicato.
 - **OpenCoesione snapshot**: controllo dell’API ogni 6 ore e aggiornamento del file versionato soltanto quando cambia il payload normalizzato.
+- **MEF partecipazioni**: discovery giornaliera del CSV annuale e commit soltanto quando cambia hash, schema o trasformazione.
 
 Un outage RGS/AgID può rendere rosso il monitor delle fonti, ma **non** la CI del codice.
 

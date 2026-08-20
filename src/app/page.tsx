@@ -67,7 +67,7 @@ const cohesionFreshnessClass =
       : styles.unknown;
 
 const sourceBySlug = new Map(publicSources.map((source) => [source.slug, source]));
-const sourceRows = ["siope", "openbdap", "ipa", "opencoesione"]
+const sourceRows = ["siope", "openbdap", "ipa", "opencoesione", "partecipazioni-pubbliche"]
   .map((slug) => sourceBySlug.get(slug))
   .filter((source): source is NonNullable<typeof source> => Boolean(source));
 
@@ -76,6 +76,7 @@ const analysisPaths = [
   { href: "/territori", area: "Territori", detail: "Pagamenti di cassa di Comuni e regioni", source: "SIOPE · IPA", status: "Dashboard attiva" },
   { href: "/coesione", area: "Politiche di coesione", detail: "Costo, pagamenti e progetti monitorati", source: "OpenCoesione", status: "Dashboard attiva" },
   { href: "/enti", area: "Enti pubblici", detail: "Ricerca nel registro nazionale", source: "IPA · AgID", status: "Ricerca attiva" },
+  { href: "/partecipazioni", area: "Partecipazioni pubbliche", detail: "Relazioni amministrazioni–partecipate", source: "MEF · rilevazione 2023", status: "Snapshot attivo" },
   { href: "/fonti", area: "Contratti pubblici", detail: "CIG, procedure e aggiudicazioni", source: "ANAC · BDNCP", status: "In integrazione" },
 ];
 

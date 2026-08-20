@@ -100,12 +100,18 @@ Il server OpenCivitas non invia al momento il certificato intermedio della propr
 
 Una nuova annualità non viene accettata alla cieca. Il workflow la rileva e si ferma con un errore esplicito, lasciando disponibile l'ultimo snapshot valido. Prima si convalidano schema, definizioni e copertura; poi si aggiorna il contratto e si abilita il nuovo anno.
 
+### OpenBDAP MOP
+
+La ricerca delle opere pubbliche non dipende da alias OData scritti a mano. Il connettore controlla metadati e schema, ricava gli alias tecnici ufficiali e si ferma se una colonna richiesta cambia nome, significato o tipo.
+
+Il refresh orario invalida il tag OpenBDAP e la route `/api/opere`. Al primo accesso successivo vengono ricontrollati metadati e schema; i dati di una singola ricerca CUP hanno cache di 6 ore e possono essere serviti per altre 24 ore mentre avviene la riconvalida. La risposta espone separatamente data della fonte e momento del controllo della piattaforma.
+
 ## Policy iniziali
 
 | Fonte | Cadenza sorgente | Discovery DoveVannoINostriSoldi | Dati |
 | --- | --- | ---: | ---: |
 | IPA Enti | giornaliera | 1 h | 1 h |
-| OpenBDAP · Pagamenti Stato | mensile per mese contabile | 2 h | 6 h |
+| OpenBDAP · Pagamenti Stato e opere MOP | mensile per i pagamenti; data propria per MOP | 1 h · invalidazione, metadati entro 2 h | 6 h |
 | ANAC open dataset | mensile | 3 h | 12 h |
 | OpenCoesione | bimestrale prevista | 6 h · workflow snapshot | 6 h · cache API |
 | OpenCivitas | irregolare | 24 h · workflow snapshot | 24 h · cache API |
@@ -144,7 +150,7 @@ Stato attuale:
 
 - IPA Data API: migrata;
 - IPA aggregazioni SQL: migrate;
-- OpenBDAP: time-based revalidation già attiva; migrazione ai source tag in corso;
+- OpenBDAP: pagamenti con revalidation temporale; opere MOP sul source fetch layer con tag, schema verificato e ricerca CUP;
 - OpenCoesione: snapshot ETL versionato attivo; freshness applicativa esposta, reachability demandata al workflow dedicato;
 - Consulenti Pubblici: snapshot ETL versionato attivo; anno corrente esplicitamente parziale;
 - OpenCivitas: snapshot comunale 2022 attivo; nuove annualità ammesse dopo convalida del contratto;

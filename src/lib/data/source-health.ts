@@ -1,4 +1,5 @@
 import { discoverLatestStatePaymentDataset } from "@/lib/bdap-payments";
+import { discoverMopDataset } from "@/lib/bdap-public-works";
 import { classifyFreshness, type Freshness } from "@/lib/data/freshness";
 import { fetchOfficialSource } from "@/lib/data/source-fetch";
 import {
@@ -253,17 +254,23 @@ async function probeOpenBdap(): Promise<SourceHealth> {
   const startedAt = performance.now();
 
   try {
-    const latest = await discoverLatestStatePaymentDataset("mission", {
-      maxMonthsBack: 6,
-    });
+    const [latest, mop] = await Promise.all([
+      discoverLatestStatePaymentDataset("mission", { maxMonthsBack: 6 }),
+      discoverMopDataset(),
+    ]);
+    const timestamps = [latest.metadataModified, mop.metadata.referenceDate]
+      .filter((value): value is string => Boolean(value))
+      .map((value) => ({ value, time: new Date(value).valueOf() }))
+      .filter((entry) => !Number.isNaN(entry.time))
+      .sort((left, right) => left.time - right.time);
 
     return {
       ...base,
       reachability: "up",
-      freshness: freshnessFor("openbdap", latest.metadataModified),
+      freshness: freshnessFor("openbdap", timestamps.at(0)?.value ?? null),
       latencyMs: Math.round(performance.now() - startedAt),
-      detail: `Ultimo rilascio pagamenti trovato: ${latest.title}`,
-      recordCount: null,
+      detail: `Pagamenti: ${latest.title} · MOP aggiornato al ${mop.metadata.referenceDate} · ${mop.schema.cupCardinality.toLocaleString("it-IT")} CUP distinti`,
+      recordCount: mop.schema.localProjectCardinality,
     };
   } catch (error) {
     return {

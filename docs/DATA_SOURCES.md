@@ -13,8 +13,22 @@ Questa è la mappa iniziale delle fonti. Il criterio è semplice: prima fonti is
 ### OpenBDAP
 **Titolare:** Ragioneria Generale dello Stato.  
 **Uso:** bilancio dello Stato, spesa, SIOPE, opere pubbliche, PNRR e altri domini.  
-**Accesso:** catalogo CKAN con API ufficiali.  
-**Primo endpoint implementato:** `GET /api/fonti/bdap`, proxy con timeout e metadati di osservazione.
+**Accesso:** catalogo e API OData ufficiali.
+**Endpoint implementati:** pagamenti dello Stato e `GET /api/opere?cup=...` per le opere pubbliche MOP.
+
+Il connettore MOP legge prima i metadati e lo schema ufficiale. Gli alias tecnici delle colonne vengono scoperti a ogni controllo e accettati soltanto se nome, significato e tipo restano quelli previsti dal contratto. Questo evita di pubblicare valori nella colonna sbagliata dopo una modifica della fonte.
+
+Al controllo del 3 agosto 2026, lo schema dichiarava 560.245 codici locali di progetto e 541.539 CUP distinti. La ricerca usa il CUP esatto e interroga soltanto le righe necessarie: non scarica oltre mezzo milione di opere durante una richiesta web.
+
+Per ogni opera manteniamo distinti:
+
+- costo previsto e costo effettivo;
+- finanziamenti statali, europei, territoriali, privati e altre fonti;
+- finanziamenti ancora da trovare;
+- date previste e date effettive;
+- avvisi sulla qualità del dato.
+
+Gli avvisi su tempi, costi o copertura finanziaria hanno uso di screening. Indicano cosa verificare e includono spiegazioni alternative plausibili. Non classificano automaticamente un'opera come spreco, irregolarità o illecito.
 
 ### BDNCP / ANAC
 **Titolare:** ANAC.  
@@ -151,7 +165,25 @@ I valori del Senato non sono ancora normalizzati. La pubblicazione istituzionale
 
 ## Fonti successive
 
-Da valutare nella fase 2:
+### Anagrafe delle opere incompiute
+
+Il Ministero delle Infrastrutture e dei Trasporti pubblica una rilevazione annuale nazionale e le anagrafi regionali. La pubblicazione contiene CUP, stazione appaltante, importi, oneri per completare l'opera, stato e percentuale di avanzamento.
+
+La fonte è registrata ma non ancora importata. Il rilascio nazionale corrente è un PDF: serve un estrattore versionato con fixture reali e arresto esplicito quando cambia il layout. Il CUP consentirà il collegamento esatto con MOP senza confronti incerti sul nome dell'opera.
+
+### Conti Pubblici Territoriali
+
+CPT permette di leggere la spesa consolidata per territorio, settore, categoria economica e tipo di soggetto. È utile per spiegare dove si concentra la spesa del Settore Pubblico Allargato.
+
+Non va sommato a SIOPE. Perimetro, classificazione e regole di consolidamento sono diversi. La fonte resta mappata finché il catalogo non viene acquisito con una pipeline stabile e verificabile.
+
+### ReNDiS
+
+ISPRA e MASE raccolgono dati tecnici, finanziari e attuativi sugli interventi contro il dissesto idrogeologico. Il CUP permette di collegare un intervento a OpenBDAP MOP e, in seguito, a OpenCUP e ai contratti ANAC.
+
+La piattaforma dichiara aggiornamento continuo e sincronizzazione settimanale con BDAP per gli interventi associati a CUP. L'adapter resta da implementare: prima vanno identificati il canale open data stabile, la licenza della singola risorsa e le regole per distinguere interventi MASE ed extra-MASE.
+
+Altre fonti da valutare nella fase 2:
 
 - sovvenzioni e contributi art. 26/27 D.Lgs. 33/2013;
 - patrimonio e partecipazioni pubbliche;

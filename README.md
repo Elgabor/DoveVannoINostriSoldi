@@ -30,10 +30,13 @@ Il backend espone inoltre:
 - `GET /api/spese/comuni/fabbisogni?anno=2022`, con il confronto OpenCivitas per 6.557 Comuni delle Regioni a statuto ordinario;
 - `GET /api/spese/stato?anno=2024`, con l'ultimo mese OpenBDAP disponibile nell'anno richiesto;
 - `GET /api/spese/stato/amministrazioni/2?anno=2024`, con missioni e categorie di una singola amministrazione;
+- `GET /api/opere?cup=I39B05000060005`, con stato, date, costi e finanziamenti di un'opera pubblica OpenBDAP;
 - `GET /api/parlamento`, con bilanci, consuntivi e documenti ufficiali di Camera e Senato;
 - `GET /api/controlli`, con indicatori classificati, scenari separati e regole per il loro uso.
 
 Per OpenCivitas, la differenza tra spesa storica e spesa standard non viene chiamata spreco. L'API restituisce anche i valori per abitante, il confronto sui servizi e i limiti territoriali della fonte.
+
+Per le opere pubbliche, l'API può segnalare date da controllare, crescita dei costi, finanziamenti ancora da trovare o problemi di qualità del dato. Sono indicazioni per scegliere cosa approfondire, non prove automatiche di spreco.
 
 ## Scegliere l'anno
 

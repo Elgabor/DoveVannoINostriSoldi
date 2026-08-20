@@ -15,7 +15,7 @@ const DEFAULT_REFRESH_SOURCES: readonly SourceId[] = ["ipa", "openbdap", "siope"
 
 const SOURCE_PATHS: Readonly<Partial<Record<SourceId, readonly string[]>>> = {
   ipa: ["/enti", "/territori"],
-  openbdap: ["/stato", "/api/spese/stato"],
+  openbdap: ["/stato", "/api/spese/stato", "/api/opere"],
   siope: ["/territori"],
   "anac-bdncp": ["/"],
   "art-4-bis": ["/enti"],

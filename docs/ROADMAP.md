@@ -14,7 +14,8 @@
 - [ ] ingestore ANAC BDNCP
 - [x] snapshot e provenance per le fonti integrate
 - [x] pagina ente con URL sorgente e freshness
-- [ ] ricerca per ente, CIG, CUP e fornitore
+- [ ] ricerca unificata per ente, CIG, CUP e fornitore
+- [x] ricerca backend OpenBDAP MOP per CUP esatto
 
 ## Fase 2: pagamenti distribuiti
 - [ ] crawler Amministrazione Trasparente a partire da IPA
@@ -27,7 +28,8 @@
 - [ ] ReGiS / PNRR
 - [x] overview nazionale OpenCoesione con snapshot riconciliato, retry ETL, grafici, API e refresh automatico
 - [ ] drill-down OpenCoesione per progetto, soggetto e territorio con regole anti-doppio conteggio
-- [ ] opere pubbliche OpenBDAP / MOP
+- [x] contratto OpenBDAP MOP, controllo schema e ricerca puntuale per CUP
+- [ ] ingestione persistente e serie storica completa delle opere OpenBDAP MOP
 - [ ] geometrie ISTAT
 - [ ] confronti regionali, provinciali e comunali
 - [ ] normalizzazione pro capite con popolazione ufficiale

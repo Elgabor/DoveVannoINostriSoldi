@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Navigation } from "@/components/navigation";
 import "./globals.css";
 import "./design-system.css";
@@ -10,6 +10,13 @@ export const metadata: Metadata = {
   },
   description:
     "Dashboard civica open source che aggrega fonti ufficiali sulla spesa e sulla gestione delle risorse pubbliche italiane.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  colorScheme: "dark",
+  themeColor: "#06131f",
 };
 
 export default function RootLayout({

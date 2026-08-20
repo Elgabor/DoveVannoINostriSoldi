@@ -34,6 +34,19 @@ Il registro pubblico è in [`src/lib/sources.ts`](src/lib/sources.ts); le policy
 
 ## Cosa c'è già
 
+### Home dashboard-first
+
+La route `/` è direttamente il prodotto: non contiene una landing promozionale e non usa valori dimostrativi.
+
+- ricerca reale degli enti sul datastore IPA;
+- quadro SIOPE dei pagamenti di cassa dei Comuni e flusso mensile ufficiale;
+- coropleta delle 20 regioni alimentata dai valori SIOPE pro capite e dai confini ISTAT 2026;
+- riepilogo OpenCoesione con rapporto finanziario distinto dall'avanzamento fisico;
+- data di riferimento, pubblicazione della fonte, acquisizione e frequenza di controllo visibili;
+- percorsi diretti verso dashboard di dettaglio, metodologia e fonti originali.
+
+I tooltip sono riservati ai termini che richiedono una spiegazione contabile; freschezza e provenienza non vengono nascoste al loro interno.
+
 ### Spese dello Stato
 
 `/spese` usa esclusivamente dataset ufficiali RGS/OpenBDAP e scopre automaticamente il periodo più recente disponibile.
@@ -211,6 +224,8 @@ Una visualizzazione entra in produzione soltanto quando esiste un dato verificab
 - se il dato manca, mostriamo uno stato vuoto, non una serie dimostrativa;
 - le animazioni non devono alterare o spettacolarizzare la percezione di un dato finanziario.
 
+La geometria regionale della home è generata in modo riproducibile dal pacchetto ufficiale ISTAT. Fonte, checksum, licenza e procedura sono documentati in [`docs/ISTAT_REGIONAL_MAP.md`](docs/ISTAT_REGIONAL_MAP.md).
+
 ## Alert e anomalie
 
 Una procedura poco concorrenziale, un prezzo elevato o un fornitore ricorrente possono meritare un controllo, ma **non provano un illecito**.
@@ -247,3 +262,5 @@ Per una nuova fonte, aprire una issue indicando almeno proprietario, URL ufficia
 ## Licenza
 
 Codice rilasciato con licenza MIT. I dataset incorporati o collegati mantengono le licenze e le condizioni delle rispettive fonti.
+
+Le attribuzioni degli asset e dei dati incorporati sono raccolte in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

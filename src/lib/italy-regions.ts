@@ -1,0 +1,31 @@
+import type { SiopeRegionPoint } from "@/lib/siope-snapshot";
+
+export const REGION_NAME_BY_ISTAT_CODE = {
+  "01": "Piemonte",
+  "02": "Valle d'Aosta/Vallée d'Aoste",
+  "03": "Lombardia",
+  "04": "Trentino-Alto Adige/Südtirol",
+  "05": "Veneto",
+  "06": "Friuli-Venezia Giulia",
+  "07": "Liguria",
+  "08": "Emilia-Romagna",
+  "09": "Toscana",
+  "10": "Umbria",
+  "11": "Marche",
+  "12": "Lazio",
+  "13": "Abruzzo",
+  "14": "Molise",
+  "15": "Campania",
+  "16": "Puglia",
+  "17": "Basilicata",
+  "18": "Calabria",
+  "19": "Sicilia",
+  "20": "Sardegna",
+} as const;
+
+export function regionDataByIstatCode(regions: SiopeRegionPoint[]) {
+  const byName = new Map(regions.map((region) => [region.region, region]));
+  return new Map(
+    Object.entries(REGION_NAME_BY_ISTAT_CODE).map(([code, name]) => [code, byName.get(name)]),
+  );
+}

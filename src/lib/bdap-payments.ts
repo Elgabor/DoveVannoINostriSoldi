@@ -1,21 +1,19 @@
+import {
+  decodePublicDataText,
+  parseDelimitedRecords,
+  parsePublicNumber,
+  type DelimitedRecord,
+} from "@/lib/data/delimited";
+import { fetchOfficialSource } from "@/lib/data/source-fetch";
+
 const BDAP_BASE = "https://bdap-opendata.rgs.mef.gov.it";
 const BDAP_ACTION = `${BDAP_BASE}/SpodCkanApi/api/3/action`;
 const BDAP_DUMP = `${BDAP_BASE}/SpodCkanApi/api/3/datastore/dump`;
 
-const USER_AGENT =
-  "TrasparenzaItalia/0.3 (+https://github.com/metaforismo/trasparenzaitalia)";
-
-const DISCOVERY_REVALIDATE_SECONDS = 6 * 60 * 60;
-const DATA_REVALIDATE_SECONDS = 6 * 60 * 60;
-
-export type StatePaymentDimension = "mission" | "missionAdministration" | "administrationEconomic";
-
-type CkanResource = {
-  id?: unknown;
-  name?: unknown;
-  format?: unknown;
-  url?: unknown;
-};
+export type StatePaymentDimension =
+  | "mission"
+  | "missionAdministration"
+  | "administrationEconomic";
 
 type CkanPackage = {
   id?: unknown;
@@ -23,7 +21,6 @@ type CkanPackage = {
   title?: unknown;
   notes?: unknown;
   metadata_modified?: unknown;
-  resources?: unknown;
 };
 
 type PackageSearchResponse = {
@@ -150,7 +147,10 @@ function text(value: unknown): string | null {
 
 function uuid(value: unknown): string | null {
   const candidate = text(value);
-  if (!candidate || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidate)) {
+  if (
+    !candidate ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidate)
+  ) {
     return null;
   }
   return candidate;
@@ -184,8 +184,7 @@ function normalizePackage(
   if (!period) return null;
 
   const notes = text(pkg.notes);
-  const matchesCode = notes?.includes(`[${expectedCode}]`) ?? false;
-  if (!matchesCode) return null;
+  if (!(notes?.includes(`[${expectedCode}]`) ?? false)) return null;
 
   return {
     dimension,
@@ -206,14 +205,14 @@ async function searchProduct(
   code: string,
   dimension: StatePaymentDimension,
 ): Promise<BdapDataset[]> {
-  const url = `${BDAP_ACTION}/package_search?${new URLSearchParams({ q: code, rows: "50" }).toString()}`;
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/json",
-      "User-Agent": USER_AGENT,
-    },
-    next: { revalidate: DISCOVERY_REVALIDATE_SECONDS },
-    signal: AbortSignal.timeout(12_000),
+  const url = `${BDAP_ACTION}/package_search?${new URLSearchParams({
+    q: code,
+    rows: "50",
+  }).toString()}`;
+  const response = await fetchOfficialSource("openbdap", url, {
+    kind: "discovery",
+    headers: { Accept: "application/json" },
+    tags: [`product:${code}`, `dimension:${dimension}`],
   });
 
   if (!response.ok) {
@@ -244,24 +243,29 @@ export async function discoverLatestStatePaymentDataset(
 
   for (let offset = 0; offset < maxMonthsBack; offset += 1) {
     const target = periodAtOffset(now, offset);
-    const code = productCode(target.month, dimension);
-    const datasets = await searchProduct(code, dimension);
-    const exact = datasets.find(
-      (dataset) =>
-        dataset.referenceYear === target.year && dataset.referenceMonth === target.month,
+    const dataset = await getStatePaymentDatasetForPeriod(
+      dimension,
+      target.year,
+      target.month,
     );
-
-    if (exact) return exact;
+    if (dataset) return dataset;
   }
 
   throw new Error(`Nessun dataset OpenBDAP recente trovato per ${dimension}`);
 }
 
-async function findDatasetForPeriod(
+export async function getStatePaymentDatasetForPeriod(
   dimension: StatePaymentDimension,
   year: number,
   month: number,
 ): Promise<BdapDataset | null> {
+  if (!Number.isInteger(year) || year < 2000 || year > 2200) {
+    throw new Error(`Anno OpenBDAP non valido: ${year}`);
+  }
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    throw new Error(`Mese OpenBDAP non valido: ${month}`);
+  }
+
   const code = productCode(month, dimension);
   const datasets = await searchProduct(code, dimension);
   return (
@@ -271,89 +275,11 @@ async function findDatasetForPeriod(
   );
 }
 
-function decodeCsv(buffer: ArrayBuffer): string {
-  try {
-    return new TextDecoder("utf-8", { fatal: true }).decode(buffer).replace(/^\uFEFF/, "");
-  } catch {
-    return new TextDecoder("windows-1252").decode(buffer).replace(/^\uFEFF/, "");
-  }
-}
-
-function parseDelimitedRows(input: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let field = "";
-  let quoted = false;
-
-  for (let index = 0; index < input.length; index += 1) {
-    const char = input[index];
-
-    if (quoted) {
-      if (char === '"') {
-        if (input[index + 1] === '"') {
-          field += '"';
-          index += 1;
-        } else {
-          quoted = false;
-        }
-      } else {
-        field += char;
-      }
-      continue;
-    }
-
-    if (char === '"') {
-      quoted = true;
-      continue;
-    }
-
-    if (char === ";") {
-      row.push(field.trim());
-      field = "";
-      continue;
-    }
-
-    if (char === "\n") {
-      row.push(field.trim().replace(/\r$/, ""));
-      field = "";
-      if (row.some((value) => value.length > 0)) rows.push(row);
-      row = [];
-      continue;
-    }
-
-    field += char;
-  }
-
-  if (field.length > 0 || row.length > 0) {
-    row.push(field.trim().replace(/\r$/, ""));
-    if (row.some((value) => value.length > 0)) rows.push(row);
-  }
-
-  return rows;
-}
-
-function parseCsv(input: string): Array<Record<string, string>> {
-  const rows = parseDelimitedRows(input);
-  const headers = rows[0]?.map((header) => header.trim()).filter(Boolean) ?? [];
-  if (headers.length === 0) return [];
-
-  return rows.slice(1).map((values) => {
-    const record: Record<string, string> = {};
-    headers.forEach((header, index) => {
-      record[header] = values[index] ?? "";
-    });
-    return record;
-  });
-}
-
-async function fetchDatasetRows(dataset: BdapDataset): Promise<Array<Record<string, string>>> {
-  const response = await fetch(dataset.csvUrl, {
-    headers: {
-      Accept: "text/csv",
-      "User-Agent": USER_AGENT,
-    },
-    next: { revalidate: DATA_REVALIDATE_SECONDS },
-    signal: AbortSignal.timeout(15_000),
+async function fetchDatasetRows(dataset: BdapDataset): Promise<DelimitedRecord[]> {
+  const response = await fetchOfficialSource("openbdap", dataset.csvUrl, {
+    kind: "data",
+    headers: { Accept: "text/csv" },
+    tags: [`dataset:${dataset.packageId}`, `dimension:${dataset.dimension}`],
   });
 
   if (!response.ok) {
@@ -365,29 +291,33 @@ async function fetchDatasetRows(dataset: BdapDataset): Promise<Array<Record<stri
     throw new Error("OpenBDAP non ha restituito un CSV per il dataset richiesto");
   }
 
-  const rows = parseCsv(decodeCsv(await response.arrayBuffer()));
+  const rows = parseDelimitedRecords(decodePublicDataText(await response.arrayBuffer()));
   if (rows.length === 0) throw new Error("Dataset OpenBDAP vuoto");
   return rows;
 }
 
-function amount(record: Record<string, string>, key: string): number {
-  const raw = record[key]?.trim();
-  if (!raw) return 0;
-  const normalized = raw.replace(/\s/g, "").replace(",", ".");
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : 0;
+export async function getStatePaymentDatasetTotal(dataset: BdapDataset): Promise<number> {
+  const rows = await fetchDatasetRows(dataset);
+  return rows.reduce(
+    (total, record) => total + parsePublicNumber(record["Totale Pagato"]),
+    0,
+  );
 }
 
-function integer(record: Record<string, string>, key: string): number {
+function amount(record: DelimitedRecord, key: string): number {
+  return parsePublicNumber(record[key]);
+}
+
+function integer(record: DelimitedRecord, key: string): number {
   const parsed = Number.parseInt(record[key] ?? "", 10);
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function required(record: Record<string, string>, key: string): string {
+function required(record: DelimitedRecord, key: string): string {
   return record[key]?.trim() || "Non indicato";
 }
 
-function components(record: Record<string, string>): PaymentComponents {
+function components(record: DelimitedRecord): PaymentComponents {
   return {
     opErario: amount(record, "OP Erario"),
     opTesoreria: amount(record, "OP Tesoreria"),
@@ -401,7 +331,7 @@ function components(record: Record<string, string>): PaymentComponents {
   };
 }
 
-function normalizeMissionRows(rows: Array<Record<string, string>>): StateMissionPayment[] {
+function normalizeMissionRows(rows: DelimitedRecord[]): StateMissionPayment[] {
   return rows.map((record) => ({
     year: integer(record, "Esercizio finanziario"),
     month: required(record, "Mese contabile"),
@@ -412,7 +342,7 @@ function normalizeMissionRows(rows: Array<Record<string, string>>): StateMission
 }
 
 function normalizeAdministrationRows(
-  rows: Array<Record<string, string>>,
+  rows: DelimitedRecord[],
 ): StateAdministrationMissionPayment[] {
   return rows.map((record) => ({
     year: integer(record, "Esercizio finanziario"),
@@ -426,7 +356,7 @@ function normalizeAdministrationRows(
 }
 
 function normalizeEconomicRows(
-  rows: Array<Record<string, string>>,
+  rows: DelimitedRecord[],
 ): StateAdministrationEconomicPayment[] {
   return rows.map((record) => ({
     year: integer(record, "Esercizio finanziario"),
@@ -486,12 +416,14 @@ export async function getStateSpendingSnapshot(): Promise<StateSpendingSnapshot>
   const { referenceYear: year, referenceMonth: month } = missionDataset;
 
   const [administrationDatasetResult, economicDatasetResult] = await Promise.allSettled([
-    findDatasetForPeriod("missionAdministration", year, month),
-    findDatasetForPeriod("administrationEconomic", year, month),
+    getStatePaymentDatasetForPeriod("missionAdministration", year, month),
+    getStatePaymentDatasetForPeriod("administrationEconomic", year, month),
   ]);
 
   const administrationDataset =
-    administrationDatasetResult.status === "fulfilled" ? administrationDatasetResult.value : null;
+    administrationDatasetResult.status === "fulfilled"
+      ? administrationDatasetResult.value
+      : null;
   const economicDataset =
     economicDatasetResult.status === "fulfilled" ? economicDatasetResult.value : null;
 
@@ -520,7 +452,8 @@ export async function getStateSpendingSnapshot(): Promise<StateSpendingSnapshot>
   const missionTotal = sum(missionRows, (row) => row.totalPaid);
   const administrationTotal =
     administrationRows.length > 0 ? sum(administrationRows, (row) => row.totalPaid) : null;
-  const economicTotal = economicRows.length > 0 ? sum(economicRows, (row) => row.totalPaid) : null;
+  const economicTotal =
+    economicRows.length > 0 ? sum(economicRows, (row) => row.totalPaid) : null;
 
   const missions = groupBy(
     missionRows,
@@ -547,14 +480,46 @@ export async function getStateSpendingSnapshot(): Promise<StateSpendingSnapshot>
   );
 
   const paymentMethods: SpendingAggregate[] = [
-    { code: "op-erario", label: "Ordini di pagamento · Erario", value: sum(missionRows, (row) => row.opErario) },
-    { code: "op-tesoreria", label: "Ordini di pagamento · Tesoreria", value: sum(missionRows, (row) => row.opTesoreria) },
-    { code: "op-esterno", label: "Ordini di pagamento · Esterno", value: sum(missionRows, (row) => row.opEsterno) },
-    { code: "oa-tesoreria", label: "Ordini di accreditamento · Tesoreria", value: sum(missionRows, (row) => row.oaTesoreria) },
-    { code: "oa-delegata", label: "Ordini di accreditamento · Spesa delegata", value: sum(missionRows, (row) => row.oaSpesaFunzDeleg) },
-    { code: "rsf-stipendi", label: "Ruoli di spesa fissa · Stipendi", value: sum(missionRows, (row) => row.rsfStipendi) },
-    { code: "rsf-altro", label: "Ruoli di spesa fissa · Altro", value: sum(missionRows, (row) => row.rsfAltro) },
-    { code: "note-imputazione", label: "Note di imputazione", value: sum(missionRows, (row) => row.noteImputazione) },
+    {
+      code: "op-erario",
+      label: "Ordini di pagamento · Erario",
+      value: sum(missionRows, (row) => row.opErario),
+    },
+    {
+      code: "op-tesoreria",
+      label: "Ordini di pagamento · Tesoreria",
+      value: sum(missionRows, (row) => row.opTesoreria),
+    },
+    {
+      code: "op-esterno",
+      label: "Ordini di pagamento · Esterno",
+      value: sum(missionRows, (row) => row.opEsterno),
+    },
+    {
+      code: "oa-tesoreria",
+      label: "Ordini di accreditamento · Tesoreria",
+      value: sum(missionRows, (row) => row.oaTesoreria),
+    },
+    {
+      code: "oa-delegata",
+      label: "Ordini di accreditamento · Spesa delegata",
+      value: sum(missionRows, (row) => row.oaSpesaFunzDeleg),
+    },
+    {
+      code: "rsf-stipendi",
+      label: "Ruoli di spesa fissa · Stipendi",
+      value: sum(missionRows, (row) => row.rsfStipendi),
+    },
+    {
+      code: "rsf-altro",
+      label: "Ruoli di spesa fissa · Altro",
+      value: sum(missionRows, (row) => row.rsfAltro),
+    },
+    {
+      code: "note-imputazione",
+      label: "Note di imputazione",
+      value: sum(missionRows, (row) => row.noteImputazione),
+    },
   ]
     .filter((item) => item.value > 0)
     .sort((left, right) => right.value - left.value);

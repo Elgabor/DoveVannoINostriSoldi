@@ -1,10 +1,8 @@
+import { fetchOfficialSource } from "@/lib/data/source-fetch";
 import { IPA_ENTI_RESOURCE_ID } from "@/lib/ipa";
 
 const IPA_DATASTORE_SQL =
   "https://indicepa.gov.it/ipa-dati/api/3/action/datastore_search_sql";
-
-const USER_AGENT =
-  "TrasparenzaItalia/0.2 (+https://github.com/metaforismo/trasparenzaitalia)";
 
 export type IpaTypeStat = {
   label: string;
@@ -48,13 +46,10 @@ export async function getIpaTypeDistribution(limit = 8): Promise<{
   ].join(" ");
 
   const sourceUrl = `${IPA_DATASTORE_SQL}?${new URLSearchParams({ sql }).toString()}`;
-  const response = await fetch(sourceUrl, {
-    headers: {
-      Accept: "application/json",
-      "User-Agent": USER_AGENT,
-    },
-    next: { revalidate: 3600 },
-    signal: AbortSignal.timeout(9000),
+  const response = await fetchOfficialSource("ipa", sourceUrl, {
+    kind: "data",
+    headers: { Accept: "application/json" },
+    tags: ["dataset:ipa-enti", "view:ipa-types"],
   });
 
   if (!response.ok) {

@@ -1,0 +1,46 @@
+name: Source refresh
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: source-refresh
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      REFRESH_URL: ${{ secrets.REFRESH_URL }}
+      SOURCE_REFRESH_SECRET: ${{ secrets.SOURCE_REFRESH_SECRET }}
+    steps:
+      - name: Refresh integrated source caches
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${REFRESH_URL}" || -z "${SOURCE_REFRESH_SECRET}" ]]; then
+            echo "::notice::Source refresh is not configured yet. Set REFRESH_URL and SOURCE_REFRESH_SECRET repository secrets after deployment."
+            exit 0
+          fi
+
+          base_url="${REFRESH_URL%/}"
+          curl \
+            --fail-with-body \
+            --silent \
+            --show-error \
+            --retry 2 \
+            --retry-all-errors \
+            --connect-timeout 10 \
+            --max-time 45 \
+            --request POST \
+            --header "Authorization: Bearer ${SOURCE_REFRESH_SECRET}" \
+            --header "Content-Type: application/json" \
+            --data '{"sources":["ipa","openbdap"]}' \
+            "${base_url}/api/internal/refresh-sources"

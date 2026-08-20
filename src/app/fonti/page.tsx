@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { publicSources } from "@/lib/sources";
 
 export const metadata: Metadata = {
@@ -23,6 +24,14 @@ export default function SourcesPage() {
           per ogni sorgente dichiariamo proprietario, copertura, formato, frequenza e stato
           dell&apos;integrazione.
         </p>
+        <div className="hero-actions" style={{ justifyContent: "flex-start" }}>
+          <Link href="/fonti/stato" className="button button-primary">
+            Stato live delle fonti
+          </Link>
+          <Link href="/metodologia" className="button button-secondary">
+            Metodologia
+          </Link>
+        </div>
       </header>
 
       <section className="source-table-wrap">

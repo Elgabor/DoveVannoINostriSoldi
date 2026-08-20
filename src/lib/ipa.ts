@@ -1,12 +1,11 @@
+import { fetchOfficialSource } from "@/lib/data/source-fetch";
+
 const IPA_DATASTORE_SEARCH =
   "https://indicepa.gov.it/ipa-dati/api/3/action/datastore_search";
 
 export const IPA_ENTI_RESOURCE_ID = "d09adf99-dc10-4349-8c53-27b1e5aa97b6";
 export const IPA_ENTI_DATASET_URL = "https://www.indicepa.gov.it/ipa-dati/dataset/enti";
 export const IPA_LICENSE = "CC BY 4.0";
-
-const USER_AGENT =
-  "TrasparenzaItalia/0.2 (+https://github.com/metaforismo/trasparenzaitalia)";
 
 export type IpaEntity = {
   codiceIpa: string;
@@ -186,13 +185,10 @@ async function datastoreRequest(params: URLSearchParams): Promise<IpaSearchResul
   params.set("resource_id", IPA_ENTI_RESOURCE_ID);
 
   const url = `${IPA_DATASTORE_SEARCH}?${params.toString()}`;
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/json",
-      "User-Agent": USER_AGENT,
-    },
-    next: { revalidate: 3600 },
-    signal: AbortSignal.timeout(9000),
+  const response = await fetchOfficialSource("ipa", url, {
+    kind: "data",
+    headers: { Accept: "application/json" },
+    tags: ["dataset:ipa-enti"],
   });
 
   if (!response.ok) {

@@ -2,6 +2,7 @@
   "name": "trasparenzaitalia",
   "version": "0.2.0",
   "private": true,
+  "type": "module",
   "description": "Dashboard civica open source sui dati della spesa pubblica italiana.",
   "engines": {
     "node": ">=22.13.0"
@@ -10,7 +11,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings=0",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "typecheck": "tsc --noEmit",
     "design:check": "impeccable detect src/"
   },

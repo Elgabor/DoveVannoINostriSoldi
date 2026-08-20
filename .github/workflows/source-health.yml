@@ -1,0 +1,68 @@
+name: Source health
+
+on:
+  schedule:
+    - cron: "41 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: source-health
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      REFRESH_URL: ${{ secrets.REFRESH_URL }}
+    steps:
+      - name: Probe active source adapters
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${REFRESH_URL}" ]]; then
+            echo "::notice::Source health is not configured yet. Set REFRESH_URL after deployment."
+            exit 0
+          fi
+
+          base_url="${REFRESH_URL%/}"
+          curl \
+            --fail-with-body \
+            --silent \
+            --show-error \
+            --retry 1 \
+            --retry-all-errors \
+            --connect-timeout 10 \
+            --max-time 60 \
+            "${base_url}/api/fonti/stato" \
+            --output /tmp/source-health.json
+
+          node <<'NODE'
+          const fs = require('node:fs');
+          const payload = JSON.parse(fs.readFileSync('/tmp/source-health.json', 'utf8'));
+          if (!payload.ok || !Array.isArray(payload.sources)) {
+            throw new Error('Invalid source-health response');
+          }
+
+          const active = payload.sources.filter((source) => source.integration === 'active');
+          const down = active.filter((source) => source.reachability === 'down');
+
+          console.log(JSON.stringify({
+            observedAt: payload.observedAt,
+            active: active.map((source) => ({
+              id: source.sourceId,
+              reachability: source.reachability,
+              latencyMs: source.latencyMs,
+              detail: source.detail,
+            })),
+          }, null, 2));
+
+          if (down.length > 0) {
+            const names = down.map((source) => source.sourceId).join(', ');
+            throw new Error(`Active official sources unreachable: ${names}`);
+          }
+          NODE

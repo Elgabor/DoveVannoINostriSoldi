@@ -23,6 +23,26 @@ export const auditReviewedAt = "2026-08-20";
 
 export const auditSignals: AuditSignal[] = [
   {
+    id: "procurement-direct-awards-2024",
+    area: "Appalti",
+    value: 54.1,
+    unit: "percent",
+    label: "Affidamenti diretti sul numero delle procedure",
+    plainMeaning: "Nel 2024 erano affidamenti diretti il 54,1% delle procedure da 40.000 euro in su.",
+    caveat: "Sul valore totale pesavano il 6,0%. È un dato da approfondire, non una prova di spreco.",
+    referenceDate: "2024",
+    tone: "attention",
+    valueClass: "risk-exposure",
+    additive: false,
+    verificationUse: "screening-only",
+    source: {
+      institution: "ANAC",
+      title: "Relazione annuale 2025 sull'attività svolta nel 2024",
+      url: "https://www.anticorruzione.it/documents/91439/307867242/Anac%2B-%2BRelazione%2Bannuale%2B2025%2Bsu%2Battivit%C3%A0%2B2024.pdf/f5053514-6745-8516-c8df-5bb0e4b2dfbd?t=1747731265787",
+      documentType: "official-report",
+    },
+  },
+  {
     id: "procurement-low-competition-value",
     area: "Appalti",
     value: 59.7721,
@@ -144,12 +164,56 @@ export const auditSignals: AuditSignal[] = [
   },
 ];
 
-export const procurementComparison = {
-  byNumber: 76.2,
-  byValue: 19.3,
-  totalValueBillion: 309.7,
-  exposedValueBillion: 59.7721,
+export type ProcurementComparison = {
+  year: 2024 | 2025;
+  subject: string;
+  byNumber: number;
+  byValue: number;
+  totalValueBillion: number;
+  exposedValueBillion: number | null;
+  plainMeaning: string;
+  caveat: string;
+  sourceUrl: string;
 };
+
+export const procurementComparisons: Record<ProcurementComparison["year"], ProcurementComparison> = {
+  2024: {
+    year: 2024,
+    subject: "Affidamenti diretti",
+    byNumber: 54.1,
+    byValue: 6,
+    totalValueBillion: 271.849,
+    exposedValueBillion: null,
+    plainMeaning: "La quota è calcolata sulle procedure da 40.000 euro in su.",
+    caveat: "Il numero delle procedure e il loro valore raccontano due aspetti diversi.",
+    sourceUrl: "https://www.anticorruzione.it/documents/91439/307867242/Anac%2B-%2BRelazione%2Bannuale%2B2025%2Bsu%2Battivit%C3%A0%2B2024.pdf/f5053514-6745-8516-c8df-5bb0e4b2dfbd?t=1747731265787",
+  },
+  2025: {
+    year: 2025,
+    subject: "Affidamenti diretti e negoziate senza bando",
+    byNumber: 76.2,
+    byValue: 19.3,
+    totalValueBillion: 309.7,
+    exposedValueBillion: 59.7721,
+    plainMeaning: "La quota è calcolata sulle procedure da 40.000 euro in su.",
+    caveat: "Un confronto competitivo ridotto richiede più verifiche, ma non dimostra irregolarità.",
+    sourceUrl: "https://www.anticorruzione.it/documents/91439/393633199/Anac%2B-%2BRelazione%2Bannuale%2B2026%2Bsu%2Battivit%C3%A0%2B2025.pdf/c2ff7d91-d715-800d-7689-15899ef650c9?t=1776760815657",
+  },
+};
+
+export const procurementComparison = procurementComparisons[2025];
+
+export const availableAuditYears = [...new Set(
+  auditSignals.map((signal) => Number.parseInt(signal.referenceDate.slice(0, 4), 10)),
+)].sort((left, right) => right - left);
+
+export function getAuditSignalsForYear(year: number): AuditSignal[] {
+  return auditSignals.filter((signal) => signal.referenceDate.startsWith(String(year)));
+}
+
+export function getProcurementComparisonForYear(year: number): ProcurementComparison | null {
+  return year === 2024 || year === 2025 ? procurementComparisons[year] : null;
+}
 
 export const auditScenarios = [
   { id: "prudent", label: "Prudente", annualBillion: 1.4383151 },

@@ -5,7 +5,9 @@ import {
   auditScenarios,
   auditSignals,
   centralScenarioBreakdown,
+  getProcurementComparisonForYear,
   procurementComparison,
+  procurementComparisons,
 } from "@/lib/audit-data";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +34,10 @@ export function GET(request: NextRequest) {
       reviewedAt: auditReviewedAt,
       filters: { area: area ?? null, year: rawYear ?? null },
       signals,
-      procurementComparison,
+      procurementComparison: rawYear
+        ? getProcurementComparisonForYear(Number.parseInt(rawYear, 10))
+        : procurementComparison,
+      procurementComparisons,
       policyScenarios: {
         items: auditScenarios,
         centralBreakdown: centralScenarioBreakdown,

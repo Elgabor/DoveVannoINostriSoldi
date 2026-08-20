@@ -5,6 +5,7 @@ import {
   auditScenarios,
   auditSignals,
   centralScenarioBreakdown,
+  getProcurementAvailability,
   getProcurementComparisonForYear,
   procurementComparison,
   procurementComparisons,
@@ -27,6 +28,7 @@ export function GET(request: NextRequest) {
     if (rawYear && !signal.referenceDate.startsWith(rawYear)) return false;
     return true;
   });
+  const requestedYear = rawYear ? Number.parseInt(rawYear, 10) : null;
 
   return NextResponse.json(
     {
@@ -34,10 +36,13 @@ export function GET(request: NextRequest) {
       reviewedAt: auditReviewedAt,
       filters: { area: area ?? null, year: rawYear ?? null },
       signals,
-      procurementComparison: rawYear
-        ? getProcurementComparisonForYear(Number.parseInt(rawYear, 10))
+      procurementComparison: requestedYear
+        ? getProcurementComparisonForYear(requestedYear)
         : procurementComparison,
       procurementComparisons,
+      procurementAvailability: requestedYear
+        ? getProcurementAvailability(requestedYear)
+        : getProcurementAvailability(procurementComparison.year),
       policyScenarios: {
         items: auditScenarios,
         centralBreakdown: centralScenarioBreakdown,

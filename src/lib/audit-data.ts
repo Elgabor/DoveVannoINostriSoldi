@@ -21,27 +21,7 @@ export type AuditSignal = {
 
 export const auditReviewedAt = "2026-08-20";
 
-export const auditSignals: AuditSignal[] = [
-  {
-    id: "procurement-direct-awards-2024",
-    area: "Appalti",
-    value: 54.1,
-    unit: "percent",
-    label: "Affidamenti diretti sul numero delle procedure",
-    plainMeaning: "Nel 2024 erano affidamenti diretti il 54,1% delle procedure da 40.000 euro in su.",
-    caveat: "Sul valore totale pesavano il 6,0%. È un dato da approfondire, non una prova di spreco.",
-    referenceDate: "2024",
-    tone: "attention",
-    valueClass: "risk-exposure",
-    additive: false,
-    verificationUse: "screening-only",
-    source: {
-      institution: "ANAC",
-      title: "Relazione annuale 2025 sull'attività svolta nel 2024",
-      url: "https://www.anticorruzione.it/documents/91439/307867242/Anac%2B-%2BRelazione%2Bannuale%2B2025%2Bsu%2Battivit%C3%A0%2B2024.pdf/f5053514-6745-8516-c8df-5bb0e4b2dfbd?t=1747731265787",
-      documentType: "official-report",
-    },
-  },
+const auditSignalsWithoutComparableProcurement: AuditSignal[] = [
   {
     id: "procurement-low-competition-value",
     area: "Appalti",
@@ -58,7 +38,7 @@ export const auditSignals: AuditSignal[] = [
     source: {
       institution: "ANAC",
       title: "Relazione annuale 2026 sull'attività svolta nel 2025",
-      url: "https://www.anticorruzione.it/documents/91439/393633199/Anac%2B-%2BRelazione%2Bannuale%2B2026%2Bsu%2Battivit%C3%A0%2B2025.pdf/c2ff7d91-d715-800d-7689-15899ef650c9?t=1776760815657",
+      url: "https://www.anticorruzione.it/documents/91439/393633199/Anac%2B-%2BRelazione%2Bannuale%2B2026%2Bsu%2Battivit%C3%A0%2B2025.pdf/165c4f77-a913-1fde-ff23-887cbcee3095?t=1776845818213",
       documentType: "official-report",
     },
   },
@@ -76,7 +56,7 @@ export const auditSignals: AuditSignal[] = [
     additive: false,
     verificationUse: "screening-only",
     source: {
-      institution: "Corte dei conti · copia del referto",
+      institution: "Corte dei conti",
       title: "Relazione sullo stato di attuazione del PNRR - maggio 2026",
       url: "https://www.corteconti.it/HOME/StampaMedia/ComunicatiStampa/DettaglioComunicati?Id=0a3d0038-093b-4197-918f-d98b87cd9158",
       documentType: "official-report",
@@ -105,10 +85,10 @@ export const auditSignals: AuditSignal[] = [
   {
     id: "tax-expenditures",
     area: "Agevolazioni fiscali",
-    value: 108.6,
+    value: 108.5827,
     unit: "billion-euro",
     label: "Effetto stimato delle agevolazioni fiscali",
-    plainMeaning: "Il rapporto MEF censisce 575 misure e stima il loro effetto finanziario per il 2025.",
+    plainMeaning: "Il MEF censisce 575 misure. Nel 2025 ne risultano vigenti 515 e 297 hanno una stima puntuale di 108,6 miliardi.",
     caveat: "Sono scelte di politica fiscale: non sono tutte sprechi e non sono tutte eliminabili.",
     referenceDate: "2025",
     tone: "policy",
@@ -136,9 +116,9 @@ export const auditSignals: AuditSignal[] = [
     additive: false,
     verificationUse: "screening-only",
     source: {
-      institution: "Corte dei conti",
+      institution: "Corte dei conti, archivio del Senato",
       title: "Gestione finanziaria degli enti locali - Del. 14/SEZAUT/2025/FRG",
-      url: "https://www.consregsardegna.it/wp-content/uploads/2025/07/Relazione-045-17legislatura.pdf",
+      url: "https://www.senato.it/service/PDF/PDFServer/DF/444237.pdf",
       documentType: "official-report",
     },
   },
@@ -165,41 +145,88 @@ export const auditSignals: AuditSignal[] = [
 ];
 
 export type ProcurementComparison = {
-  year: 2024 | 2025;
+  year: 2023 | 2024 | 2025;
   subject: string;
   byNumber: number;
   byValue: number;
+  procedureCount: number;
   totalValueBillion: number;
-  exposedValueBillion: number | null;
   plainMeaning: string;
   caveat: string;
+  sourcePublishedAt: string;
+  sourceTitle: string;
   sourceUrl: string;
 };
 
 export const procurementComparisons: Record<ProcurementComparison["year"], ProcurementComparison> = {
+  2023: {
+    year: 2023,
+    subject: "Affidamenti diretti",
+    byNumber: 49.6,
+    byValue: 6.5,
+    procedureCount: 267_403,
+    totalValueBillion: 283.37835211,
+    plainMeaning: "La quota è calcolata sulle procedure da 40.000 euro in su.",
+    caveat: "Il numero delle procedure e il loro valore raccontano due aspetti diversi.",
+    sourcePublishedAt: "2024-05-14",
+    sourceTitle: "Relazione annuale 2024 sull'attività svolta nel 2023",
+    sourceUrl: "https://www.anticorruzione.it/documents/91439/226947274/Anac+-+Relazione+annuale+2024+su+attivit%C3%A0+2023.pdf/59fa6b9e-670d-9910-54e7-88071d5274cc?t=1715693924497",
+  },
   2024: {
     year: 2024,
     subject: "Affidamenti diretti",
     byNumber: 54.1,
     byValue: 6,
-    totalValueBillion: 271.849,
-    exposedValueBillion: null,
+    procedureCount: 267_157,
+    totalValueBillion: 271.849043161,
     plainMeaning: "La quota è calcolata sulle procedure da 40.000 euro in su.",
     caveat: "Il numero delle procedure e il loro valore raccontano due aspetti diversi.",
+    sourcePublishedAt: "2025-05-20",
+    sourceTitle: "Relazione annuale 2025 sull'attività svolta nel 2024",
     sourceUrl: "https://www.anticorruzione.it/documents/91439/307867242/Anac%2B-%2BRelazione%2Bannuale%2B2025%2Bsu%2Battivit%C3%A0%2B2024.pdf/f5053514-6745-8516-c8df-5bb0e4b2dfbd?t=1747731265787",
   },
   2025: {
     year: 2025,
-    subject: "Affidamenti diretti e negoziate senza bando",
-    byNumber: 76.2,
-    byValue: 19.3,
-    totalValueBillion: 309.7,
-    exposedValueBillion: 59.7721,
+    subject: "Affidamenti diretti",
+    byNumber: 55.3,
+    byValue: 5.1,
+    procedureCount: 287_421,
+    totalValueBillion: 309.732573064,
     plainMeaning: "La quota è calcolata sulle procedure da 40.000 euro in su.",
-    caveat: "Un confronto competitivo ridotto richiede più verifiche, ma non dimostra irregolarità.",
-    sourceUrl: "https://www.anticorruzione.it/documents/91439/393633199/Anac%2B-%2BRelazione%2Bannuale%2B2026%2Bsu%2Battivit%C3%A0%2B2025.pdf/c2ff7d91-d715-800d-7689-15899ef650c9?t=1776760815657",
+    caveat: "Il numero delle procedure e il loro valore raccontano due aspetti diversi.",
+    sourcePublishedAt: "2026-04-21",
+    sourceTitle: "Relazione annuale 2026 sull'attività svolta nel 2025",
+    sourceUrl: "https://www.anticorruzione.it/documents/91439/393633199/Anac%2B-%2BRelazione%2Bannuale%2B2026%2Bsu%2Battivit%C3%A0%2B2025.pdf/165c4f77-a913-1fde-ff23-887cbcee3095?t=1776845818213",
   },
 };
+
+const procurementDirectAwardSignals: AuditSignal[] = Object.values(procurementComparisons).map(
+  (comparison) => ({
+    id: `procurement-direct-awards-${comparison.year}`,
+    area: "Appalti",
+    value: comparison.byNumber,
+    unit: "percent",
+    label: "Affidamenti diretti sul numero delle procedure",
+    plainMeaning: `Nel ${comparison.year} erano affidamenti diretti il ${comparison.byNumber.toFixed(1).replace(".", ",")}% delle procedure da 40.000 euro in su.`,
+    caveat: `Sul valore totale pesavano il ${comparison.byValue.toFixed(1).replace(".", ",")}%. È un dato da approfondire, non una prova di spreco.`,
+    referenceDate: String(comparison.year),
+    tone: "attention",
+    valueClass: "risk-exposure",
+    additive: false,
+    verificationUse: "screening-only",
+    source: {
+      institution: "ANAC",
+      title: comparison.sourceTitle,
+      url: comparison.sourceUrl,
+      documentType: "official-report",
+    },
+  }),
+);
+
+export const auditSignals: AuditSignal[] = [
+  ...procurementDirectAwardSignals,
+  ...auditSignalsWithoutComparableProcurement,
+];
 
 export const procurementComparison = procurementComparisons[2025];
 
@@ -212,7 +239,27 @@ export function getAuditSignalsForYear(year: number): AuditSignal[] {
 }
 
 export function getProcurementComparisonForYear(year: number): ProcurementComparison | null {
-  return year === 2024 || year === 2025 ? procurementComparisons[year] : null;
+  return year === 2023 || year === 2024 || year === 2025 ? procurementComparisons[year] : null;
+}
+
+export function getProcurementAvailability(year: number) {
+  const comparison = getProcurementComparisonForYear(year);
+  if (comparison) {
+    return {
+      status: "available" as const,
+      message: `La relazione ANAC per il ${year} è disponibile e usa lo stesso perimetro della serie.`,
+    };
+  }
+  if (year >= 2026) {
+    return {
+      status: "not-yet-published" as const,
+      message: `La relazione ANAC completa sul ${year} non è ancora pubblicata. Non usiamo dati parziali come se fossero annuali.`,
+    };
+  }
+  return {
+    status: "not-collected" as const,
+    message: `Il dato annuale ANAC per il ${year} non è ancora stato raccolto nella serie verificata.`,
+  };
 }
 
 export const auditScenarios = [

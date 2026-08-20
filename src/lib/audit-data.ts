@@ -79,6 +79,8 @@ export const procurementReducedCompetition2025 = {
 export const procurementServicesAndSupplies2025 = {
   directAwardShare: 95,
   directAwardShareQualifier: "quasi",
+  replicatedDirectAwardShare: 93.00067,
+  replicationObservedAt: "2026-08-20",
   thresholdBandLowerEuro: 135_000,
   thresholdBandUpperEuro: 140_000,
   thresholdBandCount2021: 1_549,
@@ -91,6 +93,8 @@ export const procurementServicesAndSupplies2025 = {
   sourcePublishedAt: "2026-04-21",
   sourceUrl:
     "https://www.anticorruzione.it/documents/91439/393633199/Anac%2B-%2BPresentazione%2Bdella%2BRelazione%2Bannuale%2B2026%2Bsu%2Battivit%C3%A0%2B2025.pdf/a35c6b4a-db50-13be-8d6f-7fba8fa4d4dd?t=1776760814307",
+  replicationUrl:
+    "https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi/blob/main/docs/research/ANAC_2025_REPLICATION.md",
 } as const;
 
 const auditSignalsWithoutComparableProcurement: AuditSignal[] = [

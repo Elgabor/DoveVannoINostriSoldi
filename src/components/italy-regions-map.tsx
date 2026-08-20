@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ITALY_REGIONS_VIEWBOX,
   italyRegionGeometry,
@@ -10,6 +10,7 @@ import {
   REGION_NAME_BY_ISTAT_CODE,
   regionDataByIstatCode,
 } from "@/lib/italy-regions";
+import { randomRegionCode } from "@/lib/ip-region";
 import { compactEuro, exactEuro, integer } from "@/lib/format";
 import styles from "./italy-regions-map.module.css";
 
@@ -29,6 +30,8 @@ export function ItalyRegionsMap({
   aside?: React.ReactNode;
 }) {
   const [selectedCode, setSelectedCode] = useState("03");
+  const [automaticSelection, setAutomaticSelection] = useState<"ip" | "random" | null>(null);
+  const userSelected = useRef(false);
   const { byCode, thresholds } = useMemo(() => {
     const mapped = regionDataByIstatCode(regions);
     const values = regions
@@ -40,6 +43,46 @@ export function ItalyRegionsMap({
       thresholds: [0.2, 0.4, 0.6, 0.8].map((fraction) => quantile(values, fraction)),
     };
   }, [regions]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const availableCodes = Object.keys(REGION_NAME_BY_ISTAT_CODE).filter((code) => byCode.has(code));
+
+    async function chooseInitialRegion() {
+      try {
+        const response = await fetch("/api/location", {
+          cache: "no-store",
+          credentials: "omit",
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(`Location HTTP ${response.status}`);
+        const payload = (await response.json()) as { region?: { code?: string } | null };
+        const code = payload.region?.code;
+        if (!userSelected.current && code && byCode.has(code)) {
+          setSelectedCode(code);
+          setAutomaticSelection("ip");
+          return;
+        }
+      } catch {
+        if (controller.signal.aborted) return;
+      }
+
+      const fallback = randomRegionCode(availableCodes);
+      if (!userSelected.current && fallback) {
+        setSelectedCode(fallback);
+        setAutomaticSelection("random");
+      }
+    }
+
+    void chooseInitialRegion();
+    return () => controller.abort();
+  }, [byCode]);
+
+  function selectRegion(code: string) {
+    userSelected.current = true;
+    setAutomaticSelection(null);
+    setSelectedCode(code);
+  }
 
   const selected = byCode.get(selectedCode) ?? regions[0];
 
@@ -83,13 +126,13 @@ export function ItalyRegionsMap({
                     ? "dato non disponibile"
                     : `${exactEuro(region.perCapita)} per abitante coperto`
                 }`}
-                onPointerEnter={() => setSelectedCode(geometry.code)}
-                onFocus={() => setSelectedCode(geometry.code)}
-                onClick={() => setSelectedCode(geometry.code)}
+                onPointerEnter={() => selectRegion(geometry.code)}
+                onFocus={() => selectRegion(geometry.code)}
+                onClick={() => selectRegion(geometry.code)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
-                    setSelectedCode(geometry.code);
+                    selectRegion(geometry.code);
                   }
                 }}
               />
@@ -99,12 +142,20 @@ export function ItalyRegionsMap({
 
         <label className={styles.mobileSelector}>
           <span>Scegli una regione</span>
-          <select value={selectedCode} onChange={(event) => setSelectedCode(event.target.value)}>
+          <select value={selectedCode} onChange={(event) => selectRegion(event.target.value)}>
             {Object.entries(REGION_NAME_BY_ISTAT_CODE).map(([code, name]) => (
               <option value={code} key={code}>{name}</option>
             ))}
           </select>
         </label>
+
+        {automaticSelection ? (
+          <p className={styles.geoNote}>
+            {automaticSelection === "ip"
+              ? "Regione proposta dalla posizione approssimativa dell’IP; l’indirizzo non viene mostrato né salvato."
+              : "Posizione non disponibile: regione iniziale scelta casualmente."}
+          </p>
+        ) : null}
 
         <div className={styles.legend} aria-label="Scala dei pagamenti pro capite">
           <span className={styles.legendEnd}>Meno spesa per abitante</span>

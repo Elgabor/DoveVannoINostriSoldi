@@ -107,6 +107,8 @@ Ogni metrica ha una `metric_version` e una definizione pubblica.
 
 Next.js serve UI e API BFF. Con la prima vera ingestione persistente introdurremo PostgreSQL come datastore analitico-operativo; oggetti raw di grandi dimensioni potranno vivere in object storage.
 
+Il route handler `/api/mcp` espone gli stessi moduli di dominio tramite MCP Streamable HTTP. Il catalogo e gli adapter vivono in `src/lib/mcp/`: una nuova fonte viene registrata una volta e diventa interrogabile senza creare tool ad hoc o duplicare la normalizzazione. Tutti i tool pubblici sono read-only, con input limitati e paginazione.
+
 Nessuna credenziale di ingestione deve essere esposta al browser.
 
 ## 7. Freshness

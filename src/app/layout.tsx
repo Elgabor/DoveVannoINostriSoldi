@@ -58,6 +58,7 @@ export default function RootLayout({
             >
               Codice su GitHub ↗
             </a>
+            <a className="footer-link" href="/mcp">MCP</a>
           </div>
           <div className="footer-row">
             <span className="footer-credit">Fatto da</span>

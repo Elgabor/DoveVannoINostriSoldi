@@ -55,9 +55,14 @@ export function Navigation() {
           </button>
         </form>
 
-        <Link className="header-action" href="/fonti">
-          Scarica i dati
-        </Link>
+        <div className="header-actions">
+          <Link className="header-action" href="/fonti">
+            Scarica i dati
+          </Link>
+          <Link className="header-action header-action-accent" href="/mcp">
+            MCP
+          </Link>
+        </div>
       </div>
 
       <div className="shell nav-row">

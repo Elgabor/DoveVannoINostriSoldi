@@ -1,0 +1,56 @@
+.endpointPanel { margin-bottom: var(--space-4); }
+
+.index {
+  display: block;
+  margin-bottom: var(--space-2);
+  font: 600 11px var(--font-mono);
+  letter-spacing: .08em;
+  color: var(--color-accent);
+}
+
+.endpointPanel h2,
+.columns h2 { margin: 0 0 var(--space-3); font-size: 18px; }
+.endpointPanel p,
+.columns p { margin: var(--space-3) 0 0; max-width: 80ch; color: var(--color-neutral-700); }
+
+.endpointRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.endpointRow code {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+  padding: 12px 14px;
+  border: 1px solid var(--color-neutral-300);
+  background: var(--color-neutral-100);
+}
+.endpointRow button { flex: none; }
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.toolList { margin: 0; }
+.toolList div { padding: 9px 0; border-top: 1px solid var(--color-neutral-200); }
+.toolList dt { font-weight: 600; }
+.toolList dd { margin: 3px 0 0; color: var(--color-neutral-700); }
+
+.datasetTable { width: 100%; border-collapse: collapse; text-align: left; }
+.datasetTable th,
+.datasetTable td { padding: 11px 12px; border-bottom: 1px solid var(--color-neutral-200); vertical-align: top; }
+.datasetTable th { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--color-neutral-600); }
+.datasetTable td { font-size: 13px; }
+.datasetTable strong,
+.datasetTable small { display: block; }
+.datasetTable small { margin-top: 3px; max-width: 70ch; color: var(--color-neutral-600); }
+
+@media (max-width: 760px) {
+  .columns { grid-template-columns: 1fr; }
+  .endpointRow { align-items: stretch; flex-direction: column; }
+  .endpointRow button { width: 100%; }
+}

@@ -91,7 +91,7 @@
   text-transform: uppercase;
   color: var(--color-neutral-700);
 }
-.details summary:hover { color: var(--color-accent); }
+.details summary:hover { color: var(--color-accent-700); }
 .details p {
   margin: var(--space-3) 0 0;
   font-size: 13px;

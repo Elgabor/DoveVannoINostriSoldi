@@ -47,7 +47,7 @@ export default function SourcesPage() {
       </div>
 
       <section className="panel">
-        <div className="table-scroll">
+        <div className="table-scroll" role="region" aria-label="Registro delle fonti" tabIndex={0}>
           <table className="table">
             <thead>
               <tr>

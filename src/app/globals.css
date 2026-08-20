@@ -35,13 +35,36 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 a { color: var(--color-accent-700); text-decoration: none; }
-a:hover { color: var(--color-accent); }
+a:hover { color: var(--color-accent-800); }
 button, input, select, textarea { font: inherit; }
 code { font: 500 .92em var(--font-mono); color: var(--color-neutral-700); }
 img, svg { display: block; max-width: 100%; }
 ::selection { background: var(--color-accent-200); }
 :focus { outline: none; }
 :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+.skip-link {
+  position: fixed;
+  inset-block-start: var(--space-2);
+  inset-inline-start: var(--space-2);
+  z-index: 100;
+  padding: 10px 14px;
+  color: var(--color-raised);
+  background: var(--color-accent-800);
+  font-weight: 700;
+  transform: translateY(calc(-100% - var(--space-4)));
+}
+.skip-link:focus-visible { color: var(--color-raised); transform: translateY(0); }
+
+main p a,
+main li a,
+main dd a,
+main figcaption a,
+main td a:not(.btn) {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .18em;
+}
 
 /* The shell bounds every band of the page — header, nav, main and footer all
    share one measure so their rules line up vertically. */
@@ -133,7 +156,7 @@ img, svg { display: block; max-width: 100%; }
   background: transparent;
   cursor: pointer;
 }
-.header-search button:hover { color: var(--color-accent); }
+.header-search button:hover { color: var(--color-accent-700); }
 
 .header-actions {
   display: flex;
@@ -144,6 +167,7 @@ img, svg { display: block; max-width: 100%; }
 
 .header-action {
   flex: none;
+  min-height: 44px;
   padding: 11px 18px;
   border: 1px solid var(--color-neutral-400);
   font-size: 13px;
@@ -239,9 +263,8 @@ main { display: block; }
 }
 .footer-row .footer-spacer { flex: 1; }
 .footer-row strong { font-weight: 600; color: var(--color-text); }
+.footer-row a { display: inline-flex; align-items: center; min-height: 44px; }
 .footer-link {
-  display: inline-flex;
-  align-items: center;
   gap: var(--space-2);
   padding: 9px 14px;
   border: 1px solid var(--color-neutral-400);
@@ -348,6 +371,20 @@ main { display: block; }
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+
+.chart-data {
+  margin-top: var(--space-3);
+  border-top: 1px solid var(--color-neutral-300);
+}
+.chart-data summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--color-accent-700);
+  font-weight: 700;
+}
+.chart-data .table-scroll { max-height: 360px; }
 
 /* ── responsive ─────────────────────────────────────────────────────────── */
 

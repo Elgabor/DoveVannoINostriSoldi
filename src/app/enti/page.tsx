@@ -194,7 +194,7 @@ export default async function EntiPage({ searchParams }: PageProps) {
           </div>
 
           {result.records.length > 0 ? (
-            <div className="table-scroll">
+            <div className="table-scroll" role="region" aria-label="Risultati della ricerca enti" tabIndex={0}>
               <table className="table">
                 <thead>
                   <tr>
@@ -243,7 +243,7 @@ export default async function EntiPage({ searchParams }: PageProps) {
             <h2 className="panel-title">Ministeri, Presidenza e Avvocatura</h2>
             <span>{integer(centralAdministrations.total)} enti · aggiornamento giornaliero</span>
           </div>
-          <div className="table-scroll">
+          <div className="table-scroll" role="region" aria-label="Principali enti pubblici" tabIndex={0}>
             <table className="table">
               <thead>
                 <tr>
@@ -340,7 +340,7 @@ export default async function EntiPage({ searchParams }: PageProps) {
           <h2 className="panel-title">Le società con più enti soci</h2>
           <Link href="/partecipazioni">Tutte le partecipazioni →</Link>
         </div>
-        <div className="table-scroll">
+        <div className="table-scroll" role="region" aria-label="Partecipazioni pubbliche" tabIndex={0}>
           <table className="table">
             <thead>
               <tr>

@@ -101,7 +101,7 @@ export default function ParticipationsPage() {
 
       <section className="panel">
         <h2 className="panel-title">Organizzazioni dichiarate da più amministrazioni</h2>
-        <div className="table-scroll">
+        <div className="table-scroll" role="region" aria-label="Organizzazioni partecipate da più amministrazioni" tabIndex={0}>
           <table className="table">
             <thead>
               <tr>

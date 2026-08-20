@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import "./helpers/register-ts-alias.mjs";
 
-const { POST } = await import("../src/app/api/mcp/route.ts");
+const { OPTIONS, POST } = await import("../src/app/api/mcp/route.ts");
 
 const requestBody = JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" });
 
@@ -25,6 +25,64 @@ test("MCP endpoint rejects an untrusted browser origin", async () => {
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
 });
 
+test("MCP endpoint answers browser preflight only for an allowed origin", async () => {
+  const response = OPTIONS(new Request("https://example.test/api/mcp", {
+    method: "OPTIONS",
+    headers: {
+      Origin: "https://example.test",
+      "Access-Control-Request-Method": "POST",
+      "Access-Control-Request-Headers": "content-type,mcp-protocol-version",
+    },
+  }));
+  assert.equal(response.status, 204);
+  assert.equal(response.headers.get("access-control-allow-origin"), "https://example.test");
+  assert.match(response.headers.get("access-control-allow-methods"), /POST/);
+  assert.match(response.headers.get("access-control-allow-headers"), /MCP-Protocol-Version/i);
+  assert.match(response.headers.get("vary"), /Origin/);
+
+  const rejected = OPTIONS(new Request("https://example.test/api/mcp", {
+    method: "OPTIONS",
+    headers: { Origin: "https://attacker.test" },
+  }));
+  assert.equal(rejected.status, 403);
+  assert.equal(rejected.headers.get("access-control-allow-origin"), null);
+});
+
+test("MCP endpoint enforces an explicit host allowlist", async () => {
+  const previous = process.env.MCP_ALLOWED_HOSTS;
+  process.env.MCP_ALLOWED_HOSTS = "mcp.example.test";
+  try {
+    const rejected = await POST(request());
+    assert.equal(rejected.status, 403);
+    assert.match(await rejected.text(), /Host non consentito/);
+  } finally {
+    if (previous === undefined) delete process.env.MCP_ALLOWED_HOSTS;
+    else process.env.MCP_ALLOWED_HOSTS = previous;
+  }
+});
+
+test("MCP endpoint does not trust a client supplied forwarded host", async () => {
+  const previous = process.env.MCP_ALLOWED_HOSTS;
+  process.env.MCP_ALLOWED_HOSTS = "mcp.example.test";
+  try {
+    const response = await POST(new Request("https://evil.test/api/mcp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+        Host: "evil.test",
+        "X-Forwarded-Host": "mcp.example.test",
+      },
+      body: requestBody,
+    }));
+    assert.equal(response.status, 403);
+    assert.match(await response.text(), /Host non consentito/);
+  } finally {
+    if (previous === undefined) delete process.env.MCP_ALLOWED_HOSTS;
+    else process.env.MCP_ALLOWED_HOSTS = previous;
+  }
+});
+
 test("MCP endpoint rejects an oversized declared body", async () => {
   const response = await POST(request({ "Content-Length": "1000001" }));
   assert.equal(response.status, 413);
@@ -34,6 +92,22 @@ test("MCP endpoint rejects an oversized declared body", async () => {
 test("MCP endpoint enforces the body limit when Content-Length is absent", async () => {
   const response = await POST(request({}, "x".repeat(1_000_001)));
   assert.equal(response.status, 413);
+});
+
+test("MCP endpoint converts a broken request stream into a controlled response", async () => {
+  const body = new ReadableStream({
+    start(controller) {
+      controller.error(new Error("synthetic disconnect"));
+    },
+  });
+  const response = await POST(new Request("https://example.test/api/mcp", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+    duplex: "half",
+  }));
+  assert.equal(response.status, 400);
+  assert.match(await response.text(), /interrotta o non leggibile/);
 });
 
 test("MCP endpoint exposes the read-only tools over Streamable HTTP", async () => {
@@ -104,6 +178,22 @@ test("MCP endpoint executes a modern tool call with mirrored request headers", a
   assert.equal(response.status, 200);
   assert.match(body, /"resultType":"complete"/);
   assert.match(body, /SIOPE \/ SIOPE\+/);
+});
+
+test("MCP endpoint rejects filters unsupported by the selected dataset", async () => {
+  const response = await POST(request({}, JSON.stringify({
+    jsonrpc: "2.0",
+    id: 8,
+    method: "tools/call",
+    params: {
+      name: "query_dataset",
+      arguments: { dataset: "opencoesione_progetti", year: 2025 },
+    },
+  })));
+  const body = await response.text();
+  assert.equal(response.status, 200);
+  assert.match(body, /Filtri non supportati/);
+  assert.match(body, /year/);
 });
 
 test("MCP endpoint reads the catalog resource with the modern protocol", async () => {

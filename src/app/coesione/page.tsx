@@ -94,7 +94,7 @@ export default function CohesionPage() {
       <div className={styles.tables}>
         <section className="panel">
           <h2 className="panel-title">Dove vanno questi soldi · per tema</h2>
-          <div className="table-scroll">
+          <div className="table-scroll" role="region" aria-label="Spesa di coesione per tema" tabIndex={0}>
             <table className="table">
               <thead>
                 <tr>
@@ -120,7 +120,7 @@ export default function CohesionPage() {
 
         <section className="panel">
           <h2 className="panel-title">Come vengono spesi · per natura</h2>
-          <div className="table-scroll">
+          <div className="table-scroll" role="region" aria-label="Spesa di coesione per natura" tabIndex={0}>
             <table className="table">
               <thead>
                 <tr>
@@ -176,7 +176,7 @@ export default function CohesionPage() {
         <section className="panel">
           <h2 className="panel-title">La serie storica · cumulata</h2>
           <CohesionHistoryChart data={snapshot.annualSeries} />
-          <div className="table-scroll">
+          <div className="table-scroll" role="region" aria-label="Serie annuale OpenCoesione" tabIndex={0}>
             <table className="table">
               <thead>
                 <tr>

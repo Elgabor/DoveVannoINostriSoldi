@@ -139,7 +139,7 @@
   text-transform: uppercase;
   color: var(--color-neutral-700);
 }
-.method summary:hover { color: var(--color-accent); }
+.method summary:hover { color: var(--color-accent-700); }
 .method p {
   margin: var(--space-3) 0 0;
   font-size: 13px;

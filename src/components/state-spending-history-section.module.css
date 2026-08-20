@@ -21,7 +21,7 @@
 
 .header h2 {
   margin: 6px 0 0;
-  color: var(--color-neutral-100);
+  color: var(--color-text);
   font-size: 27px;
   font-weight: 560;
   letter-spacing: -.03em;
@@ -73,7 +73,7 @@
 
 .metrics strong {
   margin: 9px 0 4px;
-  color: var(--color-neutral-100);
+  color: var(--color-text);
   font-size: 23px;
   font-weight: 550;
   letter-spacing: -.025em;
@@ -156,7 +156,7 @@
 .error strong {
   display: block;
   margin-bottom: 7px;
-  color: var(--color-neutral-100);
+  color: var(--color-text);
   font-size: 15px;
 }
 

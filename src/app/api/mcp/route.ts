@@ -17,9 +17,17 @@ const handler = createMcpHandler(createDvnsMcpServer, {
   onerror: reportMcpError,
 });
 
-function secureResponse(response: Response): Response {
+function secureResponse(response: Response, request?: Request): Response {
   response.headers.set("Cache-Control", "private, no-store");
   response.headers.set("X-Content-Type-Options", "nosniff");
+  if (request) {
+    const origin = request.headers.get("origin");
+    const normalized = origin ? normalizedOrigin(origin) : null;
+    if (normalized && allowedOrigins(request).has(normalized)) {
+      response.headers.set("Access-Control-Allow-Origin", normalized);
+      response.headers.append("Vary", "Origin");
+    }
+  }
   return response;
 }
 
@@ -42,9 +50,35 @@ function allowedOrigins(request: Request): Set<string> {
   return new Set([new URL(request.url).origin, ...configured]);
 }
 
+function normalizedHost(value: string): string | null {
+  const candidate = value.trim().toLocaleLowerCase("en-US").replace(/\.$/, "");
+  if (!candidate || /[\s/@]/.test(candidate)) return null;
+  return candidate;
+}
+
+function allowedHosts(request: Request): Set<string> {
+  const configured = [
+    ...(process.env.MCP_ALLOWED_HOSTS ?? "").split(","),
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    process.env.VERCEL_URL,
+  ]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .map((value) => value.replace(/^https?:\/\//i, ""))
+    .map(normalizedHost)
+    .filter((value): value is string => value !== null);
+
+  if (configured.length > 0) return new Set(configured);
+  return new Set([new URL(request.url).host.toLocaleLowerCase("en-US")]);
+}
+
 function validateRequest(request: Request): Response | null {
+  const host = normalizedHost(request.headers.get("host") ?? new URL(request.url).host);
+  if (!host || !allowedHosts(request).has(host)) {
+    return Response.json({ error: "Host non consentito" }, { status: 403 });
+  }
   const origin = request.headers.get("origin");
-  if (origin && !allowedOrigins(request).has(origin)) {
+  const normalized = origin ? normalizedOrigin(origin) : null;
+  if (origin && (!normalized || !allowedOrigins(request).has(normalized))) {
     return Response.json({ error: "Origin non consentita" }, { status: 403 });
   }
   const declaredLength = request.headers.get("content-length");
@@ -92,9 +126,31 @@ async function requestWithBoundedBody(request: Request): Promise<Request | Respo
 
 export async function POST(request: Request) {
   const rejected = validateRequest(request);
-  if (rejected) return secureResponse(rejected);
-  const boundedRequest = await requestWithBoundedBody(request);
-  if (boundedRequest instanceof Response) return secureResponse(boundedRequest);
+  if (rejected) return secureResponse(rejected, request);
+  let boundedRequest: Request | Response;
+  try {
+    boundedRequest = await requestWithBoundedBody(request);
+  } catch {
+    return secureResponse(Response.json(
+      { error: "Richiesta interrotta o non leggibile" },
+      { status: 400 },
+    ), request);
+  }
+  if (boundedRequest instanceof Response) return secureResponse(boundedRequest, request);
 
-  return secureResponse(await handler.fetch(boundedRequest));
+  return secureResponse(await handler.fetch(boundedRequest), request);
+}
+
+export function OPTIONS(request: Request) {
+  const rejected = validateRequest(request);
+  if (rejected) return secureResponse(rejected, request);
+
+  const response = new Response(null, { status: 204 });
+  response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  response.headers.set(
+    "Access-Control-Allow-Headers",
+    "Accept, Content-Type, Last-Event-ID, MCP-Method, MCP-Name, MCP-Protocol-Version, MCP-Session-ID",
+  );
+  response.headers.set("Access-Control-Max-Age", "600");
+  return secureResponse(response, request);
 }

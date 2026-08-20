@@ -225,6 +225,42 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
               maxItems={10}
               height={430}
             />
+            <div className={`table-scroll ${styles.administrationTable}`} tabIndex={0}>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Amministrazione</th>
+                    <th>Pagato</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {snapshot.administrations.map((administration) => {
+                    const identity = administration.identity;
+                    const content = (
+                      <>
+                        <strong>{administration.label}</strong>
+                        {identity && <small>Collegamento IPA verificato</small>}
+                      </>
+                    );
+
+                    return (
+                      <tr key={administration.code || administration.label}>
+                        <td>
+                          {administration.code ? (
+                            <Link
+                              href={`/stato/amministrazioni/${encodeURIComponent(administration.code)}?anno=${snapshot.period.year}&mese=${snapshot.period.month}`}
+                            >
+                              {content}
+                            </Link>
+                          ) : content}
+                        </td>
+                        <td>{compactEuro(administration.value)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div className={styles.chartBlock}>

@@ -17,7 +17,7 @@ La schermata deve far capire rapidamente:
 
 Una sola metrica può dominare una superficie. Le altre diventano confronti, serie, metadata o dettagli. Grafici e mappe devono ridurre il tempo necessario per capire un pattern, mai decorare uno spazio vuoto.
 
-Il tricolore nell'header è una firma di identità. Non è la palette delle visualizzazioni.
+Il marchio “Confluenza” porta il tricolore nell'header come firma di identità. Nell'interfaccia usa la variante trasparente; favicon e icone installabili conservano il fondale inchiostro. Il punto azzurro appartiene all'asset ufficiale e non introduce un nuovo colore nell'interfaccia. Il tricolore non è la palette delle visualizzazioni.
 
 I token vivono in `src/app/design-system.css`; la base e la chrome dell'applicazione in `src/app/globals.css`. Nessun colore va scritto a mano in un componente: se manca un token, si aggiunge lì.
 
@@ -106,7 +106,7 @@ La gerarchia si costruisce con il fondo e una linea da 1px, non con l'ombra:
 
 ### Navigation
 
-Header su una riga: marchio, tricolore, ricerca, azione. Sotto, la barra delle sezioni con sottolineatura accentata sulla voce corrente. Sotto i 900px l'header va a capo e la ricerca prende tutta la riga; la barra delle sezioni scorre orizzontalmente senza scrollbar visibile.
+Header su una riga: marchio con firma tricolore, ricerca, azione. Sotto, la barra delle sezioni con sottolineatura accentata sulla voce corrente. Sotto i 900px l'header va a capo e la ricerca prende tutta la riga; la barra delle sezioni scorre orizzontalmente senza scrollbar visibile.
 
 ### Dashboard
 

@@ -5,9 +5,119 @@
   align-items: stretch;
 }
 
+.yearFilter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.yearFilter > span {
+  color: var(--color-neutral-600);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.yearFilter > div {
+  display: inline-flex;
+  border: 1px solid var(--color-neutral-400);
+}
+
+.yearFilter a {
+  display: grid;
+  min-width: 56px;
+  min-height: 38px;
+  place-items: center;
+  padding-inline: 10px;
+  color: var(--color-neutral-700);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: color 140ms var(--ease-out), background-color 140ms var(--ease-out);
+}
+
+.yearFilter a + a {
+  border-left: 1px solid var(--color-neutral-300);
+}
+
+.yearFilter a:hover {
+  color: var(--color-text);
+  background: var(--color-neutral-200);
+}
+
+.yearFilter a[aria-current="page"] {
+  color: var(--color-raised);
+  background: var(--color-accent);
+}
+
 .signals article {
   display: flex;
   flex-direction: column;
+}
+
+.readingGuide summary,
+.signalDetails summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.readingGuide summary {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: var(--font-heading-weight);
+}
+
+.readingGuide > p {
+  max-width: 74ch;
+  margin: var(--space-3) 0;
+  color: var(--color-neutral-700);
+  font-size: 13px;
+}
+
+.readingGuide dl,
+.signalDetails dl {
+  margin: 0;
+}
+
+.readingGuide dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 0 var(--space-5);
+  border-top: 1px solid var(--color-neutral-300);
+}
+
+.readingGuide dl > div {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-neutral-200);
+}
+
+.readingGuide dt,
+.signalDetails dt {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.readingGuide dd,
+.signalDetails dd {
+  margin: 4px 0 0;
+  color: var(--color-neutral-700);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.signalKind {
+  align-self: flex-start;
+  margin-bottom: var(--space-2);
+  padding: 4px 7px;
+  border: 1px solid var(--color-neutral-400);
+  color: var(--color-neutral-700);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 /* The tone says what kind of number this is: something measured, something to
@@ -39,6 +149,22 @@
   margin: 0 0 var(--space-3);
   font-size: 13px;
   color: var(--color-neutral-800);
+}
+
+.signalDetails {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--color-neutral-200);
+  border-bottom: 1px solid var(--color-neutral-200);
+  font-size: 12px;
+}
+
+.signalDetails dl {
+  padding-top: var(--space-2);
+}
+
+.signalDetails dl > div + div {
+  margin-top: var(--space-2);
 }
 
 /* Caveat then source, stacked: a long institution name must never squeeze the
@@ -87,6 +213,44 @@
   color: var(--color-neutral-600);
 }
 
+.unavailable {
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--color-neutral-200);
+  border-bottom: 1px solid var(--color-neutral-200);
+}
+
+.unavailable strong {
+  display: block;
+  margin-bottom: var(--space-2);
+}
+
+.unavailable p {
+  max-width: 75ch;
+  margin: 0;
+  color: var(--color-neutral-700);
+}
+
+.procurementTable {
+  margin-top: var(--space-6);
+}
+
+.procurementTable table {
+  min-width: 760px;
+}
+
+.procurementTable caption,
+.scenarioMethod caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .scenarios {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -107,6 +271,26 @@
   color: var(--color-neutral-600);
 }
 
+.scenarioMethod {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-neutral-200);
+}
+
+.scenarioMethod summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.scenarioMethod > div {
+  margin-top: var(--space-3);
+}
+
+.scenarioMethod table {
+  min-width: 840px;
+}
+
 .breakdown {
   margin: 0;
   padding: 0;
@@ -117,7 +301,7 @@
 }
 .breakdown li {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 140px 92px;
+  grid-template-columns: minmax(0, 1fr) 140px 120px;
   align-items: center;
   gap: var(--space-3);
   font-size: 13px;
@@ -146,9 +330,24 @@
 }
 
 @media (max-width: 620px) {
+  .yearFilter {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .yearFilter > div {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .yearFilter a {
+    flex: 1 0 58px;
+    min-height: 44px;
+  }
+
   .signalValue { font-size: 27px; }
   .breakdown li {
-    grid-template-columns: minmax(0, 1fr) 92px;
+    grid-template-columns: minmax(0, 1fr) 112px;
   }
   .breakdown li > i { display: none; }
 }

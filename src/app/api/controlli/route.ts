@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  auditClassifications,
   auditMethodology,
   auditReviewedAt,
+  auditScenarioBasis,
+  auditScenarioAssumptions,
   auditScenarios,
   auditSignals,
   centralScenarioBreakdown,
   getProcurementAvailability,
   getProcurementComparisonForYear,
+  parseAuditYearQuery,
   procurementComparison,
   procurementComparisons,
+  procurementServicesAndSupplies2025,
 } from "@/lib/audit-data";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +21,10 @@ export const dynamic = "force-dynamic";
 export function GET(request: NextRequest) {
   const area = request.nextUrl.searchParams.get("area")?.trim().toLocaleLowerCase("it-IT");
   const rawYear = request.nextUrl.searchParams.get("anno")?.trim();
-  if (rawYear && !/^\d{4}$/.test(rawYear)) {
+  let requestedYear: number | null;
+  try {
+    requestedYear = parseAuditYearQuery(rawYear ?? null);
+  } catch {
     return NextResponse.json(
       { ok: false, error: "L'anno richiesto non è valido." },
       { status: 400 },
@@ -28,24 +36,26 @@ export function GET(request: NextRequest) {
     if (rawYear && !signal.referenceDate.startsWith(rawYear)) return false;
     return true;
   });
-  const requestedYear = rawYear ? Number.parseInt(rawYear, 10) : null;
-
   return NextResponse.json(
     {
       ok: true,
       reviewedAt: auditReviewedAt,
       filters: { area: area ?? null, year: rawYear ?? null },
       signals,
-      procurementComparison: requestedYear
+      classifications: auditClassifications,
+      procurementComparison: requestedYear !== null
         ? getProcurementComparisonForYear(requestedYear)
         : procurementComparison,
       procurementComparisons,
-      procurementAvailability: requestedYear
+      procurementServicesAndSupplies2025,
+      procurementAvailability: requestedYear !== null
         ? getProcurementAvailability(requestedYear)
         : getProcurementAvailability(procurementComparison.year),
       policyScenarios: {
         items: auditScenarios,
         centralBreakdown: centralScenarioBreakdown,
+        basis: auditScenarioBasis,
+        assumptions: auditScenarioAssumptions,
         meaning: auditMethodology.scenarioMeaning,
       },
       methodology: auditMethodology,

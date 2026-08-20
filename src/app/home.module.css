@@ -147,6 +147,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.spendingDetailsLink {
+  min-height: 44px;
+  margin-top: var(--space-3);
+}
+
 /* ── ranked municipalities ──────────────────────────────────────────────── */
 
 .rankList {

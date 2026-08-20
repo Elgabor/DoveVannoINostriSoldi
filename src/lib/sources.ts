@@ -1,5 +1,3 @@
-export type SourceStatus = "attiva" | "integrazione" | "mappata";
-
 export type PublicSource = {
   slug: string;
   name: string;
@@ -9,7 +7,6 @@ export type PublicSource = {
   coverage: string;
   format: string;
   url: string;
-  status: SourceStatus;
   note: string;
   joinKeys?: string[];
 };
@@ -24,7 +21,6 @@ export const publicSources: PublicSource[] = [
     coverage: "Adapter attivo: pagamenti di cassa dei Comuni",
     format: "ZIP · CSV · classificazioni contabili",
     url: "https://www.siope.it/documenti/siope2/open/last/",
-    status: "attiva",
     note: "Fonte primaria attiva: movimenti mensili nazionali, anagrafiche SIOPE, snapshot comunale versionato e dashboard territoriale.",
   },
   {
@@ -36,33 +32,8 @@ export const publicSources: PublicSource[] = [
     coverage: "Pagamenti dello Stato e ricerca opere pubbliche per CUP",
     format: "CKAN API · OData · CSV · open data",
     url: "https://bdap-opendata.rgs.mef.gov.it/content/api",
-    status: "attiva",
     note: "Connettore attivo: pagamenti dello Stato e dataset nazionale MOP con stato, date, costi e finanziamenti delle opere ricercabili per CUP.",
     joinKeys: ["CUP", "codice fiscale titolare", "codice ente RGS"],
-  },
-  {
-    slug: "anac-bdncp",
-    name: "BDNCP / ANAC Open Data",
-    owner: "ANAC",
-    area: "Contratti e appalti pubblici",
-    cadence: "Dataset aperti mensili; Analytics con cadenza distinta",
-    coverage: "Contratti pubblici nazionali",
-    format: "Open data · CSV/JSON · ricerca CIG",
-    url: "https://www.anticorruzione.it/-/portale-dei-dati-aperti-dell-autorita-nazionale-anticorruzione",
-    status: "integrazione",
-    note: "Per procedure, CIG, stazioni appaltanti, aggiudicazioni, fornitori e ciclo di vita dei contratti.",
-  },
-  {
-    slug: "art-4-bis",
-    name: "Pagamenti art. 4-bis",
-    owner: "Singole amministrazioni · schema ANAC",
-    area: "Pagamenti per tipologia e beneficiario",
-    cadence: "Secondo pubblicazione dell'ente",
-    coverage: "Amministrazioni soggette al D.Lgs. 33/2013",
-    format: "JSON · CSV · XML · PDF",
-    url: "https://guida-servizi.anticorruzione.it/it/help/trasparenza/schemi/art.4-bis/",
-    status: "integrazione",
-    note: "Schema 2026 che rende possibile un crawler nazionale normalizzato dei dati sui pagamenti.",
   },
   {
     slug: "ipa",
@@ -73,7 +44,6 @@ export const publicSources: PublicSource[] = [
     coverage: "PA, gestori di servizi pubblici e altri soggetti censiti",
     format: "JSON · XLSX · Data API",
     url: "https://www.indicepa.gov.it/ipa-dati/dataset/enti",
-    status: "attiva",
     note: "Connettore attivo: ricerca enti, pagina canonica per Codice IPA, API normalizzata e aggregazioni reali.",
     joinKeys: ["Codice IPA", "codice fiscale", "codice ISTAT"],
   },
@@ -86,7 +56,6 @@ export const publicSources: PublicSource[] = [
     coverage: "Unità Organizzative e Aree Organizzative Omogenee degli enti IPA",
     format: "CKAN Data API · XLSX · JSON",
     url: "https://www.indicepa.gov.it/ipa-dati/dataset/unita-organizzative",
-    status: "attiva",
     note: "Connettore attivo nelle schede ente: UO, relazioni padre-figlio dichiarate da IPA e AOO. Non sostituisce i regolamenti di organizzazione dei singoli enti.",
     joinKeys: ["Codice IPA", "Codice UO", "Codice AOO"],
   },
@@ -99,7 +68,6 @@ export const publicSources: PublicSource[] = [
     coverage: "Aggregato nazionale per stati, temi e nature",
     format: "API · CSV · open data",
     url: "https://opencoesione.gov.it/it/opendata/",
-    status: "attiva",
     note: "Dashboard nazionale attiva; nessun drill-down per progetto, soggetto o territorio. Aggiornamento automatico dall'API ufficiale.",
   },
   {
@@ -111,35 +79,8 @@ export const publicSources: PublicSource[] = [
     coverage: "6.557 Comuni delle Regioni a statuto ordinario, annualità 2022",
     format: "ZIP · CSV · XLSX",
     url: "https://www.opencivitas.it/it/open-data",
-    status: "attiva",
     note: "Confronto comunale attivo tra spesa storica e spesa standard, con valori per abitante e livello dei servizi. La differenza non viene presentata come spreco.",
     joinKeys: ["codice ISTAT Comune"],
-  },
-  {
-    slug: "opencup",
-    name: "OpenCUP",
-    owner: "DIPE · Presidenza del Consiglio dei Ministri",
-    area: "Investimenti pubblici e anagrafe CUP",
-    cadence: "Mensile",
-    coverage: "Progetti, localizzazioni, soggetti titolari e fonti di copertura",
-    format: "ZIP · CSV pipe-delimited · XML",
-    url: "https://www.opencup.gov.it/portale/web/opencup/accesso-agli-open-data",
-    status: "mappata",
-    note: "Fonte ufficiale CC BY 4.0 aggiornata mensilmente. Il dataset completo dei progetti supera 1,7 GB: l'integrazione richiede ingestione incrementale e storage esterno, non download durante una richiesta web.",
-    joinKeys: ["CUP", "codice fiscale soggetto titolare"],
-  },
-  {
-    slug: "istat-s13",
-    name: "Classificazione ISTAT S13",
-    owner: "ISTAT · distribuzione OpenBDAP/RGS",
-    area: "Perimetro delle amministrazioni pubbliche",
-    cadence: "Annuale; aggiornamenti anagrafici OpenBDAP distinti",
-    coverage: "Unità istituzionali incluse nel settore S13",
-    format: "OpenBDAP · documentazione e dataset",
-    url: "https://bdap-opendata.rgs.mef.gov.it/content/anagrafica-enti-classificazione-istat-s13",
-    status: "mappata",
-    note: "Fonte censita, senza adapter machine-readable attivo. IPA e S13 descrivono perimetri diversi: l'appartenenza al settore S13 non viene inferita dalla sola presenza in IPA.",
-    joinKeys: ["codice fiscale", "codice ente RGS"],
   },
   {
     slug: "partecipazioni-pubbliche",
@@ -150,59 +91,8 @@ export const publicSources: PublicSource[] = [
     coverage: "Partecipazioni dichiarate dalle amministrazioni e società partecipate",
     format: "Open data elaborabile · rilevazioni annuali",
     url: "https://www.de.mef.gov.it/it/attivita_istituzionali/partecipazioni_pubbliche/open_data_partecipazioni/index.html",
-    status: "attiva",
     note: "Snapshot nazionale attivo: 53.656 relazioni della rilevazione 2023, aggregati e organizzazioni dichiarate da più amministrazioni. Il drill-down completo per singola relazione richiede il successivo indice persistente.",
     joinKeys: ["codice fiscale amministrazione", "codice fiscale società"],
-  },
-  {
-    slug: "partecipazioni-stato",
-    name: "Partecipazioni dirette dello Stato",
-    owner: "MEF · Dipartimento dell'Economia",
-    area: "Partecipazioni societarie del Tesoro",
-    cadence: "Secondo pubblicazione istituzionale",
-    coverage: "Società partecipate direttamente dal Ministero dell'Economia e delle Finanze",
-    format: "Web · documenti istituzionali",
-    url: "https://www.de.mef.gov.it/it/attivita_istituzionali/partecipazioni/elenco_partecipazioni/",
-    status: "mappata",
-    note: "Fonte distinta dal censimento di tutte le partecipazioni pubbliche. Non viene usata per dedurre automaticamente controllo o natura in-house.",
-  },
-  {
-    slug: "anac-in-house-storico",
-    name: "Elenco ANAC in-house · storico",
-    owner: "ANAC",
-    area: "Affidamenti diretti a organismi in-house",
-    cadence: "Archivio cessato il 30 giugno 2023",
-    coverage: "Iscrizioni e provvedimenti dell'elenco ex art. 192 fino alla sua cessazione",
-    format: "Avviso ufficiale · provvedimenti storici",
-    url: "https://www.anticorruzione.it/-/adempimenti-art.-192-del-d.lgs.-n.-50/2016",
-    status: "mappata",
-    note: "ANAC dichiara l'elenco non più operativo dal 1° luglio 2023. Può fornire evidenza storica, mai un badge corrente di società in-house.",
-    joinKeys: ["codice fiscale amministrazione", "codice fiscale organismo"],
-  },
-  {
-    slug: "anac-ausa",
-    name: "AUSA · Stazioni appaltanti",
-    owner: "ANAC",
-    area: "Anagrafe delle stazioni appaltanti",
-    cadence: "Aggiornamento identificativi almeno annuale",
-    coverage: "Stazioni appaltanti e centri di costo censiti da ANAC",
-    format: "Open data · CSV/JSON/TTL",
-    url: "https://www.anticorruzione.it/-/anagrafe-unica-delle-stazioni-appaltanti-ausa-",
-    status: "mappata",
-    note: "Fonte identificativa utile per collegare le stazioni appaltanti. L'iscrizione AUSA non dimostra che un ente o una società sia in-house.",
-    joinKeys: ["codice AUSA", "codice fiscale"],
-  },
-  {
-    slug: "regis",
-    name: "ReGiS / PNRR Open Data",
-    owner: "MEF · Italia Domani / catalogo nazionale",
-    area: "PNRR",
-    cadence: "Estratti periodici",
-    coverage: "Progetti finanziati dal PNRR",
-    format: "Open data",
-    url: "https://open.gov.it/governo-aperto/piano-nazionale/6nap/azione-3/impegno-6",
-    status: "mappata",
-    note: "Dati finanziari, fisici e procedurali dei progetti PNRR pubblicati come estrazioni dal sistema ReGiS.",
   },
   {
     slug: "consulenti",
@@ -213,7 +103,6 @@ export const publicSources: PublicSource[] = [
     coverage: "Statistiche nazionali annuali per consulenti esterni e incarichi ai dipendenti PA",
     format: "API JSON · export open data",
     url: "https://consulentipubblici.dfp.gov.it/progetto",
-    status: "attiva",
     note: "Snapshot nazionale attivo dal 2023: incarichi, somme erogate comunicate, incarichi conclusi e principali ripartizioni. L'anno corrente è parziale e può cambiare con nuove comunicazioni.",
   },
   {
@@ -225,26 +114,10 @@ export const publicSources: PublicSource[] = [
     coverage: "Bilancio e amministrazione della Camera",
     format: "Web · documenti",
     url: "https://trasparenza.camera.it/bilancio-della-camera",
-    status: "attiva",
     note: "Conto consuntivo 2025 e bilancio 2026 collegati ai documenti ufficiali. Gli importi strutturati mantengono arrotondamenti e significato contabile della Camera.",
-  },
-  {
-    slug: "senato",
-    name: "Spese e trasparenza",
-    owner: "Senato della Repubblica",
-    area: "Parlamento",
-    cadence: "Secondo pubblicazione istituzionale",
-    coverage: "Bilancio e amministrazione del Senato",
-    format: "Web · documenti",
-    url: "https://www.senato.it/relazioni-con-i-cittadini/spese-trasparenza/spese-e-trasparenza",
-    status: "integrazione",
-    note: "Rendiconto 2024 e bilancio 2025 sono collegati ai documenti ufficiali. I valori restano non strutturati finché il formato non può essere normalizzato in modo stabile.",
   },
 ];
 
 export const sourceCounts = {
   total: publicSources.length,
-  active: publicSources.filter((source) => source.status === "attiva").length,
-  integrating: publicSources.filter((source) => source.status === "integrazione").length,
-  mapped: publicSources.filter((source) => source.status === "mappata").length,
 };

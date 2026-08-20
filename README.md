@@ -18,7 +18,7 @@ L'AI serve a confrontare dati omogenei, trovare scostamenti e ordinare i casi da
 | Spese dello Stato | Pagamenti per funzione, amministrazione e tipo di spesa | RGS, OpenBDAP |
 | Fabbisogni comunali | Spesa storica, spesa standard e servizi dei Comuni nel 2022 | OpenCivitas |
 | Partecipazioni | Società e organizzazioni partecipate dichiarate dalle amministrazioni | MEF |
-| Parlamento | Consuntivo e bilancio della Camera, documenti di bilancio del Senato | Camera dei deputati, Senato della Repubblica |
+| Parlamento | Consuntivo e bilancio della Camera | Camera dei deputati |
 | Controlli | Dati che meritano verifiche più approfondite, con spiegazioni e fonti | ANAC, MEF, Corte dei conti e altre fonti ufficiali |
 | Fonti | Stato dei collegamenti e date di aggiornamento | Registro interno delle fonti |
 
@@ -31,12 +31,18 @@ Il backend espone inoltre:
 - `GET /api/spese/stato?anno=2024`, con l'ultimo mese OpenBDAP disponibile nell'anno richiesto;
 - `GET /api/spese/stato/amministrazioni/2?anno=2024`, con missioni e categorie di una singola amministrazione;
 - `GET /api/opere?cup=I39B05000060005`, con stato, date, costi e finanziamenti di un'opera pubblica OpenBDAP;
-- `GET /api/parlamento`, con bilanci, consuntivi e documenti ufficiali di Camera e Senato;
+- `GET /api/parlamento`, con i dati strutturati verificati della Camera; il monitor segue anche i nuovi documenti del Senato senza pubblicare valori non ancora estraibili in modo affidabile;
 - `GET /api/controlli`, con indicatori classificati, scenari separati e regole per il loro uso.
 
 Per OpenCivitas, la differenza tra spesa storica e spesa standard non viene chiamata spreco. L'API restituisce anche i valori per abitante, il confronto sui servizi e i limiti territoriali della fonte.
 
 Per le opere pubbliche, l'API può segnalare date da controllare, crescita dei costi, finanziamenti ancora da trovare o problemi di qualità del dato. Sono indicazioni per scegliere cosa approfondire, non prove automatiche di spreco.
+
+La sezione Controlli tiene separate sette letture: esiti di controlli ufficiali, concorrenza ridotta, ritardi, debiti, crediti difficili da riscuotere, misure da valutare e ipotesi di miglioramento. Gli scenari non vengono sommati ai dati osservati.
+
+Non confrontiamo come prezzi unitari gli importi totali di contratti con lo stesso codice CPV. Per parlare di anomalia di prezzo servono anche quantità, unità di misura, specifiche, durata e perimetro compatibili. Finché questi campi non sono disponibili, il sito non pubblica classifiche basate sul solo rapporto tra importo minimo e massimo.
+
+La replica sui microdati CIG 2025, con formula, filtri e limiti, è documentata in [docs/research/ANAC_2025_REPLICATION.md](docs/research/ANAC_2025_REPLICATION.md). Quando il risultato ricalcolato non coincide con l'aggregato della relazione ANAC, mostriamo la differenza invece di correggere il dato a mano.
 
 ## Scegliere l'anno
 
@@ -95,6 +101,7 @@ python3 scripts/etl/opencoesione_snapshot.py --check
 python3 scripts/etl/mef_participations_snapshot.py --check
 python3 scripts/etl/consulenti_snapshot.py --check
 python3 scripts/etl/opencivitas_snapshot.py --check
+python3 scripts/etl/parliament_sources.py --check
 ```
 
 Le attività automatiche controllano periodicamente la presenza di nuovi dati. Un'interruzione di una fonte esterna non viene confusa con un errore del codice.

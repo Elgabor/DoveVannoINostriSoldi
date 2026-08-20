@@ -56,34 +56,11 @@
           "meaning": "Sono previsioni approvate, non pagamenti già effettuati. Gli importi evidenziati non formano una ripartizione completa del totale."
         }
       ]
-    },
-    {
-      "id": "senato",
-      "name": "Senato della Repubblica",
-      "structuredStatus": "source-documents-only",
-      "landingUrl": "https://www.senato.it/relazioni-con-i-cittadini/spese-trasparenza/spese-e-trasparenza",
-      "procedureUrl": "https://www.senato.it/leggi-e-documenti/attivita-non-legislative/procedure?documentoId=54898",
-      "statements": [
-        {
-          "kind": "account",
-          "year": 2024,
-          "title": "Rendiconto delle entrate e delle spese del Senato per il 2024",
-          "documentUrl": "https://www.senato.it/service/PDF/PDFServer/DF/445856.pdf",
-          "meaning": "Il documento ufficiale è collegato. I valori non sono ancora normalizzati perché la fonte non offre una tabella aperta stabile."
-        },
-        {
-          "kind": "budget",
-          "year": 2025,
-          "title": "Progetto di bilancio interno del Senato per il 2025",
-          "documentUrl": "https://www.senato.it/service/PDF/PDFServer/DF/445857.pdf",
-          "meaning": "Il documento ufficiale è collegato. Le previsioni non vengono confuse con pagamenti effettivi."
-        }
-      ]
     }
   ],
   "methodology": {
     "comparability": "Camera e Senato hanno bilanci autonomi e documenti con strutture diverse. I loro importi non vengono sommati automaticamente.",
-    "missingData": "Un valore non ancora normalizzato resta assente. Non viene stimato.",
+    "missingData": "Pubblichiamo un ramo parlamentare soltanto quando i valori ufficiali sono stati normalizzati e verificati. Un valore mancante non viene stimato.",
     "publicationCheck": "Le pagine ufficiali vengono controllate per individuare nuovi documenti. Ogni nuova struttura deve superare il contratto dati prima della pubblicazione."
   }
 }

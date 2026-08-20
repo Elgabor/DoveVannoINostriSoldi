@@ -93,6 +93,16 @@ export default async function MoneyPage({
         </div>
       </div>
 
+      <div className="notice">
+        <strong>Quali spese vuoi vedere?</strong>
+        <p>
+          Questa pagina riguarda i Comuni. Per gli altri livelli puoi aprire le{" "}
+          <Link href="/stato">spese delle amministrazioni centrali</Link> oppure le{" "}
+          <Link href="/parlamento">spese del Parlamento</Link>. I totali restano separati perché
+          arrivano da contabilità diverse.
+        </p>
+      </div>
+
       <div className={styles.split}>
         <section className="panel">
           <h2 className="panel-title">Le {data.titles.length} voci di uscita</h2>

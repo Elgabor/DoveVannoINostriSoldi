@@ -166,6 +166,16 @@ export default async function TerritoriesPage({
         </div>
       </div>
 
+      <div className="notice">
+        <strong>Confronta spesa e fabbisogno standard</strong>
+        <p>
+          Per i Comuni delle Regioni a statuto ordinario puoi confrontare la spesa storica con il
+          fabbisogno calcolato da OpenCivitas. Il confronto include importo totale, valore per
+          abitante, percentuale e livello dei servizi.{" "}
+          <Link href="/territori/confronto">Apri il confronto tra Comuni →</Link>
+        </p>
+      </div>
+
       <section className="panel">
         <h2 className="panel-title">Quanto del registro stiamo leggendo</h2>
         <div className={styles.coverage}>

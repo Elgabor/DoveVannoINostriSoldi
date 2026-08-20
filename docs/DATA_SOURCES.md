@@ -159,9 +159,9 @@ Camera Trasparente pubblica informazioni su bilancio, amministrazione e procedur
 Per il consuntivo sono disponibili pagamenti e categorie arrotondati come nel documento ufficiale. Il totale degli impegni comprende anche le partite di giro, mentre le categorie pubblicate riguardano la spesa effettiva. Per il bilancio 2026 gli importi sono previsioni, non pagamenti già effettuati.
 
 ### Senato della Repubblica
-La sezione Spese e trasparenza pubblica bilancio, conto consuntivo e informazioni sul trattamento economico dei senatori. L'API collega il rendiconto 2024 e il bilancio 2025 ai documenti ufficiali.
+La sezione Spese e trasparenza pubblica bilancio, conto consuntivo e informazioni sul trattamento economico dei senatori. Il monitor interno controlla i metadati dei nuovi documenti ufficiali e li registra nel manifesto della pipeline.
 
-I valori del Senato non sono ancora normalizzati. La pubblicazione istituzionale non offre al momento una tabella aperta stabile e l'accesso automatico ai PDF può essere bloccato. Il portale mostra quindi i documenti senza estrarre o stimare importi. Camera e Senato hanno bilanci autonomi e non vengono sommati automaticamente.
+I valori del Senato non sono ancora normalizzati e non compaiono nell'API o nella pagina pubblica. La pubblicazione istituzionale non offre al momento una tabella aperta stabile e l'accesso automatico ai PDF può essere bloccato. Non estraiamo né stimiamo importi finché il formato non è verificabile. Camera e Senato hanno bilanci autonomi e non verranno sommati automaticamente.
 
 ## Fonti successive
 

@@ -3,6 +3,9 @@ import Link from "next/link";
 import { shortDate } from "@/lib/format";
 import { mefParticipationsSnapshot } from "@/lib/mef-participations-snapshot";
 import { openCoesioneSnapshot } from "@/lib/opencoesione-snapshot";
+import { openCivitasSnapshot } from "@/lib/opencivitas-snapshot";
+import { consulentiSnapshot } from "@/lib/consulenti-snapshot";
+import { parliamentSnapshot } from "@/lib/parliament-snapshot";
 import { siopeMunicipalSnapshot } from "@/lib/siope-snapshot";
 import { publicSources, sourceCounts } from "@/lib/sources";
 import styles from "./fonti.module.css";
@@ -12,19 +15,16 @@ export const metadata: Metadata = {
   description: "Da dove arrivano i dati, quanto spesso cambiano e quali fonti sono già collegate.",
 };
 
-const statusLabel = {
-  attiva: "Attiva",
-  integrazione: "In arrivo",
-  mappata: "Individuata",
-};
-
-/* Only the sources with a working adapter can report a real "last data" date;
-   the others show an em dash rather than a guess. */
+/* A missing date means that the adapter discovers the latest release at request
+   time. It never means that the source is waiting to be connected. */
 const latestDataBySlug: Record<string, string | null> = {
   siope: siopeMunicipalSnapshot.source.siopeMovementsLastModified,
   ipa: siopeMunicipalSnapshot.source.ipaLastModified,
   opencoesione: openCoesioneSnapshot.referenceDate,
+  opencivitas: openCivitasSnapshot.publishedAt,
   "partecipazioni-pubbliche": mefParticipationsSnapshot.publishedAt,
+  consulenti: consulentiSnapshot.source.observedAt,
+  camera: parliamentSnapshot.observedAt,
 };
 
 export default function SourcesPage() {
@@ -40,20 +40,9 @@ export default function SourcesPage() {
 
       <div className="stat-strip">
         <div>
-          <span className="stat-label">Fonti nel registro</span>
+          <span className="stat-label">Fonti collegate</span>
           <span className="stat-value">{sourceCounts.total}</span>
-        </div>
-        <div>
-          <span className="stat-label">Già collegate</span>
-          <span className="stat-value">{sourceCounts.active}</span>
-        </div>
-        <div>
-          <span className="stat-label">In lavorazione</span>
-          <span className="stat-value">{sourceCounts.integrating}</span>
-        </div>
-        <div>
-          <span className="stat-label">Da collegare</span>
-          <span className="stat-value">{sourceCounts.mapped}</span>
+          <span className="stat-note">tutte con un adapter operativo</span>
         </div>
       </div>
 
@@ -67,7 +56,6 @@ export default function SourcesPage() {
                 <th scope="col">Chi la pubblica</th>
                 <th scope="col">Ogni quanto esce</th>
                 <th scope="col">Ultimo dato</th>
-                <th scope="col">Stato</th>
               </tr>
             </thead>
             <tbody>
@@ -84,11 +72,8 @@ export default function SourcesPage() {
                     <td>{source.coverage}</td>
                     <td>{source.owner}</td>
                     <td>{source.cadence}</td>
-                    <td className={styles.latest}>{latest ? shortDate(latest) : "non ancora collegata"}</td>
-                    <td>
-                      <span className={`status status-${source.status}`}>
-                        {statusLabel[source.status]}
-                      </span>
+                    <td className={styles.latest}>
+                      {latest ? shortDate(latest) : "scoperta automatica"}
                     </td>
                   </tr>
                 );
@@ -117,8 +102,8 @@ export default function SourcesPage() {
         <section className="panel">
           <h2 className="panel-title">Licenze e riuso</h2>
           <p>
-            I dati sono pubblicati dalle fonti con licenza CC BY 4.0 o equivalente: liberi da
-            riusare citando la fonte. Il codice di questa piattaforma è open source su{" "}
+            Ogni dato mantiene le condizioni di riuso indicate dalla fonte che lo pubblica. Il
+            codice di questa piattaforma è open source su{" "}
             <a
               href="https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi"
               target="_blank"
@@ -134,32 +119,13 @@ export default function SourcesPage() {
       <section className="panel">
         <h2 className="panel-title">Collegamenti diretti alle fonti</h2>
         <ul className={styles.linkList}>
-          <li>
-            <a href={siopeMunicipalSnapshot.source.siopeMovementsUrl} target="_blank" rel="noreferrer">
-              SIOPE · movimenti uscite {siopeMunicipalSnapshot.year} <i aria-hidden="true">↗</i>
-            </a>
-          </li>
-          <li>
-            <a href={siopeMunicipalSnapshot.source.siopeRegistryUrl} target="_blank" rel="noreferrer">
-              SIOPE · anagrafiche enti <i aria-hidden="true">↗</i>
-            </a>
-          </li>
-          <li>
-            <a href={siopeMunicipalSnapshot.source.ipaUrl} target="_blank" rel="noreferrer">
-              IPA · elenco amministrazioni <i aria-hidden="true">↗</i>
-            </a>
-          </li>
-          <li>
-            <a href={openCoesioneSnapshot.source.endpoint} target="_blank" rel="noreferrer">
-              OpenCoesione · aggregati nazionali <i aria-hidden="true">↗</i>
-            </a>
-          </li>
-          <li>
-            <a href={mefParticipationsSnapshot.source.landingUrl} target="_blank" rel="noreferrer">
-              MEF · open data partecipazioni {mefParticipationsSnapshot.referenceYear}{" "}
-              <i aria-hidden="true">↗</i>
-            </a>
-          </li>
+          {publicSources.map((source) => (
+            <li key={source.slug}>
+              <a href={source.url} target="_blank" rel="noreferrer">
+                {source.name} · {source.owner} <i aria-hidden="true">↗</i>
+              </a>
+            </li>
+          ))}
         </ul>
       </section>
 

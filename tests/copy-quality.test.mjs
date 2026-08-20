@@ -26,6 +26,11 @@ test("public copy avoids old branding, dash separators and known filler phrases"
     /—|–/,
     /Sei numeri, sei significati diversi/i,
     /La dashboard principale resta valida/i,
+    /\b85,4%\b/,
+    /\b(?:129|142|155|165|195|200)x differenza\b/i,
+    /muro (?:dei|del) 39[.\s]?900/i,
+    /potenzialmente frazionati/i,
+    /cimitero dei progetti/i,
   ];
 
   for (const file of files) {

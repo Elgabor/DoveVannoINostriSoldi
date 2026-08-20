@@ -3,20 +3,11 @@ export type SourceId =
   | "ipa-struttura"
   | "openbdap"
   | "siope"
-  | "anac-bdncp"
-  | "art-4-bis"
   | "opencoesione"
   | "opencivitas"
-  | "opencup"
-  | "regis"
   | "consulenti"
   | "camera"
-  | "senato"
-  | "istat-s13"
-  | "partecipazioni-pubbliche"
-  | "partecipazioni-stato"
-  | "anac-in-house-storico"
-  | "anac-ausa";
+  | "partecipazioni-pubbliche";
 
 export type SourceCadence =
   | "giornaliera"
@@ -117,37 +108,6 @@ export const SOURCE_POLICIES: Readonly<Record<SourceId, SourcePolicy>> = {
     maxRetries: 1,
     tags: ["source:siope", "domain:local-spending"],
   },
-  "anac-bdncp": {
-    id: "anac-bdncp",
-    label: "ANAC / BDNCP",
-    owner: "ANAC",
-    sourceUrl:
-      "https://www.anticorruzione.it/-/portale-dei-dati-aperti-dell-autorita-nazionale-anticorruzione",
-    cadence: "mensile",
-    cadenceNote:
-      "I dataset aperti scaricabili del portale ANAC dichiarano aggiornamento mensile; Analytics ha una frequenza distinta.",
-    discoveryRevalidateSeconds: 3 * HOUR,
-    dataRevalidateSeconds: 12 * HOUR,
-    staleAfterSeconds: 45 * DAY,
-    timeoutMs: 15_000,
-    maxRetries: 1,
-    tags: ["source:anac-bdncp", "domain:contracts"],
-  },
-  "art-4-bis": {
-    id: "art-4-bis",
-    label: "Pagamenti art. 4-bis",
-    owner: "Singole amministrazioni · schema ANAC",
-    sourceUrl: "https://guida-servizi.anticorruzione.it/it/help/trasparenza/schemi/art.4-bis/",
-    cadence: "per-amministrazione",
-    cadenceNote:
-      "La frequenza effettiva dipende dalla pubblicazione della singola amministrazione.",
-    discoveryRevalidateSeconds: 3 * HOUR,
-    dataRevalidateSeconds: 6 * HOUR,
-    staleAfterSeconds: null,
-    timeoutMs: 12_000,
-    maxRetries: 1,
-    tags: ["source:art-4-bis", "domain:payments"],
-  },
   opencoesione: {
     id: "opencoesione",
     label: "OpenCoesione",
@@ -176,35 +136,6 @@ export const SOURCE_POLICIES: Readonly<Record<SourceId, SourcePolicy>> = {
     timeoutMs: 60_000,
     maxRetries: 1,
     tags: ["source:opencivitas", "domain:municipal-standard-needs"],
-  },
-  opencup: {
-    id: "opencup",
-    label: "OpenCUP",
-    owner: "DIPE · Presidenza del Consiglio dei Ministri",
-    sourceUrl: "https://www.opencup.gov.it/portale/web/opencup/accesso-agli-open-data",
-    cadence: "mensile",
-    cadenceNote:
-      "OpenCUP dichiara aggiornamento mensile; il rilascio comprende progetti, localizzazioni, soggetti e fonti di copertura.",
-    discoveryRevalidateSeconds: 6 * HOUR,
-    dataRevalidateSeconds: DAY,
-    staleAfterSeconds: 45 * DAY,
-    timeoutMs: 15_000,
-    maxRetries: 1,
-    tags: ["source:opencup", "domain:public-investments"],
-  },
-  regis: {
-    id: "regis",
-    label: "ReGiS / PNRR Open Data",
-    owner: "MEF",
-    sourceUrl: "https://open.gov.it/governo-aperto/piano-nazionale/6nap/azione-3/impegno-6",
-    cadence: "periodica",
-    cadenceNote: "Le pubblicazioni sono estrazioni periodiche da ReGiS; non assegniamo una soglia stale arbitraria.",
-    discoveryRevalidateSeconds: 6 * HOUR,
-    dataRevalidateSeconds: 12 * HOUR,
-    staleAfterSeconds: null,
-    timeoutMs: 15_000,
-    maxRetries: 1,
-    tags: ["source:regis", "domain:pnrr"],
   },
   consulenti: {
     id: "consulenti",
@@ -235,34 +166,6 @@ export const SOURCE_POLICIES: Readonly<Record<SourceId, SourcePolicy>> = {
     maxRetries: 1,
     tags: ["source:camera", "domain:parliament"],
   },
-  senato: {
-    id: "senato",
-    label: "Senato · Spese e trasparenza",
-    owner: "Senato della Repubblica",
-    sourceUrl: "https://www.senato.it/relazioni-con-i-cittadini/spese-trasparenza/spese-e-trasparenza",
-    cadence: "su-pubblicazione",
-    cadenceNote: "Documenti e dati seguono la pubblicazione istituzionale.",
-    discoveryRevalidateSeconds: 6 * HOUR,
-    dataRevalidateSeconds: 12 * HOUR,
-    staleAfterSeconds: null,
-    timeoutMs: 12_000,
-    maxRetries: 1,
-    tags: ["source:senato", "domain:parliament"],
-  },
-  "istat-s13": {
-    id: "istat-s13",
-    label: "Classificazione ISTAT S13",
-    owner: "ISTAT · OpenBDAP/RGS",
-    sourceUrl: "https://bdap-opendata.rgs.mef.gov.it/content/anagrafica-enti-classificazione-istat-s13",
-    cadence: "annuale",
-    cadenceNote: "Fonte censita; nessun adapter anagrafico machine-readable attivo.",
-    discoveryRevalidateSeconds: DAY,
-    dataRevalidateSeconds: DAY,
-    staleAfterSeconds: null,
-    timeoutMs: 12_000,
-    maxRetries: 1,
-    tags: ["source:istat-s13", "domain:entities"],
-  },
   "partecipazioni-pubbliche": {
     id: "partecipazioni-pubbliche",
     label: "Censimento partecipazioni pubbliche",
@@ -276,48 +179,6 @@ export const SOURCE_POLICIES: Readonly<Record<SourceId, SourcePolicy>> = {
     timeoutMs: 60_000,
     maxRetries: 1,
     tags: ["source:partecipazioni-pubbliche", "domain:public-holdings"],
-  },
-  "partecipazioni-stato": {
-    id: "partecipazioni-stato",
-    label: "Partecipazioni dirette dello Stato",
-    owner: "MEF · Dipartimento dell'Economia",
-    sourceUrl: "https://www.de.mef.gov.it/it/attivita_istituzionali/partecipazioni/elenco_partecipazioni/",
-    cadence: "su-pubblicazione",
-    cadenceNote: "Elenco istituzionale corrente senza una cadenza di rilascio garantita.",
-    discoveryRevalidateSeconds: DAY,
-    dataRevalidateSeconds: DAY,
-    staleAfterSeconds: null,
-    timeoutMs: 12_000,
-    maxRetries: 1,
-    tags: ["source:partecipazioni-stato", "domain:public-holdings"],
-  },
-  "anac-in-house-storico": {
-    id: "anac-in-house-storico",
-    label: "Elenco ANAC in-house · storico",
-    owner: "ANAC",
-    sourceUrl: "https://www.anticorruzione.it/-/adempimenti-art.-192-del-d.lgs.-n.-50/2016",
-    cadence: "su-pubblicazione",
-    cadenceNote: "Archivio storico: l'elenco non è più operativo dal 1° luglio 2023.",
-    discoveryRevalidateSeconds: DAY,
-    dataRevalidateSeconds: DAY,
-    staleAfterSeconds: null,
-    timeoutMs: 12_000,
-    maxRetries: 1,
-    tags: ["source:anac-in-house-storico", "domain:public-holdings"],
-  },
-  "anac-ausa": {
-    id: "anac-ausa",
-    label: "AUSA · Stazioni appaltanti",
-    owner: "ANAC",
-    sourceUrl: "https://www.anticorruzione.it/-/anagrafe-unica-delle-stazioni-appaltanti-ausa-",
-    cadence: "annuale",
-    cadenceNote: "Identificativi aggiornati almeno annualmente; AUSA non certifica lo status in-house.",
-    discoveryRevalidateSeconds: DAY,
-    dataRevalidateSeconds: DAY,
-    staleAfterSeconds: null,
-    timeoutMs: 12_000,
-    maxRetries: 1,
-    tags: ["source:anac-ausa", "domain:contracting-authorities"],
   },
 };
 

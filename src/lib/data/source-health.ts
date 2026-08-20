@@ -16,7 +16,7 @@ import { consulentiSnapshot } from "@/lib/consulenti-snapshot";
 import { openCivitasSnapshot } from "@/lib/opencivitas-snapshot";
 import { parliamentSnapshot } from "@/lib/parliament-snapshot";
 
-export type SourceIntegrationState = "active" | "mapped";
+export type SourceIntegrationState = "active";
 export type SourceReachability = "up" | "down" | "not-probed";
 
 export type SourceHealth = {
@@ -56,18 +56,6 @@ type CkanResourceResponse = {
   };
 };
 
-const ACTIVE_SOURCES = new Set<SourceId>([
-  "ipa",
-  "ipa-struttura",
-  "openbdap",
-  "siope",
-  "opencoesione",
-  "opencivitas",
-  "partecipazioni-pubbliche",
-  "consulenti",
-  "camera",
-]);
-
 function text(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const cleaned = value.trim();
@@ -92,7 +80,7 @@ function baseHealth(
     sourceId,
     label: policy.label,
     owner: policy.owner,
-    integration: ACTIVE_SOURCES.has(sourceId) ? "active" : "mapped",
+    integration: "active",
     checkedAt: new Date().toISOString(),
     policy: {
       cadence: policy.cadence,
@@ -327,17 +315,6 @@ async function probeSiope(): Promise<SourceHealth> {
   }
 }
 
-function mappedSource(sourceId: SourceId): SourceHealth {
-  return {
-    ...baseHealth(sourceId),
-    reachability: "not-probed",
-    freshness: freshnessFor(sourceId, null),
-    latencyMs: null,
-    detail: "Adapter dati non ancora attivo: non attribuiamo uno stato di rete artificiale.",
-    recordCount: null,
-  };
-}
-
 function snapshotManagedOpenCoesione(): SourceHealth {
   return {
     ...baseHealth("opencoesione"),
@@ -415,5 +392,9 @@ export async function getSourceHealthOverview(): Promise<SourceHealth[]> {
     ["camera", snapshotManagedCamera()],
   ]);
 
-  return SOURCE_IDS.map((sourceId) => live.get(sourceId) ?? mappedSource(sourceId));
+  return SOURCE_IDS.map((sourceId) => {
+    const health = live.get(sourceId);
+    if (!health) throw new Error(`Adapter operativo senza probe: ${sourceId}`);
+    return health;
+  });
 }

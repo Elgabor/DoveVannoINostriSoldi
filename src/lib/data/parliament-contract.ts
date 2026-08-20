@@ -37,7 +37,7 @@ export type ParliamentStatement = {
 export type ParliamentChamber = {
   id: ChamberId;
   name: string;
-  structuredStatus: "structured-summary" | "source-documents-only";
+  structuredStatus: "structured-summary";
   landingUrl: string;
   procedureUrl?: string;
   statements: ParliamentStatement[];
@@ -74,7 +74,13 @@ function text(value: unknown, field: string): string {
 function officialUrl(value: unknown, field: string): string {
   const raw = text(value, field);
   const url = new URL(raw);
-  if (url.protocol !== "https:" || !OFFICIAL_HOSTS.has(url.hostname.toLowerCase())) {
+  if (
+    url.protocol !== "https:" ||
+    !OFFICIAL_HOSTS.has(url.hostname.toLowerCase()) ||
+    url.username ||
+    url.password ||
+    url.port
+  ) {
     throw new Error(`${field}: URL parlamentare ufficiale atteso`);
   }
   return raw;
@@ -155,6 +161,14 @@ function statement(value: unknown, field: string): ParliamentStatement {
   };
 }
 
+function hasStructuredData(entry: ParliamentStatement): boolean {
+  return Boolean(
+    (entry.values && Object.keys(entry.values).length > 0) ||
+      (entry.categories && entry.categories.length > 0) ||
+      (entry.highlights && entry.highlights.length > 0),
+  );
+}
+
 export function assertParliamentSnapshot(value: unknown): ParliamentSnapshot {
   const record = object(value, "snapshot");
   if (record.schemaVersion !== 1 || record.transformVersion !== 1) {
@@ -165,8 +179,8 @@ export function assertParliamentSnapshot(value: unknown): ParliamentSnapshot {
     throw new Error("snapshot.observedAt: timestamp non valido");
   }
   if (record.unit !== "million-euro") throw new Error("snapshot.unit non valida");
-  if (!Array.isArray(record.chambers) || record.chambers.length !== 2) {
-    throw new Error("snapshot.chambers: Camera e Senato attesi");
+  if (!Array.isArray(record.chambers) || record.chambers.length < 1 || record.chambers.length > 2) {
+    throw new Error("snapshot.chambers: uno o due rami parlamentari attesi");
   }
 
   const chamberIds = new Set<string>();
@@ -178,11 +192,8 @@ export function assertParliamentSnapshot(value: unknown): ParliamentSnapshot {
     }
     if (chamberIds.has(chamber.id)) throw new Error(`${field}.id duplicato`);
     chamberIds.add(chamber.id);
-    if (
-      chamber.structuredStatus !== "structured-summary" &&
-      chamber.structuredStatus !== "source-documents-only"
-    ) {
-      throw new Error(`${field}.structuredStatus non valido`);
+    if (chamber.structuredStatus !== "structured-summary") {
+      throw new Error(`${field}: si possono pubblicare soltanto dati strutturati`);
     }
     if (!Array.isArray(chamber.statements) || chamber.statements.length === 0) {
       throw new Error(`${field}.statements: lista non vuota attesa`);
@@ -190,11 +201,8 @@ export function assertParliamentSnapshot(value: unknown): ParliamentSnapshot {
     const statements = chamber.statements.map((entry, statementIndex) =>
       statement(entry, `${field}.statements[${statementIndex}]`),
     );
-    if (
-      chamber.structuredStatus === "source-documents-only" &&
-      statements.some((entry) => entry.values || entry.categories || entry.highlights)
-    ) {
-      throw new Error(`${field}: una fonte documentale non può esporre valori strutturati`);
+    if (statements.some((entry) => !hasStructuredData(entry))) {
+      throw new Error(`${field}: ogni documento pubblico deve avere valori strutturati`);
     }
     return {
       id: chamber.id,

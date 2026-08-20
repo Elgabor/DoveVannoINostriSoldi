@@ -11,12 +11,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SOURCE_ID_SET = new Set<string>(SOURCE_IDS);
-const DEFAULT_REFRESH_SOURCES: readonly SourceId[] = ["ipa", "openbdap"];
+const DEFAULT_REFRESH_SOURCES: readonly SourceId[] = ["ipa", "openbdap", "siope"];
 
 const SOURCE_PATHS: Readonly<Partial<Record<SourceId, readonly string[]>>> = {
-  ipa: ["/enti"],
+  ipa: ["/enti", "/territori"],
   openbdap: ["/spese"],
-  siope: ["/enti"],
+  siope: ["/territori"],
   "anac-bdncp": ["/"],
   "art-4-bis": ["/enti"],
   opencoesione: ["/enti"],

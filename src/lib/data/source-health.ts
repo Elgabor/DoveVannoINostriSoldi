@@ -49,7 +49,7 @@ type CkanResourceResponse = {
   };
 };
 
-const ACTIVE_SOURCES = new Set<SourceId>(["ipa", "openbdap"]);
+const ACTIVE_SOURCES = new Set<SourceId>(["ipa", "openbdap", "siope"]);
 
 function text(value: unknown): string | null {
   if (typeof value !== "string") return null;
@@ -193,6 +193,49 @@ async function probeOpenBdap(): Promise<SourceHealth> {
   }
 }
 
+async function probeSiope(): Promise<SourceHealth> {
+  const base = baseHealth("siope");
+  const startedAt = performance.now();
+  const year = new Date().getUTCFullYear();
+  const url = `https://www.siope.it/documenti/siope2/open/last/SIOPE_USCITE.${year}.zip`;
+
+  try {
+    const response = await fetchOfficialSource("siope", url, {
+      kind: "discovery",
+      headers: {
+        Accept: "application/zip, application/octet-stream;q=0.9, */*;q=0.5",
+        Range: "bytes=0-0",
+      },
+      tags: ["health:siope", `dataset:siope-uscite-${year}`],
+    });
+
+    if (!response.ok) throw new Error(`SIOPE open data HTTP ${response.status}`);
+    const sourceTimestamp = response.headers.get("last-modified");
+    const range = response.headers.get("content-range");
+    await response.body?.cancel();
+
+    return {
+      ...base,
+      reachability: "up",
+      freshness: freshnessFor("siope", sourceTimestamp),
+      latencyMs: Math.round(performance.now() - startedAt),
+      detail: range
+        ? `File nazionale uscite ${year} raggiungibile · ${range}`
+        : `File nazionale uscite ${year} raggiungibile`,
+      recordCount: null,
+    };
+  } catch (error) {
+    return {
+      ...base,
+      reachability: "down",
+      freshness: freshnessFor("siope", null),
+      latencyMs: Math.round(performance.now() - startedAt),
+      detail: error instanceof Error ? error.message : "Errore sconosciuto",
+      recordCount: null,
+    };
+  }
+}
+
 function mappedSource(sourceId: SourceId): SourceHealth {
   return {
     ...baseHealth(sourceId),
@@ -205,10 +248,15 @@ function mappedSource(sourceId: SourceId): SourceHealth {
 }
 
 export async function getSourceHealthOverview(): Promise<SourceHealth[]> {
-  const [ipa, openbdap] = await Promise.all([probeIpa(), probeOpenBdap()]);
+  const [ipa, openbdap, siope] = await Promise.all([
+    probeIpa(),
+    probeOpenBdap(),
+    probeSiope(),
+  ]);
   const live = new Map<SourceId, SourceHealth>([
     ["ipa", ipa],
     ["openbdap", openbdap],
+    ["siope", siope],
   ]);
 
   return SOURCE_IDS.map((sourceId) => live.get(sourceId) ?? mappedSource(sourceId));

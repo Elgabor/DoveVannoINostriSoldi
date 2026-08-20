@@ -1,0 +1,111 @@
+name: SIOPE municipal snapshot
+
+on:
+  push:
+    branches:
+      - main
+      - feat/siope-territorial-dashboard
+    paths:
+      - scripts/etl/siope_municipal_snapshot.py
+      - .github/workflows/siope-refresh.yml
+  pull_request:
+    paths:
+      - scripts/etl/siope_municipal_snapshot.py
+      - .github/workflows/siope-refresh.yml
+  schedule:
+    - cron: "29 * * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Rebuild even when source validators are unchanged
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: siope-municipal-snapshot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      TARGET_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ env.TARGET_BRANCH }}
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Build snapshot
+        shell: bash
+        env:
+          FORCE_REFRESH: ${{ inputs.force || 'false' }}
+        run: |
+          set -euo pipefail
+          args=()
+          if [[ "${FORCE_REFRESH}" == "true" ]]; then
+            args+=(--force)
+          fi
+          python scripts/etl/siope_municipal_snapshot.py "${args[@]}"
+
+      - name: Validate generated contract
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+
+          path = Path("src/data/generated/siope-municipal.json")
+          if not path.exists():
+              raise SystemExit("Generated SIOPE snapshot is missing")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          assert data["schemaVersion"] == 1
+          assert data["scope"] == "municipalities"
+          assert 1 <= data["latestMonth"] <= 12
+          assert data["totalPaid"] >= 0
+          assert len(data["regions"]) >= 18
+          assert data["coverage"]["withMovements"] > 7000
+          assert data["coverage"]["includedMovementRows"] > 0
+          assert data["source"]["siopeMovementsLastModified"]
+          assert data["source"]["siopeRegistryLastModified"]
+          print(json.dumps({
+              "year": data["year"],
+              "latestMonth": data["latestMonthLabel"],
+              "totalPaid": data["totalPaid"],
+              "regions": len(data["regions"]),
+              "municipalities": data["coverage"]["withMovements"],
+              "matched": data["coverage"]["matchedToIpaRegion"],
+              "unmatched": data["coverage"]["unmatchedToIpaRegion"],
+              "movementRows": data["coverage"]["movementRows"],
+          }, ensure_ascii=False, indent=2))
+
+      - name: Commit source update
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$(git status --porcelain -- src/data/generated/siope-municipal.json)" ]]; then
+            echo "No SIOPE snapshot change to commit."
+            exit 0
+          fi
+
+          git config user.name "trasparenza-italia-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/data/generated/siope-municipal.json
+          git commit -m "chore(data): refresh SIOPE municipal snapshot"
+
+          # The ETL can take several minutes. If another commit landed while it
+          # was running, replay the data-only commit on top of the latest branch
+          # head instead of failing with a non-fast-forward push.
+          git pull --rebase origin "${TARGET_BRANCH}"
+          git push origin "HEAD:${TARGET_BRANCH}"

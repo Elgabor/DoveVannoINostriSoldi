@@ -1,12 +1,30 @@
 import Link from "next/link";
 import { ItalyVisual } from "@/components/italy-visual";
+import { siopeMunicipalSnapshot as siope } from "@/lib/siope-snapshot";
 import { publicSources, sourceCounts } from "@/lib/sources";
 
+const integer = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 0 });
+
+function compactEuro(value: number): string {
+  const absolute = Math.abs(value);
+  if (absolute >= 1_000_000_000) {
+    return `${(value / 1_000_000_000).toLocaleString("it-IT", { maximumFractionDigits: 2 })} mld €`;
+  }
+  if (absolute >= 1_000_000) {
+    return `${(value / 1_000_000).toLocaleString("it-IT", { maximumFractionDigits: 1 })} mln €`;
+  }
+  return `${value.toLocaleString("it-IT", { maximumFractionDigits: 0 })} €`;
+}
+
 const priorities = [
+  {
+    name: "SIOPE · pagamenti dei Comuni",
+    cadence: `dati fino a ${siope.latestMonthLabel.toLocaleLowerCase("it-IT")} ${siope.year}`,
+    state: "Attiva",
+  },
   { name: "IPA · anagrafe enti", cadence: "giornaliera", state: "Attiva" },
   { name: "RGS · pagamenti Bilancio Stato", cadence: "per rilascio", state: "Dashboard attiva" },
-  { name: "ANAC · contratti pubblici", cadence: "settimanale / periodica", state: "Integrazione" },
-  { name: "Pagamenti art. 4-bis", cadence: "per amministrazione", state: "Crawler" },
+  { name: "ANAC · contratti pubblici", cadence: "mensile / analytics separati", state: "Integrazione" },
 ];
 
 const domains = [
@@ -29,10 +47,10 @@ const domains = [
   {
     id: "territori",
     kicker: "03 · Territori",
-    title: "La spesa vista sulla mappa",
+    title: "La spesa vista sul territorio",
     description:
-      "Regioni, province, città metropolitane e comuni con confronti pro capite e tra enti omogenei. Le mappe useranno confini e codici territoriali ufficiali.",
-    chips: ["regioni", "comuni", "pro capite", "opere", "fondi UE"],
+      "Il primo layer è già attivo: pagamenti di cassa di migliaia di Comuni via SIOPE, aggregazioni regionali e confronti pro capite. Mappe e ulteriori enti seguiranno usando codici territoriali ufficiali.",
+    chips: ["regioni", "comuni", "pro capite", "SIOPE", "serie mensile"],
   },
   {
     id: "parlamento",
@@ -58,7 +76,7 @@ export default function HomePage() {
 
         <div className="hero-actions">
           <Link href="/spese" className="button button-primary">Apri le spese dello Stato</Link>
-          <Link href="/enti" className="button button-secondary">Cerca un ente pubblico</Link>
+          <Link href="/territori" className="button button-secondary">Esplora i territori</Link>
         </div>
       </section>
 
@@ -66,29 +84,32 @@ export default function HomePage() {
         <aside className="panel coverage-panel">
           <div className="panel-heading">
             <div>
-              <span className="panel-kicker">COPERTURA</span>
-              <h2>Dati collegati</h2>
+              <span className="panel-kicker">SIOPE · COMUNI</span>
+              <h2>Pagamenti di cassa</h2>
             </div>
-            <span className="live-dot">IN ESPANSIONE</span>
+            <span className="live-dot">DATO REALE</span>
           </div>
 
           <div className="big-stat">
-            <strong>10.000+</strong>
-            <span>enti coperti da SIOPE</span>
+            <strong>{compactEuro(siope.totalPaid)}</strong>
+            <span>da gennaio a {siope.latestMonthLabel.toLocaleLowerCase("it-IT")} {siope.year}</span>
           </div>
 
           <div className="mini-grid">
-            <div><b>{sourceCounts.total}</b><span>fonti ufficiali mappate</span></div>
-            <div><b>2</b><span>domini con dati già collegati</span></div>
-            <div><b>{sourceCounts.integrating}</b><span>integrazioni prioritarie</span></div>
+            <div><b>{integer.format(siope.coverage.withMovements)}</b><span>Comuni con movimenti</span></div>
+            <div><b>{siope.regions.length}</b><span>regioni aggregate</span></div>
+            <div><b>{sourceCounts.active}</b><span>fonti con adapter attivo</span></div>
             <div><b>0</b><span>numeri economici simulati</span></div>
           </div>
 
           <div className="panel-divider" />
           <p className="microcopy">
-            I conteggi descrivono la copertura delle fonti, non il totale della spesa.
-            Un valore economico appare solo dopo la validazione del relativo ingestore.
+            Pagamenti comunali SIOPE, non “tutta la spesa in Italia”. Il perimetro resta visibile
+            anche quando il numero è riusato fuori dalla dashboard territoriale.
           </p>
+          <Link href="/territori" className="text-link">
+            Apri il dettaglio territoriale <span>→</span>
+          </Link>
         </aside>
 
         <section className="panel map-panel">
@@ -103,9 +124,9 @@ export default function HomePage() {
           <ItalyVisual />
 
           <div className="map-bottom">
-            <div><b>RGS</b><span>bilancio e pagamenti</span></div>
-            <div><b>BDNCP</b><span>contratti pubblici</span></div>
-            <div><b>CUP / PNRR</b><span>progetti e opere</span></div>
+            <div><b>SIOPE</b><span>cassa dei Comuni</span></div>
+            <div><b>RGS</b><span>bilancio dello Stato</span></div>
+            <div><b>IPA</b><span>anagrafe degli enti</span></div>
           </div>
         </section>
 
@@ -129,8 +150,8 @@ export default function HomePage() {
             ))}
           </div>
 
-          <Link href="/fonti" className="text-link">
-            Registro completo delle fonti <span>→</span>
+          <Link href="/fonti/stato" className="text-link">
+            Stato operativo delle fonti <span>→</span>
           </Link>
         </aside>
       </section>
@@ -189,7 +210,7 @@ export default function HomePage() {
         <span>OPEN SOURCE · OPEN DATA · ACCOUNTABILITY</span>
         <h2>La trasparenza funziona quando il dato è semplice da trovare e difficile da fraintendere.</h2>
         <div className="hero-actions">
-          <Link href="/spese" className="button button-primary">Esplora i pagamenti dello Stato</Link>
+          <Link href="/territori" className="button button-primary">Esplora i pagamenti dei Comuni</Link>
           <Link href="/fonti" className="button button-secondary">Verifica le fonti</Link>
         </div>
       </section>

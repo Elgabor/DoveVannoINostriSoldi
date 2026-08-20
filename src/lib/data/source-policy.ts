@@ -82,13 +82,13 @@ export const SOURCE_POLICIES: Readonly<Record<SourceId, SourcePolicy>> = {
   siope: {
     id: "siope",
     label: "SIOPE / SIOPE+",
-    owner: "RGS · Banca d'Italia",
-    sourceUrl: "https://www.bancaditalia.it/compiti/tesoreria/siope/index.html",
+    owner: "RGS · banca dati gestita da Banca d'Italia",
+    sourceUrl: "https://www.siope.it/documenti/siope2/open/last/",
     cadence: "periodica",
     cadenceNote:
-      "Il sistema registra i flussi di cassa; la policy di esposizione sarà affinata sul singolo dataset pubblico integrato.",
-    discoveryRevalidateSeconds: 3 * HOUR,
-    dataRevalidateSeconds: 6 * HOUR,
+      "La piattaforma controlla ogni ora i validator dei file open data nazionali e rigenera lo snapshot solo quando la fonte ufficiale cambia.",
+    discoveryRevalidateSeconds: HOUR,
+    dataRevalidateSeconds: HOUR,
     staleAfterSeconds: null,
     timeoutMs: 15_000,
     maxRetries: 1,

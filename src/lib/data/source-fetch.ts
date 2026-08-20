@@ -20,7 +20,13 @@ type SourceFetchOptions = Omit<NextFetchOptions, "next" | "signal" | "cache"> & 
 const ALLOWED_HOSTS: Readonly<Record<SourceId, readonly string[]>> = {
   ipa: ["indicepa.gov.it", "www.indicepa.gov.it"],
   openbdap: ["bdap-opendata.rgs.mef.gov.it", "openbdap.rgs.mef.gov.it"],
-  siope: ["www.bancaditalia.it", "bancaditalia.it", "bdap-opendata.rgs.mef.gov.it"],
+  siope: [
+    "www.siope.it",
+    "siope.it",
+    "www.bancaditalia.it",
+    "bancaditalia.it",
+    "bdap-opendata.rgs.mef.gov.it",
+  ],
   "anac-bdncp": [
     "www.anticorruzione.it",
     "anticorruzione.it",

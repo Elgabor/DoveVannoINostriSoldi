@@ -4,7 +4,7 @@ const primary = [
   { href: "/spese", label: "Spese" },
   { href: "/enti", label: "Enti" },
   { href: "/#appalti", label: "Appalti" },
-  { href: "/#territori", label: "Territori" },
+  { href: "/territori", label: "Territori" },
   { href: "/#parlamento", label: "Parlamento" },
   { href: "/fonti", label: "Fonti" },
 ];

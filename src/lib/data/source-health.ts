@@ -8,6 +8,7 @@ import {
   type SourcePolicy,
 } from "@/lib/data/source-policy";
 import { IPA_ENTI_RESOURCE_ID } from "@/lib/ipa";
+import { openCoesioneSnapshot } from "@/lib/opencoesione-snapshot";
 
 export type SourceIntegrationState = "active" | "mapped";
 export type SourceReachability = "up" | "down" | "not-probed";
@@ -49,7 +50,7 @@ type CkanResourceResponse = {
   };
 };
 
-const ACTIVE_SOURCES = new Set<SourceId>(["ipa", "openbdap", "siope"]);
+const ACTIVE_SOURCES = new Set<SourceId>(["ipa", "openbdap", "siope", "opencoesione"]);
 
 function text(value: unknown): string | null {
   if (typeof value !== "string") return null;
@@ -247,6 +248,18 @@ function mappedSource(sourceId: SourceId): SourceHealth {
   };
 }
 
+function snapshotManagedOpenCoesione(): SourceHealth {
+  return {
+    ...baseHealth("opencoesione"),
+    reachability: "not-probed",
+    freshness: freshnessFor("opencoesione", openCoesioneSnapshot.referenceDate),
+    latencyMs: null,
+    detail:
+      "Snapshot ETL attivo; reachability controllata dal workflow dedicato, non da questo endpoint.",
+    recordCount: openCoesioneSnapshot.totals.projects,
+  };
+}
+
 export async function getSourceHealthOverview(): Promise<SourceHealth[]> {
   const [ipa, openbdap, siope] = await Promise.all([
     probeIpa(),
@@ -257,6 +270,7 @@ export async function getSourceHealthOverview(): Promise<SourceHealth[]> {
     ["ipa", ipa],
     ["openbdap", openbdap],
     ["siope", siope],
+    ["opencoesione", snapshotManagedOpenCoesione()],
   ]);
 
   return SOURCE_IDS.map((sourceId) => live.get(sourceId) ?? mappedSource(sourceId));

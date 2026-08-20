@@ -25,7 +25,8 @@
 
 ## Fase 3 — Investimenti e territorio
 - [ ] ReGiS / PNRR
-- [ ] OpenCoesione
+- [x] overview nazionale OpenCoesione con snapshot riconciliato, retry ETL, grafici, API e refresh automatico
+- [ ] drill-down OpenCoesione per progetto, soggetto e territorio con regole anti-doppio conteggio
 - [ ] opere pubbliche OpenBDAP / MOP
 - [ ] geometrie ISTAT
 - [ ] confronti regionali, provinciali e comunali

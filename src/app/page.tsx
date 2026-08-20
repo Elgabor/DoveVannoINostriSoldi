@@ -24,6 +24,7 @@ const priorities = [
   },
   { name: "IPA · anagrafe enti", cadence: "giornaliera", state: "Attiva" },
   { name: "RGS · pagamenti Bilancio Stato", cadence: "per rilascio", state: "Dashboard attiva" },
+  { name: "OpenCoesione · progetti", cadence: "bimestrale prevista", state: "Dashboard attiva" },
   { name: "ANAC · contratti pubblici", cadence: "mensile / analytics separati", state: "Integrazione" },
 ];
 
@@ -76,7 +77,7 @@ export default function HomePage() {
 
         <div className="hero-actions">
           <Link href="/spese" className="button button-primary">Apri le spese dello Stato</Link>
-          <Link href="/territori" className="button button-secondary">Esplora i territori</Link>
+          <Link href="/coesione" className="button button-secondary">Esplora gli investimenti</Link>
         </div>
       </section>
 
@@ -211,7 +212,7 @@ export default function HomePage() {
         <h2>La trasparenza funziona quando il dato è semplice da trovare e difficile da fraintendere.</h2>
         <div className="hero-actions">
           <Link href="/territori" className="button button-primary">Esplora i pagamenti dei Comuni</Link>
-          <Link href="/fonti" className="button button-secondary">Verifica le fonti</Link>
+          <Link href="/coesione" className="button button-secondary">Apri OpenCoesione</Link>
         </div>
       </section>
     </main>

@@ -19,7 +19,7 @@ const SOURCE_PATHS: Readonly<Partial<Record<SourceId, readonly string[]>>> = {
   siope: ["/territori"],
   "anac-bdncp": ["/"],
   "art-4-bis": ["/enti"],
-  opencoesione: ["/enti"],
+  opencoesione: ["/coesione"],
   regis: ["/enti"],
   consulenti: ["/enti"],
   camera: ["/"],

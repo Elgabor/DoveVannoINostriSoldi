@@ -69,6 +69,10 @@ Gli open data PNRR sono pubblicati come estrazioni periodiche da ReGiS e compren
 ### OpenCoesione
 L'API e gli open data espongono progetti e soggetti, con tabelle relazionali per localizzazioni, pagamenti, impegni, fasi e indicatori. I dati sono pubblicati con licenza CC BY 4.0.
 
+La prima integrazione usa l’aggregato nazionale ufficiale `/it/api/aggregati/`, che espone costo pubblico, pagamenti, numero di progetti, stati, temi, nature, serie annuale e data del rilascio. Lo snapshot viene controllato ogni 6 ore e committato soltanto quando cambia il payload normalizzato, esclusi i timestamp di osservazione.
+
+Ogni dimensione deve riconciliarsi con il totale nazionale, sia per i valori generali sia per la componente coesione: sono tollerati al massimo 2 euro di scarto monetario dovuto agli arrotondamenti della fonte e nessuno scarto nel conteggio dei progetti. Le aggregazioni territoriali non sono ancora sommate perché i progetti multilocalizzati possono comparire in più territori e rendere i valori non additivi.
+
 ## Tier 4 — incarichi e istituzioni
 
 ### Consulenti Pubblici

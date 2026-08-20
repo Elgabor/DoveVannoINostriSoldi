@@ -66,6 +66,26 @@ L'Indice PA è la prima anagrafe canonica del progetto.
 - grafico della distribuzione per tipologia;
 - provenienza e licenza esposte insieme al record.
 
+### Politiche di coesione
+
+`/coesione` usa l’aggregato nazionale dell’API ufficiale OpenCoesione e pubblica uno snapshot verificato, senza numeri dimostrativi.
+
+La dashboard contiene:
+
+- costo pubblico, pagamenti e numero di progetti;
+- rapporto finanziario pagamenti/costo, esplicitamente distinto dall’avanzamento fisico;
+- letture interattive per tema, natura e stato con tabella accessibile equivalente;
+- serie annuale cumulativa di impegni e pagamenti;
+- data del rilascio sorgente, acquisizione, cadenza dichiarata e frequenza di controllo separate;
+- riconciliazioni ricalcolate dei totali generali e della componente coesione, con avvertenza sui progetti multilocalizzati.
+
+API e aggiornamento:
+
+- `/api/coesione`
+- `python3 scripts/etl/opencoesione_snapshot.py` per verificare e aggiornare lo snapshot;
+- `python3 scripts/etl/opencoesione_snapshot.py --check` per la validazione offline;
+- workflow schedulato ogni 6 ore, con retry limitati e commit soltanto quando cambia il payload normalizzato, esclusi i timestamp di osservazione.
+
 ### Stato delle fonti
 
 `/fonti/stato` separa tre concetti che spesso vengono confusi:
@@ -114,7 +134,8 @@ Dopo il deployment:
 I workflow separati fanno poi:
 
 - **Source refresh**: invalidazione source-scoped ogni ora;
-- **Source health**: probe degli adapter attivi ogni 6 ore.
+- **Source health**: probe ogni 6 ore degli adapter inclusi nel monitor applicativo; OpenCoesione è controllata dal workflow snapshot dedicato.
+- **OpenCoesione snapshot**: controllo dell’API ogni 6 ore e aggiornamento del file versionato soltanto quando cambia il payload normalizzato.
 
 Un outage RGS/AgID può rendere rosso il monitor delle fonti, ma **non** la CI del codice.
 

@@ -76,6 +76,18 @@ GitHub Actions invalida ogni ora, al minuto 17, le sorgenti integrate. Il minuto
 
 Se i secret non esistono il workflow termina con successo e un notice, perché il repository deve rimanere utilizzabile prima del primo deployment.
 
+### OpenCoesione snapshot versionato
+
+OpenCoesione usa un flusso dedicato perché la dashboard deve rimanere disponibile anche durante un disservizio dell’upstream:
+
+1. il workflow controlla l’API aggregata ufficiale ogni 6 ore con timeout e retry limitati;
+2. schema, domini, interi monetari e riconciliazioni vengono ricalcolati prima della scrittura;
+3. su errore transitorio viene mantenuto l’ultimo snapshot valido e il degrado resta visibile nei log;
+4. il file viene committato soltanto quando cambia il payload normalizzato, esclusi i timestamp di osservazione;
+5. l’API normalizzata usa cache CDN di 6 ore e stale-while-revalidate di 7 giorni.
+
+La cadenza dichiarata dalla fonte resta bimestrale prevista. `/api/fonti/stato` classifica la freshness dalla data del rilascio ma non ripete il probe di rete: la reachability è controllata dal workflow dedicato.
+
 ## Policy iniziali
 
 | Fonte | Cadenza sorgente | Discovery Trasparenza Italia | Dati |
@@ -83,7 +95,7 @@ Se i secret non esistono il workflow termina con successo e un notice, perché i
 | IPA Enti | giornaliera | 1 h | 1 h |
 | OpenBDAP · Pagamenti Stato | mensile per mese contabile | 2 h | 6 h |
 | ANAC open dataset | mensile | 3 h | 12 h |
-| OpenCoesione | bimestrale prevista | 6 h | 24 h |
+| OpenCoesione | bimestrale prevista | 6 h · workflow snapshot | 6 h · cache API |
 | ReGiS | periodica | 6 h | 12 h |
 | Art. 4-bis | dipende dall'ente | 3 h | 6 h |
 | Consulenti Pubblici | dipende dall'ente | 6 h | 6 h |
@@ -104,6 +116,7 @@ Le verifiche live appartengono invece a:
 
 ```text
 source refresh → source probe → alert/observability
+snapshot refresh → validazione → commit → deploy
 ```
 
 Questo rende distinguibili un bug introdotto nel codice e un problema di disponibilità esterno.
@@ -117,6 +130,7 @@ Stato attuale:
 - IPA Data API: migrata;
 - IPA aggregazioni SQL: migrate;
 - OpenBDAP: time-based revalidation già attiva; migrazione ai source tag in corso;
+- OpenCoesione: snapshot ETL versionato attivo; freshness applicativa esposta, reachability demandata al workflow dedicato;
 - altre fonti: useranno direttamente il nuovo contratto quando verranno implementate.
 
 Non riscriviamo tutti gli adapter contemporaneamente soltanto per uniformità estetica: ogni migrazione deve mantenere gli stessi risultati e passare lint, typecheck, design gate e build.

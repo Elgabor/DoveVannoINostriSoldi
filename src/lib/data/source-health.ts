@@ -11,6 +11,8 @@ import { IPA_ENTI_RESOURCE_ID } from "@/lib/ipa";
 import { IPA_AOO_RESOURCE_ID, IPA_UO_RESOURCE_ID } from "@/lib/ipa-structure";
 import { mefParticipationsSnapshot } from "@/lib/mef-participations-snapshot";
 import { openCoesioneSnapshot } from "@/lib/opencoesione-snapshot";
+import { consulentiSnapshot } from "@/lib/consulenti-snapshot";
+import { openCivitasSnapshot } from "@/lib/opencivitas-snapshot";
 
 export type SourceIntegrationState = "active" | "mapped";
 export type SourceReachability = "up" | "down" | "not-probed";
@@ -58,7 +60,9 @@ const ACTIVE_SOURCES = new Set<SourceId>([
   "openbdap",
   "siope",
   "opencoesione",
+  "opencivitas",
   "partecipazioni-pubbliche",
+  "consulenti",
 ]);
 
 function text(value: unknown): string | null {
@@ -227,7 +231,7 @@ async function probeIpaStructure(): Promise<SourceHealth> {
       reachability: "up",
       freshness: freshnessFor("ipa-struttura", oldestTimestamp),
       latencyMs: Math.round(performance.now() - startedAt),
-      detail: `UO: ${units.count ?? "—"} · AOO: ${areas.count ?? "—"}`,
+      detail: `UO: ${units.count ?? "non disponibile"} · AOO: ${areas.count ?? "non disponibile"}`,
       recordCount: (units.count ?? 0) + (areas.count ?? 0),
     };
   } catch (error) {
@@ -348,6 +352,29 @@ function snapshotManagedMefParticipations(): SourceHealth {
   };
 }
 
+function snapshotManagedConsulenti(): SourceHealth {
+  const latest = consulentiSnapshot.externalAppointments.at(-1);
+  return {
+    ...baseHealth("consulenti"),
+    reachability: "not-probed",
+    freshness: freshnessFor("consulenti", consulentiSnapshot.source.observedAt),
+    latencyMs: null,
+    detail: `Snapshot ETL attivo · ultimo anno disponibile ${consulentiSnapshot.latestYear}`,
+    recordCount: latest?.assignments ?? null,
+  };
+}
+
+function snapshotManagedOpenCivitas(): SourceHealth {
+  return {
+    ...baseHealth("opencivitas"),
+    reachability: "not-probed",
+    freshness: freshnessFor("opencivitas", openCivitasSnapshot.publishedAt),
+    latencyMs: null,
+    detail: `Snapshot ETL attivo · dati ${openCivitasSnapshot.referenceYear}`,
+    recordCount: openCivitasSnapshot.coverage.municipalities,
+  };
+}
+
 export async function getSourceHealthOverview(): Promise<SourceHealth[]> {
   const [ipa, ipaStructure, openbdap, siope] = await Promise.all([
     probeIpa(),
@@ -361,7 +388,9 @@ export async function getSourceHealthOverview(): Promise<SourceHealth[]> {
     ["openbdap", openbdap],
     ["siope", siope],
     ["opencoesione", snapshotManagedOpenCoesione()],
+    ["opencivitas", snapshotManagedOpenCivitas()],
     ["partecipazioni-pubbliche", snapshotManagedMefParticipations()],
+    ["consulenti", snapshotManagedConsulenti()],
   ]);
 
   return SOURCE_IDS.map((sourceId) => live.get(sourceId) ?? mappedSource(sourceId));

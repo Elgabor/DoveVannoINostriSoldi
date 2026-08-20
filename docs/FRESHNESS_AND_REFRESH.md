@@ -88,6 +88,18 @@ OpenCoesione usa un flusso dedicato perché la dashboard deve rimanere disponibi
 
 La cadenza dichiarata dalla fonte resta bimestrale prevista. `/api/fonti/stato` classifica la freshness dalla data del rilascio ma non ripete il probe di rete: la reachability è controllata dal workflow dedicato.
 
+### Consulenti Pubblici
+
+Il workflow controlla ogni 6 ore l'endpoint ufficiale usato dal portale. Gli importi vengono salvati in centesimi interi e l'anno corrente resta indicato come parziale. Se il contenuto non cambia, il timestamp di osservazione non produce un nuovo commit.
+
+### OpenCivitas
+
+Il rilascio comunale 2022 viene verificato ogni giorno. L'ETL controlla i metadati degli indicatori, il join sul codice ISTAT, gli importi, i livelli dei servizi e gli avvisi della fonte prima di scrivere lo snapshot.
+
+Il server OpenCivitas non invia al momento il certificato intermedio della propria catena TLS. La verifica resta attiva: l'ETL aggiunge il solo certificato pubblico intermedio verificato e documentato in `scripts/etl/certs/README.md`. Non usa `--insecure`, proxy o fonti alternative.
+
+Una nuova annualità non viene accettata alla cieca. Il workflow la rileva e si ferma con un errore esplicito, lasciando disponibile l'ultimo snapshot valido. Prima si convalidano schema, definizioni e copertura; poi si aggiorna il contratto e si abilita il nuovo anno.
+
 ## Policy iniziali
 
 | Fonte | Cadenza sorgente | Discovery DoveVannoINostriSoldi | Dati |
@@ -96,6 +108,7 @@ La cadenza dichiarata dalla fonte resta bimestrale prevista. `/api/fonti/stato` 
 | OpenBDAP · Pagamenti Stato | mensile per mese contabile | 2 h | 6 h |
 | ANAC open dataset | mensile | 3 h | 12 h |
 | OpenCoesione | bimestrale prevista | 6 h · workflow snapshot | 6 h · cache API |
+| OpenCivitas | irregolare | 24 h · workflow snapshot | 24 h · cache API |
 | ReGiS | periodica | 6 h | 12 h |
 | Art. 4-bis | dipende dall'ente | 3 h | 6 h |
 | Consulenti Pubblici | dipende dall'ente | 6 h | 6 h |
@@ -131,6 +144,8 @@ Stato attuale:
 - IPA aggregazioni SQL: migrate;
 - OpenBDAP: time-based revalidation già attiva; migrazione ai source tag in corso;
 - OpenCoesione: snapshot ETL versionato attivo; freshness applicativa esposta, reachability demandata al workflow dedicato;
+- Consulenti Pubblici: snapshot ETL versionato attivo; anno corrente esplicitamente parziale;
+- OpenCivitas: snapshot comunale 2022 attivo; nuove annualità ammesse dopo convalida del contratto;
 - altre fonti: useranno direttamente il nuovo contratto quando verranno implementate.
 
 Non riscriviamo tutti gli adapter contemporaneamente soltanto per uniformità estetica: ogni migrazione deve mantenere gli stessi risultati e passare lint, typecheck, design gate e build.

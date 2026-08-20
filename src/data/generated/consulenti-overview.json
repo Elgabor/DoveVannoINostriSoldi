@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "transformVersion": 1,
+  "scope": "national-annual-overview",
+  "generatedAt": "2026-08-20T12:08:28Z",
+  "latestYear": 2026,
+  "externalAppointments": [
+    {
+      "year": 2023,
+      "assignments": 204825,
+      "paidCents": 73210943845,
+      "completedAssignments": 108884,
+      "individualRecipients": 122616,
+      "organizationRecipients": 4900
+    },
+    {
+      "year": 2024,
+      "assignments": 227367,
+      "paidCents": 79322532383,
+      "completedAssignments": 116748,
+      "individualRecipients": 137279,
+      "organizationRecipients": 4481
+    },
+    {
+      "year": 2025,
+      "assignments": 211833,
+      "paidCents": 49025849616,
+      "completedAssignments": 88613,
+      "individualRecipients": 131567,
+      "organizationRecipients": 3375
+    },
+    {
+      "year": 2026,
+      "assignments": 83266,
+      "paidCents": 5492224672,
+      "completedAssignments": 19044,
+      "individualRecipients": 60079,
+      "organizationRecipients": 1468
+    }
+  ],
+  "employeeAppointments": [
+    {
+      "year": 2023,
+      "assignments": 405898,
+      "paidCents": 22167233375,
+      "completedAssignments": 199809,
+      "managerAssignments": 74192,
+      "nonManagerAssignments": 331706,
+      "publicAdministrationGrantorRecords": 266391
+    },
+    {
+      "year": 2024,
+      "assignments": 593183,
+      "paidCents": 34358770007,
+      "completedAssignments": 292271,
+      "managerAssignments": 75505,
+      "nonManagerAssignments": 517678,
+      "publicAdministrationGrantorRecords": 442649
+    },
+    {
+      "year": 2025,
+      "assignments": 564763,
+      "paidCents": 27039083522,
+      "completedAssignments": 222874,
+      "managerAssignments": 72833,
+      "nonManagerAssignments": 491930,
+      "publicAdministrationGrantorRecords": 413530
+    },
+    {
+      "year": 2026,
+      "assignments": 211877,
+      "paidCents": 3636318359,
+      "completedAssignments": 36951,
+      "managerAssignments": 36666,
+      "nonManagerAssignments": 175211,
+      "publicAdministrationGrantorRecords": 141269
+    }
+  ],
+  "source": {
+    "owner": "Dipartimento della Funzione Pubblica",
+    "dataset": "Consulenti Pubblici · statistiche nazionali degli incarichi",
+    "landingUrl": "https://consulentipubblici.dfp.gov.it/progetto",
+    "endpoint": "https://adp-api.perlapa.gov.it/api/public/incarichi/StatisticheIncarichi",
+    "licenseUrl": "https://www.perlapa.gov.it/cd-note-legali.html",
+    "reuseTerms": "Riuso consentito con attribuzione e licenza identica o equivalente",
+    "observedAt": "2026-08-20T12:08:28Z",
+    "declaredCadence": "Aggiornamento per singola amministrazione e incarico",
+    "platformCheckCadence": "Ogni 6 ore"
+  },
+  "methodology": {
+    "amountMeaning": "Ammontare erogato comunicato dalle amministrazioni alla data di consultazione; non coincide necessariamente con il compenso lordo previsto.",
+    "currentYearWarning": "L'anno più recente è parziale e i valori possono crescere o cambiare con nuove comunicazioni.",
+    "responsibilityWarning": "I dati sono comunicati dalle singole amministrazioni sotto la propria responsabilità.",
+    "publicAdministrationGrantorMeaning": "Il campo paConferenteCount è conservato come conteggio di record della fonte e non viene presentato come numero di amministrazioni distinte."
+  }
+}

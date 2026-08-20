@@ -6,6 +6,8 @@ export type SourceId =
   | "anac-bdncp"
   | "art-4-bis"
   | "opencoesione"
+  | "opencivitas"
+  | "opencup"
   | "regis"
   | "consulenti"
   | "camera"
@@ -160,6 +162,36 @@ export const SOURCE_POLICIES: Readonly<Record<SourceId, SourcePolicy>> = {
     maxRetries: 1,
     tags: ["source:opencoesione", "domain:cohesion"],
   },
+  opencivitas: {
+    id: "opencivitas",
+    label: "OpenCivitas",
+    owner: "Sogei",
+    sourceUrl: "https://www.opencivitas.it/it/open-data",
+    cadence: "periodica",
+    cadenceNote:
+      "La fonte dichiara frequenza irregolare. Il rilascio 2022 viene verificato ogni giorno; una nuova annualità richiede la convalida del contratto dati.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: null,
+    timeoutMs: 60_000,
+    maxRetries: 1,
+    tags: ["source:opencivitas", "domain:municipal-standard-needs"],
+  },
+  opencup: {
+    id: "opencup",
+    label: "OpenCUP",
+    owner: "DIPE · Presidenza del Consiglio dei Ministri",
+    sourceUrl: "https://www.opencup.gov.it/portale/web/opencup/accesso-agli-open-data",
+    cadence: "mensile",
+    cadenceNote:
+      "OpenCUP dichiara aggiornamento mensile; il rilascio comprende progetti, localizzazioni, soggetti e fonti di copertura.",
+    discoveryRevalidateSeconds: 6 * HOUR,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 45 * DAY,
+    timeoutMs: 15_000,
+    maxRetries: 1,
+    tags: ["source:opencup", "domain:public-investments"],
+  },
   regis: {
     id: "regis",
     label: "ReGiS / PNRR Open Data",
@@ -178,9 +210,10 @@ export const SOURCE_POLICIES: Readonly<Record<SourceId, SourcePolicy>> = {
     id: "consulenti",
     label: "Consulenti Pubblici",
     owner: "Dipartimento della Funzione Pubblica",
-    sourceUrl: "https://consulentipubblici.dfp.gov.it/",
+    sourceUrl: "https://consulentipubblici.dfp.gov.it/progetto",
     cadence: "per-amministrazione",
-    cadenceNote: "L'aggiornamento dipende dalle comunicazioni delle singole amministrazioni.",
+    cadenceNote:
+      "L'aggiornamento dipende dalle comunicazioni delle singole amministrazioni; lo snapshot nazionale viene controllato ogni 6 ore.",
     discoveryRevalidateSeconds: 6 * HOUR,
     dataRevalidateSeconds: 6 * HOUR,
     staleAfterSeconds: null,

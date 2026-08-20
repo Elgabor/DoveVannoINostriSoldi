@@ -14,11 +14,19 @@ Riunisce dati ufficiali che oggi si trovano in portali diversi. Ogni numero most
 | Fondi e progetti | Costo previsto, pagamenti e stato dei progetti di coesione | OpenCoesione |
 | Enti e società | Ministeri, enti pubblici, uffici, contatti e società partecipate | IPA, AgID, MEF |
 | Spese dello Stato | Pagamenti per funzione, amministrazione e tipo di spesa | RGS, OpenBDAP |
+| Fabbisogni comunali | Spesa storica, spesa standard e servizi dei Comuni nel 2022 | OpenCivitas |
 | Partecipazioni | Società e organizzazioni partecipate dichiarate dalle amministrazioni | MEF |
 | Controlli | Dati che meritano verifiche più approfondite, con spiegazioni e fonti | ANAC, MEF, Corte dei conti e altre fonti ufficiali |
 | Fonti | Stato dei collegamenti e date di aggiornamento | Registro interno delle fonti |
 
 Gli appalti ANAC, il PNRR ReGiS e altre fonti già censite non sono ancora presentati come dati correnti. Il sito lo indica chiaramente e non usa numeri dimostrativi per riempire gli spazi mancanti.
+
+Il backend espone inoltre:
+
+- `GET /api/incarichi`, con statistiche nazionali ufficiali di Consulenti Pubblici dal 2023;
+- `GET /api/spese/comuni/fabbisogni?anno=2022`, con il confronto OpenCivitas per 6.557 Comuni delle Regioni a statuto ordinario.
+
+Per OpenCivitas, la differenza tra spesa storica e spesa standard non viene chiamata spreco. L'API restituisce anche i valori per abitante, il confronto sui servizi e i limiti territoriali della fonte.
 
 ## Scegliere l'anno
 
@@ -75,6 +83,8 @@ python3 scripts/etl/siope_municipal_snapshot.py --year 2025 \
   --output src/data/generated/siope-municipal-2025.json
 python3 scripts/etl/opencoesione_snapshot.py --check
 python3 scripts/etl/mef_participations_snapshot.py --check
+python3 scripts/etl/consulenti_snapshot.py --check
+python3 scripts/etl/opencivitas_snapshot.py --check
 ```
 
 Le attività automatiche controllano periodicamente la presenza di nuovi dati. Un'interruzione di una fonte esterna non viene confusa con un errore del codice.

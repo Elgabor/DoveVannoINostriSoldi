@@ -28,23 +28,15 @@ const ALLOWED_HOSTS: Readonly<Record<SourceId, readonly string[]>> = {
     "bancaditalia.it",
     "bdap-opendata.rgs.mef.gov.it",
   ],
-  "anac-bdncp": [
-    "www.anticorruzione.it",
-    "anticorruzione.it",
-    "dati.anticorruzione.it",
-    "api.anticorruzione.it",
-  ],
-  "art-4-bis": ["guida-servizi.anticorruzione.it"],
   opencoesione: ["opencoesione.gov.it", "www.opencoesione.gov.it"],
-  regis: ["open.gov.it", "www.italiadomani.gov.it", "italiadomani.gov.it"],
-  consulenti: ["consulentipubblici.dfp.gov.it"],
-  camera: ["trasparenza.camera.it", "www.camera.it", "camera.it"],
-  senato: ["www.senato.it", "senato.it"],
-  "istat-s13": ["bdap-opendata.rgs.mef.gov.it", "www.istat.it", "istat.it"],
+  opencivitas: ["opencivitas.it", "www.opencivitas.it", "docs.opencivitas.it"],
+  consulenti: [
+    "consulentipubblici.dfp.gov.it",
+    "adp-api.perlapa.gov.it",
+    "www.perlapa.gov.it",
+  ],
+  camera: ["trasparenza.camera.it", "documenti.camera.it", "www.camera.it", "camera.it"],
   "partecipazioni-pubbliche": ["www.de.mef.gov.it", "de.mef.gov.it"],
-  "partecipazioni-stato": ["www.de.mef.gov.it", "de.mef.gov.it"],
-  "anac-in-house-storico": ["www.anticorruzione.it", "anticorruzione.it"],
-  "anac-ausa": ["www.anticorruzione.it", "anticorruzione.it", "dati.anticorruzione.it"],
 };
 
 const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);

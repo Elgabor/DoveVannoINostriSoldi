@@ -20,9 +20,9 @@ Questa distinzione è parte del contratto del dato e deve restare visibile nella
 
 La pipeline usa tre file ufficiali:
 
-1. `SIOPE_USCITE.<anno>.zip` — movimenti nazionali di uscita;
-2. `SIOPE_ANAGRAFICHE.zip` — anagrafiche degli enti SIOPE;
-3. `amministrazioni.txt` di Indice PA — join del codice fiscale dell'ente alla regione della sede amministrativa.
+1. `SIOPE_USCITE.<anno>.zip`: movimenti nazionali di uscita;
+2. `SIOPE_ANAGRAFICHE.zip`: anagrafiche degli enti SIOPE;
+3. `amministrazioni.txt` di Indice PA: join del codice fiscale dell'ente alla regione della sede amministrativa.
 
 Il file annuale SIOPE contiene movimenti mensili puri. Non è una successione di snapshot cumulativi: per questo il grafico mensile non calcola differenze tra rilasci. Il cumulato visualizzato da DoveVannoINostriSoldi è semplicemente la somma progressiva dei flussi mensili.
 

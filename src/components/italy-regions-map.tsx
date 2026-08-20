@@ -61,7 +61,7 @@ export function ItalyRegionsMap({
         >
           <title id="regional-map-title">Pagamenti comunali per abitante coperto, per regione</title>
           <desc id="regional-map-description">
-            Coropleta regionale dei pagamenti di cassa SIOPE dei Comuni. Usa Tab per
+            Mappa regionale colorata in base ai pagamenti di cassa SIOPE dei Comuni. Usa Tab per
             selezionare una regione e leggere il valore esatto nel pannello accanto.
           </desc>
           {italyRegionGeometry.map((geometry) => {

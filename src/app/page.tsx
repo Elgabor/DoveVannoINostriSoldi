@@ -2,7 +2,7 @@ import Link from "next/link";
 import { InfoTooltip } from "@/components/info-tooltip";
 import { ItalyRegionsMap } from "@/components/italy-regions-map";
 import { PeriodSelector } from "@/components/period-selector";
-import { auditScenarios, procurementComparison } from "@/lib/audit-data";
+import { getProcurementComparisonForYear } from "@/lib/audit-data";
 import {
   billions,
   compactEuro,
@@ -98,12 +98,12 @@ export default async function HomePage({
   const topRegionScale = topRegions[0]?.value ?? 0;
   const maxFlow = Math.max(...siope.monthly.map((point) => point.flow), 0);
 
-  const cohesionPaid = cohesion.totals.paymentsCents / 100;
-  const cohesionCost = cohesion.totals.publicCostCents / 100;
-  const cohesionRatio = cohesionCost > 0 ? (cohesionPaid / cohesionCost) * 100 : 0;
-
-  const centralScenario =
-    auditScenarios.find((scenario) => scenario.id === "central") ?? auditScenarios[1];
+  const cohesionForYear = cohesion.annualSeries.find((point) => point.year === year) ?? null;
+  const cohesionPaid = (cohesionForYear?.paymentsCents ?? 0) / 100;
+  const cohesionCommitted = (cohesionForYear?.commitmentsCents ?? 0) / 100;
+  const cohesionRatio =
+    cohesionCommitted > 0 ? (cohesionPaid / cohesionCommitted) * 100 : 0;
+  const procurement = getProcurementComparisonForYear(year);
 
   return (
     <main className={`shell ${styles.dashboard}`}>
@@ -179,6 +179,12 @@ export default async function HomePage({
               ))}
             </ul>
           </div>
+          <Link
+            className={`btn btn-block ${styles.spendingDetailsLink}`}
+            href={`/spese?anno=${year}`}
+          >
+            Vedi il dettaglio delle voci
+          </Link>
         </section>
 
         <section className="panel">
@@ -369,30 +375,33 @@ export default async function HomePage({
 
         <section className="panel">
           <h2 className="panel-title">Fondi e progetti · OpenCoesione</h2>
-          <dl className={styles.factRows}>
-            <div>
-              <dt>Costo previsto dei progetti</dt>
-              <dd>{compactEuro(cohesionCost)}</dd>
-            </div>
-            <div>
-              <dt>Già pagato</dt>
-              <dd>{compactEuro(cohesionPaid)}</dd>
-            </div>
-            <div>
-              <dt>Progetti seguiti dal 1990</dt>
-              <dd>{integer(cohesion.totals.projects)}</dd>
-            </div>
-          </dl>
-          <div className={styles.ratioHead}>
-            <span>Pagato sul previsto</span>
-            <b>{percent(cohesionRatio)}</b>
-          </div>
-          <div className={styles.ratioTrack} aria-hidden="true">
-            <i style={{ width: `${Math.min(cohesionRatio, 100)}%` }} />
-          </div>
-          <p className={styles.note}>
-            Dati al {longDate(cohesion.referenceDate)}. “Pagato” non vuol dire opera finita.
-          </p>
+          {cohesionForYear ? (
+            <>
+              <dl className={styles.factRows}>
+                <div>
+                  <dt>Impegni registrati entro il {year}</dt>
+                  <dd>{compactEuro(cohesionCommitted)}</dd>
+                </div>
+                <div>
+                  <dt>Pagamenti registrati entro il {year}</dt>
+                  <dd>{compactEuro(cohesionPaid)}</dd>
+                </div>
+              </dl>
+              <div className={styles.ratioHead}>
+                <span>Pagamenti sugli impegni</span>
+                <b>{percent(cohesionRatio)}</b>
+              </div>
+              <div className={styles.ratioTrack} aria-hidden="true">
+                <i style={{ width: `${Math.min(cohesionRatio, 100)}%` }} />
+              </div>
+              <p className={styles.note}>
+                Serie cumulata al {year}, nello snapshot aggiornato al {longDate(cohesion.referenceDate)}.
+                Un pagamento non prova che il progetto sia finito.
+              </p>
+            </>
+          ) : (
+            <p className={styles.note}>La serie OpenCoesione non contiene dati per il {year}.</p>
+          )}
           <Link className="btn btn-block" href="/coesione">
             Vai ai fondi
           </Link>
@@ -400,31 +409,29 @@ export default async function HomePage({
 
         <section className="panel">
           <h2 className="panel-title">Segnali da controllare</h2>
-          <dl className={styles.factRows}>
-            <div>
-              <dt>Appalti con poca concorrenza</dt>
-              <dd>{procurementComparison.exposedValueBillion.toLocaleString("it-IT", {
-                maximumFractionDigits: 1,
-              })} mld €</dd>
-            </div>
-            <div>
-              <dt>Quota sul valore dei contratti</dt>
-              <dd>{percent(procurementComparison.byValue)}</dd>
-            </div>
-            <div>
-              <dt>Recupero possibile, ipotesi centrale</dt>
-              <dd>
-                {centralScenario.annualBillion.toLocaleString("it-IT", {
-                  maximumFractionDigits: 1,
-                })}{" "}
-                mld €/anno
-              </dd>
-            </div>
-          </dl>
-          <p className={styles.note}>
-            Numeri da relazioni ufficiali (ANAC, Corte dei conti, MEF): segnali da capire, non
-            accuse.
-          </p>
+          {procurement ? (
+            <>
+              <dl className={styles.factRows}>
+                <div>
+                  <dt>Valore degli affidamenti diretti nel {procurement.year}</dt>
+                  <dd>{((procurement.totalValueBillion * procurement.byValue) / 100).toLocaleString("it-IT", {
+                    maximumFractionDigits: 1,
+                  })} mld €</dd>
+                </div>
+                <div>
+                  <dt>Quota sul valore dei contratti</dt>
+                  <dd>{percent(procurement.byValue)}</dd>
+                </div>
+              </dl>
+              <p className={styles.note}>
+                Relazione ANAC sul {procurement.year}. È un segnale da approfondire, non una prova di spreco.
+              </p>
+            </>
+          ) : (
+            <p className={styles.note}>
+              La relazione ANAC completa sul {year} non è ancora disponibile. Non sostituiamo il dato con quello di un altro anno.
+            </p>
+          )}
           <Link className="btn btn-block" href="/controlli">
             Vai ai controlli
           </Link>

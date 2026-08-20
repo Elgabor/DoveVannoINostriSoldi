@@ -1,51 +1,54 @@
 # Roadmap
 
-## Fase 0 — Foundation
+## Fase 0: fondamenta
 - [x] identità e dashboard responsive
 - [x] source registry
 - [x] metodologia e principi legali
 - [x] primo endpoint OpenBDAP
 - [x] CI
 
-## Fase 1 — Dati reali
-- [ ] ingestore IPA e tabella canonica degli enti
-- [ ] discovery dei dataset OpenBDAP
-- [ ] ingestore SIOPE/OpenBDAP per pagamenti aggregati
+## Fase 1: dati reali
+- [x] ingestore IPA e schede canoniche degli enti
+- [x] discovery dei dataset OpenBDAP
+- [x] ingestore SIOPE e OpenBDAP per pagamenti aggregati
 - [ ] ingestore ANAC BDNCP
-- [ ] snapshot e provenance persistenti
-- [ ] pagina ente con URL sorgente e freshness
-- [ ] ricerca per ente, CIG, CUP e fornitore
+- [x] snapshot e provenance per le fonti integrate
+- [x] pagina ente con URL sorgente e freshness
+- [ ] ricerca unificata per ente, CIG, CUP e fornitore
+- [x] ricerca backend OpenBDAP MOP per CUP esatto
 
-## Fase 2 — Pagamenti distribuiti
+## Fase 2: pagamenti distribuiti
 - [ ] crawler Amministrazione Trasparente a partire da IPA
 - [ ] validatore schema ANAC art. 4-bis
 - [ ] coverage report per ente
 - [ ] deduplicazione e versioning
 - [ ] pagina pagamenti con filtri temporali e categorie
 
-## Fase 3 — Investimenti e territorio
+## Fase 3: investimenti e territorio
 - [ ] ReGiS / PNRR
 - [x] overview nazionale OpenCoesione con snapshot riconciliato, retry ETL, grafici, API e refresh automatico
 - [ ] drill-down OpenCoesione per progetto, soggetto e territorio con regole anti-doppio conteggio
-- [ ] opere pubbliche OpenBDAP / MOP
+- [x] contratto OpenBDAP MOP, controllo schema e ricerca puntuale per CUP
+- [ ] ingestione persistente e serie storica completa delle opere OpenBDAP MOP
 - [ ] geometrie ISTAT
 - [ ] confronti regionali, provinciali e comunali
 - [ ] normalizzazione pro capite con popolazione ufficiale
 
-## Fase 4 — Parlamento e incarichi
-- [ ] Consulenti Pubblici
-- [ ] bilanci Camera e Senato
+## Fase 4: Parlamento e incarichi
+- [x] Consulenti Pubblici
+- [x] consuntivo e bilancio Camera; documenti ufficiali Senato collegati
 - [ ] gare delle istituzioni
 - [ ] trattamento economico con granularità rigorosamente aderente alle fonti
 
-## Fase 5 — Osservatorio anomalie
+## Fase 5: controlli sui dati insoliti
 - [ ] concentrazione fornitori
 - [ ] affidamenti ripetuti
 - [ ] prossimità alle soglie
 - [ ] proroghe e rinnovi
 - [ ] benchmark di prezzo su categorie realmente comparabili
-- [ ] spiegazione pubblica di ogni indicatore
-- [ ] test contro falsi positivi
+- [x] contratto che separa dati osservati, stime, esposizioni al rischio e stock
+- [x] regole pubbliche che vietano conclusioni automatiche e somme incompatibili
+- [ ] test quantitativi contro falsi positivi sui futuri indicatori automatici
 
 ## Definition of done per connettore
 

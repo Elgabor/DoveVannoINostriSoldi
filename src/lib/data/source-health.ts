@@ -1,4 +1,5 @@
 import { discoverLatestStatePaymentDataset } from "@/lib/bdap-payments";
+import { discoverMopDataset } from "@/lib/bdap-public-works";
 import { classifyFreshness, type Freshness } from "@/lib/data/freshness";
 import { fetchOfficialSource } from "@/lib/data/source-fetch";
 import {
@@ -11,8 +12,11 @@ import { IPA_ENTI_RESOURCE_ID } from "@/lib/ipa";
 import { IPA_AOO_RESOURCE_ID, IPA_UO_RESOURCE_ID } from "@/lib/ipa-structure";
 import { mefParticipationsSnapshot } from "@/lib/mef-participations-snapshot";
 import { openCoesioneSnapshot } from "@/lib/opencoesione-snapshot";
+import { consulentiSnapshot } from "@/lib/consulenti-snapshot";
+import { openCivitasSnapshot } from "@/lib/opencivitas-snapshot";
+import { parliamentSnapshot } from "@/lib/parliament-snapshot";
 
-export type SourceIntegrationState = "active" | "mapped";
+export type SourceIntegrationState = "active";
 export type SourceReachability = "up" | "down" | "not-probed";
 
 export type SourceHealth = {
@@ -52,15 +56,6 @@ type CkanResourceResponse = {
   };
 };
 
-const ACTIVE_SOURCES = new Set<SourceId>([
-  "ipa",
-  "ipa-struttura",
-  "openbdap",
-  "siope",
-  "opencoesione",
-  "partecipazioni-pubbliche",
-]);
-
 function text(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const cleaned = value.trim();
@@ -85,7 +80,7 @@ function baseHealth(
     sourceId,
     label: policy.label,
     owner: policy.owner,
-    integration: ACTIVE_SOURCES.has(sourceId) ? "active" : "mapped",
+    integration: "active",
     checkedAt: new Date().toISOString(),
     policy: {
       cadence: policy.cadence,
@@ -227,7 +222,7 @@ async function probeIpaStructure(): Promise<SourceHealth> {
       reachability: "up",
       freshness: freshnessFor("ipa-struttura", oldestTimestamp),
       latencyMs: Math.round(performance.now() - startedAt),
-      detail: `UO: ${units.count ?? "—"} · AOO: ${areas.count ?? "—"}`,
+      detail: `UO: ${units.count ?? "non disponibile"} · AOO: ${areas.count ?? "non disponibile"}`,
       recordCount: (units.count ?? 0) + (areas.count ?? 0),
     };
   } catch (error) {
@@ -247,17 +242,23 @@ async function probeOpenBdap(): Promise<SourceHealth> {
   const startedAt = performance.now();
 
   try {
-    const latest = await discoverLatestStatePaymentDataset("mission", {
-      maxMonthsBack: 6,
-    });
+    const [latest, mop] = await Promise.all([
+      discoverLatestStatePaymentDataset("mission", { maxMonthsBack: 6 }),
+      discoverMopDataset(),
+    ]);
+    const timestamps = [latest.metadataModified, mop.metadata.referenceDate]
+      .filter((value): value is string => Boolean(value))
+      .map((value) => ({ value, time: new Date(value).valueOf() }))
+      .filter((entry) => !Number.isNaN(entry.time))
+      .sort((left, right) => left.time - right.time);
 
     return {
       ...base,
       reachability: "up",
-      freshness: freshnessFor("openbdap", latest.metadataModified),
+      freshness: freshnessFor("openbdap", timestamps.at(0)?.value ?? null),
       latencyMs: Math.round(performance.now() - startedAt),
-      detail: `Ultimo rilascio pagamenti trovato: ${latest.title}`,
-      recordCount: null,
+      detail: `Pagamenti: ${latest.title} · MOP aggiornato al ${mop.metadata.referenceDate} · ${mop.schema.cupCardinality.toLocaleString("it-IT")} CUP distinti`,
+      recordCount: mop.schema.localProjectCardinality,
     };
   } catch (error) {
     return {
@@ -314,17 +315,6 @@ async function probeSiope(): Promise<SourceHealth> {
   }
 }
 
-function mappedSource(sourceId: SourceId): SourceHealth {
-  return {
-    ...baseHealth(sourceId),
-    reachability: "not-probed",
-    freshness: freshnessFor(sourceId, null),
-    latencyMs: null,
-    detail: "Adapter dati non ancora attivo: non attribuiamo uno stato di rete artificiale.",
-    recordCount: null,
-  };
-}
-
 function snapshotManagedOpenCoesione(): SourceHealth {
   return {
     ...baseHealth("opencoesione"),
@@ -348,6 +338,41 @@ function snapshotManagedMefParticipations(): SourceHealth {
   };
 }
 
+function snapshotManagedConsulenti(): SourceHealth {
+  const latest = consulentiSnapshot.externalAppointments.at(-1);
+  return {
+    ...baseHealth("consulenti"),
+    reachability: "not-probed",
+    freshness: freshnessFor("consulenti", consulentiSnapshot.source.observedAt),
+    latencyMs: null,
+    detail: `Snapshot ETL attivo · ultimo anno disponibile ${consulentiSnapshot.latestYear}`,
+    recordCount: latest?.assignments ?? null,
+  };
+}
+
+function snapshotManagedOpenCivitas(): SourceHealth {
+  return {
+    ...baseHealth("opencivitas"),
+    reachability: "not-probed",
+    freshness: freshnessFor("opencivitas", openCivitasSnapshot.publishedAt),
+    latencyMs: null,
+    detail: `Snapshot ETL attivo · dati ${openCivitasSnapshot.referenceYear}`,
+    recordCount: openCivitasSnapshot.coverage.municipalities,
+  };
+}
+
+function snapshotManagedCamera(): SourceHealth {
+  const camera = parliamentSnapshot.chambers.find((chamber) => chamber.id === "camera");
+  return {
+    ...baseHealth("camera"),
+    reachability: "not-probed",
+    freshness: freshnessFor("camera", parliamentSnapshot.observedAt),
+    latencyMs: null,
+    detail: "Consuntivo e bilancio collegati ai documenti ufficiali della Camera.",
+    recordCount: camera?.statements.length ?? null,
+  };
+}
+
 export async function getSourceHealthOverview(): Promise<SourceHealth[]> {
   const [ipa, ipaStructure, openbdap, siope] = await Promise.all([
     probeIpa(),
@@ -361,8 +386,15 @@ export async function getSourceHealthOverview(): Promise<SourceHealth[]> {
     ["openbdap", openbdap],
     ["siope", siope],
     ["opencoesione", snapshotManagedOpenCoesione()],
+    ["opencivitas", snapshotManagedOpenCivitas()],
     ["partecipazioni-pubbliche", snapshotManagedMefParticipations()],
+    ["consulenti", snapshotManagedConsulenti()],
+    ["camera", snapshotManagedCamera()],
   ]);
 
-  return SOURCE_IDS.map((sourceId) => live.get(sourceId) ?? mappedSource(sourceId));
+  return SOURCE_IDS.map((sourceId) => {
+    const health = live.get(sourceId);
+    if (!health) throw new Error(`Adapter operativo senza probe: ${sourceId}`);
+    return health;
+  });
 }

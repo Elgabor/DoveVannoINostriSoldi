@@ -28,3 +28,10 @@ pnpm-debug.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local Codex worktrees
+/.worktrees/
+
+# Python ETL
+__pycache__/
+*.py[cod]

@@ -1,11 +1,23 @@
-import { NextResponse } from "next/server";
-import { getStateSpendingSnapshot } from "@/lib/bdap-payments";
+import { NextRequest, NextResponse } from "next/server";
+import {
+  getStateSpendingSnapshot,
+  StatePaymentPeriodUnavailableError,
+} from "@/lib/bdap-payments";
+import { parseReferencePeriod } from "@/lib/data/reference-period";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const requestedPeriod = parseReferencePeriod(request.nextUrl.searchParams);
+  if (!requestedPeriod.ok) {
+    return NextResponse.json(
+      { ok: false, error: requestedPeriod.error },
+      { status: 400 },
+    );
+  }
+
   try {
-    const snapshot = await getStateSpendingSnapshot();
+    const snapshot = await getStateSpendingSnapshot(requestedPeriod.value);
 
     return NextResponse.json(
       {
@@ -25,6 +37,7 @@ export async function GET() {
       },
     );
   } catch (error) {
+    const unavailable = error instanceof StatePaymentPeriodUnavailableError;
     return NextResponse.json(
       {
         ok: false,
@@ -32,7 +45,7 @@ export async function GET() {
         observedAt: new Date().toISOString(),
         error: error instanceof Error ? error.message : "Errore sconosciuto",
       },
-      { status: 503 },
+      { status: unavailable ? 404 : 503 },
     );
   }
 }

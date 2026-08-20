@@ -15,15 +15,14 @@ const DEFAULT_REFRESH_SOURCES: readonly SourceId[] = ["ipa", "openbdap", "siope"
 
 const SOURCE_PATHS: Readonly<Partial<Record<SourceId, readonly string[]>>> = {
   ipa: ["/enti", "/territori"],
-  openbdap: ["/stato"],
-  siope: ["/territori"],
-  "anac-bdncp": ["/"],
-  "art-4-bis": ["/enti"],
-  opencoesione: ["/coesione"],
-  regis: ["/enti"],
+  "ipa-struttura": ["/enti"],
+  openbdap: ["/stato", "/api/spese/stato", "/api/opere"],
+  siope: ["/", "/spese", "/territori"],
+  opencoesione: ["/", "/coesione"],
+  opencivitas: ["/territori", "/territori/confronto", "/api/spese/comuni/fabbisogni"],
+  "partecipazioni-pubbliche": ["/partecipazioni"],
   consulenti: ["/enti"],
-  camera: ["/"],
-  senato: ["/"],
+  camera: ["/parlamento", "/api/parlamento"],
 };
 
 type RefreshBody = {

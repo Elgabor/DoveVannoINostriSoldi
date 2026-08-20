@@ -1,18 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon } from "@hugeicons/core-free-icons";
 
 const primary = [
   { href: "/", label: "Home" },
-  { href: "/spese", label: "Soldi" },
+  { href: "/spese", label: "Soldi", aliases: ["/stato", "/parlamento"] },
   { href: "/territori", label: "Territori" },
   { href: "/coesione", label: "Fondi e progetti" },
   { href: "/enti", label: "Enti e società", aliases: ["/partecipazioni"] },
   { href: "/controlli", label: "Cosa controllare" },
-  { href: "/fonti", label: "Fonti", aliases: ["/metodologia", "/stato"] },
+  { href: "/fonti", label: "Fonti", aliases: ["/metodologia"] },
 ];
 
 export function Navigation() {
@@ -22,18 +23,20 @@ export function Navigation() {
     <header className="site-header">
       <div className="shell header-inner">
         <Link href="/" className="brand" aria-label="Dove vanno i nostri soldi, home">
-          <span className="brand-mark" aria-hidden="true">€</span>
+          <Image
+            className="brand-mark"
+            src="/brand/dvns-mark-transparent.svg"
+            width={44}
+            height={44}
+            alt=""
+            aria-hidden="true"
+            priority
+          />
           <span className="brand-text">
             <strong>Dove vanno i nostri soldi?</strong>
             <small>I soldi pubblici, spiegati semplice</small>
           </span>
         </Link>
-
-        <span className="flag" aria-hidden="true">
-          <i />
-          <i />
-          <i />
-        </span>
 
         <span className="header-spacer" />
 

@@ -1,0 +1,47 @@
+from __future__ import annotations
+
+import importlib.util
+import sys
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+MODULE_PATH = ROOT / "scripts/etl/parliament_sources.py"
+SPEC = importlib.util.spec_from_file_location("parliament_sources", MODULE_PATH)
+if SPEC is None or SPEC.loader is None:
+    raise RuntimeError("Impossibile caricare parliament_sources.py")
+MODULE = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = MODULE
+SPEC.loader.exec_module(MODULE)
+FIXTURES = ROOT / "tests/fixtures/parliament"
+
+
+class ParliamentSourceParserTests(unittest.TestCase):
+    def test_camera_discovers_only_primary_documents(self) -> None:
+        documents = MODULE.parse_camera_documents(
+            (FIXTURES / "camera.html").read_text(encoding="utf-8")
+        )
+        self.assertEqual([item.kind for item in documents], ["account", "budget"])
+        self.assertEqual([item.year for item in documents], [2025, 2026])
+
+    def test_senate_filters_doc_viii_and_normalizes_official_https(self) -> None:
+        documents = MODULE.parse_senate_documents(
+            (FIXTURES / "senato.csv").read_text(encoding="utf-8")
+        )
+        self.assertEqual([item.document_number for item in documents], [5, 6])
+        self.assertTrue(all(item.document_url.startswith("https://www.senato.it/") for item in documents))
+        self.assertTrue(all(item.record_url.startswith("https://dati.senato.it/") for item in documents))
+
+    def test_senate_fails_closed_on_unknown_doc_viii_title(self) -> None:
+        payload = (FIXTURES / "senato.csv").read_text(encoding="utf-8")
+        payload += (
+            "https://dati.senato.it/documento/60000,19,"
+            "Rendiconto delle entrate e delle spese e progetto di bilancio interno del Senato,"
+            "7,,VIII,Titolo inatteso,2026-08-20,https://www.senato.it/documento.pdf\n"
+        )
+        with self.assertRaisesRegex(MODULE.StructuralError, "titolo.*non riconosciuto"):
+            MODULE.parse_senate_documents(payload)
+
+
+if __name__ == "__main__":
+    unittest.main()

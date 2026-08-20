@@ -88,19 +88,40 @@ OpenCoesione usa un flusso dedicato perché la dashboard deve rimanere disponibi
 
 La cadenza dichiarata dalla fonte resta bimestrale prevista. `/api/fonti/stato` classifica la freshness dalla data del rilascio ma non ripete il probe di rete: la reachability è controllata dal workflow dedicato.
 
+### Consulenti Pubblici
+
+Il workflow controlla ogni 6 ore l'endpoint ufficiale usato dal portale. Gli importi vengono salvati in centesimi interi e l'anno corrente resta indicato come parziale. Se il contenuto non cambia, il timestamp di osservazione non produce un nuovo commit.
+
+### OpenCivitas
+
+Il rilascio comunale 2022 viene verificato ogni giorno. L'ETL controlla i metadati degli indicatori, il join sul codice ISTAT, gli importi, i livelli dei servizi e gli avvisi della fonte prima di scrivere lo snapshot.
+
+Il server OpenCivitas non invia al momento il certificato intermedio della propria catena TLS. La verifica resta attiva: l'ETL aggiunge il solo certificato pubblico intermedio verificato e documentato in `scripts/etl/certs/README.md`. Non usa `--insecure`, proxy o fonti alternative.
+
+Una nuova annualità non viene accettata alla cieca. Il workflow la rileva e si ferma con un errore esplicito, lasciando disponibile l'ultimo snapshot valido. Prima si convalidano schema, definizioni e copertura; poi si aggiorna il contratto e si abilita il nuovo anno.
+
+### OpenBDAP MOP
+
+La ricerca delle opere pubbliche non dipende da alias OData scritti a mano. Il connettore controlla metadati e schema, ricava gli alias tecnici ufficiali e si ferma se una colonna richiesta cambia nome, significato o tipo.
+
+Il refresh orario invalida il tag OpenBDAP e la route `/api/opere`. Al primo accesso successivo vengono ricontrollati metadati e schema; i dati di una singola ricerca CUP hanno cache di 6 ore e possono essere serviti per altre 24 ore mentre avviene la riconvalida. La risposta espone separatamente data della fonte e momento del controllo della piattaforma.
+
 ## Policy iniziali
 
 | Fonte | Cadenza sorgente | Discovery DoveVannoINostriSoldi | Dati |
 | --- | --- | ---: | ---: |
 | IPA Enti | giornaliera | 1 h | 1 h |
-| OpenBDAP · Pagamenti Stato | mensile per mese contabile | 2 h | 6 h |
+| OpenBDAP · Pagamenti Stato e opere MOP | mensile per i pagamenti; data propria per MOP | 1 h · invalidazione, metadati entro 2 h | 6 h |
 | ANAC open dataset | mensile | 3 h | 12 h |
 | OpenCoesione | bimestrale prevista | 6 h · workflow snapshot | 6 h · cache API |
+| OpenCivitas | irregolare | 24 h · workflow snapshot | 24 h · cache API |
 | ReGiS | periodica | 6 h | 12 h |
 | Art. 4-bis | dipende dall'ente | 3 h | 6 h |
 | Consulenti Pubblici | dipende dall'ente | 6 h | 6 h |
+| Camera dei deputati | su pubblicazione | 6 h | 12 h |
+| Senato della Repubblica | su pubblicazione | 6 h | 12 h |
 
-SIOPE, Camera e Senato hanno policy conservative fino a quando il singolo adapter non avrà una semantica di pubblicazione sufficientemente precisa.
+Camera ha un riepilogo strutturato con data del documento. Senato resta documentale: i nuovi atti vengono collegati, ma i valori non sono pubblicati finché non superano una normalizzazione verificabile.
 
 ## CI vs source health
 
@@ -129,8 +150,12 @@ Stato attuale:
 
 - IPA Data API: migrata;
 - IPA aggregazioni SQL: migrate;
-- OpenBDAP: time-based revalidation già attiva; migrazione ai source tag in corso;
+- OpenBDAP: pagamenti con revalidation temporale; opere MOP sul source fetch layer con tag, schema verificato e ricerca CUP;
 - OpenCoesione: snapshot ETL versionato attivo; freshness applicativa esposta, reachability demandata al workflow dedicato;
+- Consulenti Pubblici: snapshot ETL versionato attivo; anno corrente esplicitamente parziale;
+- OpenCivitas: snapshot comunale 2022 attivo; nuove annualità ammesse dopo convalida del contratto;
+- Camera: consuntivo 2025 e bilancio 2026 separati per significato contabile;
+- Senato: documenti ufficiali collegati, valori strutturati ancora sospesi;
 - altre fonti: useranno direttamente il nuovo contratto quando verranno implementate.
 
 Non riscriviamo tutti gli adapter contemporaneamente soltanto per uniformità estetica: ogni migrazione deve mantenere gli stessi risultati e passare lint, typecheck, design gate e build.

@@ -39,7 +39,7 @@ test("public number parser handles whitespace, decimal comma and empty values", 
 
 test("every registered source has a complete operational policy", () => {
   assert.equal(new Set(SOURCE_IDS).size, SOURCE_IDS.length);
-  assert.ok(SOURCE_IDS.length >= 10);
+  assert.equal(SOURCE_IDS.length, 9);
   assert.deepEqual(
     [...publicSources.map((source) => source.slug)].sort(),
     [...SOURCE_IDS].sort(),
@@ -78,7 +78,7 @@ test("freshness uses source thresholds without inventing missing ones", () => {
   assert.equal(staleIpa.state, "stale");
 
   const periodicWithoutThreshold = classifyFreshness(
-    SOURCE_POLICIES.regis.staleAfterSeconds,
+    SOURCE_POLICIES.camera.staleAfterSeconds,
     "2026-08-19T12:00:00.000Z",
     now,
   );

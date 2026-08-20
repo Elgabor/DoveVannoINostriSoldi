@@ -1,0 +1,78 @@
+name: OpenCivitas municipal snapshot
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/etl/opencivitas_snapshot.py
+      - scripts/etl/certs/**
+      - src/lib/data/opencivitas-contract.ts
+      - src/data/generated/opencivitas-2022.json
+      - tests/opencivitas-contract.test.mjs
+      - .github/workflows/opencivitas-refresh.yml
+  pull_request:
+    paths:
+      - scripts/etl/opencivitas_snapshot.py
+      - scripts/etl/certs/**
+      - src/lib/data/opencivitas-contract.ts
+      - src/data/generated/opencivitas-2022.json
+      - tests/opencivitas-contract.test.mjs
+      - .github/workflows/opencivitas-refresh.yml
+  schedule:
+    - cron: "23 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: opencivitas-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Validate committed snapshot offline
+        run: python scripts/etl/opencivitas_snapshot.py --check
+
+  refresh:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: write
+    env:
+      TARGET_BRANCH: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.TARGET_BRANCH }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Refresh the validated 2022 release
+        run: python scripts/etl/opencivitas_snapshot.py
+      - name: Validate snapshot offline
+        run: python scripts/etl/opencivitas_snapshot.py --check
+      - name: Commit changed official data
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$(git status --porcelain -- src/data/generated/opencivitas-2022.json)" ]]; then
+            echo "No OpenCivitas data change to commit."
+            exit 0
+          fi
+          git config user.name "dove-vanno-i-nostri-soldi-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/data/generated/opencivitas-2022.json
+          git commit -m "chore(data): refresh OpenCivitas snapshot"
+          git pull --rebase origin "${TARGET_BRANCH}"
+          git push origin "HEAD:${TARGET_BRANCH}"

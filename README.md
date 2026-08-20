@@ -4,6 +4,8 @@ DoveVannoINostriSoldi è un progetto civico open source per capire come vengono 
 
 Riunisce dati ufficiali che oggi si trovano in portali diversi. Ogni numero mostra la fonte, il periodo a cui si riferisce e i limiti da conoscere. Un valore insolito può indicare dove controllare meglio, ma non dimostra da solo uno spreco o un illecito.
 
+L'AI serve a confrontare dati omogenei, trovare scostamenti e ordinare i casi da verificare. Non decide se esiste uno spreco e non attribuisce responsabilità.
+
 ## Cosa puoi consultare
 
 | Sezione | Che cosa mostra | Fonte |
@@ -14,11 +16,33 @@ Riunisce dati ufficiali che oggi si trovano in portali diversi. Ogni numero most
 | Fondi e progetti | Costo previsto, pagamenti e stato dei progetti di coesione | OpenCoesione |
 | Enti e società | Ministeri, enti pubblici, uffici, contatti e società partecipate | IPA, AgID, MEF |
 | Spese dello Stato | Pagamenti per funzione, amministrazione e tipo di spesa | RGS, OpenBDAP |
+| Fabbisogni comunali | Spesa storica, spesa standard e servizi dei Comuni nel 2022 | OpenCivitas |
 | Partecipazioni | Società e organizzazioni partecipate dichiarate dalle amministrazioni | MEF |
+| Parlamento | Consuntivo e bilancio della Camera | Camera dei deputati |
 | Controlli | Dati che meritano verifiche più approfondite, con spiegazioni e fonti | ANAC, MEF, Corte dei conti e altre fonti ufficiali |
 | Fonti | Stato dei collegamenti e date di aggiornamento | Registro interno delle fonti |
 
 Gli appalti ANAC, il PNRR ReGiS e altre fonti già censite non sono ancora presentati come dati correnti. Il sito lo indica chiaramente e non usa numeri dimostrativi per riempire gli spazi mancanti.
+
+Il backend espone inoltre:
+
+- `GET /api/incarichi`, con statistiche nazionali ufficiali di Consulenti Pubblici dal 2023;
+- `GET /api/spese/comuni/fabbisogni?anno=2022`, con il confronto OpenCivitas per 6.557 Comuni delle Regioni a statuto ordinario;
+- `GET /api/spese/stato?anno=2024`, con l'ultimo mese OpenBDAP disponibile nell'anno richiesto;
+- `GET /api/spese/stato/amministrazioni/2?anno=2024`, con missioni e categorie di una singola amministrazione;
+- `GET /api/opere?cup=I39B05000060005`, con stato, date, costi e finanziamenti di un'opera pubblica OpenBDAP;
+- `GET /api/parlamento`, con i dati strutturati verificati della Camera; il monitor segue anche i nuovi documenti del Senato senza pubblicare valori non ancora estraibili in modo affidabile;
+- `GET /api/controlli`, con indicatori classificati, scenari separati e regole per il loro uso.
+
+Per OpenCivitas, la differenza tra spesa storica e spesa standard non viene chiamata spreco. L'API restituisce anche i valori per abitante, il confronto sui servizi e i limiti territoriali della fonte.
+
+Per le opere pubbliche, l'API può segnalare date da controllare, crescita dei costi, finanziamenti ancora da trovare o problemi di qualità del dato. Sono indicazioni per scegliere cosa approfondire, non prove automatiche di spreco.
+
+La sezione Controlli tiene separate sette letture: esiti di controlli ufficiali, concorrenza ridotta, ritardi, debiti, crediti difficili da riscuotere, misure da valutare e ipotesi di miglioramento. Gli scenari non vengono sommati ai dati osservati.
+
+Non confrontiamo come prezzi unitari gli importi totali di contratti con lo stesso codice CPV. Per parlare di anomalia di prezzo servono anche quantità, unità di misura, specifiche, durata e perimetro compatibili. Finché questi campi non sono disponibili, il sito non pubblica classifiche basate sul solo rapporto tra importo minimo e massimo.
+
+La replica sui microdati CIG 2025, con formula, filtri e limiti, è documentata in [docs/research/ANAC_2025_REPLICATION.md](docs/research/ANAC_2025_REPLICATION.md). Quando il risultato ricalcolato non coincide con l'aggregato della relazione ANAC, mostriamo la differenza invece di correggere il dato a mano.
 
 ## Scegliere l'anno
 
@@ -30,7 +54,7 @@ La home e le pagine Soldi e Territori permettono di scegliere il 2024, 2025 o 20
 /territori?anno=2025
 ```
 
-I dati SIOPE e la serie annuale OpenCoesione cambiano con l'anno scelto. Se un indicatore non esiste per quel periodo, viene mostrato come non disponibile. Non riutilizziamo un dato di un altro anno.
+I dati SIOPE, OpenBDAP e la serie annuale OpenCoesione cambiano con l'anno scelto. Se un indicatore non esiste per quel periodo, viene mostrato come non disponibile. Non riutilizziamo un dato di un altro anno.
 
 ## Regole del progetto
 
@@ -75,6 +99,9 @@ python3 scripts/etl/siope_municipal_snapshot.py --year 2025 \
   --output src/data/generated/siope-municipal-2025.json
 python3 scripts/etl/opencoesione_snapshot.py --check
 python3 scripts/etl/mef_participations_snapshot.py --check
+python3 scripts/etl/consulenti_snapshot.py --check
+python3 scripts/etl/opencivitas_snapshot.py --check
+python3 scripts/etl/parliament_sources.py --check
 ```
 
 Le attività automatiche controllano periodicamente la presenza di nuovi dati. Un'interruzione di una fonte esterna non viene confusa con un errore del codice.

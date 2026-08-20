@@ -2,7 +2,7 @@
 
 Questa è la mappa iniziale delle fonti. Il criterio è semplice: prima fonti istituzionali nazionali, strutturate e con identificativi stabili; poi portali territoriali e documenti meno standardizzati.
 
-## Tier 1 — infrastrutture nazionali
+## Tier 1: infrastrutture nazionali
 
 ### SIOPE / SIOPE+
 **Titolari/gestori:** RGS e Banca d'Italia.  
@@ -13,8 +13,22 @@ Questa è la mappa iniziale delle fonti. Il criterio è semplice: prima fonti is
 ### OpenBDAP
 **Titolare:** Ragioneria Generale dello Stato.  
 **Uso:** bilancio dello Stato, spesa, SIOPE, opere pubbliche, PNRR e altri domini.  
-**Accesso:** catalogo CKAN con API ufficiali.  
-**Primo endpoint implementato:** `GET /api/fonti/bdap`, proxy con timeout e metadati di osservazione.
+**Accesso:** catalogo e API OData ufficiali.
+**Endpoint implementati:** pagamenti dello Stato e `GET /api/opere?cup=...` per le opere pubbliche MOP.
+
+Il connettore MOP legge prima i metadati e lo schema ufficiale. Gli alias tecnici delle colonne vengono scoperti a ogni controllo e accettati soltanto se nome, significato e tipo restano quelli previsti dal contratto. Questo evita di pubblicare valori nella colonna sbagliata dopo una modifica della fonte.
+
+Al controllo del 3 agosto 2026, lo schema dichiarava 560.245 codici locali di progetto e 541.539 CUP distinti. La ricerca usa il CUP esatto e interroga soltanto le righe necessarie: non scarica oltre mezzo milione di opere durante una richiesta web.
+
+Per ogni opera manteniamo distinti:
+
+- costo previsto e costo effettivo;
+- finanziamenti statali, europei, territoriali, privati e altre fonti;
+- finanziamenti ancora da trovare;
+- date previste e date effettive;
+- avvisi sulla qualità del dato.
+
+Gli avvisi su tempi, costi o copertura finanziaria hanno uso di screening. Indicano cosa verificare e includono spiegazioni alternative plausibili. Non classificano automaticamente un'opera come spreco, irregolarità o illecito.
 
 ### BDNCP / ANAC
 **Titolare:** ANAC.  
@@ -36,7 +50,7 @@ Risorse integrate:
 
 Le UO non hanno un campo semantico che certifichi “dipartimento”, “direzione generale” o “ufficio”. Queste qualifiche richiedono un crosswalk ufficiale con regolamenti e sezioni Amministrazione Trasparente.
 
-## Tier 2 — trasparenza distribuita
+## Tier 2: trasparenza distribuita
 
 ### Dati sui pagamenti art. 4-bis
 Nel 2026 ANAC ha pubblicato uno schema di riferimento per i dati sui pagamenti nella sezione “Amministrazione Trasparente”.
@@ -70,7 +84,7 @@ Strategia:
 
 ANAC TrasparenzAI dimostra che il monitoraggio automatico della struttura di Amministrazione Trasparente è tecnicamente applicabile su scala IPA. DoveVannoINostriSoldi non deve duplicare il giudizio di conformità ANAC: deve usare la stessa idea di discovery per aggregare i dati effettivamente pubblicati.
 
-## Tier 3 — investimenti
+## Tier 3: investimenti
 
 ### ReGiS / PNRR
 Gli open data PNRR sono pubblicati come estrazioni periodiche da ReGiS e comprendono informazioni finanziarie, fisiche e procedurali. Useremo CUP come una delle chiavi fondamentali.
@@ -82,7 +96,38 @@ La prima integrazione usa l’aggregato nazionale ufficiale `/it/api/aggregati/`
 
 Ogni dimensione deve riconciliarsi con il totale nazionale, sia per i valori generali sia per la componente coesione: sono tollerati al massimo 2 euro di scarto monetario dovuto agli arrotondamenti della fonte e nessuno scarto nel conteggio dei progetti. Le aggregazioni territoriali non sono ancora sommate perché i progetti multilocalizzati possono comparire in più territori e rendere i valori non additivi.
 
-## Tier 4 — incarichi e istituzioni
+### OpenCUP
+
+OpenCUP è l'anagrafe nazionale dei progetti di investimento pubblico promossa dal DIPE della Presidenza del Consiglio dei Ministri. Pubblica ogni mese progetti, localizzazioni, soggetti titolari e fonti di copertura con licenza CC BY 4.0. Il CUP è la chiave necessaria per collegare investimento, finanziamento, contratto e avanzamento senza usare corrispondenze testuali.
+
+Il rilascio nazionale dei progetti supera 1,7 GB. Per questo la fonte è registrata ma non viene scaricata durante una richiesta Next.js. L'integrazione prevista usa:
+
+1. discovery del rilascio mensile e dei suoi metadati;
+2. download in object storage con hash e validator HTTP;
+3. lettura streaming del CSV separato da pipe;
+4. indice persistente per CUP e codice fiscale del soggetto titolare;
+5. collegamenti a OpenCoesione, ReGiS e ANAC soltanto tramite identificativi esatti.
+
+Il dataset OpenCUP che segnala candidati PNRR non certifica l'ammissione al finanziamento. Per i progetti PNRR effettivi resta necessaria la fonte ReGiS o l'elenco ufficiale dell'amministrazione responsabile.
+
+### OpenCivitas
+
+OpenCivitas pubblica dati comunali su fabbisogni standard, spesa storica e servizi. La prima integrazione usa il rilascio 2022 dei servizi totali e copre 6.557 Comuni delle 15 Regioni a statuto ordinario.
+
+Per ogni Comune conserviamo:
+
+- codice ISTAT, nome, provincia e regione;
+- spesa storica e spesa standard;
+- differenza totale, per abitante e percentuale;
+- livello della spesa e dei servizi su scala 0-10;
+- differenza dei servizi rispetto ai Comuni della stessa fascia di popolazione;
+- motivi di non valutabilità e avvisi della fonte.
+
+La differenza monetaria non è una prova di spreco. Un Comune può avere costi diversi o offrire più o meno servizi. Per questo l'API non ordina i risultati per differenza assoluta senza una richiesta esplicita e restituisce sempre le note metodologiche.
+
+Il join con IPA e SIOPE usa il codice ISTAT del Comune. Le Regioni a statuto speciale e le Province autonome non sono trattate come dati mancanti: sono fuori dal perimetro dichiarato da questa pubblicazione.
+
+## Tier 4: incarichi e istituzioni
 
 ### Partecipazioni pubbliche MEF
 
@@ -99,15 +144,46 @@ S13 e IPA hanno perimetri diversi. Finché la pubblicazione ufficiale corrente n
 ### Consulenti Pubblici
 Il Dipartimento della Funzione Pubblica pubblica gli incarichi comunicati dalle amministrazioni nell'Anagrafe delle prestazioni. Sono esposti, tra gli altri, compenso lordo, ammontare erogato e data di aggiornamento del singolo incarico.
 
+La prima integrazione usa l'endpoint JSON pubblico impiegato dal portale per le statistiche nazionali. Lo snapshot contiene, dal 2023:
+
+- incarichi esterni, incarichi conclusi e somme erogate comunicate;
+- conteggi dei percettori persone fisiche e organizzazioni;
+- incarichi conferiti o autorizzati ai dipendenti pubblici;
+- ripartizione degli incarichi ai dipendenti tra dirigenti e non dirigenti.
+
+Gli importi vengono convertiti in centesimi interi. Per gli incarichi ai dipendenti, dirigenti e non dirigenti devono riconciliarsi esattamente con il totale annuale. L'anno corrente resta esplicitamente parziale. Il campo tecnico `paConferenteCount` non viene reinterpretato come numero di amministrazioni distinte.
+
 ### Camera dei deputati
-Camera Trasparente pubblica informazioni su bilancio, amministrazione e procedure di gara. L'integrazione deve distinguere il trattamento economico “previsto” dagli importi individualmente e realmente erogati quando questi ultimi non siano esposti dalla fonte.
+Camera Trasparente pubblica informazioni su bilancio, amministrazione e procedure di gara. L'API parlamentare espone il conto consuntivo 2025 e il bilancio 2026 come documenti distinti.
+
+Per il consuntivo sono disponibili pagamenti e categorie arrotondati come nel documento ufficiale. Il totale degli impegni comprende anche le partite di giro, mentre le categorie pubblicate riguardano la spesa effettiva. Per il bilancio 2026 gli importi sono previsioni, non pagamenti già effettuati.
 
 ### Senato della Repubblica
-La sezione Spese e trasparenza pubblica bilancio, conto consuntivo e informazioni sul trattamento economico dei senatori. Vale la stessa cautela sulla granularità individuale.
+La sezione Spese e trasparenza pubblica bilancio, conto consuntivo e informazioni sul trattamento economico dei senatori. Il monitor interno controlla i metadati dei nuovi documenti ufficiali e li registra nel manifesto della pipeline.
+
+I valori del Senato non sono ancora normalizzati e non compaiono nell'API o nella pagina pubblica. La pubblicazione istituzionale non offre al momento una tabella aperta stabile e l'accesso automatico ai PDF può essere bloccato. Non estraiamo né stimiamo importi finché il formato non è verificabile. Camera e Senato hanno bilanci autonomi e non verranno sommati automaticamente.
 
 ## Fonti successive
 
-Da valutare nella fase 2:
+### Anagrafe delle opere incompiute
+
+Il Ministero delle Infrastrutture e dei Trasporti pubblica una rilevazione annuale nazionale e le anagrafi regionali. La pubblicazione contiene CUP, stazione appaltante, importi, oneri per completare l'opera, stato e percentuale di avanzamento.
+
+La fonte è registrata ma non ancora importata. Il rilascio nazionale corrente è un PDF: serve un estrattore versionato con fixture reali e arresto esplicito quando cambia il layout. Il CUP consentirà il collegamento esatto con MOP senza confronti incerti sul nome dell'opera.
+
+### Conti Pubblici Territoriali
+
+CPT permette di leggere la spesa consolidata per territorio, settore, categoria economica e tipo di soggetto. È utile per spiegare dove si concentra la spesa del Settore Pubblico Allargato.
+
+Non va sommato a SIOPE. Perimetro, classificazione e regole di consolidamento sono diversi. La fonte resta mappata finché il catalogo non viene acquisito con una pipeline stabile e verificabile.
+
+### ReNDiS
+
+ISPRA e MASE raccolgono dati tecnici, finanziari e attuativi sugli interventi contro il dissesto idrogeologico. Il CUP permette di collegare un intervento a OpenBDAP MOP e, in seguito, a OpenCUP e ai contratti ANAC.
+
+La piattaforma dichiara aggiornamento continuo e sincronizzazione settimanale con BDAP per gli interventi associati a CUP. L'adapter resta da implementare: prima vanno identificati il canale open data stabile, la licenza della singola risorsa e le regole per distinguere interventi MASE ed extra-MASE.
+
+Altre fonti da valutare nella fase 2:
 
 - sovvenzioni e contributi art. 26/27 D.Lgs. 33/2013;
 - patrimonio e partecipazioni pubbliche;
@@ -115,4 +191,5 @@ Da valutare nella fase 2:
 - personale pubblico;
 - sanità;
 - dati regionali e comunali con maggiore granularità;
+- serie storica OpenCivitas 2015-2022 e singole funzioni comunali;
 - Corte dei conti per contesto e referti, senza confondere contestazioni, sentenze e dati di spesa.

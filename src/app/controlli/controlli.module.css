@@ -63,6 +63,12 @@
   font-weight: 650;
 }
 
+.signalDetails summary {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+}
+
 .readingGuide summary {
   font-family: var(--font-heading);
   font-size: 18px;

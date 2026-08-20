@@ -267,20 +267,20 @@ export default async function ControlsPage({ searchParams }: PageProps) {
 
       {(selectedYear === null || selectedYear === 2025) && (
         <section className="panel">
-          <h2 className="panel-title">Appalti 2025: perché le percentuali cambiano</h2>
+          <h2 className="panel-title">Appalti 2025: 55,3% e quasi 95% usano calcoli diversi</h2>
           <div className="stat-strip">
             <div>
-              <span className="stat-label">Procedure da 40.000 euro in su</span>
+              <span className="stat-label">Tutte le procedure da 40.000 euro in su</span>
               <span className="stat-value">{percent(procurementComparisons[2025].byNumber)}</span>
-              <span className="stat-note">affidamenti diretti</span>
+              <span className="stat-note">sono affidamenti diretti</span>
             </div>
             <div>
-              <span className="stat-label">Servizi e forniture, perimetro ANAC</span>
+              <span className="stat-label">Studio ANAC su servizi e forniture</span>
               <span className="stat-value">
                 {procurementServicesAndSupplies2025.directAwardShareQualifier}{" "}
                 {percent(procurementServicesAndSupplies2025.directAwardShare)}
               </span>
-              <span className="stat-note">affidamenti diretti</span>
+              <span className="stat-note">dato ufficiale sugli affidamenti diretti</span>
             </div>
             <div>
               <span className="stat-label">Tra 135.000 e 140.000 euro nel 2025</span>
@@ -298,14 +298,50 @@ export default async function ControlsPage({ searchParams }: PageProps) {
             </div>
           </div>
           <p className={styles.note}>
-            Il {percent(procurementComparisons[2025].byNumber)} e il quasi{" "}
-            {percent(procurementServicesAndSupplies2025.directAwardShare)} usano insiemi diversi,
-            quindi non si contraddicono. La concentrazione vicino alla soglia indica casi da
-            approfondire, ma non prova da sola un&apos;irregolarità.{" "}
+            Il {percent(procurementComparisons[2025].byNumber)} considera tutte le procedure da
+            40.000 euro in su. Il quasi {percent(procurementServicesAndSupplies2025.directAwardShare)}
+            viene da uno studio diverso di ANAC su servizi e forniture. Non è il 95% di tutti gli
+            appalti. La concentrazione vicino alla soglia indica casi da approfondire, ma non prova
+            da sola un&apos;irregolarità.{" "}
             <a href={procurementServicesAndSupplies2025.sourceUrl} target="_blank" rel="noreferrer">
               Leggi la fonte ANAC ↗
             </a>
           </p>
+          <details className={styles.signalDetails}>
+            <summary>Come abbiamo controllato il quasi 95%</summary>
+            <dl>
+              <div>
+                <dt>Che cosa scrive ANAC</dt>
+                <dd>
+                  Quasi il 95% nel gruppo specifico di contratti usato nel suo studio su servizi e
+                  forniture.
+                </dd>
+              </div>
+              <div>
+                <dt>Che cosa otteniamo dai file aperti</dt>
+                <dd>
+                  {percent(procurementServicesAndSupplies2025.replicatedDirectAwardShare)} usando i
+                  dodici file mensili 2025 disponibili il{" "}
+                  {longDate(procurementServicesAndSupplies2025.replicationObservedAt)}. La differenza
+                  può dipendere da rettifiche successive o da ulteriori dettagli del perimetro.
+                </dd>
+              </div>
+              <div>
+                <dt>Come lo presentiamo</dt>
+                <dd>
+                  Manteniamo il dato ufficiale e mostriamo separatamente il nostro controllo. Non
+                  correggiamo i dati per farli coincidere.{" "}
+                  <a
+                    href={procurementServicesAndSupplies2025.replicationUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Vedi metodo e risultati ↗
+                  </a>
+                </dd>
+              </div>
+            </dl>
+          </details>
         </section>
       )}
 

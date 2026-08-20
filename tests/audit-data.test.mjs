@@ -108,8 +108,11 @@ test("procurement series keeps the same scope across annual reports", () => {
   assert.equal(procurementReducedCompetition2025.directAwardsBillion, 15.702);
   assert.equal(procurementReducedCompetition2025.negotiatedWithoutTenderBillion, 44.084);
   assert.equal(procurementServicesAndSupplies2025.directAwardShare, 95);
+  assert.equal(procurementServicesAndSupplies2025.replicatedDirectAwardShare, 93.00067);
+  assert.match(procurementServicesAndSupplies2025.replicationObservedAt, /^20\d{2}-\d{2}-\d{2}$/);
   assert.equal(procurementServicesAndSupplies2025.thresholdBandCount2025, 13_879);
   assert.match(procurementServicesAndSupplies2025.sourceUrl, /^https:\/\/www\.anticorruzione\.it\//);
+  assert.match(procurementServicesAndSupplies2025.replicationUrl, /^https:\/\/github\.com\//);
   assert.equal(reducedCompetition?.value, procurementReducedCompetition2025.totalBillion);
   assert.ok(reducedCompetition?.evidenceStatus.includes("44,084"));
   assert.ok(reducedCompetition?.evidenceStatus.includes("15,702"));

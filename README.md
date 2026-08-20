@@ -35,6 +35,7 @@ Il backend espone inoltre:
 - `GET /api/parlamento`, con i dati strutturati verificati della Camera; il monitor segue anche i nuovi documenti del Senato senza pubblicare valori non ancora estraibili in modo affidabile;
 - `GET /api/controlli`, con indicatori classificati, scenari separati e regole per il loro uso.
 - `GET /api/spese/invalidita?anno=2024&regione=Calabria`, con spesa nazionale e nuove pensioni di invalidità civile per la granularità pubblica verificata.
+- `GET /api/territori/fisco?anno=2023&regione=Calabria`, con entrate, spese e saldo contabile CPT nello stesso perimetro PA consolidato.
 
 ## MCP per assistenti AI
 
@@ -56,7 +57,7 @@ Il server espone:
 - la risorsa `dvns://related-mcp-services`, che segnala servizi pubblici complementari senza
   confonderli con gli adapter gestiti dal portale.
 
-Tra i dataset c'è `anac_cig_snapshot`: espone copertura annuale, conteggi, procedure, fasce di importo, hash degli input e cautele della replica CIG 2025. `inps_invalidita_civile` tiene separate spesa nazionale, stock di prestazioni e nuove decorrenze regionali, senza inferire dati comunali o responsabilità individuali. `opencoesione_progetti` include anche quota del costo pubblico, rapporto pagamenti/costo e costo medio per progetto per tema, natura e stato.
+Tra i dataset c'è `anac_cig_snapshot`: espone copertura annuale, conteggi, procedure, fasce di importo, hash degli input e cautele della replica CIG 2025. `inps_invalidita_civile` tiene separate spesa nazionale, stock di prestazioni e nuove decorrenze regionali, senza inferire dati comunali o responsabilità individuali. `cpt_finanza_regionale` espone entrate, spese e saldo territoriale 2000-2023, con valori pro capite solo dove il denominatore ISTAT è coerente. `opencoesione_progetti` include anche quota del costo pubblico, rapporto pagamenti/costo e costo medio per progetto per tema, natura e stato.
 
 Per il dettaglio civico per singolo Comune segnaliamo anche il MCP pubblico di
 [Cruscotto Italia](https://cruscotto-italia.dati.gov.it/about.html#accesso-mcp), gestito da AgID:

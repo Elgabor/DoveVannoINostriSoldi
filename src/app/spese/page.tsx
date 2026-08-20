@@ -18,7 +18,8 @@ export const metadata: Metadata = {
 };
 
 function selectedYear(value: string | string[] | undefined): number {
-  const parsed = Number.parseInt(Array.isArray(value) ? value[0] ?? "" : value ?? "", 10);
+  const raw = Array.isArray(value) ? value[0] ?? "" : value ?? "";
+  const parsed = /^\d{4}$/.test(raw) ? Number(raw) : Number.NaN;
   return availableSiopeYears.includes(parsed) ? parsed : availableSiopeYears[0];
 }
 

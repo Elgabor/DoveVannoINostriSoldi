@@ -94,10 +94,11 @@ test("IPA entity lookup does not silently ignore an ambiguous search filter", as
 });
 
 test("every snapshot-backed MCP adapter returns real structured data", async () => {
-  const [cohesion, anac, inps, participations, appointments, parliament, controls, sources] = await Promise.all([
+  const [cohesion, anac, inps, cpt, participations, appointments, parliament, controls, sources] = await Promise.all([
     queryPublicDataset({ dataset: "opencoesione_progetti" }),
     queryPublicDataset({ dataset: "anac_cig_snapshot", year: 2025 }),
     queryPublicDataset({ dataset: "inps_invalidita_civile", year: 2023, region: "Calabria" }),
+    queryPublicDataset({ dataset: "cpt_finanza_regionale", year: 2023, region: "Calabria" }),
     queryPublicDataset({ dataset: "mef_partecipazioni" }),
     queryPublicDataset({ dataset: "consulenti_incarichi" }),
     queryPublicDataset({ dataset: "parlamento_bilanci" }),
@@ -116,6 +117,10 @@ test("every snapshot-backed MCP adapter returns real structured data", async () 
   assert.ok(participations.totals.participationRecords > 0);
   assert.deepEqual(inps.regionalNewPensions.regions, [{ region: "Calabria", values: [8789] }]);
   assert.match(inps.methodology.interpretation, /non provano frode/i);
+  assert.equal(cpt.rows.length, 1);
+  assert.equal(cpt.rows[0].region, "Calabria");
+  assert.equal(cpt.rows[0].balanceCents, cpt.rows[0].revenueCents - cpt.rows[0].expenditureCents);
+  assert.match(cpt.methodology.notFiscalResidual, /non è il residuo fiscale/i);
   assert.ok(appointments.externalAppointments.length > 0);
   assert.ok(parliament.chambers.length > 0);
   assert.ok(controls.signals.length > 0);

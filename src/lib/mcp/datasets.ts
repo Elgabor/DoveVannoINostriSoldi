@@ -146,6 +146,10 @@ export async function queryPublicDataset(query: DatasetQuery): Promise<unknown> 
       const { queryInpsCivilInvalidity } = await import("@/lib/inps-invalidity-snapshot");
       return jsonSafe(queryInpsCivilInvalidity({ year: query.year, region: query.region }));
     }
+    case "cpt_finanza_regionale": {
+      const { queryCptRegionalFiscal } = await import("@/lib/cpt-regional-fiscal-snapshot");
+      return jsonSafe(queryCptRegionalFiscal({ year: query.year, region: query.region }));
+    }
     case "ipa_enti": {
       const { getIpaEntityByCode, searchIpaEntities } = await import("@/lib/ipa");
       if (query.code?.trim()) {

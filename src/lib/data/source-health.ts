@@ -17,6 +17,7 @@ import { openCivitasSnapshot } from "@/lib/opencivitas-snapshot";
 import { parliamentSnapshot } from "@/lib/parliament-snapshot";
 import { anacCigSnapshot } from "@/lib/anac-cig-snapshot";
 import { inpsCivilInvaliditySnapshot } from "@/lib/inps-invalidity-snapshot";
+import { cptRegionalFiscalSnapshot } from "@/lib/cpt-regional-fiscal-snapshot";
 
 export type SourceIntegrationState = "active";
 export type SourceReachability = "up" | "down" | "not-probed";
@@ -359,6 +360,17 @@ function snapshotManagedInps(): SourceHealth {
   };
 }
 
+function snapshotManagedCpt(): SourceHealth {
+  return {
+    ...baseHealth("cpt"),
+    reachability: "not-probed",
+    freshness: freshnessFor("cpt", cptRegionalFiscalSnapshot.provenance.observedAt),
+    latencyMs: null,
+    detail: `Snapshot verificato · serie ${cptRegionalFiscalSnapshot.referenceYears.at(0)}-${cptRegionalFiscalSnapshot.referenceYears.at(-1)} · 21 territori`,
+    recordCount: cptRegionalFiscalSnapshot.rows.length,
+  };
+}
+
 function snapshotManagedMefParticipations(): SourceHealth {
   return {
     ...baseHealth("partecipazioni-pubbliche"),
@@ -409,6 +421,7 @@ export function getSnapshotManagedSourceHealth(): SourceHealth[] {
   return [
     snapshotManagedAnac(),
     snapshotManagedInps(),
+    snapshotManagedCpt(),
     snapshotManagedOpenCoesione(),
     snapshotManagedOpenCivitas(),
     snapshotManagedMefParticipations(),

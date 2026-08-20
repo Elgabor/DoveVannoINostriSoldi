@@ -28,6 +28,7 @@ const ALLOWED_HOSTS: Readonly<Record<SourceId, readonly string[]>> = {
     "anticorruzione.it",
   ],
   inps: ["www.inps.it", "inps.it", "serviziweb2.inps.it"],
+  cpt: ["politichecoesione.governo.it", "www.politichecoesione.governo.it"],
   siope: [
     "www.siope.it",
     "siope.it",

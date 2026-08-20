@@ -60,6 +60,18 @@ export const publicSources: PublicSource[] = [
     joinKeys: ["regione", "anno"],
   },
   {
+    slug: "cpt",
+    name: "Conti Pubblici Territoriali",
+    owner: "Dipartimento per le Politiche di Coesione e per il Sud",
+    area: "Entrate e spese pubbliche territorializzate",
+    cadence: "Annuale; serie consolidata disponibile 2000-2023",
+    coverage: "21 unità territoriali CPT, perimetro Pubblica Amministrazione consolidata",
+    format: "CSV · XLSX · snapshot JSON verificato",
+    url: "https://politichecoesione.governo.it/it/politica-di-coesione/misurazione-valutazione-e-trasparenza/la-misurazione-delle-politiche-di-coesione/conti-pubblici-territoriali-cpt/i-dati/catalogo-open-cpt/",
+    note: "Entrate e spese derivano dalla stessa release e base di cassa. Il saldo è una differenza contabile territorializzata, non una misura di merito né il residuo fiscale di Banca d'Italia.",
+    joinKeys: ["codice territorio CPT", "anno"],
+  },
+  {
     slug: "ipa",
     name: "Indice PA (IPA)",
     owner: "AgID",

@@ -17,7 +17,8 @@ export const metadata: Metadata = {
 };
 
 function selectedYear(value: string | string[] | undefined): number {
-  const parsed = Number.parseInt(Array.isArray(value) ? value[0] ?? "" : value ?? "", 10);
+  const raw = Array.isArray(value) ? value[0] ?? "" : value ?? "";
+  const parsed = /^\d{4}$/.test(raw) ? Number(raw) : Number.NaN;
   return availableSiopeYears.includes(parsed) ? parsed : availableSiopeYears[0];
 }
 
@@ -169,6 +170,15 @@ export default async function TerritoriesPage({
             </p>
           </div>
         </div>
+      </div>
+
+      <div className="notice">
+        <strong>Quanto entra e quanto viene speso sul territorio?</strong>
+        <p>
+          I Conti Pubblici Territoriali permettono di confrontare entrate e spese della Pubblica
+          Amministrazione consolidata su una base contabile coerente, con il pro capite come vista
+          iniziale. <Link href="/territori/fisco">Apri entrate, spese e saldo per regione →</Link>
+        </p>
       </div>
 
       <div className="notice">

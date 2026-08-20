@@ -57,6 +57,16 @@ Le UO non hanno un campo semantico che certifichi “dipartimento”, “direzio
 
 ## Tier 2: trasparenza distribuita
 
+### Conti Pubblici Territoriali
+**Titolare:** Dipartimento per le Politiche di Coesione e per il Sud.
+
+**Uso:** entrate e spese effettivamente incassate e pagate, territorializzate nello stesso conto consolidato.
+
+**Accesso:** [Catalogo Open CPT](https://politichecoesione.governo.it/it/politica-di-coesione/misurazione-valutazione-e-trasparenza/la-misurazione-delle-politiche-di-coesione/conti-pubblici-territoriali-cpt/i-dati/catalogo-open-cpt/).
+**Copertura integrata:** serie 2000-2023 del perimetro Pubblica Amministrazione consolidata, 19 Regioni e Province autonome di Trento e Bolzano.
+
+Lo snapshot unisce soltanto `EN_PA_CEMACRO` e `SP_PA_CEMACRO`, appartenenti alla stessa release e base di cassa. Gli input sono bloccati con SHA-256; una modifica della fonte interrompe l'ETL finché schema e risultati non vengono ricontrollati. Il valore derivato è `entrate meno spese`. È chiamato saldo contabile territoriale e non residuo fiscale: non misura pressione fiscale, qualità dei servizi, merito politico o trasferimenti netti tra territori. Il pro capite 2023 usa la popolazione residente ISTAT al 31 dicembre 2023; per gli altri anni resta `null` finché non viene integrata una serie demografica annuale verificata. Le condizioni di riuso sono registrate come nota per ciascun input e vanno controllate sulla relativa scheda ufficiale: le note legali generali del sito non sostituiscono eventuali indicazioni specifiche della risorsa.
+
 ### Dati sui pagamenti art. 4-bis
 Nel 2026 ANAC ha pubblicato uno schema di riferimento per i dati sui pagamenti nella sezione “Amministrazione Trasparente”.
 

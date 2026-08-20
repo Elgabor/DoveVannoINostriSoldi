@@ -110,7 +110,7 @@ Il refresh orario invalida il tag OpenBDAP e la route `/api/opere`. Al primo acc
 
 Il monitor controlla ogni 6 ore i registri ufficiali di Camera e Senato. La validazione offline dello snapshot e del manifesto resta sempre obbligatoria. Un nuovo documento, un formato cambiato o un errore HTTP permanente interrompono il workflow e richiedono una revisione.
 
-Timeout, errori di rete, risposte `408`, `425`, `429` e alcuni errori `5xx` vengono ritentati. I siti parlamentari possono inoltre rispondere con `403` ai runner automatici: in quel caso il controllo viene segnato come non riuscito e genera un avviso, ma non invalida l'ultimo snapshot verificato. Il timestamp pubblico non viene aggiornato durante questi fallimenti.
+Timeout, errori di rete, risposte `408`, `425`, `429` e alcuni errori `5xx` vengono ritentati. I siti parlamentari possono inoltre rispondere con `403` ai runner automatici o restituire temporaneamente un CSV con campi indispensabili vuoti: in questi casi il controllo viene segnato come non riuscito e genera un avviso, ma non invalida l'ultimo snapshot verificato. Il monitor non completa i campi usando il manifesto e non registra un falso successo. Un valore presente ma malformato, un documento rimosso o un cambio di struttura restano invece errori bloccanti. Il timestamp pubblico non viene aggiornato durante questi fallimenti.
 
 ## Policy iniziali
 

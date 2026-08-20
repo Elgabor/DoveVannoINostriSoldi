@@ -6,6 +6,7 @@ import { auditScenarios, procurementComparison } from "@/lib/audit-data";
 import {
   billions,
   compactEuro,
+  compactEuroLike,
   exactEuro,
   integer,
   longDate,
@@ -17,7 +18,12 @@ import {
   HOME_SPENDING_BUCKETS,
   PASS_THROUGH_TITLE_CODE,
 } from "@/lib/siope-titles";
-import { availableSiopeYears, getSiopeMunicipalSnapshot } from "@/lib/siope-snapshot";
+import {
+  availableSiopeYears,
+  completedMonths,
+  getSiopeMunicipalSnapshot,
+  partialMonth,
+} from "@/lib/siope-snapshot";
 import styles from "./home.module.css";
 
 /* The donut walks this ramp in order; five buckets, five steps of contrast. */
@@ -62,12 +68,13 @@ export default async function HomePage({
     siope.titles.find((title) => title.code === PASS_THROUGH_TITLE_CODE)?.value ?? 0;
   const realSpending = siope.totalPaid - passThrough;
 
-  const completedMonths = siope.monthly.filter((point) => point.month < siope.latestMonth);
+  const runningMonth = partialMonth(siope);
+  const settledMonths = completedMonths(siope);
   const completedAverage =
-    completedMonths.length > 0
-      ? completedMonths.reduce((sum, point) => sum + point.flow, 0) / completedMonths.length
+    settledMonths.length > 0
+      ? settledMonths.reduce((sum, point) => sum + point.flow, 0) / settledMonths.length
       : 0;
-  const lastCompleted = completedMonths[completedMonths.length - 1] ?? null;
+  const lastCompleted = settledMonths[settledMonths.length - 1] ?? null;
 
   const valueByCode = new Map(siope.titles.map((title) => [title.code, title.value]));
   const buckets = HOME_SPENDING_BUCKETS.map((bucket, index) => {
@@ -86,6 +93,9 @@ export default async function HomePage({
     .sort((left, right) => right.value - left.value)
     .slice(0, 6);
   const topMunicipalities = siope.topMunicipalities.slice(0, 5);
+  /* One unit per ranking, taken from the biggest figure in it. */
+  const topMunicipalityScale = topMunicipalities[0]?.value ?? 0;
+  const topRegionScale = topRegions[0]?.value ?? 0;
   const maxFlow = Math.max(...siope.monthly.map((point) => point.flow), 0);
 
   const cohesionPaid = cohesion.totals.paymentsCents / 100;
@@ -178,7 +188,7 @@ export default async function HomePage({
               <li key={municipality.codiceFiscale}>
                 <span>{index + 1}</span>
                 <strong>{municipalityName(municipality.name)}</strong>
-                <b>{compactEuro(municipality.value)}</b>
+                <b>{compactEuroLike(municipality.value, topMunicipalityScale)}</b>
               </li>
             ))}
           </ol>
@@ -267,7 +277,7 @@ export default async function HomePage({
                 {topRegions.map((region) => (
                   <tr key={region.region}>
                     <th scope="row">{region.region}</th>
-                    <td className="num">{compactEuro(region.value)}</td>
+                    <td className="num">{compactEuroLike(region.value, topRegionScale)}</td>
                     <td className="num">
                       {region.perCapita === null ? "n.d." : exactEuro(region.perCapita)}
                     </td>
@@ -290,7 +300,7 @@ export default async function HomePage({
           </div>
           <ul className={styles.monthList}>
             {siope.monthly.map((point) => {
-              const running = point.month === siope.latestMonth;
+              const running = point.month === runningMonth;
               return (
                 <li key={point.month}>
                   <span>{point.label}</span>
@@ -305,9 +315,13 @@ export default async function HomePage({
               );
             })}
           </ul>
-          <p className={styles.note}>
-            {siope.latestMonthLabel} è ancora in corso: il numero salirà.
-          </p>
+          {runningMonth === null ? (
+            <p className={styles.note}>Anno chiuso: tutti i mesi sono definitivi.</p>
+          ) : (
+            <p className={styles.note}>
+              {siope.latestMonthLabel} è ancora in corso: il numero salirà.
+            </p>
+          )}
         </section>
 
         <section className="panel">

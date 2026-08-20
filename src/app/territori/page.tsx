@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { PeriodSelector } from "@/components/period-selector";
-import { compactEuro, exactEuro, integer, longDate } from "@/lib/format";
+import { compactEuroLike, exactEuro, integer, longDate } from "@/lib/format";
 import { municipalityName } from "@/lib/municipality-name";
 import { availableSiopeYears, getSiopeMunicipalSnapshot } from "@/lib/siope-snapshot";
 import styles from "./territori.module.css";
@@ -28,6 +28,8 @@ export default async function TerritoriesPage({
 
   const regions = [...data.regions].sort((left, right) => right.value - left.value);
   const topByVolume = data.topMunicipalities.slice(0, 20);
+  const regionScale = regions[0]?.value ?? 0;
+  const municipalityScale = topByVolume[0]?.value ?? 0;
   const topByPerCapita = [...data.topMunicipalities]
     .filter((municipality) => municipality.perCapita !== null)
     .sort((left, right) => (right.perCapita ?? 0) - (left.perCapita ?? 0))
@@ -68,7 +70,7 @@ export default async function TerritoriesPage({
                 {regions.map((region) => (
                   <tr key={region.region}>
                     <th scope="row">{region.region}</th>
-                    <td className="num">{compactEuro(region.value)}</td>
+                    <td className="num">{compactEuroLike(region.value, regionScale)}</td>
                     <td className="num">
                       {region.perCapita === null ? "n.d." : exactEuro(region.perCapita)}
                     </td>
@@ -107,7 +109,9 @@ export default async function TerritoriesPage({
                             : `${integer(municipality.population)} abitanti`}
                         </small>
                       </th>
-                      <td className="num">{compactEuro(municipality.value)}</td>
+                      <td className="num">
+                        {compactEuroLike(municipality.value, municipalityScale)}
+                      </td>
                       <td className="num">
                         {municipality.perCapita === null
                           ? "n.d."

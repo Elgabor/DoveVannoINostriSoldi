@@ -52,7 +52,14 @@ La palette è grigio-carta caldo con un unico rosso di segnalazione. Evitare ner
 
 ### Token per le visualizzazioni
 
-`--chart-primary` è l'accento; `--chart-secondary…quinary` scendono lungo la rampa neutra. Una serie accentata su contesto neutro, mai un arcobaleno. La coropleta regionale usa `accent-100 → accent-800` come rampa sequenziale: è intensità, non categoria.
+`--chart-primary` è l'accento; `--chart-secondary…quinary` scendono lungo la rampa neutra. Una serie accentata su contesto neutro, mai un arcobaleno.
+
+La coropleta regionale usa cinque passi sequenziali — `accent-200, accent-300, accent-400, accent-600, accent-800` — con contorno `--color-neutral-500` da 1px. Due vincoli, entrambi verificati a schermo:
+
+- **il passo più chiaro deve staccarsi dal pannello bianco.** Partire da `accent-100` rende invisibili le regioni con la spesa più bassa: la rampa parte da `accent-200`;
+- **il contorno non può essere bianco.** Due regioni chiare adiacenti con bordo bianco si leggono come una macchia sola. Il grigio medio funziona sotto tutti e cinque i passi.
+
+Regione selezionata: contorno `--color-text` da 2px. Regione senza dato: `--color-neutral-200`.
 
 ## 03 Typography
 
@@ -69,7 +76,15 @@ Un'unica famiglia: **Archivo**, caricata con `next/font/google` e self-hosted. `
 
 Ogni cifra confrontabile usa `font-variant-numeric: tabular-nums`. Le celle numeriche non vanno a capo: è il contenitore a scorrere.
 
-I numeri si scrivono con il separatore delle migliaia forzato (`useGrouping: "always"` in `src/lib/format.ts`): il CLDR italiano non raggrupperebbe le cifre a quattro posizioni e “7893” non è come si scrive un conto pubblico.
+### Regole sui numeri
+
+Tutto in `src/lib/format.ts`. Sono regole di lettura, non di stile:
+
+- **Separatore delle migliaia sempre** (`useGrouping: "always"`). Il CLDR italiano non raggruppa le cifre a quattro posizioni: “7893” e “1203,55 €” non sono come si scrive un conto pubblico.
+- **Decimali fissi nella forma compatta**: due per i miliardi, uno per i milioni. “5 mld €” in mezzo a “10,74 mld €” rompe l'incolonnamento.
+- **Una sola unità per colonna** (`compactEuroLike`). Una classifica che passa da “mld” a “mln” a metà elenco costringe a ri-scalare ogni riga: la colonna sceglie l'unità dal valore più grande e la tiene per tutti.
+- **Compatto più esatto**: il titolo mostra “70,94 mld €”, la riga sotto “70.936.770.818,54 € esatti”. Il lettore deve poter riconciliare quello che stampiamo con il file della fonte.
+- **Mai un numero al posto di un buco**: “n.d.”, “non disponibile” o “non ancora collegata”, mai una stima travestita da dato.
 
 ## 04 Elevation
 
@@ -105,9 +120,15 @@ La home è una griglia a tre colonne (`288px | 1fr | 300px`). A 1320px la colonn
 
 `.table` dentro `.table-scroll`. Le intestazioni di colonna sono maiuscole e piccole; l'intestazione di riga è il nome della riga, in caso normale, con un'eventuale seconda riga di contesto in `small`. Le colonne numeriche usano `.num`.
 
+### Stat strip
+
+`.stat-strip`: una banda bianca divisa in colonne, ognuna con etichetta maiuscola piccola, valore in Archivo 800 e nota esplicativa. Etichetta, valore e nota sono `display: block` e stanno su righe separate — accostati sulla stessa riga il numero si attacca all'etichetta e diventa illeggibile. Quattro colonne su desktop, due sotto i 900px, una sotto i 620px.
+
 ### Bar rows
 
-Il pattern ricorrente `etichetta | traccia | valore`: traccia `neutral-200`, riempimento accento, valore tabulare a destra. Il mese in corso usa `neutral-500` invece dell'accento, perché è un numero ancora incompleto.
+Il pattern ricorrente `etichetta | traccia | valore`: traccia `neutral-200`, riempimento accento, valore tabulare a destra.
+
+**Il mese ancora in corso usa `neutral-500` invece dell'accento** e porta un asterisco: è un numero destinato a salire e non va confrontato con i mesi chiusi. Un anno già concluso non ha nessun mese in corso — tutte le barre sono accento e la nota dice “Anno chiuso: tutti i mesi sono definitivi”. La regola sta in `src/lib/siope-calendar.ts` e decide in base all'anno in cui abbiamo scaricato il file, non al numero del mese.
 
 ### Charts
 
@@ -136,7 +157,8 @@ Transizioni brevi (140ms, `--ease-out`) su colore e sfondo. Nessuna animazione d
 - Mostrare il valore compatto e quello esatto: “70,94 mld €” con sotto “70.936.770.818,54 € esatti”.
 - Far scorrere il contenuto largo dentro il suo contenitore, mai la pagina.
 - Spiegare in italiano semplice che cosa misura un numero e che cosa non dimostra.
-- Verificare ogni pagina a 375px oltre che su desktop.
+- Verificare ogni pagina a 320, 375, 768, 1024, 1280 e 1600px: nessun `scrollWidth` maggiore del viewport e nessuno spazio morto asimmetrico.
+- Distinguere un dato provvisorio da uno definitivo, nel colore e nelle parole.
 
 ### Don't
 
@@ -146,3 +168,4 @@ Transizioni brevi (140ms, `--ease-out`) su colore e sfondo. Nessuna animazione d
 - Nessun colore scritto a mano in un componente o in un modulo CSS.
 - Nessun numero senza fonte e senza data.
 - Nessuna parola che trasformi un segnale in un'accusa.
+- Nessuna etichetta di comodo su un aggregato: se una fetta somma due voci diverse, si chiama con un nome che le contiene entrambe, non con quello della più grande.

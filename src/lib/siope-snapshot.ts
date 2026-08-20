@@ -1,3 +1,4 @@
+import { partialMonthOf } from "@/lib/siope-calendar";
 import snapshot2024 from "@/data/generated/siope-municipal-2024.json";
 import snapshot2025 from "@/data/generated/siope-municipal-2025.json";
 import snapshot2026 from "@/data/generated/siope-municipal.json";
@@ -96,6 +97,21 @@ export function getSiopeMunicipalSnapshot(year?: number): SiopeMunicipalSnapshot
 }
 
 export const siopeMunicipalSnapshot = getSiopeMunicipalSnapshot();
+
+/** The month that is still filling up, if there is one. See siope-calendar. */
+export function partialMonth(
+  data: SiopeMunicipalSnapshot = siopeMunicipalSnapshot,
+): number | null {
+  return partialMonthOf(data.year, data.latestMonth, data.source.observedAt);
+}
+
+/** The months whose totals the source considers settled. */
+export function completedMonths(
+  data: SiopeMunicipalSnapshot = siopeMunicipalSnapshot,
+): SiopeMunicipalMonthlyPoint[] {
+  const partial = partialMonth(data);
+  return data.monthly.filter((point) => point.month !== partial);
+}
 
 export function regionsByPerCapita(
   data: SiopeMunicipalSnapshot = siopeMunicipalSnapshot,

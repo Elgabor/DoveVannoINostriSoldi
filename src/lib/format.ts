@@ -51,6 +51,32 @@ export function compactEuro(value: number): string {
   return euroFormatter.format(value);
 }
 
+/**
+ * Formats a value in the unit that suits `reference`.
+ *
+ * A ranked column that switches from "mld" to "mln" halfway down forces the
+ * reader to re-scale every row, so a table picks one unit from its largest
+ * figure and keeps it for all of them.
+ */
+export function compactEuroLike(value: number, reference: number): string {
+  const scale = Math.abs(reference);
+  if (scale >= 1_000_000_000) {
+    return `${(value / 1_000_000_000).toLocaleString("it-IT", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      useGrouping: "always",
+    })} mld €`;
+  }
+  if (scale >= 1_000_000) {
+    return `${(value / 1_000_000).toLocaleString("it-IT", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+      useGrouping: "always",
+    })} mln €`;
+  }
+  return euroFormatter.format(value);
+}
+
 export function billions(value: number): string {
   return (value / 1_000_000_000).toLocaleString("it-IT", {
     minimumFractionDigits: 2,

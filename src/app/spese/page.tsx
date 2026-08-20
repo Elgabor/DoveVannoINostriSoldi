@@ -3,7 +3,12 @@ import type { Metadata } from "next";
 import { PeriodSelector } from "@/components/period-selector";
 import { billions, compactEuro, exactEuro, integer, percent, longDate } from "@/lib/format";
 import { PASS_THROUGH_TITLE_CODE, siopeTitleCopy } from "@/lib/siope-titles";
-import { availableSiopeYears, getSiopeMunicipalSnapshot } from "@/lib/siope-snapshot";
+import {
+  availableSiopeYears,
+  completedMonths,
+  getSiopeMunicipalSnapshot,
+  partialMonth,
+} from "@/lib/siope-snapshot";
 import styles from "./spese.module.css";
 
 export const metadata: Metadata = {
@@ -31,15 +36,16 @@ export default async function MoneyPage({
   const realSpending = data.totalPaid - passThrough;
 
   /* The running month is still filling up, so it would drag the average down.
-     The average only counts months the source considers closed. */
-  const completedMonths = data.monthly.filter((point) => point.month < data.latestMonth);
+     A closed year has no running month and counts all twelve. */
+  const runningMonth = partialMonth(data);
+  const settledMonths = completedMonths(data);
   const completedAverage =
-    completedMonths.length > 0
-      ? completedMonths.reduce((sum, point) => sum + point.flow, 0) / completedMonths.length
+    settledMonths.length > 0
+      ? settledMonths.reduce((sum, point) => sum + point.flow, 0) / settledMonths.length
       : 0;
   const completedRange =
-    completedMonths.length > 0
-      ? `da ${completedMonths[0].label.toLocaleLowerCase("it-IT")} a ${completedMonths[completedMonths.length - 1].label.toLocaleLowerCase("it-IT")} ${data.year}`
+    settledMonths.length > 0
+      ? `da ${settledMonths[0].label.toLocaleLowerCase("it-IT")} a ${settledMonths[settledMonths.length - 1].label.toLocaleLowerCase("it-IT")} ${data.year}`
       : "nessun mese completo";
 
   const maxFlow = Math.max(...data.monthly.map((point) => point.flow), 0);
@@ -117,7 +123,7 @@ export default async function MoneyPage({
             <h2 className="panel-title">Mese per mese · mld €</h2>
             <ul className={styles.monthList}>
               {data.monthly.map((point) => {
-                const running = point.month === data.latestMonth;
+                const running = point.month === runningMonth;
                 return (
                   <li key={point.month}>
                     <span>
@@ -135,9 +141,13 @@ export default async function MoneyPage({
                 );
               })}
             </ul>
-            <p className={styles.note}>
-              *{data.latestMonthLabel} è ancora in corso: il numero salirà.
-            </p>
+            {runningMonth === null ? (
+              <p className={styles.note}>Anno chiuso: tutti i mesi sono definitivi.</p>
+            ) : (
+              <p className={styles.note}>
+                *{data.latestMonthLabel} è ancora in corso: il numero salirà.
+              </p>
+            )}
           </section>
 
           <section className="panel">
@@ -156,7 +166,7 @@ export default async function MoneyPage({
                     <tr key={point.month}>
                       <th scope="row">
                         {point.label}
-                        {point.month === data.latestMonth ? "*" : ""}
+                        {point.month === runningMonth ? "*" : ""}
                       </th>
                       <td className="num">{billions(point.flow)}</td>
                       <td className="num">{billions(point.cumulative)}</td>

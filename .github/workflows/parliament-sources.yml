@@ -63,7 +63,7 @@ jobs:
               1) exit 1 ;;
               2)
                 if [ "$attempt" -lt 3 ]; then
-                  echo "::notice::Fonte parlamentare non raggiungibile. Nuovo tentativo $((attempt + 1)) di 3."
+                  echo "::notice::Fonte parlamentare non verificabile. Nuovo tentativo $((attempt + 1)) di 3."
                   sleep $((attempt * 10))
                 fi
                 ;;
@@ -71,9 +71,9 @@ jobs:
             esac
           done
 
-          echo "::warning title=Fonte parlamentare non raggiungibile::Lo snapshot verificato resta valido. Il controllo live verrà ripetuto alla prossima esecuzione."
+          echo "::warning title=Fonte parlamentare non verificabile::Lo snapshot verificato resta valido. Il controllo live verrà ripetuto alla prossima esecuzione."
           {
-            echo "### Fonte parlamentare temporaneamente non raggiungibile"
+            echo "### Fonte parlamentare temporaneamente non verificabile"
             echo "Lo snapshot verificato non è stato modificato e questo tentativo non conta come controllo riuscito."
           } >> "$GITHUB_STEP_SUMMARY"
           exit 0

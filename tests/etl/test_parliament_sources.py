@@ -55,6 +55,38 @@ class ParliamentSourceParserTests(unittest.TestCase):
         with self.assertRaisesRegex(MODULE.StructuralError, "titolo.*non riconosciuto"):
             MODULE.parse_senate_documents(payload)
 
+    def test_senate_marks_a_blank_document_number_as_temporarily_incomplete(self) -> None:
+        payload = (FIXTURES / "senato.csv").read_text(encoding="utf-8")
+        payload = payload.replace(",6,,VIII,", ",,,VIII,")
+        with self.assertRaisesRegex(MODULE.TemporarySourceError, "temporaneamente incompleta"):
+            MODULE.parse_senate_documents(payload)
+
+    def test_senate_marks_a_blank_document_url_as_temporarily_incomplete(self) -> None:
+        payload = (FIXTURES / "senato.csv").read_text(encoding="utf-8")
+        payload = payload.replace(
+            "http://www.senato.it/service/PDF/PDFServer/BGT/1487095.pdf",
+            "",
+        )
+        with self.assertRaisesRegex(MODULE.TemporarySourceError, "URLTesto"):
+            MODULE.parse_senate_documents(payload)
+
+    def test_senate_keeps_a_non_numeric_document_number_structural(self) -> None:
+        payload = (FIXTURES / "senato.csv").read_text(encoding="utf-8")
+        payload = payload.replace(",6,,VIII,", ",sei,,VIII,")
+        with self.assertRaisesRegex(MODULE.StructuralError, "numero documento non valido"):
+            MODULE.parse_senate_documents(payload)
+
+    def test_online_check_keeps_an_omitted_known_document_structural(self) -> None:
+        snapshot = MODULE.load_json(MODULE.SNAPSHOT_PATH)
+        manifest = MODULE.load_json(MODULE.MANIFEST_PATH)
+        camera, senate, known_max = MODULE.validate_manifest(manifest, snapshot)
+        with (
+            patch.object(MODULE, "download_camera", return_value=camera),
+            patch.object(MODULE, "download_senate", return_value=senate[1:]),
+            self.assertRaisesRegex(MODULE.StructuralError, "mancanti_o_modificati"),
+        ):
+            MODULE.online_check(manifest, camera, senate, known_max, 1)
+
     def test_main_marks_http_503_as_temporarily_unavailable(self) -> None:
         error = urllib.error.HTTPError(
             "https://example.invalid", 503, "unavailable", {}, io.BytesIO()
@@ -72,6 +104,12 @@ class ParliamentSourceParserTests(unittest.TestCase):
     def test_main_marks_network_errors_as_temporarily_unavailable(self) -> None:
         self.assertEqual(
             self.run_main_with_online_error(urllib.error.URLError("timeout")),
+            2,
+        )
+
+    def test_main_marks_an_incomplete_official_response_as_temporary(self) -> None:
+        self.assertEqual(
+            self.run_main_with_online_error(MODULE.TemporarySourceError("campo mancante")),
             2,
         )
 

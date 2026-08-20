@@ -41,6 +41,10 @@ class StructuralError(RuntimeError):
     """The official source or committed data no longer matches its contract."""
 
 
+class TemporarySourceError(RuntimeError):
+    """The official source returned an incomplete response that can be retried."""
+
+
 @dataclass(frozen=True, order=True)
 class Document:
     kind: str
@@ -294,6 +298,18 @@ def parse_senate_documents(payload: str, series: str = "VIII") -> list[Document]
     for row in reader:
         if row["numeroRomano"].strip() != series or row["tipoDoc"].strip() != SENATE_DOCUMENT_TYPE:
             continue
+        indispensable = ("documento", "numeroDoc", "titolo", "dataPresentazione", "URLTesto")
+        missing = [
+            field
+            for field in indispensable
+            if not isinstance(row.get(field), str) or not row[field].strip()
+        ]
+        if missing:
+            record = row.get("documento") or "record senza URL"
+            raise TemporarySourceError(
+                "Senato CSV: risposta temporaneamente incompleta "
+                f"per {record!r}; campi mancanti: {', '.join(missing)}"
+            )
         title = " ".join(row["titolo"].split())
         account = re.fullmatch(
             r"Rendiconto delle entrate e delle spese del Senato per l'anno finanziario (\d{4})",
@@ -307,10 +323,14 @@ def parse_senate_documents(payload: str, series: str = "VIII") -> list[Document]
         )
         if not account and not budget:
             raise StructuralError(f"Senato CSV: titolo del Doc. {series} non riconosciuto: {title}")
+        raw_number = row["numeroDoc"].strip()
         try:
-            number = int(row["numeroDoc"])
+            number = int(raw_number)
         except ValueError as error:
-            raise StructuralError("Senato CSV: numero documento non valido") from error
+            raise StructuralError(
+                "Senato CSV: numero documento non valido "
+                f"per {row['documento']!r}: {raw_number!r}"
+            ) from error
         kind = "account" if account else "budget"
         year = int((account or budget).group(1))
         record_url = normalize_official_url(row["documento"], "Senato.recordUrl", SENATE_HOSTS)
@@ -442,7 +462,8 @@ def online_check(manifest: dict[str, Any], expected_camera: list[Document], expe
     if latest_number > known_max:
         new_documents = [item.identity() for item in actual_senate if (item.document_number or 0) > known_max]
         raise StructuralError(f"Senato: nuovi documenti ufficiali da verificare: {new_documents}")
-    actual_latest = [item for item in actual_senate if item.document_number in {item.document_number for item in expected_senate}]
+    expected_numbers = {item.document_number for item in expected_senate}
+    actual_latest = [item for item in actual_senate if item.document_number in expected_numbers]
     compare_documents("Senato", expected_senate, actual_latest)
 
 
@@ -462,6 +483,9 @@ def main() -> int:
         camera_docs, senate_docs, known_max = validate_manifest(manifest, snapshot)
         if not args.check:
             online_check(manifest, camera_docs, senate_docs, known_max, args.timeout)
+    except TemporarySourceError as error:
+        print(f"fonte ufficiale temporaneamente incompleta: {error}", file=sys.stderr)
+        return 2
     except StructuralError as error:
         print(f"errore strutturale: {error}", file=sys.stderr)
         return 1

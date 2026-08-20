@@ -8,14 +8,18 @@ export type AuditSignal = {
   caveat: string;
   referenceDate: string;
   tone: "observed" | "attention" | "policy" | "stock";
+  valueClass: "observed-value" | "estimated-effect" | "risk-exposure" | "nominal-stock";
+  additive: false;
+  verificationUse: "screening-only";
   source: {
     institution: string;
     title: string;
     url: string;
+    documentType: "official-report";
   };
 };
 
-export const auditReviewedAt = "2026-06-24";
+export const auditReviewedAt = "2026-08-20";
 
 export const auditSignals: AuditSignal[] = [
   {
@@ -28,10 +32,14 @@ export const auditSignals: AuditSignal[] = [
     caveat: "È spesa da controllare meglio, non una perdita già accertata.",
     referenceDate: "2025",
     tone: "attention",
+    valueClass: "risk-exposure",
+    additive: false,
+    verificationUse: "screening-only",
     source: {
       institution: "ANAC",
       title: "Relazione annuale 2026 sull'attività svolta nel 2025",
       url: "https://www.anticorruzione.it/documents/91439/393633199/Anac%2B-%2BRelazione%2Bannuale%2B2026%2Bsu%2Battivit%C3%A0%2B2025.pdf/c2ff7d91-d715-800d-7689-15899ef650c9?t=1776760815657",
+      documentType: "official-report",
     },
   },
   {
@@ -44,10 +52,14 @@ export const auditSignals: AuditSignal[] = [
     caveat: "Spendere non significa automaticamente avere completato opere e servizi.",
     referenceDate: "2026-02",
     tone: "observed",
+    valueClass: "observed-value",
+    additive: false,
+    verificationUse: "screening-only",
     source: {
       institution: "Corte dei conti · copia del referto",
       title: "Relazione sullo stato di attuazione del PNRR - maggio 2026",
       url: "https://www.corteconti.it/HOME/StampaMedia/ComunicatiStampa/DettaglioComunicati?Id=0a3d0038-093b-4197-918f-d98b87cd9158",
+      documentType: "official-report",
     },
   },
   {
@@ -60,10 +72,14 @@ export const auditSignals: AuditSignal[] = [
     caveat: "È un rischio di ritardo, non denaro perso.",
     referenceDate: "2026-02",
     tone: "attention",
+    valueClass: "risk-exposure",
+    additive: false,
+    verificationUse: "screening-only",
     source: {
       institution: "Corte dei conti",
       title: "Relazione sullo stato di attuazione del PNRR - maggio 2026",
       url: "https://www.corteconti.it/HOME/StampaMedia/ComunicatiStampa/DettaglioComunicati?Id=0a3d0038-093b-4197-918f-d98b87cd9158",
+      documentType: "official-report",
     },
   },
   {
@@ -76,10 +92,14 @@ export const auditSignals: AuditSignal[] = [
     caveat: "Sono scelte di politica fiscale: non sono tutte sprechi e non sono tutte eliminabili.",
     referenceDate: "2025",
     tone: "policy",
+    valueClass: "estimated-effect",
+    additive: false,
+    verificationUse: "screening-only",
     source: {
       institution: "Ministero dell'Economia e delle Finanze",
       title: "Rapporto annuale sulle spese fiscali 2024",
       url: "https://www.mef.gov.it/export/sites/MEF/documenti-allegati/2024/RSF-2024.pdf",
+      documentType: "official-report",
     },
   },
   {
@@ -92,10 +112,14 @@ export const auditSignals: AuditSignal[] = [
     caveat: "Circa 250,5 milioni derivano da acquisti senza un impegno contabile preventivo.",
     referenceDate: "2023",
     tone: "attention",
+    valueClass: "observed-value",
+    additive: false,
+    verificationUse: "screening-only",
     source: {
       institution: "Corte dei conti",
       title: "Gestione finanziaria degli enti locali - Del. 14/SEZAUT/2025/FRG",
-      url: "https://mirapa.it/wp-content/uploads/2025/07/delibera_14_2025_sezaut.pdf",
+      url: "https://www.consregsardegna.it/wp-content/uploads/2025/07/Relazione-045-17legislatura.pdf",
+      documentType: "official-report",
     },
   },
   {
@@ -108,10 +132,14 @@ export const auditSignals: AuditSignal[] = [
     caveat: "Gran parte non è realisticamente recuperabile: non è un tesoretto disponibile.",
     referenceDate: "2025-01-31",
     tone: "stock",
+    valueClass: "nominal-stock",
+    additive: false,
+    verificationUse: "screening-only",
     source: {
       institution: "Agenzia delle entrate-Riscossione",
       title: "Audizione del Direttore - 27 marzo 2025",
       url: "https://www.agenziaentrateriscossione.gov.it/export/.files/it/Audizione-VI-COMM.-SENATO_27-marzo-2025.pdf",
+      documentType: "official-report",
     },
   },
 ];
@@ -135,3 +163,25 @@ export const centralScenarioBreakdown = [
   { label: "Minore ricorso strutturale ai gettonisti", value: 0.0568, tone: "observed" },
   { label: "Prevenzione di nuovi debiti fuori bilancio", value: 0.0501092, tone: "stock" },
 ] as const;
+
+export const auditMethodology = {
+  purpose:
+    "Aiutare a scegliere quali dati controllare prima. Gli indicatori non stabiliscono da soli sprechi, illeciti o responsabilità.",
+  aiUse: {
+    allowed: [
+      "confrontare valori omogenei nel tempo",
+      "segnalare scostamenti e dati mancanti",
+      "ordinare i casi da verificare",
+      "spiegare il percorso fino alla fonte",
+    ],
+    prohibited: [
+      "definire uno spreco senza una verifica documentale",
+      "attribuire responsabilità a persone o enti",
+      "sommare stock, flussi, stime e scenari",
+      "nascondere anno, fonte o limiti del dato",
+    ],
+  },
+  scenarioMeaning:
+    "Gli scenari sono ipotesi di politica pubblica. Non sono risparmi già disponibili e non sono previsioni.",
+  reviewedAt: auditReviewedAt,
+} as const;

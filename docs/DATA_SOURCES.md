@@ -140,10 +140,14 @@ La prima integrazione usa l'endpoint JSON pubblico impiegato dal portale per le 
 Gli importi vengono convertiti in centesimi interi. Per gli incarichi ai dipendenti, dirigenti e non dirigenti devono riconciliarsi esattamente con il totale annuale. L'anno corrente resta esplicitamente parziale. Il campo tecnico `paConferenteCount` non viene reinterpretato come numero di amministrazioni distinte.
 
 ### Camera dei deputati
-Camera Trasparente pubblica informazioni su bilancio, amministrazione e procedure di gara. L'integrazione deve distinguere il trattamento economico “previsto” dagli importi individualmente e realmente erogati quando questi ultimi non siano esposti dalla fonte.
+Camera Trasparente pubblica informazioni su bilancio, amministrazione e procedure di gara. L'API parlamentare espone il conto consuntivo 2025 e il bilancio 2026 come documenti distinti.
+
+Per il consuntivo sono disponibili pagamenti e categorie arrotondati come nel documento ufficiale. Il totale degli impegni comprende anche le partite di giro, mentre le categorie pubblicate riguardano la spesa effettiva. Per il bilancio 2026 gli importi sono previsioni, non pagamenti già effettuati.
 
 ### Senato della Repubblica
-La sezione Spese e trasparenza pubblica bilancio, conto consuntivo e informazioni sul trattamento economico dei senatori. Vale la stessa cautela sulla granularità individuale.
+La sezione Spese e trasparenza pubblica bilancio, conto consuntivo e informazioni sul trattamento economico dei senatori. L'API collega il rendiconto 2024 e il bilancio 2025 ai documenti ufficiali.
+
+I valori del Senato non sono ancora normalizzati. La pubblicazione istituzionale non offre al momento una tabella aperta stabile e l'accesso automatico ai PDF può essere bloccato. Il portale mostra quindi i documenti senza estrarre o stimare importi. Camera e Senato hanno bilanci autonomi e non vengono sommati automaticamente.
 
 ## Fonti successive
 

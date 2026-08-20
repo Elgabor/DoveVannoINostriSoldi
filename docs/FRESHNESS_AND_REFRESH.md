@@ -112,8 +112,10 @@ Una nuova annualità non viene accettata alla cieca. Il workflow la rileva e si 
 | ReGiS | periodica | 6 h | 12 h |
 | Art. 4-bis | dipende dall'ente | 3 h | 6 h |
 | Consulenti Pubblici | dipende dall'ente | 6 h | 6 h |
+| Camera dei deputati | su pubblicazione | 6 h | 12 h |
+| Senato della Repubblica | su pubblicazione | 6 h | 12 h |
 
-SIOPE, Camera e Senato hanno policy conservative fino a quando il singolo adapter non avrà una semantica di pubblicazione sufficientemente precisa.
+Camera ha un riepilogo strutturato con data del documento. Senato resta documentale: i nuovi atti vengono collegati, ma i valori non sono pubblicati finché non superano una normalizzazione verificabile.
 
 ## CI vs source health
 
@@ -146,6 +148,8 @@ Stato attuale:
 - OpenCoesione: snapshot ETL versionato attivo; freshness applicativa esposta, reachability demandata al workflow dedicato;
 - Consulenti Pubblici: snapshot ETL versionato attivo; anno corrente esplicitamente parziale;
 - OpenCivitas: snapshot comunale 2022 attivo; nuove annualità ammesse dopo convalida del contratto;
+- Camera: consuntivo 2025 e bilancio 2026 separati per significato contabile;
+- Senato: documenti ufficiali collegati, valori strutturati ancora sospesi;
 - altre fonti: useranno direttamente il nuovo contratto quando verranno implementate.
 
 Non riscriviamo tutti gli adapter contemporaneamente soltanto per uniformità estetica: ogni migrazione deve mantenere gli stessi risultati e passare lint, typecheck, design gate e build.

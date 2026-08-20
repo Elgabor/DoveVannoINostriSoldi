@@ -13,6 +13,7 @@ import { mefParticipationsSnapshot } from "@/lib/mef-participations-snapshot";
 import { openCoesioneSnapshot } from "@/lib/opencoesione-snapshot";
 import { consulentiSnapshot } from "@/lib/consulenti-snapshot";
 import { openCivitasSnapshot } from "@/lib/opencivitas-snapshot";
+import { parliamentSnapshot } from "@/lib/parliament-snapshot";
 
 export type SourceIntegrationState = "active" | "mapped";
 export type SourceReachability = "up" | "down" | "not-probed";
@@ -63,6 +64,7 @@ const ACTIVE_SOURCES = new Set<SourceId>([
   "opencivitas",
   "partecipazioni-pubbliche",
   "consulenti",
+  "camera",
 ]);
 
 function text(value: unknown): string | null {
@@ -375,6 +377,18 @@ function snapshotManagedOpenCivitas(): SourceHealth {
   };
 }
 
+function snapshotManagedCamera(): SourceHealth {
+  const camera = parliamentSnapshot.chambers.find((chamber) => chamber.id === "camera");
+  return {
+    ...baseHealth("camera"),
+    reachability: "not-probed",
+    freshness: freshnessFor("camera", parliamentSnapshot.observedAt),
+    latencyMs: null,
+    detail: "Consuntivo e bilancio collegati ai documenti ufficiali della Camera.",
+    recordCount: camera?.statements.length ?? null,
+  };
+}
+
 export async function getSourceHealthOverview(): Promise<SourceHealth[]> {
   const [ipa, ipaStructure, openbdap, siope] = await Promise.all([
     probeIpa(),
@@ -391,6 +405,7 @@ export async function getSourceHealthOverview(): Promise<SourceHealth[]> {
     ["opencivitas", snapshotManagedOpenCivitas()],
     ["partecipazioni-pubbliche", snapshotManagedMefParticipations()],
     ["consulenti", snapshotManagedConsulenti()],
+    ["camera", snapshotManagedCamera()],
   ]);
 
   return SOURCE_IDS.map((sourceId) => live.get(sourceId) ?? mappedSource(sourceId));

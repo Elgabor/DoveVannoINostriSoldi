@@ -44,7 +44,7 @@ const ALLOWED_HOSTS: Readonly<Record<SourceId, readonly string[]>> = {
     "adp-api.perlapa.gov.it",
     "www.perlapa.gov.it",
   ],
-  camera: ["trasparenza.camera.it", "www.camera.it", "camera.it"],
+  camera: ["trasparenza.camera.it", "documenti.camera.it", "www.camera.it", "camera.it"],
   senato: ["www.senato.it", "senato.it"],
   "istat-s13": ["bdap-opendata.rgs.mef.gov.it", "www.istat.it", "istat.it"],
   "partecipazioni-pubbliche": ["www.de.mef.gov.it", "de.mef.gov.it"],

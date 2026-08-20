@@ -4,6 +4,8 @@ DoveVannoINostriSoldi è un progetto civico open source per capire come vengono 
 
 Riunisce dati ufficiali che oggi si trovano in portali diversi. Ogni numero mostra la fonte, il periodo a cui si riferisce e i limiti da conoscere. Un valore insolito può indicare dove controllare meglio, ma non dimostra da solo uno spreco o un illecito.
 
+L'AI serve a confrontare dati omogenei, trovare scostamenti e ordinare i casi da verificare. Non decide se esiste uno spreco e non attribuisce responsabilità.
+
 ## Cosa puoi consultare
 
 | Sezione | Che cosa mostra | Fonte |
@@ -16,6 +18,7 @@ Riunisce dati ufficiali che oggi si trovano in portali diversi. Ogni numero most
 | Spese dello Stato | Pagamenti per funzione, amministrazione e tipo di spesa | RGS, OpenBDAP |
 | Fabbisogni comunali | Spesa storica, spesa standard e servizi dei Comuni nel 2022 | OpenCivitas |
 | Partecipazioni | Società e organizzazioni partecipate dichiarate dalle amministrazioni | MEF |
+| Parlamento | Consuntivo e bilancio della Camera, documenti di bilancio del Senato | Camera dei deputati, Senato della Repubblica |
 | Controlli | Dati che meritano verifiche più approfondite, con spiegazioni e fonti | ANAC, MEF, Corte dei conti e altre fonti ufficiali |
 | Fonti | Stato dei collegamenti e date di aggiornamento | Registro interno delle fonti |
 
@@ -24,7 +27,11 @@ Gli appalti ANAC, il PNRR ReGiS e altre fonti già censite non sono ancora prese
 Il backend espone inoltre:
 
 - `GET /api/incarichi`, con statistiche nazionali ufficiali di Consulenti Pubblici dal 2023;
-- `GET /api/spese/comuni/fabbisogni?anno=2022`, con il confronto OpenCivitas per 6.557 Comuni delle Regioni a statuto ordinario.
+- `GET /api/spese/comuni/fabbisogni?anno=2022`, con il confronto OpenCivitas per 6.557 Comuni delle Regioni a statuto ordinario;
+- `GET /api/spese/stato?anno=2024`, con l'ultimo mese OpenBDAP disponibile nell'anno richiesto;
+- `GET /api/spese/stato/amministrazioni/2?anno=2024`, con missioni e categorie di una singola amministrazione;
+- `GET /api/parlamento`, con bilanci, consuntivi e documenti ufficiali di Camera e Senato;
+- `GET /api/controlli`, con indicatori classificati, scenari separati e regole per il loro uso.
 
 Per OpenCivitas, la differenza tra spesa storica e spesa standard non viene chiamata spreco. L'API restituisce anche i valori per abitante, il confronto sui servizi e i limiti territoriali della fonte.
 
@@ -38,7 +45,7 @@ La home e le pagine Soldi e Territori permettono di scegliere il 2024, 2025 o 20
 /territori?anno=2025
 ```
 
-I dati SIOPE e la serie annuale OpenCoesione cambiano con l'anno scelto. Se un indicatore non esiste per quel periodo, viene mostrato come non disponibile. Non riutilizziamo un dato di un altro anno.
+I dati SIOPE, OpenBDAP e la serie annuale OpenCoesione cambiano con l'anno scelto. Se un indicatore non esiste per quel periodo, viene mostrato come non disponibile. Non riutilizziamo un dato di un altro anno.
 
 ## Regole del progetto
 

@@ -223,9 +223,9 @@ export const publicSources: PublicSource[] = [
     cadence: "Secondo pubblicazione istituzionale",
     coverage: "Bilancio e amministrazione della Camera",
     format: "Web · documenti",
-    url: "https://trasparenza.camera.it/",
-    status: "mappata",
-    note: "Bilanci, procedure di gara, organizzazione e trattamento economico secondo quanto pubblicato dalla Camera.",
+    url: "https://trasparenza.camera.it/bilancio-della-camera",
+    status: "attiva",
+    note: "Conto consuntivo 2025 e bilancio 2026 collegati ai documenti ufficiali. Gli importi strutturati mantengono arrotondamenti e significato contabile della Camera.",
   },
   {
     slug: "senato",
@@ -236,8 +236,8 @@ export const publicSources: PublicSource[] = [
     coverage: "Bilancio e amministrazione del Senato",
     format: "Web · documenti",
     url: "https://www.senato.it/relazioni-con-i-cittadini/spese-trasparenza/spese-e-trasparenza",
-    status: "mappata",
-    note: "Bilancio, consuntivo e informazioni ufficiali sul trattamento economico dei senatori.",
+    status: "integrazione",
+    note: "Rendiconto 2024 e bilancio 2025 sono collegati ai documenti ufficiali. I valori restano non strutturati finché il formato non può essere normalizzato in modo stabile.",
   },
 ];
 

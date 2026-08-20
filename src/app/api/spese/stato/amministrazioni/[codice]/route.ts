@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  getStateSpendingSnapshot,
+  getStateAdministrationSpending,
+  StateAdministrationNotFoundError,
   StatePaymentPeriodUnavailableError,
 } from "@/lib/bdap-payments";
 import { parseReferencePeriod } from "@/lib/data/reference-period";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
+type RouteContext = { params: Promise<{ codice: string }> };
+
+export async function GET(request: NextRequest, context: RouteContext) {
   const requestedPeriod = parseReferencePeriod(request.nextUrl.searchParams);
   if (!requestedPeriod.ok) {
     return NextResponse.json(
@@ -16,8 +19,13 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const { codice } = await context.params;
+
   try {
-    const snapshot = await getStateSpendingSnapshot(requestedPeriod.value);
+    const spending = await getStateAdministrationSpending(
+      decodeURIComponent(codice),
+      requestedPeriod.value,
+    );
 
     return NextResponse.json(
       {
@@ -28,7 +36,8 @@ export async function GET(request: NextRequest) {
           cadence: "rilasci periodici per mese contabile",
           normalization: "DoveVannoINostriSoldi",
         },
-        ...snapshot,
+        scope: "Pagamenti cumulati dall'inizio dell'anno al mese indicato.",
+        ...spending,
       },
       {
         headers: {
@@ -37,7 +46,10 @@ export async function GET(request: NextRequest) {
       },
     );
   } catch (error) {
-    const unavailable = error instanceof StatePaymentPeriodUnavailableError;
+    const notFound =
+      error instanceof StateAdministrationNotFoundError ||
+      error instanceof StatePaymentPeriodUnavailableError;
+
     return NextResponse.json(
       {
         ok: false,
@@ -45,7 +57,7 @@ export async function GET(request: NextRequest) {
         observedAt: new Date().toISOString(),
         error: error instanceof Error ? error.message : "Errore sconosciuto",
       },
-      { status: unavailable ? 404 : 503 },
+      { status: notFound ? 404 : 503 },
     );
   }
 }

@@ -1,10 +1,17 @@
 import {
   decodePublicDataText,
   parseDelimitedRecords,
-  parsePublicNumber,
   type DelimitedRecord,
 } from "@/lib/data/delimited";
 import { fetchOfficialSource } from "@/lib/data/source-fetch";
+import {
+  assertOpenBdapComponentTotal,
+  parseOpenBdapAmount,
+} from "@/lib/data/bdap-payment-contract";
+import {
+  getStateAdministrationIdentity,
+  type StateAdministrationIdentity,
+} from "@/lib/data/state-administration-identities";
 
 const BDAP_BASE = "https://bdap-opendata.rgs.mef.gov.it";
 const BDAP_ACTION = `${BDAP_BASE}/SpodCkanApi/api/3/action`;
@@ -86,6 +93,10 @@ export type SpendingAggregate = {
   value: number;
 };
 
+export type StateAdministrationAggregate = SpendingAggregate & {
+  identity: StateAdministrationIdentity | null;
+};
+
 export type StateSpendingSnapshot = {
   period: {
     year: number;
@@ -100,9 +111,15 @@ export type StateSpendingSnapshot = {
     economicCategories: number;
   };
   missions: SpendingAggregate[];
-  administrations: SpendingAggregate[];
+  administrations: StateAdministrationAggregate[];
   economicCategories: SpendingAggregate[];
   paymentMethods: SpendingAggregate[];
+  availability: {
+    missions: "available";
+    administrations: "available" | "unavailable";
+    economicCategories: "available" | "unavailable";
+  };
+  warnings: string[];
   consistency: {
     missionTotal: number;
     administrationTotal: number | null;
@@ -117,6 +134,60 @@ export type StateSpendingSnapshot = {
   };
   observedAt: string;
 };
+
+export type StateAdministrationSpending = {
+  period: StateSpendingSnapshot["period"];
+  administration: {
+    code: string;
+    name: string;
+    totalPaid: number;
+    identity: StateAdministrationIdentity | null;
+  };
+  counts: {
+    missions: number;
+    economicCategories: number;
+    economicDetails: number;
+  };
+  missions: SpendingAggregate[];
+  economicCategories: SpendingAggregate[];
+  economicDetails: SpendingAggregate[];
+  paymentMethods: SpendingAggregate[];
+  availability: {
+    missions: "available";
+    economicBreakdown: "available" | "unavailable";
+  };
+  warnings: string[];
+  consistency: {
+    missionTotal: number;
+    economicTotal: number | null;
+    economicDifferencePct: number | null;
+  };
+  sources: {
+    missionAdministration: BdapDataset;
+    administrationEconomic: BdapDataset | null;
+  };
+  observedAt: string;
+};
+
+export class StatePaymentPeriodUnavailableError extends Error {
+  constructor(year: number, month: number | null) {
+    super(
+      month === null
+        ? `OpenBDAP non contiene un rilascio disponibile per il ${year}`
+        : `OpenBDAP non contiene un rilascio disponibile per ${String(month).padStart(2, "0")}/${year}`,
+    );
+    this.name = "StatePaymentPeriodUnavailableError";
+  }
+}
+
+export class StateAdministrationNotFoundError extends Error {
+  constructor(code: string, year: number, month: number) {
+    super(
+      `L'amministrazione ${code} non è presente nel rilascio OpenBDAP ${String(month).padStart(2, "0")}/${year}`,
+    );
+    this.name = "StateAdministrationNotFoundError";
+  }
+}
 
 const MONTH_NAMES = [
   "GENNAIO",
@@ -279,6 +350,39 @@ export async function getStatePaymentDatasetForPeriod(
   );
 }
 
+async function resolveStatePaymentDataset(
+  dimension: StatePaymentDimension,
+  options: { year?: number; month?: number; signal?: AbortSignal },
+): Promise<BdapDataset> {
+  const { year, month, signal } = options;
+
+  if (year === undefined && month !== undefined) {
+    throw new Error("Per scegliere il mese OpenBDAP serve anche l'anno");
+  }
+
+  if (year === undefined) {
+    return discoverLatestStatePaymentDataset(dimension, { signal });
+  }
+
+  if (month !== undefined) {
+    const dataset = await getStatePaymentDatasetForPeriod(dimension, year, month, { signal });
+    if (!dataset) throw new StatePaymentPeriodUnavailableError(year, month);
+    return dataset;
+  }
+
+  for (let candidateMonth = 12; candidateMonth >= 1; candidateMonth -= 1) {
+    const dataset = await getStatePaymentDatasetForPeriod(
+      dimension,
+      year,
+      candidateMonth,
+      { signal },
+    );
+    if (dataset) return dataset;
+  }
+
+  throw new StatePaymentPeriodUnavailableError(year, null);
+}
+
 async function fetchDatasetRows(
   dataset: BdapDataset,
   signal?: AbortSignal,
@@ -309,27 +413,33 @@ export async function getStatePaymentDatasetTotal(
   options: { signal?: AbortSignal } = {},
 ): Promise<number> {
   const rows = await fetchDatasetRows(dataset, options.signal);
-  return rows.reduce(
-    (total, record) => total + parsePublicNumber(record["Totale Pagato"]),
-    0,
-  );
+  return rows.reduce((total, record) => total + amount(record, "Totale Pagato"), 0);
 }
 
 function amount(record: DelimitedRecord, key: string): number {
-  return parsePublicNumber(record[key]);
+  return parseOpenBdapAmount(record[key], key);
 }
 
 function integer(record: DelimitedRecord, key: string): number {
-  const parsed = Number.parseInt(record[key] ?? "", 10);
-  return Number.isFinite(parsed) ? parsed : 0;
+  const raw = record[key]?.trim();
+  if (!raw || !/^\d+$/.test(raw)) {
+    throw new Error(`OpenBDAP: intero non valido nel campo ${key}`);
+  }
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isSafeInteger(parsed)) {
+    throw new Error(`OpenBDAP: intero fuori intervallo nel campo ${key}`);
+  }
+  return parsed;
 }
 
 function required(record: DelimitedRecord, key: string): string {
-  return record[key]?.trim() || "Non indicato";
+  const value = record[key]?.trim();
+  if (!value) throw new Error(`OpenBDAP: campo obbligatorio mancante: ${key}`);
+  return value;
 }
 
 function components(record: DelimitedRecord): PaymentComponents {
-  return {
+  const result = {
     opErario: amount(record, "OP Erario"),
     opTesoreria: amount(record, "OP Tesoreria"),
     opEsterno: amount(record, "OP Esterno"),
@@ -340,6 +450,8 @@ function components(record: DelimitedRecord): PaymentComponents {
     noteImputazione: amount(record, "Note Imputazione"),
     totalPaid: amount(record, "Totale Pagato"),
   };
+  assertOpenBdapComponentTotal(result);
+  return result;
 }
 
 function normalizeMissionRows(rows: DelimitedRecord[]): StateMissionPayment[] {
@@ -422,12 +534,66 @@ function monthName(month: number): string {
   return MONTH_NAMES[month - 1] ?? `MESE ${month}`;
 }
 
+function period(year: number, month: number): StateSpendingSnapshot["period"] {
+  return {
+    year,
+    month,
+    monthName: monthName(month),
+    label: `${monthName(month)} ${year}`,
+  };
+}
+
+function paymentMethodsForRows<T extends PaymentComponents>(rows: T[]): SpendingAggregate[] {
+  return [
+    {
+      code: "op-erario",
+      label: "Pagamenti tramite Erario",
+      value: sum(rows, (row) => row.opErario),
+    },
+    {
+      code: "op-tesoreria",
+      label: "Pagamenti tramite Tesoreria",
+      value: sum(rows, (row) => row.opTesoreria),
+    },
+    {
+      code: "op-esterno",
+      label: "Altri ordini di pagamento",
+      value: sum(rows, (row) => row.opEsterno),
+    },
+    {
+      code: "oa-tesoreria",
+      label: "Accreditamenti tramite Tesoreria",
+      value: sum(rows, (row) => row.oaTesoreria),
+    },
+    {
+      code: "oa-delegata",
+      label: "Spesa delegata",
+      value: sum(rows, (row) => row.oaSpesaFunzDeleg),
+    },
+    {
+      code: "rsf-stipendi",
+      label: "Stipendi",
+      value: sum(rows, (row) => row.rsfStipendi),
+    },
+    {
+      code: "rsf-altro",
+      label: "Altre spese fisse",
+      value: sum(rows, (row) => row.rsfAltro),
+    },
+    {
+      code: "note-imputazione",
+      label: "Note di imputazione",
+      value: sum(rows, (row) => row.noteImputazione),
+    },
+  ]
+    .filter((item) => item.value > 0)
+    .sort((left, right) => right.value - left.value);
+}
+
 export async function getStateSpendingSnapshot(
-  options: { signal?: AbortSignal } = {},
+  options: { year?: number; month?: number; signal?: AbortSignal } = {},
 ): Promise<StateSpendingSnapshot> {
-  const missionDataset = await discoverLatestStatePaymentDataset("mission", {
-    signal: options.signal,
-  });
+  const missionDataset = await resolveStatePaymentDataset("mission", options);
   const { referenceYear: year, referenceMonth: month } = missionDataset;
 
   const [administrationDatasetResult, economicDatasetResult] = await Promise.allSettled([
@@ -465,6 +631,17 @@ export async function getStateSpendingSnapshot(
     economicRowsResult.status === "fulfilled"
       ? normalizeEconomicRows(economicRowsResult.value)
       : [];
+  const warnings: string[] = [];
+  if (!administrationDataset) {
+    warnings.push("OpenBDAP non ha pubblicato il dettaglio per amministrazione per questo periodo.");
+  } else if (administrationRowsResult.status === "rejected") {
+    warnings.push("Il dettaglio per amministrazione non era raggiungibile durante questo controllo.");
+  }
+  if (!economicDataset) {
+    warnings.push("OpenBDAP non ha pubblicato il dettaglio economico per questo periodo.");
+  } else if (economicRowsResult.status === "rejected") {
+    warnings.push("Il dettaglio economico non era raggiungibile durante questo controllo.");
+  }
 
   const missionTotal = sum(missionRows, (row) => row.totalPaid);
   const administrationTotal =
@@ -480,13 +657,17 @@ export async function getStateSpendingSnapshot(
     (row) => row.missionCode,
   );
 
-  const administrations = groupBy(
+  const administrations: StateAdministrationAggregate[] = groupBy(
     administrationRows,
     (row) => row.administrationCode,
     (row) => row.administration,
     (row) => row.totalPaid,
     (row) => row.administrationCode,
-  );
+  ).map((item) => ({
+    ...item,
+    identity:
+      item.code === null ? null : getStateAdministrationIdentity(item.code, item.label),
+  }));
 
   const economicCategories = groupBy(
     economicRows,
@@ -496,58 +677,10 @@ export async function getStateSpendingSnapshot(
     (row) => row.categoryCode,
   );
 
-  const paymentMethods: SpendingAggregate[] = [
-    {
-      code: "op-erario",
-      label: "Ordini di pagamento · Erario",
-      value: sum(missionRows, (row) => row.opErario),
-    },
-    {
-      code: "op-tesoreria",
-      label: "Ordini di pagamento · Tesoreria",
-      value: sum(missionRows, (row) => row.opTesoreria),
-    },
-    {
-      code: "op-esterno",
-      label: "Ordini di pagamento · Esterno",
-      value: sum(missionRows, (row) => row.opEsterno),
-    },
-    {
-      code: "oa-tesoreria",
-      label: "Ordini di accreditamento · Tesoreria",
-      value: sum(missionRows, (row) => row.oaTesoreria),
-    },
-    {
-      code: "oa-delegata",
-      label: "Ordini di accreditamento · Spesa delegata",
-      value: sum(missionRows, (row) => row.oaSpesaFunzDeleg),
-    },
-    {
-      code: "rsf-stipendi",
-      label: "Ruoli di spesa fissa · Stipendi",
-      value: sum(missionRows, (row) => row.rsfStipendi),
-    },
-    {
-      code: "rsf-altro",
-      label: "Ruoli di spesa fissa · Altro",
-      value: sum(missionRows, (row) => row.rsfAltro),
-    },
-    {
-      code: "note-imputazione",
-      label: "Note di imputazione",
-      value: sum(missionRows, (row) => row.noteImputazione),
-    },
-  ]
-    .filter((item) => item.value > 0)
-    .sort((left, right) => right.value - left.value);
+  const paymentMethods = paymentMethodsForRows(missionRows);
 
   return {
-    period: {
-      year,
-      month,
-      monthName: monthName(month),
-      label: `${monthName(month)} ${year}`,
-    },
+    period: period(year, month),
     totalPaid: missionTotal,
     counts: {
       missions: missions.length,
@@ -558,6 +691,18 @@ export async function getStateSpendingSnapshot(
     administrations,
     economicCategories,
     paymentMethods,
+    availability: {
+      missions: "available",
+      administrations:
+        administrationDataset && administrationRowsResult.status === "fulfilled"
+          ? "available"
+          : "unavailable",
+      economicCategories:
+        economicDataset && economicRowsResult.status === "fulfilled"
+          ? "available"
+          : "unavailable",
+    },
+    warnings,
     consistency: {
       missionTotal,
       administrationTotal,
@@ -567,6 +712,116 @@ export async function getStateSpendingSnapshot(
     },
     sources: {
       mission: missionDataset,
+      missionAdministration: administrationDataset,
+      administrationEconomic: economicDataset,
+    },
+    observedAt: new Date().toISOString(),
+  };
+}
+
+export async function getStateAdministrationSpending(
+  administrationCode: string,
+  options: { year?: number; month?: number; signal?: AbortSignal } = {},
+): Promise<StateAdministrationSpending> {
+  const requestedCode = administrationCode.trim();
+  if (!requestedCode || requestedCode.length > 64) {
+    throw new Error("Codice amministrazione OpenBDAP non valido");
+  }
+
+  const administrationDataset = await resolveStatePaymentDataset(
+    "missionAdministration",
+    options,
+  );
+  const { referenceYear: year, referenceMonth: month } = administrationDataset;
+  const economicDataset = await getStatePaymentDatasetForPeriod(
+    "administrationEconomic",
+    year,
+    month,
+    { signal: options.signal },
+  );
+
+  const [administrationRecords, economicRecordsResult] = await Promise.all([
+    fetchDatasetRows(administrationDataset, options.signal),
+    economicDataset
+      ? fetchDatasetRows(economicDataset, options.signal)
+          .then((records) => ({ ok: true as const, records }))
+          .catch(() => ({ ok: false as const, records: null }))
+      : Promise.resolve({ ok: false as const, records: null }),
+  ]);
+
+  const administrationRows = normalizeAdministrationRows(administrationRecords).filter(
+    (row) => row.administrationCode === requestedCode,
+  );
+  if (administrationRows.length === 0) {
+    throw new StateAdministrationNotFoundError(requestedCode, year, month);
+  }
+
+  const economicRows = economicRecordsResult.records
+    ? normalizeEconomicRows(economicRecordsResult.records).filter(
+        (row) => row.administrationCode === requestedCode,
+      )
+    : [];
+  const warnings = economicDataset && !economicRecordsResult.ok
+    ? ["Il dettaglio economico non era raggiungibile durante questo controllo."]
+    : !economicDataset
+      ? ["OpenBDAP non ha pubblicato il dettaglio economico per questo periodo."]
+      : [];
+  const missionTotal = sum(administrationRows, (row) => row.totalPaid);
+  const economicTotal =
+    economicRows.length > 0 ? sum(economicRows, (row) => row.totalPaid) : null;
+  const missions = groupBy(
+    administrationRows,
+    (row) => row.missionCode,
+    (row) => row.mission,
+    (row) => row.totalPaid,
+    (row) => row.missionCode,
+  );
+  const economicCategories = groupBy(
+    economicRows,
+    (row) => row.categoryCode,
+    (row) => row.category,
+    (row) => row.totalPaid,
+    (row) => row.categoryCode,
+  );
+  const economicDetails = groupBy(
+    economicRows,
+    (row) => `${row.categoryCode}:${row.economicLevel2Code}`,
+    (row) => row.economicLevel2,
+    (row) => row.totalPaid,
+    (row) => row.economicLevel2Code,
+  );
+
+  return {
+    period: period(year, month),
+    administration: {
+      code: requestedCode,
+      name: administrationRows[0].administration,
+      totalPaid: missionTotal,
+      identity: getStateAdministrationIdentity(
+        requestedCode,
+        administrationRows[0].administration,
+      ),
+    },
+    counts: {
+      missions: missions.length,
+      economicCategories: economicCategories.length,
+      economicDetails: economicDetails.length,
+    },
+    missions,
+    economicCategories,
+    economicDetails,
+    paymentMethods: paymentMethodsForRows(administrationRows),
+    availability: {
+      missions: "available",
+      economicBreakdown: economicRecordsResult.ok ? "available" : "unavailable",
+    },
+    warnings,
+    consistency: {
+      missionTotal,
+      economicTotal,
+      economicDifferencePct: differencePct(missionTotal, economicTotal),
+    },
+    sources: {
       missionAdministration: administrationDataset,
       administrationEconomic: economicDataset,
     },

@@ -8,12 +8,12 @@
 - [x] CI
 
 ## Fase 1: dati reali
-- [ ] ingestore IPA e tabella canonica degli enti
-- [ ] discovery dei dataset OpenBDAP
-- [ ] ingestore SIOPE/OpenBDAP per pagamenti aggregati
+- [x] ingestore IPA e schede canoniche degli enti
+- [x] discovery dei dataset OpenBDAP
+- [x] ingestore SIOPE e OpenBDAP per pagamenti aggregati
 - [ ] ingestore ANAC BDNCP
-- [ ] snapshot e provenance persistenti
-- [ ] pagina ente con URL sorgente e freshness
+- [x] snapshot e provenance per le fonti integrate
+- [x] pagina ente con URL sorgente e freshness
 - [ ] ricerca per ente, CIG, CUP e fornitore
 
 ## Fase 2: pagamenti distribuiti
@@ -33,8 +33,8 @@
 - [ ] normalizzazione pro capite con popolazione ufficiale
 
 ## Fase 4: Parlamento e incarichi
-- [ ] Consulenti Pubblici
-- [ ] bilanci Camera e Senato
+- [x] Consulenti Pubblici
+- [x] consuntivo e bilancio Camera; documenti ufficiali Senato collegati
 - [ ] gare delle istituzioni
 - [ ] trattamento economico con granularità rigorosamente aderente alle fonti
 
@@ -44,8 +44,9 @@
 - [ ] prossimità alle soglie
 - [ ] proroghe e rinnovi
 - [ ] benchmark di prezzo su categorie realmente comparabili
-- [ ] spiegazione pubblica di ogni indicatore
-- [ ] test contro falsi positivi
+- [x] contratto che separa dati osservati, stime, esposizioni al rischio e stock
+- [x] regole pubbliche che vietano conclusioni automatiche e somme incompatibili
+- [ ] test quantitativi contro falsi positivi sui futuri indicatori automatici
 
 ## Definition of done per connettore
 

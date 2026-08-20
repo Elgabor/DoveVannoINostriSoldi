@@ -34,6 +34,50 @@ Il backend espone inoltre:
 - `GET /api/parlamento`, con i dati strutturati verificati della Camera; il monitor segue anche i nuovi documenti del Senato senza pubblicare valori non ancora estraibili in modo affidabile;
 - `GET /api/controlli`, con indicatori classificati, scenari separati e regole per il loro uso.
 
+## MCP per assistenti AI
+
+Il sito include un server [Model Context Protocol](https://modelcontextprotocol.io/) pubblico e in sola lettura. Un client MCP compatibile può scoprire e interrogare i dataset del portale senza dover conoscere ogni API separatamente.
+
+Endpoint di produzione:
+
+```text
+https://<dominio-del-sito>/api/mcp
+```
+
+In locale è `http://localhost:3000/api/mcp`. La pagina `/mcp` mostra l'indirizzo corretto del deployment e il catalogo corrente.
+
+Il server espone:
+
+- `list_datasets`, per elencare dataset, filtri, freschezza e cautele interpretative;
+- `query_dataset`, per interrogare snapshot verificati e fonti ufficiali live con filtri e paginazione;
+- la risorsa `dvns://datasets`, che contiene il catalogo machine-readable.
+
+Esempio di configurazione per un client che accetta server HTTP remoti:
+
+```json
+{
+  "mcpServers": {
+    "dove-vanno-i-nostri-soldi": {
+      "type": "http",
+      "url": "https://<dominio-del-sito>/api/mcp"
+    }
+  }
+}
+```
+
+Verifica rapida del protocollo:
+
+```bash
+curl -X POST http://localhost:3000/api/mcp \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+L'accesso anonimo è intenzionale perché il server espone esclusivamente dati pubblici e operazioni read-only. Le richieste hanno input limitati, paginazione massima e controllo dell'header `Origin`; eventuali origini browser aggiuntive si configurano con `MCP_ALLOWED_ORIGINS`. Non vengono esposte credenziali di ingestione.
+
+Per aggiungere una fonte all'MCP si registra la descrizione in `src/lib/mcp/catalog.ts` e l'adapter in `src/lib/mcp/datasets.ts`. Gli strumenti restano gli stessi, quindi i client non devono essere riconfigurati quando il catalogo cresce. Dettagli e checklist sono in [docs/MCP.md](docs/MCP.md).
+
 Per OpenCivitas, la differenza tra spesa storica e spesa standard non viene chiamata spreco. L'API restituisce anche i valori per abitante, il confronto sui servizi e i limiti territoriali della fonte.
 
 Per le opere pubbliche, l'API può segnalare date da controllare, crescita dei costi, finanziamenti ancora da trovare o problemi di qualità del dato. Sono indicazioni per scegliere cosa approfondire, non prove automatiche di spreco.
@@ -114,6 +158,7 @@ Dettagli: [docs/FRESHNESS_AND_REFRESH.md](docs/FRESHNESS_AND_REFRESH.md).
 src/app/                 pagine e servizi web
 src/components/          grafici, mappa e controlli dell'interfaccia
 src/lib/                 lettura, controllo e collegamento dei dati
+src/lib/mcp/             catalogo e adapter del server MCP
 src/data/generated/      copie ridotte e verificate usate dal sito
 scripts/etl/             aggiornamento delle fonti
 tests/                   controlli automatici

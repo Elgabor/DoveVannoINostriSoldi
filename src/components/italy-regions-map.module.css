@@ -63,6 +63,12 @@
 
 .mobileSelector { display: none; }
 
+.geoNote {
+  margin: var(--space-2) 0 0;
+  font-size: 11px;
+  color: var(--color-neutral-600);
+}
+
 /* The reading row under the map: whichever region is hovered, focused or
    picked from the select shows its exact figures here. */
 .detail {

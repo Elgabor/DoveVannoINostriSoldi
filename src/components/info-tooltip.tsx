@@ -17,7 +17,7 @@ export function InfoTooltip({
         aria-label={label}
         aria-describedby={id}
       >
-        i
+        ?
       </button>
       <span className={styles.tooltip} id={id} role="tooltip">
         {children}

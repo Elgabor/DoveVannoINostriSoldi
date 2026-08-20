@@ -1,7 +1,7 @@
 .section {
   width: 100%;
   padding: 44px 0;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--color-neutral-200);
 }
 
 .header {
@@ -13,7 +13,7 @@
 }
 
 .header span {
-  color: #7998a9;
+  color: var(--color-neutral-600);
   font-size: 11px;
   font-weight: 760;
   letter-spacing: .1em;
@@ -21,7 +21,7 @@
 
 .header h2 {
   margin: 6px 0 0;
-  color: #e4edf2;
+  color: var(--color-neutral-100);
   font-size: 27px;
   font-weight: 560;
   letter-spacing: -.03em;
@@ -30,7 +30,7 @@
 .header p {
   max-width: 590px;
   margin: 0;
-  color: #7d98a7;
+  color: var(--color-neutral-600);
   font-size: 12px;
   line-height: 1.62;
   text-align: right;
@@ -40,13 +40,13 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   margin-bottom: 18px;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  border-top: 1px solid var(--color-neutral-200);
+  border-bottom: 1px solid var(--color-neutral-200);
 }
 
 .metrics > div {
   padding: 18px 22px 18px 0;
-  border-right: 1px solid var(--line);
+  border-right: 1px solid var(--color-neutral-200);
 }
 
 .metrics > div + div {
@@ -64,7 +64,7 @@
 }
 
 .metrics span {
-  color: #7894a4;
+  color: var(--color-neutral-600);
   font-size: 11px;
   font-weight: 710;
   letter-spacing: .05em;
@@ -73,14 +73,14 @@
 
 .metrics strong {
   margin: 9px 0 4px;
-  color: #e0ebf0;
+  color: var(--color-neutral-100);
   font-size: 23px;
   font-weight: 550;
   letter-spacing: -.025em;
 }
 
 .metrics small {
-  color: #718c9b;
+  color: var(--color-neutral-600);
   font-size: 11px;
   line-height: 1.45;
 }
@@ -91,15 +91,15 @@
   gap: 24px;
   margin-top: 18px;
   padding-top: 18px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--color-neutral-200);
 }
 
 .coverageNote {
   margin: 14px 0 0;
   padding: 12px 14px;
-  border-left: 2px solid var(--amber);
-  color: #aebfca;
-  background: rgba(240, 197, 108, .05);
+  border-left: 2px solid var(--color-warning);
+  color: var(--color-text);
+  background: var(--color-warning-bg);
   font-size: 12px;
   line-height: 1.55;
 }
@@ -116,7 +116,7 @@
 
 .methodology span {
   margin-bottom: 5px;
-  color: #7893a3;
+  color: var(--color-neutral-600);
   font-size: 11px;
   font-weight: 710;
   letter-spacing: .06em;
@@ -125,14 +125,14 @@
 
 .methodology strong,
 .methodology a {
-  color: #b9ccd5;
+  color: var(--color-text);
   font-size: 11px;
   font-weight: 560;
   line-height: 1.55;
 }
 
 .methodology a:hover {
-  color: var(--blue);
+  color: var(--color-accent-700);
 }
 
 .loadingGrid {
@@ -143,28 +143,27 @@
 
 .loadingGrid div {
   min-height: 410px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: rgba(8, 29, 46, .32);
+  border: 1px solid var(--color-neutral-200);
+    background: var(--color-neutral-100);
 }
 
 .error {
   padding: 26px 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  border-top: 1px solid var(--color-neutral-200);
+  border-bottom: 1px solid var(--color-neutral-200);
 }
 
 .error strong {
   display: block;
   margin-bottom: 7px;
-  color: #dbe7ed;
+  color: var(--color-neutral-100);
   font-size: 15px;
 }
 
 .error p {
   max-width: 760px;
   margin: 0;
-  color: #7c96a6;
+  color: var(--color-neutral-600);
   font-size: 12px;
   line-height: 1.6;
 }
@@ -189,7 +188,7 @@
   .metrics > div + div {
     padding: 15px 0;
     border-right: 0;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--color-neutral-200);
   }
 
   .metrics > div:last-child {

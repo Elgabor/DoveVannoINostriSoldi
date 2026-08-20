@@ -1,138 +1,97 @@
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(230px, 0.65fr);
-  gap: 24px;
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: var(--space-4);
+  align-items: start;
 }
 
-.mapColumn {
-  min-width: 0;
-}
+.mapColumn { min-width: 0; }
+
+.asideColumn { min-width: 0; }
 
 .map {
   display: block;
   width: 100%;
-  max-height: 525px;
+  max-height: 520px;
 }
 
 .region {
-  stroke: #06131f;
-  stroke-width: 1.5;
+  stroke: var(--color-raised);
+  stroke-width: 1;
   vector-effect: non-scaling-stroke;
   cursor: pointer;
-  transition: fill 140ms ease, stroke 140ms ease, opacity 140ms ease;
+  transition: fill 140ms ease, stroke 140ms ease;
 }
 
 .region:hover,
 .region:focus,
 .active {
-  stroke: #eaf4f8;
-  stroke-width: 2.5;
+  stroke: var(--color-text);
+  stroke-width: 2;
   outline: none;
 }
 
-.level0 { fill: #56468f; background: #56468f; }
-.level1 { fill: #346ea1; background: #346ea1; }
-.level2 { fill: #2d8d8a; background: #2d8d8a; }
-.level3 { fill: #65a66f; background: #65a66f; }
-.level4 { fill: #d2a84f; background: #d2a84f; }
-.noData { fill: #29343b; }
+/* One sequential ramp from the accent's palest tint to its darkest shade, so
+   the map reads as intensity rather than as five unrelated categories. */
+.level0 { fill: var(--color-accent-100); background: var(--color-accent-100); }
+.level1 { fill: var(--color-accent-200); background: var(--color-accent-200); }
+.level2 { fill: var(--color-accent-400); background: var(--color-accent-400); }
+.level3 { fill: var(--color-accent-600); background: var(--color-accent-600); }
+.level4 { fill: var(--color-accent-800); background: var(--color-accent-800); }
+.noData { fill: var(--color-neutral-200); }
 
 .legend {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px 13px;
-  margin-top: 10px;
-  color: #8ea5b1;
+  align-items: center;
+  gap: 2px;
+  margin-top: var(--space-3);
   font-size: 11px;
-  line-height: 1.4;
+  color: var(--color-neutral-600);
 }
+.legend i {
+  width: 26px;
+  height: 10px;
+  flex: none;
+}
+.legendEnd { white-space: nowrap; }
+.legendEnd:first-child { margin-right: var(--space-2); }
+.legendEnd:last-child { margin-left: var(--space-2); }
 
 .mobileSelector { display: none; }
 
-.legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.legend i {
-  width: 9px;
-  height: 9px;
-  border-radius: 2px;
-}
-
+/* The reading row under the map: whichever region is hovered, focused or
+   picked from the select shows its exact figures here. */
 .detail {
-  padding-left: 24px;
-  border-left: 1px solid rgba(137, 171, 190, 0.18);
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(140px, 1.4fr) repeat(5, minmax(84px, 1fr));
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding: 10px 14px;
+  background: var(--color-neutral-100);
+  border: 1px solid var(--color-neutral-400);
 }
-
-.detail > span {
-  color: #7794a3;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+.detail b {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: var(--font-heading-weight);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-
-.detail h3 {
-  margin: 8px 0 24px;
-  color: #edf5f8;
-  font-size: 24px;
-  font-weight: 580;
-  letter-spacing: -0.025em;
+.detail span {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
-
-.detail > strong,
-.detail > small {
+.detail small {
   display: block;
-}
-
-.detail > strong {
-  color: #f3f8fa;
-  font-size: clamp(30px, 3vw, 42px);
-  font-weight: 540;
-  letter-spacing: -0.035em;
-  font-variant-numeric: tabular-nums;
-}
-
-.detail > small {
-  max-width: 26ch;
-  margin-top: 5px;
-  color: #8fa5b1;
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-.detail dl {
-  margin: 25px 0 0;
-}
-
-.detail dl div {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 10px 0;
-  border-top: 1px solid rgba(137, 171, 190, 0.14);
-}
-
-.detail dt,
-.detail dd {
-  margin: 0;
-  font-size: 12px;
-}
-
-.detail dt { color: #829aa7; }
-.detail dd {
-  color: #dbe7ec;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.detail p {
-  margin: 18px 0 0;
-  color: #7f96a2;
-  font-size: 11px;
-  line-height: 1.55;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
 }
 
 .srOnly {
@@ -142,60 +101,49 @@
   padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
 }
 
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .detail { grid-template-columns: repeat(3, minmax(84px, 1fr)); }
+  .detail b { grid-column: 1 / -1; }
+}
+
 @media (max-width: 760px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-
-  .map {
-    max-height: 470px;
-  }
-
-  .detail {
-    padding: 20px 0 0;
-    border-top: 1px solid rgba(137, 171, 190, 0.18);
-    border-left: 0;
-  }
+  .map { max-height: 440px; }
+  .legendEnd { display: none; }
+  .legend { justify-content: center; }
 
   .mobileSelector {
     display: grid;
-    gap: 7px;
-    margin-top: 12px;
-    color: #8fa6b2;
+    gap: 6px;
+    margin-top: var(--space-3);
     font-size: 12px;
+    color: var(--color-neutral-700);
   }
-
   .mobileSelector select {
     width: 100%;
     min-height: 44px;
-    padding: 0 38px 0 12px;
-    border: 1px solid rgba(137, 171, 190, 0.28);
-    border-radius: 8px;
-    color: #e8f1f4;
-    background: #0a2030;
+    padding: 0 12px;
+    border: 1px solid var(--color-neutral-400);
+    background: var(--color-raised);
+    color: var(--color-text);
     font-size: 14px;
   }
 }
 
-@media (hover: none) {
-  .region:hover {
-    stroke: #06131f;
-    stroke-width: 1.5;
-  }
+@media (max-width: 480px) {
+  .detail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
-  .active {
-    stroke: #eaf4f8;
-    stroke-width: 2.5;
-  }
+@media (hover: none) {
+  .region:hover { stroke: var(--color-raised); stroke-width: 1; }
+  .active { stroke: var(--color-text); stroke-width: 2; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .region {
-    transition: none;
-  }
+  .region { transition: none; }
 }

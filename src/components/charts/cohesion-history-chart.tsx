@@ -16,6 +16,7 @@ const exactEuro = new Intl.NumberFormat("it-IT", {
   style: "currency",
   currency: "EUR",
   maximumFractionDigits: 0,
+  useGrouping: "always",
 });
 
 function compactEuro(value: number): string {
@@ -41,23 +42,23 @@ export function CohesionHistoryChart({ data }: { data: OpenCoesioneAnnualPoint[]
       >
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 12, right: 16, bottom: 0, left: 0 }} accessibilityLayer>
-            <CartesianGrid vertical={false} stroke="rgba(145, 174, 192, 0.12)" />
+            <CartesianGrid vertical={false} stroke="var(--color-neutral-300)" />
             <XAxis
               dataKey="year"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: "#8198a6", fontSize: 11 }}
+              tick={{ fill: "var(--color-neutral-600)", fontSize: 11 }}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
               width={66}
-              tick={{ fill: "#8198a6", fontSize: 11 }}
+              tick={{ fill: "var(--color-neutral-600)", fontSize: 11 }}
               tickFormatter={compactEuro}
             />
             <Tooltip
               animationDuration={120}
-              cursor={{ stroke: "rgba(171, 204, 221, 0.24)" }}
+              cursor={{ stroke: "var(--color-neutral-400)" }}
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
                 const point = payload[0]?.payload as (OpenCoesioneAnnualPoint & {
@@ -82,7 +83,7 @@ export function CohesionHistoryChart({ data }: { data: OpenCoesioneAnnualPoint[]
               fill="var(--chart-secondary)"
               fillOpacity={0.035}
               isAnimationActive={false}
-              activeDot={{ r: 3, fill: "var(--chart-secondary)", stroke: "#071827", strokeWidth: 2 }}
+              activeDot={{ r: 3, fill: "var(--chart-secondary)", stroke: "var(--color-raised)", strokeWidth: 2 }}
             />
             <Area
               type="monotone"
@@ -92,7 +93,7 @@ export function CohesionHistoryChart({ data }: { data: OpenCoesioneAnnualPoint[]
               fill="var(--chart-primary)"
               fillOpacity={0.09}
               isAnimationActive={false}
-              activeDot={{ r: 4, fill: "var(--chart-primary)", stroke: "#071827", strokeWidth: 2 }}
+              activeDot={{ r: 4, fill: "var(--chart-primary)", stroke: "var(--color-raised)", strokeWidth: 2 }}
             />
           </AreaChart>
         </ResponsiveContainer>

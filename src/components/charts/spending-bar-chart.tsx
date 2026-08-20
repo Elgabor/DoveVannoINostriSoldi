@@ -23,6 +23,7 @@ const exactEuro = new Intl.NumberFormat("it-IT", {
   style: "currency",
   currency: "EUR",
   maximumFractionDigits: 2,
+  useGrouping: "always",
 });
 
 function compactEuro(value: number): string {
@@ -73,12 +74,12 @@ export function SpendingBarChart({
             layout="vertical"
             margin={{ top: 5, right: 20, bottom: 5, left: 4 }}
           >
-            <CartesianGrid horizontal={false} stroke="rgba(145, 174, 192, 0.12)" />
+            <CartesianGrid horizontal={false} stroke="var(--color-neutral-300)" />
             <XAxis
               type="number"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: "#8198a6", fontSize: 11 }}
+              tick={{ fill: "var(--color-neutral-600)", fontSize: 11 }}
               tickFormatter={compactEuro}
             />
             <YAxis
@@ -87,10 +88,10 @@ export function SpendingBarChart({
               axisLine={false}
               tickLine={false}
               width={205}
-              tick={{ fill: "#b8c8d0", fontSize: 11 }}
+              tick={{ fill: "var(--color-neutral-600)", fontSize: 11 }}
             />
             <Tooltip
-              cursor={{ fill: "rgba(255,255,255,0.022)" }}
+              cursor={{ fill: "var(--color-neutral-100)" }}
               animationDuration={120}
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;

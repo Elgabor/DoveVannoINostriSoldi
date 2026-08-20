@@ -10,22 +10,8 @@ import {
   REGION_NAME_BY_ISTAT_CODE,
   regionDataByIstatCode,
 } from "@/lib/italy-regions";
+import { compactEuro, exactEuro, integer } from "@/lib/format";
 import styles from "./italy-regions-map.module.css";
-
-const euro = new Intl.NumberFormat("it-IT", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 2,
-});
-
-const integer = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 0 });
-
-function compactEuro(value: number): string {
-  if (Math.abs(value) >= 1_000_000_000) {
-    return `${(value / 1_000_000_000).toLocaleString("it-IT", { maximumFractionDigits: 2 })} mld €`;
-  }
-  return `${(value / 1_000_000).toLocaleString("it-IT", { maximumFractionDigits: 0 })} mln €`;
-}
 
 function quantile(values: number[], fraction: number): number {
   const index = Math.min(values.length - 1, Math.floor(values.length * fraction));
@@ -35,9 +21,12 @@ function quantile(values: number[], fraction: number): number {
 export function ItalyRegionsMap({
   regions,
   period,
+  aside,
 }: {
   regions: SiopeRegionPoint[];
   period: string;
+  /** National figures shown beside the map; owned by the page, not the map. */
+  aside?: React.ReactNode;
 }) {
   const [selectedCode, setSelectedCode] = useState("03");
   const { byCode, thresholds } = useMemo(() => {
@@ -92,7 +81,7 @@ export function ItalyRegionsMap({
                 aria-label={`${REGION_NAME_BY_ISTAT_CODE[geometry.code]}: ${
                   region?.perCapita === null || region?.perCapita === undefined
                     ? "dato non disponibile"
-                    : `${euro.format(region.perCapita)} per abitante coperto`
+                    : `${exactEuro(region.perCapita)} per abitante coperto`
                 }`}
                 onPointerEnter={() => setSelectedCode(geometry.code)}
                 onFocus={() => setSelectedCode(geometry.code)}
@@ -118,34 +107,49 @@ export function ItalyRegionsMap({
         </label>
 
         <div className={styles.legend} aria-label="Scala dei pagamenti pro capite">
+          <span className={styles.legendEnd}>Meno spesa per abitante</span>
           {[0, 1, 2, 3, 4].map((index) => (
-            <span key={index}>
-              <i className={styles[`level${index}`]} />
-              {index === 0
-                ? `fino a ${integer.format(thresholds[0])} €`
-                : index === 4
-                  ? `oltre ${integer.format(thresholds[3])} €`
-                  : `da ${integer.format(thresholds[index - 1])} a ${integer.format(thresholds[index])} €`}
-            </span>
+            <i
+              key={index}
+              className={styles[`level${index}`]}
+              title={
+                index === 0
+                  ? `fino a ${integer(thresholds[0])} €`
+                  : index === 4
+                    ? `oltre ${integer(thresholds[3])} €`
+                    : `da ${integer(thresholds[index - 1])} a ${integer(thresholds[index])} €`
+              }
+            />
           ))}
+          <span className={styles.legendEnd}>Più spesa per abitante</span>
         </div>
       </div>
 
-      <aside className={styles.detail} aria-live="polite">
-        <span>Regione selezionata</span>
-        <h3>{selected?.region ?? "Dato non disponibile"}</h3>
-        <strong>{selected?.perCapita === null || !selected ? "Non disponibile" : euro.format(selected.perCapita)}</strong>
-        <small>per abitante della popolazione coperta</small>
-        <dl>
-          <div><dt>Totale pagato</dt><dd>{selected ? compactEuro(selected.value) : "Non disponibile"}</dd></div>
-          <div><dt>Comuni inclusi</dt><dd>{selected ? integer.format(selected.municipalities) : "Non disponibile"}</dd></div>
-          <div><dt>Periodo</dt><dd>{period}</dd></div>
-        </dl>
-        <p>
-          Pagamenti dei Comuni con sede nella regione; non tutta la spesa effettuata
-          fisicamente nel territorio.
-        </p>
-      </aside>
+      {aside ? <div className={styles.asideColumn}>{aside}</div> : null}
+
+      <div className={styles.detail} aria-live="polite">
+        <b>{selected?.region ?? "Dato non disponibile"}</b>
+        <span>
+          <small>Totale</small>
+          {selected ? compactEuro(selected.value) : "n.d."}
+        </span>
+        <span>
+          <small>Per abitante</small>
+          {selected?.perCapita === null || !selected ? "n.d." : exactEuro(selected.perCapita)}
+        </span>
+        <span>
+          <small>Abitanti</small>
+          {selected?.population == null ? "n.d." : integer(selected.population)}
+        </span>
+        <span>
+          <small>Comuni</small>
+          {selected ? integer(selected.municipalities) : "n.d."}
+        </span>
+        <span>
+          <small>Periodo</small>
+          {period}
+        </span>
+      </div>
 
       <div className={styles.srOnly}>
         <table>
@@ -155,9 +159,9 @@ export function ItalyRegionsMap({
             {regions.map((region) => (
               <tr key={region.region}>
                 <th>{region.region}</th>
-                <td>{euro.format(region.value)}</td>
-                <td>{region.perCapita === null ? "Non disponibile" : euro.format(region.perCapita)}</td>
-                <td>{integer.format(region.municipalities)}</td>
+                <td>{exactEuro(region.value)}</td>
+                <td>{region.perCapita === null ? "Non disponibile" : exactEuro(region.perCapita)}</td>
+                <td>{integer(region.municipalities)}</td>
               </tr>
             ))}
           </tbody>

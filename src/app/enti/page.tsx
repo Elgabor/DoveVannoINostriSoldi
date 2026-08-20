@@ -1,12 +1,10 @@
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  BankIcon,
-  Building06Icon,
-  HierarchyIcon,
-  MapsIcon,
-} from "@hugeicons/core-free-icons";
+import { Search01Icon } from "@hugeicons/core-free-icons";
 import { RegistryTypeChart } from "@/components/charts/registry-type-chart";
+import { integer, longDate } from "@/lib/format";
+import { mefParticipationsSnapshot as participations } from "@/lib/mef-participations-snapshot";
+import { siopeMunicipalSnapshot } from "@/lib/siope-snapshot";
 import {
   getIpaCentralAdministrations,
   getIpaRegistryStats,
@@ -20,8 +18,6 @@ import { getIpaTypeDistribution, type IpaTypeStat } from "@/lib/ipa-stats";
 import styles from "./enti.module.css";
 
 export const dynamic = "force-dynamic";
-
-const numberFormatter = new Intl.NumberFormat("it-IT");
 
 type PageProps = {
   searchParams: Promise<{
@@ -38,12 +34,10 @@ function locationLabel(indirizzo: string | null, cap: string | null): string {
   return indirizzo ?? cap ?? "Sede non indicata nel record IPA";
 }
 
-function formatObservedAt(value: string | null): string {
+function observedAtLabel(value: string | null): string {
   if (!value) return "Non disponibile";
-
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Non disponibile";
-
   return new Intl.DateTimeFormat("it-IT", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -100,75 +94,61 @@ export default async function EntiPage({ searchParams }: PageProps) {
   }
 
   return (
-    <main className={styles.page}>
-      <section className={styles.intro}>
+    <main className="shell page">
+      <div className="page-intro">
+        <h1>Chi spende: enti e società</h1>
+        <p>
+          Registro nazionale degli enti (IPA) e partecipazioni dichiarate al MEF per il{" "}
+          {participations.referenceYear}, pubblicate il {longDate(participations.publishedAt)}.
+        </p>
+      </div>
+
+      <div className={`stat-strip ${styles.fiveUp}`}>
         <div>
-          <h1 className={styles.title}>Organizzazioni pubbliche</h1>
-          <p className={styles.lead}>
-            Cerca un&apos;amministrazione, apri la sua struttura interna dichiarata in IPA e segui i
-            collegamenti verso spese, progetti e fonti ufficiali. Enti, uffici e società partecipate
-            restano livelli distinti: non li deduciamo dal nome.
-          </p>
+          <span className="stat-label">Comuni attivi in SIOPE</span>
+          <span className="stat-value">
+            {integer(siopeMunicipalSnapshot.coverage.activeSiopeMunicipalities)}
+          </span>
+          <span className="stat-note">anagrafe aggiornata ogni giorno</span>
         </div>
+        <div>
+          <span className="stat-label">Società partecipate</span>
+          <span className="stat-value">
+            {integer(participations.totals.participatedOrganizations)}
+          </span>
+          <span className="stat-note">dichiarate per il {participations.referenceYear}</span>
+        </div>
+        <div>
+          <span className="stat-label">Enti che dichiarano quote</span>
+          <span className="stat-value">
+            {integer(participations.totals.declaringAdministrations)}
+          </span>
+          <span className="stat-note">su tutta Italia</span>
+        </div>
+        <div>
+          <span className="stat-label">Quote dirette</span>
+          <span className="stat-value">
+            {integer(participations.totals.directParticipationRecords)}
+          </span>
+          <span className="stat-note">partecipazioni di primo livello</span>
+        </div>
+        <div>
+          <span className="stat-label">Quote indirette</span>
+          <span className="stat-value">
+            {integer(participations.totals.indirectParticipationRecords)}
+          </span>
+          <span className="stat-note">attraverso altre società</span>
+        </div>
+      </div>
 
-        <aside className={styles.sourceCard} aria-label="Informazioni sulla fonte IPA">
-          <div className={styles.sourceCardTop}>
-            <strong>Indice PA · Enti</strong>
-            <span className={styles.live}>FONTE ATTIVA</span>
-          </div>
-          <div className={styles.sourceMeta}>
-            <div>
-              <b>Frequenza</b>
-              <span>giornaliera</span>
-            </div>
-            <div>
-              <b>Licenza</b>
-              <span>{IPA_LICENSE}</span>
-            </div>
-            <div>
-              <b>Accesso</b>
-              <span>Servizio dati AgID</span>
-            </div>
-            <div>
-              <b>Identificativo del file</b>
-              <span>{IPA_ENTI_RESOURCE_ID}</span>
-            </div>
-          </div>
-          <a className={styles.sourceLink} href={IPA_ENTI_DATASET_URL} target="_blank" rel="noreferrer">
-            Apri i dati AgID <span>↗</span>
-          </a>
-        </aside>
-      </section>
-
-      <nav className={styles.organizationPaths} aria-label="Percorsi nel registro delle organizzazioni">
-        <Link href="/enti#amministrazioni-centrali">
-          <HugeiconsIcon icon={BankIcon} size={22} strokeWidth={1.5} aria-hidden="true" />
-          <span><strong>Ministeri e Presidenza</strong><small>17 amministrazioni centrali nella categoria IPA C1</small></span>
-          <b aria-hidden="true">→</b>
-        </Link>
-        <Link href="/enti/PCM#struttura-ipa">
-          <HugeiconsIcon icon={HierarchyIcon} size={22} strokeWidth={1.5} aria-hidden="true" />
-          <span><strong>Dipartimenti e uffici</strong><small>Apri le UO e AOO di Palazzo Chigi; la stessa vista è disponibile per ogni ente</small></span>
-          <b aria-hidden="true">→</b>
-        </Link>
-        <Link href="/enti?q=Regione">
-          <HugeiconsIcon icon={MapsIcon} size={22} strokeWidth={1.5} aria-hidden="true" />
-          <span><strong>Regioni ed enti territoriali</strong><small>Anagrafica IPA e dati territoriali SIOPE</small></span>
-          <b aria-hidden="true">→</b>
-        </Link>
-        <Link href="/partecipazioni">
-          <HugeiconsIcon icon={Building06Icon} size={22} strokeWidth={1.5} aria-hidden="true" />
-          <span><strong>Società partecipate</strong><small>53.656 relazioni dichiarate nel censimento MEF 2023</small></span>
-          <b aria-hidden="true">→</b>
-        </Link>
-      </nav>
-
-      <section className={styles.searchSection} aria-labelledby="ricerca-enti">
-          <span className={styles.kicker}>CERCA NEL REGISTRO UFFICIALE</span>
+      <section className="panel">
+        <h2 className="panel-title">Cerca nel registro ufficiale</h2>
         <form className={styles.searchForm} action="/enti" method="get">
-          <label className={styles.visuallyHidden} htmlFor="q">Cerca un ente</label>
+          <label className={styles.visuallyHidden} htmlFor="q">
+            Cerca un ente
+          </label>
           <input
-            className={styles.input}
+            className="input"
             id="q"
             name="q"
             type="search"
@@ -176,153 +156,249 @@ export default async function EntiPage({ searchParams }: PageProps) {
             placeholder="Comune di Milano, Ministero dell'Interno, Regione Calabria, codice IPA…"
             autoComplete="off"
           />
-          <button className={styles.searchButton} type="submit">Cerca ente</button>
+          <button className="btn btn-primary" type="submit">
+            <HugeiconsIcon icon={Search01Icon} size={16} strokeWidth={1.7} aria-hidden="true" />
+            Cerca ente
+          </button>
         </form>
-        <p className={styles.searchHelp} id="ricerca-enti">
-          La ricerca legge direttamente il registro IPA di AgID. Non usiamo nomi dimostrativi
-          o un elenco scritto a mano.
+        <p className={styles.note}>
+          La ricerca legge direttamente il registro IPA di AgID. Non usiamo nomi dimostrativi o un
+          elenco scritto a mano.
         </p>
       </section>
 
-      <section className={styles.registrySnapshot} aria-labelledby="snapshot-registro">
-        <div className={styles.snapshotSummary}>
-            <span className={styles.kicker}>REGISTRO IN NUMERI</span>
-          <div className={styles.snapshotNumber}>
-            <strong>{stats ? numberFormatter.format(stats.total) : "Non disponibile"}</strong>
-            <span>enti presenti nel registro</span>
-          </div>
-          <p>
-            Questo è il numero di enti presenti nel registro IPA. Non indica il numero dei soli
-            ministeri e non misura la spesa pubblica.
-          </p>
-          <dl className={styles.snapshotMeta}>
-            <div>
-              <dt>Controllato</dt>
-              <dd>{formatObservedAt(stats?.observedAt ?? distributionObservedAt)}</dd>
-            </div>
-            <div>
-              <dt>Valori dimostrativi</dt>
-              <dd>nessuno</dd>
-            </div>
-          </dl>
-        </div>
-
-        <div className={styles.chartPanel}>
-          <div className={styles.chartHeading}>
-            <div>
-              <span className={styles.kicker}>COMPOSIZIONE</span>
-              <h2 id="snapshot-registro">Tipologie più presenti</h2>
-            </div>
-            <span className={styles.chartSource}>dati IPA</span>
-          </div>
-          <RegistryTypeChart data={distribution} />
-        </div>
-      </section>
-
-      {!query && centralAdministrations && (
-        <section className={styles.centralDirectory} aria-labelledby="amministrazioni-centrali">
-          <div className={styles.resultsHeader}>
-            <div>
-              <h2 id="amministrazioni-centrali">Ministeri, Presidenza e Avvocatura</h2>
-              <p>IPA raccoglie questi enti nella categoria C1 e distingue i ministeri dalla Presidenza del Consiglio.</p>
-            </div>
-            <span>{numberFormatter.format(centralAdministrations.total)} enti · aggiornamento giornaliero</span>
-          </div>
-          <div className={styles.entityList}>
-            {centralAdministrations.records.map((entity) => {
-              const type = entity.codiceIpa === "PCM"
-                ? "Presidenza del Consiglio"
-                : entity.codiceNatura === "2220"
-                  ? "Ministero"
-                  : "Amministrazione centrale";
-              return (
-                <Link className={styles.centralRow} href={`/enti/${encodeURIComponent(entity.codiceIpa)}`} key={entity.codiceIpa}>
-                  <span className={styles.centralIcon} aria-hidden="true">
-                    <HugeiconsIcon icon={BankIcon} size={20} strokeWidth={1.5} />
-                  </span>
-                  <span><strong>{entity.denominazione}</strong><small>{type}</small></span>
-                  <code>{entity.codiceIpa}</code>
-                  <b aria-hidden="true">→</b>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {!query && !centralAdministrations && (
-        <div className={styles.empty}>
-          <strong>L&apos;elenco delle amministrazioni centrali non è disponibile ora.</strong>
-          <p>La ricerca IPA resta utilizzabile; non sostituiamo l&apos;elenco ufficiale con una lista statica.</p>
-        </div>
-      )}
-
       {query && !canSearch && (
-        <div className={styles.empty}>
-          <strong>Scrivi almeno due caratteri.</strong>
+        <div className="notice warning-notice">
+          <strong>Scrivi almeno due caratteri</strong>
           <p>La ricerca parte dopo due caratteri per non sovraccaricare il servizio pubblico.</p>
         </div>
       )}
 
       {upstreamError && canSearch && !result && (
-        <div className={styles.error}>
-          <strong>La fonte IPA non risponde in questo momento.</strong>
+        <div className="notice warning-notice">
+          <strong>La fonte IPA non risponde in questo momento</strong>
           <p>
-            Non sostituiamo il dato ufficiale con un elenco inventato. Riprova più tardi oppure apri i dati AgID.
+            Non sostituiamo il dato ufficiale con un elenco inventato. Riprova più tardi oppure apri
+            i dati AgID.
           </p>
         </div>
       )}
 
       {result && (
-        <>
-          <div className={styles.resultsHeader}>
-            <div>
-              <span className={styles.kicker}>RISULTATI</span>
-              <h2>{numberFormatter.format(result.total)} corrispondenze per “{query}”</h2>
-            </div>
-            <p>
-              Fino a 30 risultati per richiesta. Ogni scheda conserva il Codice IPA e il collegamento alla fonte.
-            </p>
+        <section className="panel">
+          <div className={styles.resultsHead}>
+            <h2 className="panel-title">
+              {integer(result.total)} corrispondenze per “{query}”
+            </h2>
+            <span>Fino a 30 risultati per richiesta</span>
           </div>
 
           {result.records.length > 0 ? (
-            <div className={styles.entityList}>
-              {result.records.map((entity) => (
-                <Link
-                  className={styles.entityCard}
-                  href={`/enti/${encodeURIComponent(entity.codiceIpa)}`}
-                  key={entity.codiceIpa}
-                >
-                  <div className={styles.entityName}>
-                    <strong>{entity.denominazione}</strong>
-                    <span>IPA · {entity.codiceIpa}</span>
-                    <div className={styles.badges}>
-                      {entity.acronimo && <i className={styles.badge}>{entity.acronimo}</i>}
-                      {entity.inLiquidazione && (
-                        <i className={`${styles.badge} ${styles.badgeWarning}`}>in liquidazione</i>
-                      )}
-                    </div>
-                  </div>
-                  <div className={styles.entityColumn}>
-                    <b>Tipologia</b>
-                    <span>{entity.tipologia ?? "Non indicata"}</span>
-                  </div>
-                  <div className={styles.entityColumn}>
-                    <b>Sede</b>
-                    <span>{locationLabel(entity.sede.indirizzo, entity.sede.cap)}</span>
-                  </div>
-                  <span className={styles.entityArrow} aria-hidden="true">→</span>
-                </Link>
-              ))}
+            <div className="table-scroll">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Ente</th>
+                    <th scope="col">Tipologia</th>
+                    <th scope="col">Sede</th>
+                    <th scope="col">Codice IPA</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.records.map((entity) => (
+                    <tr key={entity.codiceIpa}>
+                      <th scope="row">
+                        <Link href={`/enti/${encodeURIComponent(entity.codiceIpa)}`}>
+                          {entity.denominazione}
+                        </Link>
+                        {entity.acronimo || entity.inLiquidazione ? (
+                          <small>
+                            {entity.acronimo}
+                            {entity.acronimo && entity.inLiquidazione ? " · " : ""}
+                            {entity.inLiquidazione ? "in liquidazione" : ""}
+                          </small>
+                        ) : null}
+                      </th>
+                      <td>{entity.tipologia ?? "Non indicata"}</td>
+                      <td>{locationLabel(entity.sede.indirizzo, entity.sede.cap)}</td>
+                      <td>
+                        <code>{entity.codiceIpa}</code>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : (
-            <div className={styles.empty}>
-              <strong>Nessun ente trovato.</strong>
-              <p>La ricerca non ha trovato corrispondenze nel registro IPA.</p>
-            </div>
+            <p className={styles.note}>
+              La ricerca non ha trovato corrispondenze nel registro IPA.
+            </p>
           )}
-        </>
+        </section>
       )}
+
+      {!query && centralAdministrations && (
+        <section className="panel" id="amministrazioni-centrali">
+          <div className={styles.resultsHead}>
+            <h2 className="panel-title">Ministeri, Presidenza e Avvocatura</h2>
+            <span>{integer(centralAdministrations.total)} enti · aggiornamento giornaliero</span>
+          </div>
+          <div className="table-scroll">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">Amministrazione</th>
+                  <th scope="col">Categoria</th>
+                  <th scope="col">Codice IPA</th>
+                </tr>
+              </thead>
+              <tbody>
+                {centralAdministrations.records.map((entity) => (
+                  <tr key={entity.codiceIpa}>
+                    <th scope="row">
+                      <Link href={`/enti/${encodeURIComponent(entity.codiceIpa)}`}>
+                        {entity.denominazione}
+                      </Link>
+                    </th>
+                    <td>
+                      {entity.codiceIpa === "PCM"
+                        ? "Presidenza del Consiglio"
+                        : entity.codiceNatura === "2220"
+                          ? "Ministero"
+                          : "Amministrazione centrale"}
+                    </td>
+                    <td>
+                      <code>{entity.codiceIpa}</code>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {!query && !centralAdministrations && (
+        <div className="notice warning-notice">
+          <strong>L&apos;elenco delle amministrazioni centrali non è disponibile ora</strong>
+          <p>
+            La ricerca IPA resta utilizzabile; non sostituiamo l&apos;elenco ufficiale con una lista
+            statica.
+          </p>
+        </div>
+      )}
+
+      <div className={styles.split}>
+        <section className="panel">
+          <div className={styles.resultsHead}>
+            <h2 className="panel-title">Il registro IPA in numeri</h2>
+            <span>dati AgID</span>
+          </div>
+          <strong className={styles.bigNumber}>
+            {stats ? integer(stats.total) : "Non disponibile"}
+          </strong>
+          <p className={styles.note}>
+            Enti presenti nel registro IPA. Non indica il numero dei soli ministeri e non misura la
+            spesa pubblica. Controllato il{" "}
+            {observedAtLabel(stats?.observedAt ?? distributionObservedAt)}.
+          </p>
+          <RegistryTypeChart data={distribution} />
+        </section>
+
+        <section className="panel">
+          <h2 className="panel-title">Cosa dichiarano gli enti</h2>
+          <dl className={styles.evidence}>
+            <div>
+              <dt>Quote con controllo diretto (analogo)</dt>
+              <dd>{integer(participations.declaredEvidence.analogControlRecords)}</dd>
+            </div>
+            <div>
+              <dt>Quote con affidamenti diretti</dt>
+              <dd>{integer(participations.declaredEvidence.directAwardRecords)}</dd>
+            </div>
+            <div>
+              <dt>Entrambi i segnali</dt>
+              <dd>{integer(participations.declaredEvidence.bothSignalsRecords)}</dd>
+            </div>
+          </dl>
+          <p className={styles.note}>{participations.declaredEvidence.legalMeaning}</p>
+
+          <details className={styles.details}>
+            <summary>Cosa sono le partecipate</summary>
+            <p>
+              Sono società di cui un ente pubblico possiede una quota: acquedotti, rifiuti,
+              trasporti, informatica. Ogni anno gli enti dichiarano le loro quote al MEF; questa è
+              la fotografia al {longDate(participations.referenceDate)} (
+              {integer(participations.totals.participationRecords)} dichiarazioni).
+            </p>
+          </details>
+        </section>
+      </div>
+
+      <section className="panel">
+        <div className={styles.resultsHead}>
+          <h2 className="panel-title">Le società con più enti soci</h2>
+          <Link href="/partecipazioni">Tutte le partecipazioni →</Link>
+        </div>
+        <div className="table-scroll">
+          <table className="table">
+            <thead>
+              <tr>
+                <th scope="col">Società</th>
+                <th scope="col">Codice fiscale</th>
+                <th scope="col" className="num">Enti soci</th>
+              </tr>
+            </thead>
+            <tbody>
+              {participations.topCompaniesByDeclaringAdministrations.map((company) => (
+                <tr key={company.taxCode}>
+                  <th scope="row">{company.name}</th>
+                  <td>
+                    <code>{company.taxCode}</code>
+                  </td>
+                  <td className="num">{integer(company.declaringAdministrations)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className={styles.note}>
+          Quasi tutte gestiscono servizi condivisi tra molti Comuni: acqua, energia, informatica,
+          riscossione. Per questo hanno centinaia di enti soci.
+        </p>
+      </section>
+
+      <section className="panel">
+        <h2 className="panel-title">Fonti</h2>
+        <dl className={styles.sourceGrid}>
+          <div>
+            <dt>Registro degli enti</dt>
+            <dd>
+              <a href={IPA_ENTI_DATASET_URL} target="_blank" rel="noreferrer">
+                IPA · AgID ↗
+              </a>
+            </dd>
+          </div>
+          <div>
+            <dt>Identificativo del file</dt>
+            <dd>
+              <code>{IPA_ENTI_RESOURCE_ID}</code>
+            </dd>
+          </div>
+          <div>
+            <dt>Licenza IPA</dt>
+            <dd>{IPA_LICENSE}</dd>
+          </div>
+          <div>
+            <dt>Partecipazioni</dt>
+            <dd>
+              <a href={participations.source.landingUrl} target="_blank" rel="noreferrer">
+                MEF · open data {participations.referenceYear} ↗
+              </a>
+            </dd>
+          </div>
+        </dl>
+      </section>
     </main>
   );
 }

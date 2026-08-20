@@ -8,14 +8,36 @@ import {
   procurementComparison,
   type AuditSignal,
 } from "@/lib/audit-data";
+import { longDate } from "@/lib/format";
 import styles from "./controlli.module.css";
 
 export const metadata: Metadata = {
   title: "Cosa controllare",
-  description: "Numeri e aree della spesa pubblica che meritano verifiche più approfondite, senza trasformare segnali in accuse.",
+  description:
+    "Numeri e aree della spesa pubblica che meritano verifiche più approfondite, senza trasformare segnali in accuse.",
 };
 
-const number = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 1 });
+const number = new Intl.NumberFormat("it-IT", {
+  maximumFractionDigits: 1,
+  useGrouping: "always",
+});
+
+/* Reference dates arrive as the source states them: "2025", "2026-02" or a
+   full "2025-01-31". Render each at the precision it actually carries. */
+function referencePeriod(value: string): string {
+  const parts = value.split("-");
+  if (parts.length === 1) return value;
+
+  const date = new Date(`${parts.length === 2 ? `${value}-01` : value}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return new Intl.DateTimeFormat("it-IT", {
+    ...(parts.length === 3 ? { day: "numeric" as const } : {}),
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+}
 
 function formatSignal(signal: AuditSignal) {
   if (signal.unit === "percent") return `${number.format(signal.value)}%`;
@@ -24,118 +46,128 @@ function formatSignal(signal: AuditSignal) {
   return number.format(signal.value);
 }
 
-function date(value: string) {
-  return new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", year: "numeric" })
-    .format(new Date(`${value}T00:00:00Z`));
-}
-
 export default function ControlsPage() {
   const maxScenario = Math.max(...auditScenarios.map((scenario) => scenario.annualBillion));
   const centralTotal = centralScenarioBreakdown.reduce((sum, item) => sum + item.value, 0);
+  const maxBreakdown = Math.max(...centralScenarioBreakdown.map((item) => item.value));
 
   return (
-    <main className={styles.page}>
-      <header className={styles.intro}>
-        <div>
-          <h1>Dove vale la pena guardare meglio</h1>
-          <p>
-            Questi numeri aiutano a scegliere dove fare controlli più approfonditi.
-            Non sono una classifica degli sprechi e non dimostrano illeciti.
-          </p>
-        </div>
-        <aside>
-          <strong>Dossier verificato il {date(auditReviewedAt)}</strong>
-          <span>Dati con date diverse: ogni riquadro mostra il proprio periodo.</span>
-        </aside>
-      </header>
+    <main className="shell page">
+      <div className="page-intro">
+        <h1>Cosa vale la pena controllare</h1>
+        <p>
+          Numeri presi da relazioni ufficiali, rivisti il {longDate(`${auditReviewedAt}T00:00:00Z`)}.
+          Ognuno dice una cosa precisa, e sotto trovi anche cosa non dice.
+        </p>
+      </div>
 
-      <section className={styles.readingRule} aria-label="Come leggere questa pagina">
+      <div className="notice">
         <strong>La regola più importante</strong>
-        <p>Pagamenti, debiti, costi e ipotesi sono numeri diversi. Non vanno sommati.</p>
-        <div>
-          <span data-tone="observed">Dato osservato</span>
-          <span data-tone="attention">Da controllare</span>
-          <span data-tone="policy">Scelta pubblica</span>
-          <span data-tone="stock">Totale accumulato</span>
-        </div>
-      </section>
+        <p>
+          Pagamenti, debiti, costi e ipotesi sono numeri diversi e non vanno sommati. Un segnale
+          serve ad aprire una verifica, non a chiuderla.
+        </p>
+      </div>
 
-      <section className={styles.procurement} aria-labelledby="procurement-title">
-        <header>
-          <div>
-            <h2 id="procurement-title">Appalti: tanti affidamenti, una quota di valore più piccola</h2>
-            <p>Sopra 40.000 euro, affidamenti diretti e negoziate senza bando pesano in modo molto diverso per numero e per valore.</p>
-          </div>
-          <a href="https://www.anticorruzione.it/" target="_blank" rel="noreferrer">Fonte ANAC ↗</a>
-        </header>
-        <div className={styles.comparisonRows}>
-          <div>
-            <span><strong>{number.format(procurementComparison.byNumber)}%</strong> delle procedure</span>
-            <div aria-hidden="true"><i style={{ width: `${procurementComparison.byNumber}%` }} /></div>
-            <p>Misura quante procedure usano queste modalità.</p>
-          </div>
-          <div>
-            <span><strong>{number.format(procurementComparison.byValue)}%</strong> del valore</span>
-            <div aria-hidden="true"><i style={{ width: `${procurementComparison.byValue}%` }} /></div>
-            <p>Circa {number.format(procurementComparison.exposedValueBillion)} miliardi su {number.format(procurementComparison.totalValueBillion)}.</p>
-          </div>
-        </div>
-        <footer>Minore confronto competitivo significa più bisogno di confrontare prezzi, motivazioni e rotazione. Non significa automaticamente corruzione.</footer>
-      </section>
-
-      <section className={styles.signals} aria-labelledby="signals-title">
-        <header>
-          <h2 id="signals-title">Numeri da leggere con attenzione</h2>
-          <p>Ogni dato ha una data, una spiegazione e un collegamento alla fonte.</p>
-        </header>
-        <div>
-          {auditSignals.map((signal) => (
-            <article key={signal.id} data-tone={signal.tone}>
-              <div><span>{signal.area}</span><small>{signal.referenceDate}</small></div>
-              <strong>{formatSignal(signal)}</strong>
-              <h3>{signal.label}</h3>
-              <p>{signal.plainMeaning}</p>
-              <aside>{signal.caveat}</aside>
+      <div className={styles.signals}>
+        {auditSignals.map((signal) => (
+          <article className="panel" key={signal.id} data-tone={signal.tone}>
+            <h2 className="panel-title">
+              {signal.area} · {referencePeriod(signal.referenceDate)}
+            </h2>
+            <strong className={styles.signalValue}>{formatSignal(signal)}</strong>
+            <h3>{signal.label}</h3>
+            <p>{signal.plainMeaning}</p>
+            <footer>
+              <span>{signal.caveat}</span>
               <a href={signal.source.url} target="_blank" rel="noreferrer">
-                {signal.source.institution}: apri la fonte <span>↗</span>
+                {signal.source.institution} ↗
               </a>
-            </article>
-          ))}
+            </footer>
+          </article>
+        ))}
+      </div>
+
+      <section className="panel">
+        <h2 className="panel-title">
+          Appalti: tanti affidamenti, una quota di valore più piccola
+        </h2>
+        <div className={styles.comparison}>
+          <div>
+            <span>
+              <strong>{number.format(procurementComparison.byNumber)}%</strong> delle procedure
+            </span>
+            <div className={styles.track} aria-hidden="true">
+              <i style={{ width: `${procurementComparison.byNumber}%` }} />
+            </div>
+            <p>Misura quante procedure usano affidamento diretto o negoziata senza bando.</p>
+          </div>
+          <div>
+            <span>
+              <strong>{number.format(procurementComparison.byValue)}%</strong> del valore
+            </span>
+            <div className={styles.track} aria-hidden="true">
+              <i style={{ width: `${procurementComparison.byValue}%` }} />
+            </div>
+            <p>
+              Circa {number.format(procurementComparison.exposedValueBillion)} miliardi su{" "}
+              {number.format(procurementComparison.totalValueBillion)}.
+            </p>
+          </div>
         </div>
+        <p className={styles.note}>
+          Minore confronto competitivo significa più bisogno di confrontare prezzi, motivazioni e
+          rotazione. Non significa automaticamente corruzione.
+        </p>
       </section>
 
-      <section className={styles.scenarios} aria-labelledby="scenarios-title">
-        <header>
-          <div>
-            <h2 id="scenarios-title">Tre ipotesi di miglioramento annuale</h2>
-            <p>Sono ipotesi basate su percentuali dichiarate. Non sono soldi già recuperati e non sono previsioni.</p>
-          </div>
-          <Link href="/metodologia">Come leggiamo gli scenari <span>→</span></Link>
-        </header>
-        <div className={styles.scenarioBars}>
+      <section className="panel">
+        <h2 className="panel-title">
+          Quanto si potrebbe recuperare ogni anno · tre ipotesi
+        </h2>
+        <div className={styles.scenarios}>
           {auditScenarios.map((scenario) => (
             <div key={scenario.id}>
-              <span>{scenario.label}</span>
-              <div aria-hidden="true"><i style={{ width: `${(scenario.annualBillion / maxScenario) * 100}%` }} /></div>
-              <strong>{number.format(scenario.annualBillion)} mld €/anno</strong>
-            </div>
-          ))}
-        </div>
-        <div className={styles.centralBreakdown}>
-          <h3>Da cosa nasce lo scenario centrale di {number.format(centralTotal)} miliardi</h3>
-          {centralScenarioBreakdown.map((item) => (
-            <div key={item.label} data-tone={item.tone}>
-              <span>{item.label}</span><strong>{number.format(item.value)} mld €</strong>
+              <strong>{number.format(scenario.annualBillion)} mld €</strong>
+              <span>Ipotesi {scenario.label.toLocaleLowerCase("it-IT")}</span>
+              <div className={styles.track} aria-hidden="true">
+                <i style={{ width: `${(scenario.annualBillion / maxScenario) * 100}%` }} />
+              </div>
             </div>
           ))}
         </div>
       </section>
 
-      <section className={styles.close}>
-        <h2>Un segnale serve ad aprire una verifica, non a chiuderla.</h2>
-        <p>Prima di giudicare un ente bisogna conoscere quantità, servizio, periodo, regole applicabili e fonte originale.</p>
-        <Link href="/fonti">Vai alle fonti ufficiali <span>→</span></Link>
+      <section className="panel">
+        <h2 className="panel-title">
+          Da dove arriva l&apos;ipotesi centrale ({number.format(centralTotal)} mld €)
+        </h2>
+        <ul className={styles.breakdown}>
+          {centralScenarioBreakdown.map((item) => (
+            <li key={item.label}>
+              <span>{item.label}</span>
+              <i aria-hidden="true">
+                <b style={{ width: `${(item.value / maxBreakdown) * 100}%` }} />
+              </i>
+              <b>{number.format(item.value)} mld €</b>
+            </li>
+          ))}
+        </ul>
+        <p className={styles.note}>
+          Sono stime costruite su ipotesi dichiarate, non soldi già disponibili. Servono a capire
+          l&apos;ordine di grandezza, non a promettere risparmi.
+        </p>
       </section>
+
+      <div className="notice warning-notice">
+        <strong>Un segnale non è una colpa</strong>
+        <p>
+          Prima di giudicare un ente bisogna conoscere quantità, servizio, periodo, regole
+          applicabili e fonte originale.{" "}
+          <Link href="/fonti">Vai alle fonti ufficiali →</Link> ·{" "}
+          <Link href="/metodologia">Come leggiamo i dati →</Link>
+        </p>
+      </div>
     </main>
   );
 }

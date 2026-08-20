@@ -8,13 +8,12 @@
 }
 
 .tooltip {
-  width: min(330px, 74vw);
-  padding: 12px 13px;
-  border: 1px solid rgba(139, 174, 194, .22);
-  border-radius: 8px;
-  color: #d9e6ed;
-  background: rgba(5, 18, 29, .98);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, .28);
+  max-width: 300px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-neutral-400);
+  color: var(--color-neutral-100);
+  background: var(--color-text);
+  box-shadow: var(--shadow-md);
 }
 
 .tooltip strong,
@@ -24,7 +23,7 @@
 
 .tooltip strong {
   margin-bottom: 7px;
-  color: #eff7fa;
+  color: #ffffff;
   font-size: 13px;
 }
 
@@ -33,12 +32,12 @@
   justify-content: space-between;
   gap: 18px;
   padding-top: 5px;
-  color: #8fa8b7;
+  color: var(--color-neutral-400);
   font-size: 11px;
 }
 
 .tooltip b {
-  color: #dce9ef;
+  color: #ffffff;
   font-weight: 650;
   text-align: right;
 }
@@ -48,7 +47,7 @@
   flex-wrap: wrap;
   gap: 16px;
   margin-top: 14px;
-  color: #879fad;
+  color: var(--color-neutral-600);
   font-size: 10px;
 }
 
@@ -69,7 +68,7 @@
 .figure figcaption {
   max-width: 76ch;
   margin-top: 14px;
-  color: #6f8a99;
+  color: var(--color-neutral-600);
   font-size: 10px;
   line-height: 1.55;
 }
@@ -88,7 +87,7 @@
 
 .tableWrap caption {
   padding: 0 0 9px;
-  color: #7894a4;
+  color: var(--color-neutral-600);
   font-size: 10px;
   text-align: left;
 }
@@ -96,8 +95,8 @@
 .tableWrap th,
 .tableWrap td {
   padding: 10px;
-  border-bottom: 1px solid var(--line);
-  color: #a9bdc8;
+  border-bottom: 1px solid var(--color-neutral-200);
+  color: var(--color-text);
   font-size: 10px;
   font-weight: 520;
   text-align: right;
@@ -109,7 +108,7 @@
 }
 
 .tableWrap thead th {
-  color: #6f8d9d;
+  color: var(--color-neutral-600);
   font-size: 9px;
   font-weight: 720;
   letter-spacing: .07em;

@@ -9,9 +9,11 @@ Riunisce dati ufficiali che oggi si trovano in portali diversi. Ogni numero most
 | Sezione | Che cosa mostra | Fonte |
 | --- | --- | --- |
 | Home | Pagamenti dei Comuni, mappa regionale, andamento mensile e dati OpenCoesione | SIOPE, IPA, OpenCoesione |
-| Spese dello Stato | Pagamenti per funzione, amministrazione e tipo di spesa | RGS, OpenBDAP |
+| Soldi | Per cosa pagano i Comuni: le voci di uscita e il flusso mese per mese | SIOPE |
 | Territori | Confronti tra regioni e Comuni per il 2024, 2025 e 2026 | SIOPE, IPA |
-| Enti | Ministeri, Presidenza del Consiglio, enti pubblici, uffici e contatti | IPA, AgID |
+| Fondi e progetti | Costo previsto, pagamenti e stato dei progetti di coesione | OpenCoesione |
+| Enti e società | Ministeri, enti pubblici, uffici, contatti e società partecipate | IPA, AgID, MEF |
+| Spese dello Stato | Pagamenti per funzione, amministrazione e tipo di spesa | RGS, OpenBDAP |
 | Partecipazioni | Società e organizzazioni partecipate dichiarate dalle amministrazioni | MEF |
 | Controlli | Dati che meritano verifiche più approfondite, con spiegazioni e fonti | ANAC, MEF, Corte dei conti e altre fonti ufficiali |
 | Fonti | Stato dei collegamenti e date di aggiornamento | Registro interno delle fonti |
@@ -20,10 +22,11 @@ Gli appalti ANAC, il PNRR ReGiS e altre fonti già censite non sono ancora prese
 
 ## Scegliere l'anno
 
-La home e la pagina Territori permettono di scegliere il 2024, 2025 o 2026. La scelta resta nell'indirizzo della pagina, per esempio:
+La home e le pagine Soldi e Territori permettono di scegliere il 2024, 2025 o 2026. La scelta resta nell'indirizzo della pagina, per esempio:
 
 ```text
 /?anno=2025
+/spese?anno=2025
 /territori?anno=2025
 ```
 

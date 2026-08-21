@@ -77,6 +77,17 @@ function optionalNumber(value: unknown, label: string, minimum = 0): number | nu
   return number(value, label, minimum);
 }
 
+function ratio(value: unknown, label: string): number {
+  const result = number(value, label);
+  if (result > 1) throw new Error(`${label}: quota oltre 1`);
+  return result;
+}
+
+function optionalRatio(value: unknown, label: string): number | null {
+  if (value === null || value === undefined) return null;
+  return ratio(value, label);
+}
+
 function monthLabel(month: number | null): string {
   if (month === null) return "anno completo";
   const names = [
@@ -99,10 +110,20 @@ function period(year: number, month: number | null, label?: string) {
 }
 
 function source(owner: unknown, url: unknown, observedAt: unknown) {
+  const sourceUrl = text(url, "source.url");
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(sourceUrl);
+  } catch {
+    throw new Error("source.url: URL non valida");
+  }
+  if (parsedUrl.protocol !== "https:") throw new Error("source.url: HTTPS atteso");
+  const observed = text(observedAt, "source.observedAt");
+  if (Number.isNaN(Date.parse(observed))) throw new Error("source.observedAt: data non valida");
   return {
     owner: text(owner, "source.owner"),
-    url: text(url, "source.url"),
-    observedAt: text(observedAt, "source.observedAt"),
+    url: sourceUrl,
+    observedAt: observed,
   };
 }
 
@@ -133,7 +154,7 @@ function siopeAnswer(query: DatasetQuery, value: unknown): AssistantAnswer {
       : integer(region.population, "SIOPE.region.population");
     const municipalities = integer(region.municipalities, "SIOPE.region.municipalities");
     const perCapita = optionalNumber(region.perCapita, "SIOPE.region.perCapita");
-    const share = optionalNumber(region.share, "SIOPE.region.share");
+    const share = optionalRatio(region.share, "SIOPE.region.share");
     if (share !== null) caveats.push("La quota regionale è calcolata sull’aggregato regionale abbinato a IPA, non sull’intero totale nazionale.");
     return {
       dataset: "siope_comuni",
@@ -157,7 +178,7 @@ function siopeAnswer(query: DatasetQuery, value: unknown): AssistantAnswer {
 
   const totalPaid = number(snapshot.totalPaid, "SIOPE.totalPaid");
   const distribution = record(snapshot.distribution, "SIOPE.distribution");
-  const nationalShare = optionalNumber(distribution.nationalShareAll, "SIOPE.distribution.nationalShareAll");
+  const nationalShare = optionalRatio(distribution.nationalShareAll, "SIOPE.distribution.nationalShareAll");
   const withoutRegion = integer(coverage.withoutRegion, "SIOPE.coverage.withoutRegion");
   const paymentsWithoutRegion = number(coverage.paymentsWithoutRegion, "SIOPE.coverage.paymentsWithoutRegion");
   return {
@@ -187,6 +208,13 @@ function stateAnswer(value: unknown): AssistantAnswer {
   const year = integer(periodRecord.year, "OpenBDAP.period.year", 2000);
   const month = periodRecord.month === null ? null : integer(periodRecord.month, "OpenBDAP.period.month", 1);
   if (month !== null && month > 12) throw new Error("OpenBDAP.period.month fuori intervallo");
+  const releaseKind = text(periodRecord.releaseKind, "OpenBDAP.period.releaseKind");
+  if (releaseKind !== "monthly" && releaseKind !== "consuntivo") {
+    throw new Error("OpenBDAP.period.releaseKind inatteso");
+  }
+  if ((releaseKind === "monthly") !== (month !== null)) {
+    throw new Error("OpenBDAP.period: mese e tipo di rilascio non coerenti");
+  }
   const totalPaid = number(snapshot.totalPaid, "OpenBDAP.totalPaid");
   const sources = record(snapshot.sources, "OpenBDAP.sources");
   const mission = sourceLink(sources.mission, "OpenBDAP.sources.mission");
@@ -199,7 +227,7 @@ function stateAnswer(value: unknown): AssistantAnswer {
       label: "Pagamenti dello Stato",
       value: totalPaid,
       unit: "euro",
-      scope: text(periodRecord.releaseKind, "OpenBDAP.period.releaseKind"),
+      scope: releaseKind === "consuntivo" ? "Consuntivo annuale" : "Rilascio mensile cumulato",
     },
     source: source(
       "OpenBDAP · Ragioneria Generale dello Stato",
@@ -207,7 +235,9 @@ function stateAnswer(value: unknown): AssistantAnswer {
       snapshot.observedAt,
     ),
     caveats: [
-      "Sono pagamenti contabilizzati nel rilascio OpenBDAP indicato, non costi economici o residui fiscali.",
+      releaseKind === "consuntivo"
+        ? "È il consuntivo annuale OpenBDAP: pagamenti contabilizzati, non costi economici o residui fiscali."
+        : "È un rilascio mensile cumulato dal 1° gennaio al mese indicato: pagamenti contabilizzati, non costi economici o residui fiscali.",
       ...warnings,
     ],
     facts: [
@@ -225,6 +255,9 @@ function irpefAnswer(query: DatasetQuery, value: unknown): AssistantAnswer {
   const measures = record(matchedTotals.measures, "MEF.matchedTotals.measures");
   const netTax = record(measures.netTaxDeclared, "MEF.netTaxDeclared");
   const coverage = text(netTax.coverage, "MEF.netTaxDeclared.coverage");
+  if (coverage !== "complete" && coverage !== "partial") {
+    throw new Error("MEF.netTaxDeclared.coverage inattesa");
+  }
   const amountCents = coverage === "complete"
     ? integer(netTax.amountCents, "MEF.netTaxDeclared.amountCents")
     : integer(netTax.knownAmountCents, "MEF.netTaxDeclared.knownAmountCents");

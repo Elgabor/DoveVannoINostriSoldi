@@ -64,6 +64,15 @@ test("golden intents map to exactly one bounded dataset query", () => {
   assert.equal(isAssistantIntent(hyphenatedRegion), true);
   assert.deepEqual(hyphenatedRegion.query, { dataset: "siope_comuni", year: 2025, region: "Emilia-Romagna" });
 
+  for (const [prompt, region] of [
+    ["Quanto hanno speso i Comuni in Trentino Alto Adige nel 2025?", "Trentino-Alto Adige/Südtirol"],
+    ["Quanto hanno speso i Comuni in Valle d’Aosta nel 2025?", "Valle d'Aosta/Vallée d'Aoste"],
+  ]) {
+    const parsed = parseAssistantIntent(prompt);
+    assert.equal(isAssistantIntent(parsed), true);
+    assert.equal(parsed.query.region, region);
+  }
+
   const tax = parseAssistantIntent("Qual è l’imposta netta dichiarata in Calabria nel 2024?");
   assert.equal(isAssistantIntent(tax), true);
   assert.deepEqual(tax.query, {
@@ -72,6 +81,18 @@ test("golden intents map to exactly one bounded dataset query", () => {
     level: "region",
     region: "Calabria",
   });
+});
+
+test("official compound region names reach both verified adapters", async () => {
+  for (const [prompt, dataset, scope] of [
+    ["Quanto hanno speso i Comuni in Valle d’Aosta nel 2025?", "siope_comuni", "Valle d'Aosta/Vallée d'Aoste"],
+    ["Qual è l’imposta netta dichiarata in Trentino Alto Adige nel 2024?", "mef_irpef_comunale", "Trentino-Alto Adige/Südtirol"],
+  ]) {
+    const response = await executeAssistant({ prompt });
+    assert.equal(response.ok, true);
+    assert.equal(response.answer.dataset, dataset);
+    assert.equal(response.answer.observation.scope, scope);
+  }
 });
 
 test("unsupported, ambiguous and prompt-injection inputs never reach the adapter", () => {
@@ -143,6 +164,8 @@ test("state query carries adapter period and source", async () => {
   assert.equal(response.ok, true);
   assert.equal(response.answer.observation.value, 5000);
   assert.equal(response.answer.period.month, 6);
+  assert.equal(response.answer.observation.scope, "Rilascio mensile cumulato");
+  assert.match(response.answer.caveats.join(" "), /cumulato/u);
   assert.equal(response.answer.source.url, state.sources.mission.csvUrl);
 });
 

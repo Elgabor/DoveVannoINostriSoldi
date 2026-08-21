@@ -20,7 +20,10 @@ function json(body: unknown, status = 200, headers?: HeadersInit) {
 }
 
 function isLoopbackHost(host: string): boolean {
-  const hostname = host.replace(/^\[|\](?::\d+)?$|:\d+$/gu, "").toLocaleLowerCase("en-US");
+  const normalizedHost = host.trim().toLocaleLowerCase("en-US");
+  const hostname = normalizedHost.startsWith("[")
+    ? normalizedHost.slice(1, normalizedHost.indexOf("]"))
+    : normalizedHost.replace(/:\d+$/u, "");
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
 }
 
@@ -68,27 +71,42 @@ async function boundedBody(request: Request): Promise<string | Response> {
   const reader = request.body.getReader();
   const chunks: Uint8Array[] = [];
   let total = 0;
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > MAX_REQUEST_BYTES) {
-      await reader.cancel("Assistant request body limit exceeded").catch(() => undefined);
-      return json({ ok: false, error: "Richiesta troppo grande" }, 413);
-    }
-    chunks.push(value);
+  let aborted = request.signal.aborted;
+  const abortReader = () => {
+    aborted = true;
+    void reader.cancel(request.signal.reason).catch(() => undefined);
+  };
+  if (aborted) {
+    await reader.cancel(request.signal.reason).catch(() => undefined);
+    return json({ ok: false, error: "Richiesta interrotta o non leggibile" }, 400);
   }
-
-  const body = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    body.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
+  request.signal.addEventListener("abort", abortReader, { once: true });
   try {
-    return new TextDecoder("utf-8", { fatal: true }).decode(body);
-  } catch {
-    return json({ ok: false, error: "Corpo UTF-8 non valido" }, 400);
+    while (true) {
+      const { done, value } = await reader.read();
+      if (aborted) return json({ ok: false, error: "Richiesta interrotta o non leggibile" }, 400);
+      if (done) break;
+      total += value.byteLength;
+      if (total > MAX_REQUEST_BYTES) {
+        await reader.cancel("Assistant request body limit exceeded").catch(() => undefined);
+        return json({ ok: false, error: "Richiesta troppo grande" }, 413);
+      }
+      chunks.push(value);
+    }
+
+    const body = new Uint8Array(total);
+    let offset = 0;
+    for (const chunk of chunks) {
+      body.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    try {
+      return new TextDecoder("utf-8", { fatal: true }).decode(body);
+    } catch {
+      return json({ ok: false, error: "Corpo UTF-8 non valido" }, 400);
+    }
+  } finally {
+    request.signal.removeEventListener("abort", abortReader);
   }
 }
 

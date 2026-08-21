@@ -24,9 +24,9 @@ const REGIONS = new Map<string, string>([
   ["sardegna", "Sardegna"],
   ["sicilia", "Sicilia"],
   ["toscana", "Toscana"],
-  ["trentino alto adige", "Trentino-Alto Adige"],
+  ["trentino alto adige", "Trentino-Alto Adige/Südtirol"],
   ["umbria", "Umbria"],
-  ["valle d aosta", "Valle d’Aosta"],
+  ["valle d aosta", "Valle d'Aosta/Vallée d'Aoste"],
   ["veneto", "Veneto"],
 ]);
 

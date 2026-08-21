@@ -47,12 +47,39 @@ test("assistant API rejects host confusion and invalid content length", async ()
   assert.match(await length.text(), /Content-Length non valido/);
 });
 
+test("assistant API accepts an HTTPS or loopback HTTP origin with an IPv6 host and port", async () => {
+  const response = await POST(request({
+    url: "http://[::1]:3000/api/assistant",
+  }));
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).kind, "help");
+});
+
 test("assistant API enforces declared and streamed body limits", async () => {
   const declared = await POST(request({ headers: { "Content-Length": "16385" } }));
   assert.equal(declared.status, 413);
 
   const streamed = await POST(request({ body: JSON.stringify({ prompt: "x".repeat(20_000) }) }));
   assert.equal(streamed.status, 413);
+});
+
+test("assistant API cancels a body reader when the request is aborted", async () => {
+  const controller = new AbortController();
+  const body = new ReadableStream({ start() {} });
+  const pending = POST({
+    url: "https://example.test/api/assistant",
+    headers: new Headers({
+      "Content-Type": "application/json",
+      Origin: "https://example.test",
+      Host: "example.test",
+    }),
+    body,
+    signal: controller.signal,
+  });
+  controller.abort();
+  const response = await pending;
+  assert.equal(response.status, 400);
+  assert.match(await response.text(), /interrotta/);
 });
 
 test("assistant API exposes a deterministic help response without provider calls", async () => {

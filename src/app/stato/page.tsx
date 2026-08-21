@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { SpendingBarChart } from "@/components/charts/spending-bar-chart";
 import {
@@ -11,6 +12,10 @@ import {
   type BdapDataset,
   type StateSpendingSnapshot,
 } from "@/lib/bdap-payments";
+import {
+  parseStateOverviewSelection,
+  STATE_CONSUNTIVO_YEAR,
+} from "@/lib/data/state-overview-period";
 import styles from "./stato.module.css";
 
 export const dynamic = "force-dynamic";
@@ -95,11 +100,34 @@ function SourceRow({ dataset }: { dataset: BdapDataset }) {
   );
 }
 
+function StatePeriodSelector({ isConsuntivo }: { isConsuntivo: boolean }) {
+  return (
+    <nav className={styles.periodSelector} aria-label="Seleziona il rilascio della spesa dello Stato">
+      <span>Vista del periodo</span>
+      <div>
+        <Link
+          href="/stato"
+          aria-current={!isConsuntivo ? "page" : undefined}
+        >
+          Ultimo rilascio mensile disponibile
+        </Link>
+        <Link
+          href={`/stato?anno=${STATE_CONSUNTIVO_YEAR}`}
+          aria-current={isConsuntivo ? "page" : undefined}
+        >
+          Consuntivo {STATE_CONSUNTIVO_YEAR} · definitivo
+        </Link>
+      </div>
+    </nav>
+  );
+}
+
 function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
   const maxPaymentMethod = snapshot.paymentMethods[0]?.value ?? 0;
   const sourceUpdatedAt = snapshot.sources.mission.metadataModified;
   const isConsuntivo = snapshot.period.releaseKind === "consuntivo";
   const totalPaidField = isConsuntivo ? "Totale pagato" : "Totale Pagato";
+  const chartValueLabel = isConsuntivo ? "totale pagato del consuntivo" : "totale pagato cumulato";
   const administrationQuery = snapshot.period.month === null
     ? `anno=${snapshot.period.year}`
     : `anno=${snapshot.period.year}&mese=${snapshot.period.month}`;
@@ -119,7 +147,11 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
         <aside className={styles.sourceSummary} aria-label="Metadati della fonte">
           <div className={styles.sourceSummaryRow}>
             <span>Periodo</span>
-            <strong>{snapshot.period.label}</strong>
+            <strong>
+              {isConsuntivo
+                ? `Consuntivo ${snapshot.period.year} · definitivo`
+                : `${snapshot.period.monthName} ${snapshot.period.year} · rilascio mensile cumulativo`}
+            </strong>
           </div>
           <div className={styles.sourceSummaryRow}>
             <span>Fonte</span>
@@ -144,7 +176,7 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
         <div className={styles.primaryMetric}>
           <div className={styles.metricLabel}>
             <i aria-hidden="true" />
-            {isConsuntivo ? "Pagamenti del consuntivo" : "Pagamenti da inizio anno"}
+            {isConsuntivo ? "Consuntivo annuale definitivo" : "Rilascio mensile cumulativo"}
           </div>
           <strong>{compactEuro(snapshot.totalPaid)}</strong>
           <span>
@@ -183,9 +215,28 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
         </div>
       </section>
 
-      <Suspense fallback={<StateSpendingHistoryFallback />}>
-        <StateSpendingHistorySection />
-      </Suspense>
+      {isConsuntivo ? (
+        <section className={styles.section} aria-labelledby="monthly-history-title">
+          <div className={styles.sectionHeader}>
+            <div>
+              <span className={styles.kicker}>SERIE SEPARATA</span>
+              <h2 id="monthly-history-title">La serie mese per mese resta mensile</h2>
+            </div>
+            <p>
+              Il grafico storico usa solo i rilasci mensili cumulativi. Non scompone il consuntivo
+              {` ${snapshot.period.year}`}. La serie mensile non viene mostrata in questa vista per non
+              confrontare livelli diversi.
+            </p>
+          </div>
+          <Link className={styles.separationLink} href="/stato">
+            Apri l&apos;ultimo rilascio mensile cumulativo →
+          </Link>
+        </section>
+      ) : (
+        <Suspense fallback={<StateSpendingHistoryFallback />}>
+          <StateSpendingHistorySection />
+        </Suspense>
+      )}
 
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
@@ -206,7 +257,7 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
           </div>
           <SpendingBarChart
             data={snapshot.missions}
-            ariaLabel={`Prime missioni del Bilancio dello Stato per totale pagato cumulato, ${snapshot.period.label}`}
+            ariaLabel={`Prime missioni del Bilancio dello Stato per ${chartValueLabel}, ${snapshot.period.label}`}
             maxItems={12}
             height={500}
           />
@@ -240,7 +291,7 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
             </div>
             <SpendingBarChart
               data={snapshot.administrations}
-              ariaLabel={`Amministrazioni centrali per totale pagato cumulato, ${snapshot.period.label}`}
+              ariaLabel={`Amministrazioni centrali per ${chartValueLabel}, ${snapshot.period.label}`}
               maxItems={10}
               height={430}
             />
@@ -291,7 +342,7 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
             </div>
             <SpendingBarChart
               data={snapshot.economicCategories}
-              ariaLabel={`Categorie economiche per totale pagato cumulato, ${snapshot.period.label}`}
+              ariaLabel={`Categorie economiche per ${chartValueLabel}, ${snapshot.period.label}`}
               maxItems={10}
               height={430}
             />
@@ -378,12 +429,21 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
   );
 }
 
-export default async function StateSpendingPage() {
+type PageProps = {
+  searchParams: Promise<{ anno?: string | string[] }>;
+};
+
+export default async function StateSpendingPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const selection = parseStateOverviewSelection(params.anno);
+  if (selection.kind === "invalid") notFound();
+
   let snapshot: StateSpendingSnapshot | null = null;
   let errorMessage: string | null = null;
 
   try {
     snapshot = await getStateSpendingSnapshot({
+      ...(selection.kind === "year" ? { year: selection.year } : {}),
       signal: AbortSignal.timeout(PAGE_DATA_BUDGET_MS),
     });
   } catch (error) {
@@ -397,6 +457,12 @@ export default async function StateSpendingPage() {
         <span>→</span>
         <span>Spese dello Stato</span>
       </nav>
+
+      <StatePeriodSelector
+        isConsuntivo={snapshot
+          ? snapshot.period.releaseKind === "consuntivo"
+          : selection.kind === "year" && selection.year === STATE_CONSUNTIVO_YEAR}
+      />
 
       {snapshot ? (
         <SpendingDashboard snapshot={snapshot} />

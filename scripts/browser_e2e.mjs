@@ -7,6 +7,7 @@ import puppeteer from "puppeteer";
 const baseUrl = new URL(process.env.DVNS_BASE_URL ?? "http://127.0.0.1:3000");
 const SERVER_TIMEOUT_MS = 60_000;
 const NAVIGATION_TIMEOUT_MS = 45_000;
+const BROWSER_LAUNCH_TIMEOUT_MS = 60_000;
 const TABLE_REGION = '[role="region"][aria-label="Redditi e variabili IRPEF per territorio"]';
 const ACTIVE_LEVEL = 'nav[aria-label="Livello territoriale"] a[aria-current="page"]';
 const INFO_TOOLTIP_IDS = ["cash-payments-tip", "spending-glossary-tip"];
@@ -451,6 +452,7 @@ try {
     args: ["--disable-dev-shm-usage", "--no-sandbox", "--disable-setuid-sandbox"],
     executablePath,
     headless: true,
+    timeout: BROWSER_LAUNCH_TIMEOUT_MS,
   });
 
   for (const width of [320, 390, 768, 1280]) {

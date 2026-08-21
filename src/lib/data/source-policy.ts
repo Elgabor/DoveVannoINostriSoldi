@@ -3,6 +3,8 @@ export type SourceId =
   | "ipa-struttura"
   | "openbdap"
   | "anac"
+  | "inps"
+  | "cpt"
   | "siope"
   | "opencoesione"
   | "opencivitas"
@@ -108,6 +110,35 @@ export const SOURCE_POLICIES: Readonly<Record<SourceId, SourcePolicy>> = {
     timeoutMs: 20_000,
     maxRetries: 1,
     tags: ["source:anac", "domain:public-procurement"],
+  },
+  inps: {
+    id: "inps",
+    label: "INPS",
+    owner: "Istituto Nazionale della Previdenza Sociale",
+    sourceUrl: "https://www.inps.it/it/it/dati-e-bilanci.html",
+    cadence: "su-pubblicazione",
+    cadenceNote:
+      "Rendiconti e analisi statistiche seguono la pubblicazione istituzionale; ogni nuova edizione richiede la riconciliazione del contratto dati.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: null,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    tags: ["source:inps", "domain:social-benefits"],
+  },
+  cpt: {
+    id: "cpt",
+    label: "Conti Pubblici Territoriali",
+    owner: "Dipartimento per le Politiche di Coesione e per il Sud",
+    sourceUrl: "https://politichecoesione.governo.it/it/politica-di-coesione/misurazione-valutazione-e-trasparenza/la-misurazione-delle-politiche-di-coesione/conti-pubblici-territoriali-cpt/i-dati/catalogo-open-cpt/",
+    cadence: "annuale",
+    cadenceNote: "Il Sistema CPT pubblica serie consolidate annuali; lo snapshot viene rigenerato solo dopo la validazione congiunta di entrate e spese.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 540 * DAY,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    tags: ["source:cpt", "domain:regional-public-finance"],
   },
   siope: {
     id: "siope",

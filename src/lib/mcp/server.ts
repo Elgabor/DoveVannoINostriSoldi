@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/server";
 import * as z from "zod/v4";
 import { DATASET_IDS, datasetCatalog } from "@/lib/mcp/catalog";
 import { queryPublicDataset } from "@/lib/mcp/datasets";
+import { relatedMcpServices } from "@/lib/mcp/related-services";
 
 const querySchema = z.object({
   dataset: z.enum(DATASET_IDS).describe("Identificativo restituito da list_datasets."),
@@ -28,6 +29,9 @@ export function createDvnsMcpServer() {
   const server = new McpServer({
     name: "dove-vanno-i-nostri-soldi",
     version: "1.0.0",
+  }, {
+    instructions:
+      "Usa list_datasets prima di query_dataset. Mantieni unità, periodo, provenienza e caveat nelle risposte. I servizi MCP correlati sono esterni e non vengono proxyati da DVNS.",
   });
 
   server.registerResource(
@@ -41,6 +45,26 @@ export function createDvnsMcpServer() {
     async (uri) => ({ contents: [{ uri: uri.href, mimeType: "application/json", text: JSON.stringify(datasetCatalog) }] }),
   );
 
+  server.registerResource(
+    "related-mcp-services",
+    "dvns://related-mcp-services",
+    {
+      title: "Servizi MCP pubblici complementari",
+      description:
+        "Endpoint MCP esterni utili per domini non duplicati dal portale, con proprietà e limiti espliciti.",
+      mimeType: "application/json",
+    },
+    async (uri) => ({
+      contents: [
+        {
+          uri: uri.href,
+          mimeType: "application/json",
+          text: JSON.stringify(relatedMcpServices),
+        },
+      ],
+    }),
+  );
+
   server.registerTool(
     "list_datasets",
     {
@@ -48,7 +72,7 @@ export function createDvnsMcpServer() {
       description: "Elenca tutti i dataset disponibili, i filtri ammessi, la freschezza e le cautele interpretative.",
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
-    async () => toolResult({ datasets: datasetCatalog }),
+    async () => toolResult({ datasets: datasetCatalog, relatedMcpServices }),
   );
 
   server.registerTool(

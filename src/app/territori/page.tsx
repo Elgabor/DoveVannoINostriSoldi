@@ -13,11 +13,12 @@ import styles from "./territori.module.css";
 export const metadata: Metadata = {
   title: "Territori",
   description:
-    "Quanto pagano i Comuni regione per regione: classifiche pro capite, totali e copertura della popolazione.",
+    "Pagamenti effettuati dai Comuni, regione per regione: classifiche pro capite, totali e copertura della popolazione.",
 };
 
 function selectedYear(value: string | string[] | undefined): number {
-  const parsed = Number.parseInt(Array.isArray(value) ? value[0] ?? "" : value ?? "", 10);
+  const raw = Array.isArray(value) ? value[0] ?? "" : value ?? "";
+  const parsed = /^\d{4}$/.test(raw) ? Number(raw) : Number.NaN;
   return availableSiopeYears.includes(parsed) ? parsed : availableSiopeYears[0];
 }
 
@@ -40,7 +41,7 @@ export default async function TerritoriesPage({
     <main className="shell page">
       <div className={styles.intro}>
         <div className="page-intro">
-          <h1>Quanto paga il tuo territorio</h1>
+          <h1>Pagamenti dei Comuni, territorio per territorio</h1>
           <p>
             Pagamenti dei Comuni con sede nella regione, da gennaio a {monthLabel} {data.year}. Media
             italiana:{" "}
@@ -48,6 +49,7 @@ export default async function TerritoriesPage({
               ? "non disponibile"
               : `${exactEuro(data.nationalPerCapita)} per abitante`}
             .
+            {" "}Sono uscite di cassa dei Comuni, non tasse pagate dai residenti.
           </p>
         </div>
         <PeriodSelector activeYear={year} years={availableSiopeYears} pathname="/territori" />
@@ -56,7 +58,7 @@ export default async function TerritoriesPage({
       <div className={styles.split}>
         <section className="panel">
           <h2 className="panel-title">Tutte le {regions.length} regioni</h2>
-          <div className="table-scroll" role="region" aria-label="Pagamenti di tutte le regioni" tabIndex={0}>
+          <div className="table-scroll" role="region" aria-label="Pagamenti di tutte le regioni; scorri orizzontalmente per vedere tutte le colonne" tabIndex={0}>
             <table className="table">
               <thead>
                 <tr>
@@ -93,7 +95,7 @@ export default async function TerritoriesPage({
         <div className={styles.aside}>
           <section className="panel">
             <h2 className="panel-title">I {topByPerCapita.length} Comuni con più pagamenti per abitante</h2>
-            <div className="table-scroll" role="region" aria-label="Comuni ordinati per pagamenti pro capite" tabIndex={0}>
+            <div className="table-scroll" role="region" aria-label="Comuni ordinati per pagamenti pro capite; scorri orizzontalmente per vedere tutte le colonne" tabIndex={0}>
               <table className="table">
                 <thead>
                   <tr>
@@ -128,7 +130,7 @@ export default async function TerritoriesPage({
 
           <section className="panel">
             <h2 className="panel-title">Confronto · {topByVolume.length} maggiori volumi totali</h2>
-            <div className="table-scroll" role="region" aria-label="Comuni ordinati per volume totale dei pagamenti" tabIndex={0}>
+            <div className="table-scroll" role="region" aria-label="Comuni ordinati per volume totale dei pagamenti; scorri orizzontalmente per vedere tutte le colonne" tabIndex={0}>
               <table className="table">
                 <thead>
                   <tr>
@@ -168,6 +170,15 @@ export default async function TerritoriesPage({
             </p>
           </div>
         </div>
+      </div>
+
+      <div className="notice">
+        <strong>Quanto entra e quanto viene speso sul territorio?</strong>
+        <p>
+          I Conti Pubblici Territoriali permettono di confrontare entrate e spese della Pubblica
+          Amministrazione consolidata su una base contabile coerente, con il pro capite come vista
+          iniziale. <Link href="/territori/fisco">Apri entrate, spese e saldo per regione →</Link>
+        </p>
       </div>
 
       <div className="notice">

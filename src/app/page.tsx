@@ -68,7 +68,7 @@ export default async function HomePage({
 
   const passThrough =
     siope.titles.find((title) => title.code === PASS_THROUGH_TITLE_CODE)?.value ?? 0;
-  const realSpending = siope.totalPaid - passThrough;
+  const netPayments = siope.totalPaid - passThrough;
 
   const runningMonth = partialMonth(siope);
   const settledMonths = completedMonths(siope);
@@ -109,10 +109,10 @@ export default async function HomePage({
       <div className={styles.column}>
         <section className="panel">
           <div className={styles.panelHead}>
-            <h2 className="panel-title">Quanto pagano i Comuni</h2>
+            <h2 className="panel-title">Pagamenti effettuati dai Comuni</h2>
             <InfoTooltip id="cash-payments-tip" label="Che cosa sono i pagamenti di cassa?">
-              Sono i “pagamenti di cassa”: le uscite davvero registrate in banca dai Comuni, mese
-              per mese. Non includono Stato centrale, Regioni e sanità.
+              Sono uscite di cassa registrate dai Comuni, mese per mese. Non sono le tasse pagate
+              dai residenti e non includono Stato centrale, Regioni e sanità.
             </InfoTooltip>
           </div>
 
@@ -136,8 +136,8 @@ export default async function HomePage({
               </dd>
             </div>
             <div>
-              <dt>Spesa vera, senza giroconti</dt>
-              <dd>{compactEuro(realSpending)}</dd>
+              <dt>Pagamenti al netto delle partite di giro</dt>
+              <dd>{compactEuro(netPayments)}</dd>
             </div>
             <div>
               <dt>Media dei mesi completi</dt>
@@ -210,7 +210,7 @@ export default async function HomePage({
             Default pro capite. Il totale resta disponibile nel dettaglio territoriale.
           </p>
           <Link className="btn btn-block" href={`/territori?anno=${year}`}>
-            Vedi tutti i Comuni
+            Vedi il confronto territoriale
           </Link>
         </section>
       </div>

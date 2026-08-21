@@ -37,7 +37,7 @@ function fakeLiveHealth(sourceId) {
   };
 }
 
-test("source health registry covers every operational source, including ANAC", () => {
+test("source health registry covers every operational source, including ANAC, INPS and CPT", () => {
   const snapshots = getSnapshotManagedSourceHealth();
   const snapshotIds = new Set(snapshots.map((entry) => entry.sourceId));
   const live = SOURCE_IDS
@@ -50,6 +50,25 @@ test("source health registry covers every operational source, including ANAC", (
   assert.equal(anac?.reachability, "not-probed");
   assert.equal(anac?.recordCount, 1_453_918);
   assert.match(anac?.detail ?? "", /12 distribuzioni mensili/);
+  assert.equal(anac?.freshness.sourceTimestamp, "2026-01-16");
+  assert.notEqual(anac?.freshness.sourceTimestamp, "2026-08-20");
+  const inps = overview.find((entry) => entry.sourceId === "inps");
+  assert.equal(inps?.reachability, "not-probed");
+  assert.equal(inps?.recordCount, 167);
+  assert.match(inps?.detail ?? "", /spesa nazionale 2021-2025/);
+  const cpt = overview.find((entry) => entry.sourceId === "cpt");
+  assert.equal(cpt?.reachability, "not-probed");
+  assert.equal(cpt?.recordCount, 504);
+  assert.match(cpt?.detail ?? "", /21 territori/);
+  assert.match(cpt?.detail ?? "", /dati 2000-2023/);
+  assert.equal(cpt?.freshness.state, "unknown");
+  assert.equal(cpt?.freshness.sourceTimestamp, null);
+  const consulenti = overview.find((entry) => entry.sourceId === "consulenti");
+  const camera = overview.find((entry) => entry.sourceId === "camera");
+  assert.equal(consulenti?.freshness.sourceTimestamp, null);
+  assert.equal(camera?.freshness.sourceTimestamp, null);
+  assert.match(consulenti?.detail ?? "", /Snapshot estratto il/);
+  assert.match(camera?.detail ?? "", /Snapshot verificato il/);
 });
 
 test("source health registry fails closed when an adapter is omitted", () => {

@@ -57,6 +57,29 @@ Le UO non hanno un campo semantico che certifichi “dipartimento”, “direzio
 
 ## Tier 2: trasparenza distribuita
 
+### Conti Pubblici Territoriali
+**Titolare:** Dipartimento per le Politiche di Coesione e per il Sud.
+
+**Uso:** entrate e spese effettivamente incassate e pagate, territorializzate nello stesso conto consolidato.
+
+**Accesso:** [Catalogo Open CPT](https://politichecoesione.governo.it/it/politica-di-coesione/misurazione-valutazione-e-trasparenza/la-misurazione-delle-politiche-di-coesione/conti-pubblici-territoriali-cpt/i-dati/catalogo-open-cpt/).
+**Copertura integrata:** serie 2000-2023 del perimetro Pubblica Amministrazione consolidata, 19 Regioni e Province autonome di Trento e Bolzano.
+
+Lo snapshot unisce soltanto `EN_PA_CEMACRO` e `SP_PA_CEMACRO`, appartenenti alla stessa release e base di cassa. Gli input sono bloccati con SHA-256; una modifica della fonte interrompe l'ETL finché schema e risultati non vengono ricontrollati. Il valore derivato è `entrate meno spese`. È chiamato saldo contabile territoriale e non residuo fiscale: non misura pressione fiscale, qualità dei servizi, merito politico o trasferimenti netti tra territori. Il pro capite 2023 usa la popolazione residente ISTAT al 31 dicembre 2023; per gli altri anni resta `null` finché non viene integrata una serie demografica annuale verificata. I 21 denominatori sono una normalizzazione manuale della tavola ufficiale: oltre all'hash del PDF, l'ETL blocca il mapping ordinato con un secondo SHA-256 per rendere visibile qualunque modifica o scambio fra territori. Le condizioni di riuso sono registrate come nota per ciascun input e vanno controllate sulla relativa scheda ufficiale: le note legali generali del sito non sostituiscono eventuali indicazioni specifiche della risorsa.
+
+La rigenerazione è intenzionalmente fail-closed: scaricare le tre distribuzioni dagli URL registrati nel manifest corrente, quindi eseguire:
+
+```bash
+python3 scripts/etl/cpt_regional_fiscal_snapshot.py \
+  --revenue /percorso/en_pa_cemacro.csv \
+  --expenditure /percorso/sp_pa_cemacro.csv \
+  --population /percorso/CENSIMENTO-E-DINAMICA-DELLA-POPOLAZIONE-2023.pdf \
+  --output src/data/generated/cpt-regional-fiscal.json \
+  --observed-at 2026-08-20T22:46:15Z
+```
+
+`--observed-at` indica quando gli input sono stati verificati, non l'anno di aggiornamento dei dati. Se URL, hash, dimensione, schema o copertura cambiano, l'ETL deve fallire: prima di aggiornare le costanti occorre ricontrollare la nuova release e rieseguire l'intera suite.
+
 ### Dati sui pagamenti art. 4-bis
 Nel 2026 ANAC ha pubblicato uno schema di riferimento per i dati sui pagamenti nella sezione “Amministrazione Trasparente”.
 
@@ -176,11 +199,11 @@ Il Ministero delle Infrastrutture e dei Trasporti pubblica una rilevazione annua
 
 La fonte è registrata ma non ancora importata. Il rilascio nazionale corrente è un PDF: serve un estrattore versionato con fixture reali e arresto esplicito quando cambia il layout. Il CUP consentirà il collegamento esatto con MOP senza confronti incerti sul nome dell'opera.
 
-### Conti Pubblici Territoriali
+### Estensioni Conti Pubblici Territoriali
 
-CPT permette di leggere la spesa consolidata per territorio, settore, categoria economica e tipo di soggetto. È utile per spiegare dove si concentra la spesa del Settore Pubblico Allargato.
+CPT permette anche di leggere i conti per settore, categoria economica, tipo di soggetto e perimetro del Settore Pubblico Allargato. Queste dimensioni sono ulteriori rispetto allo snapshot PA macroeconomico già integrato.
 
-Non va sommato a SIOPE. Perimetro, classificazione e regole di consolidamento sono diversi. La fonte resta mappata finché il catalogo non viene acquisito con una pipeline stabile e verificabile.
+Non vanno sommate a SIOPE o allo snapshot corrente: perimetro, classificazione e regole di consolidamento sono diversi. Ogni estensione richiederà un dataset autonomo, lo stesso blocco di provenienza e test di riconciliazione dedicati.
 
 ### ReNDiS
 

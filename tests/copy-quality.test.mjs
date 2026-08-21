@@ -31,6 +31,9 @@ test("public copy avoids old branding, dash separators and known filler phrases"
     /muro (?:dei|del) 39[.\s]?900/i,
     /potenzialmente frazionati/i,
     /cimitero dei progetti/i,
+    /Spesa vera/i,
+    /Quanto pagano i Comuni/i,
+    /Quanto paga il tuo territorio/i,
   ];
 
   for (const file of files) {

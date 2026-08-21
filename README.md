@@ -11,7 +11,8 @@ L'AI serve a confrontare dati omogenei, trovare scostamenti e ordinare i casi da
 | Sezione | Che cosa mostra | Fonte |
 | --- | --- | --- |
 | Home | Pagamenti dei Comuni, mappa regionale, andamento mensile e dati OpenCoesione | SIOPE, IPA, OpenCoesione |
-| Soldi | Per cosa pagano i Comuni: le voci di uscita e il flusso mese per mese | SIOPE |
+| Soldi | Pagamenti effettuati dai Comuni: voci di uscita e flusso mese per mese, distinti dalle tasse dei residenti | SIOPE |
+| Invalidità civile | Spesa nazionale, prestazioni vigenti e nuove pensioni per regione | INPS |
 | Territori | Confronti pro capite di default tra regioni e Comuni per il 2024, 2025 e 2026 | SIOPE, IPA |
 | Fondi e progetti | Costo previsto, pagamenti e stato dei progetti di coesione | OpenCoesione |
 | Enti e società | Ministeri, enti pubblici, uffici, contatti e società partecipate | IPA, AgID, MEF |
@@ -33,6 +34,8 @@ Il backend espone inoltre:
 - `GET /api/opere?cup=I39B05000060005`, con stato, date, costi e finanziamenti di un'opera pubblica OpenBDAP;
 - `GET /api/parlamento`, con i dati strutturati verificati della Camera; il monitor segue anche i nuovi documenti del Senato senza pubblicare valori non ancora estraibili in modo affidabile;
 - `GET /api/controlli`, con indicatori classificati, scenari separati e regole per il loro uso.
+- `GET /api/spese/invalidita?anno=2024&regione=Calabria`, con spesa nazionale e nuove pensioni di invalidità civile per la granularità pubblica verificata.
+- `GET /api/territori/fisco?anno=2023&regione=Calabria`, con entrate, spese e saldo contabile CPT nello stesso perimetro PA consolidato.
 
 ## MCP per assistenti AI
 
@@ -51,8 +54,24 @@ Il server espone:
 - `list_datasets`, per elencare dataset, filtri, freschezza e cautele interpretative;
 - `query_dataset`, per interrogare snapshot verificati e fonti ufficiali live con filtri e paginazione;
 - la risorsa `dvns://datasets`, che contiene il catalogo machine-readable.
+- la risorsa `dvns://related-mcp-services`, che segnala servizi pubblici complementari senza
+  confonderli con gli adapter gestiti dal portale.
 
-Tra i dataset c'è `anac_cig_snapshot`: espone copertura annuale, conteggi, procedure, fasce di importo, hash degli input e cautele della replica CIG 2025. `opencoesione_progetti` include anche quota del costo pubblico, rapporto pagamenti/costo e costo medio per progetto per tema, natura e stato.
+Tra i dataset c'è `anac_cig_snapshot`: espone copertura annuale, conteggi, procedure, fasce di importo, hash degli input e cautele della replica CIG 2025. `inps_invalidita_civile` tiene separate spesa nazionale, stock di prestazioni e nuove decorrenze regionali, senza inferire dati comunali o responsabilità individuali. `cpt_finanza_regionale` espone entrate, spese e saldo territoriale 2000-2023, con valori pro capite solo dove il denominatore ISTAT è coerente. `opencoesione_progetti` include anche quota del costo pubblico, rapporto pagamenti/costo e costo medio per progetto per tema, natura e stato.
+
+Per il dettaglio civico per singolo Comune segnaliamo anche il MCP pubblico di
+[Cruscotto Italia](https://cruscotto-italia.dati.gov.it/about.html#accesso-mcp), gestito da AgID:
+
+```text
+https://cruscotto-italia-mcp.agid.workers.dev/mcp
+```
+
+È un servizio esterno pubblico, al momento senza autenticazione o tariffa dichiarata, da collegare
+direttamente al proprio client. DVNS non ne inoltra le chiamate, non ne duplica le pipeline e non
+ne presenta gli aggregati come dati validati localmente. Il percorso consigliato è
+`search_comune`, poi `comune_kpi`; `comune_dashboard` va usato solo quando servono serie o elenchi
+di dettaglio. Codice e architettura sono nel
+[repository ufficiale AgID](https://github.com/AgID/cruscotto-italia).
 
 Esempio di configurazione per un client che accetta server HTTP remoti:
 
@@ -78,6 +97,10 @@ curl -X POST http://localhost:3000/api/mcp \
 
 L'accesso anonimo è intenzionale perché il server espone esclusivamente dati pubblici e operazioni read-only. Le richieste hanno input limitati, paginazione massima e controlli sugli header `Origin` e `Host`; eventuali origini browser aggiuntive si configurano con `MCP_ALLOWED_ORIGINS`, mentre i domini pubblici ammessi si dichiarano in `MCP_ALLOWED_HOSTS`. I filtri estranei al dataset vengono rifiutati esplicitamente, senza produrre risultati che sembrino filtrati ma non lo siano. Non vengono esposte credenziali di ingestione.
 
+Il repository non simula un rate limit distribuito con memoria locale: sul deployment la regola edge
+per `/api/mcp` va attivata e verificata separatamente. Finché non è attiva, questa protezione non va
+considerata presente; la configurazione proposta è documentata in [docs/MCP.md](docs/MCP.md).
+
 Per aggiungere una fonte all'MCP si registra la descrizione in `src/lib/mcp/catalog.ts` e l'adapter in `src/lib/mcp/datasets.ts`. Gli strumenti restano gli stessi, quindi i client non devono essere riconfigurati quando il catalogo cresce. Dettagli e checklist sono in [docs/MCP.md](docs/MCP.md).
 
 Per OpenCivitas, la differenza tra spesa storica e spesa standard non viene chiamata spreco. L'API restituisce anche i valori per abitante, il confronto sui servizi e i limiti territoriali della fonte.
@@ -89,6 +112,8 @@ La sezione Controlli tiene separate sette letture: esiti di controlli ufficiali,
 Non confrontiamo come prezzi unitari gli importi totali di contratti con lo stesso codice CPV. Per parlare di anomalia di prezzo servono anche quantità, unità di misura, specifiche, durata e perimetro compatibili. Finché questi campi non sono disponibili, il sito non pubblica classifiche basate sul solo rapporto tra importo minimo e massimo.
 
 La replica sui microdati CIG 2025, con formula, filtri e limiti, è documentata in [docs/research/ANAC_2025_REPLICATION.md](docs/research/ANAC_2025_REPLICATION.md). Quando il risultato ricalcolato non coincide con l'aggregato della relazione ANAC, mostriamo la differenza invece di correggere il dato a mano.
+
+Per l'invalidità civile, fonti, riconciliazioni e limiti territoriali sono documentati in [docs/INPS_INVALIDITA.md](docs/INPS_INVALIDITA.md). La voce ufficiale più recente è 23,616 miliardi di euro nel 2025 per l'insieme delle prestazioni di invalidità civile, non per le sole pensioni.
 
 ## Scegliere l'anno
 

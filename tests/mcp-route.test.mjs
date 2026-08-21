@@ -18,6 +18,12 @@ function request(headers = {}, body = requestBody) {
   });
 }
 
+function parseRpcEvent(body) {
+  const dataLine = body.split(/\r?\n/).find((line) => line.startsWith("data: "));
+  assert.ok(dataLine, "expected an SSE data frame");
+  return JSON.parse(dataLine.slice("data: ".length));
+}
+
 test("MCP endpoint rejects an untrusted browser origin", async () => {
   const response = await POST(request({ Origin: "https://attacker.test" }));
   assert.equal(response.status, 403);
@@ -83,6 +89,48 @@ test("MCP endpoint does not trust a client supplied forwarded host", async () =>
   }
 });
 
+test("MCP endpoint accepts the exact loopback host shown by the local UI", async () => {
+  const previous = process.env.VERCEL_URL;
+  process.env.VERCEL_URL = "production.example.test";
+  try {
+    const response = await POST(new Request("http://localhost:3210/api/mcp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+        Host: "127.0.0.1:3210",
+      },
+      body: requestBody,
+    }));
+    assert.equal(response.status, 200);
+    assert.match(await response.text(), /query_dataset/);
+  } finally {
+    if (previous === undefined) delete process.env.VERCEL_URL;
+    else process.env.VERCEL_URL = previous;
+  }
+});
+
+test("MCP endpoint does not accept a loopback Host header on a public URL", async () => {
+  const previous = process.env.MCP_ALLOWED_HOSTS;
+  process.env.MCP_ALLOWED_HOSTS = "production.example.test";
+  try {
+    const response = await POST(new Request("https://production.example.test/api/mcp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+        Host: "127.0.0.1:3210",
+      },
+      body: requestBody,
+    }));
+    assert.equal(response.status, 403);
+    assert.match(await response.text(), /Host non consentito/);
+  } finally {
+    if (previous === undefined) delete process.env.MCP_ALLOWED_HOSTS;
+    else process.env.MCP_ALLOWED_HOSTS = previous;
+  }
+});
+
 test("MCP endpoint rejects an oversized declared body", async () => {
   const response = await POST(request({ "Content-Length": "1000001" }));
   assert.equal(response.status, 413);
@@ -129,6 +177,23 @@ test("MCP endpoint exposes the machine-readable dataset catalog resource", async
   assert.equal(response.status, 200);
   assert.match(body, /dvns:\/\/datasets/);
   assert.match(body, /dataset-catalog/);
+  assert.match(body, /dvns:\/\/related-mcp-services/);
+  assert.match(body, /related-mcp-services/);
+});
+
+test("MCP endpoint exposes related public services without proxying them", async () => {
+  const response = await POST(request({}, JSON.stringify({
+    jsonrpc: "2.0",
+    id: 9,
+    method: "resources/read",
+    params: { uri: "dvns://related-mcp-services" },
+  })));
+  const body = await response.text();
+  const rpcEvent = parseRpcEvent(body);
+  const services = JSON.parse(rpcEvent.result.contents[0].text);
+  assert.equal(response.status, 200);
+  assert.equal(services[0].endpoint, "https://cruscotto-italia-mcp.agid.workers.dev/mcp");
+  assert.equal(services[0].proxiedByDvns, false);
 });
 
 test("MCP endpoint supports the modern 2026 protocol envelope", async () => {
@@ -150,6 +215,27 @@ test("MCP endpoint supports the modern 2026 protocol envelope", async () => {
   assert.match(body, /"resultType":"complete"/);
   assert.match(body, /list_datasets/);
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+});
+
+test("MCP endpoint supports 2026 server discovery", async () => {
+  const meta = {
+    "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+    "io.modelcontextprotocol/clientCapabilities": {},
+  };
+  const response = await POST(request(
+    { "MCP-Protocol-Version": "2026-07-28", "MCP-Method": "server/discover" },
+    JSON.stringify({
+      jsonrpc: "2.0",
+      id: 10,
+      method: "server/discover",
+      params: { _meta: meta },
+    }),
+  ));
+  const body = await response.text();
+  assert.equal(response.status, 200);
+  assert.match(body, /2026-07-28/);
+  assert.match(body, /dove-vanno-i-nostri-soldi/);
+  assert.match(body, /"resultType":"complete"/);
 });
 
 test("MCP endpoint executes a modern tool call with mirrored request headers", async () => {

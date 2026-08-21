@@ -1,30 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { shortDate } from "@/lib/format";
-import { mefParticipationsSnapshot } from "@/lib/mef-participations-snapshot";
-import { openCoesioneSnapshot } from "@/lib/opencoesione-snapshot";
-import { openCivitasSnapshot } from "@/lib/opencivitas-snapshot";
-import { consulentiSnapshot } from "@/lib/consulenti-snapshot";
-import { parliamentSnapshot } from "@/lib/parliament-snapshot";
-import { siopeMunicipalSnapshot } from "@/lib/siope-snapshot";
+import { latestDataBySlug } from "@/lib/source-latest-data";
 import { publicSources, sourceCounts } from "@/lib/sources";
 import styles from "./fonti.module.css";
 
 export const metadata: Metadata = {
   title: "Fonti",
   description: "Da dove arrivano i dati, quanto spesso cambiano e quali fonti sono già collegate.",
-};
-
-/* A missing date means that the adapter discovers the latest release at request
-   time. It never means that the source is waiting to be connected. */
-const latestDataBySlug: Record<string, string | null> = {
-  siope: siopeMunicipalSnapshot.source.siopeMovementsLastModified,
-  ipa: siopeMunicipalSnapshot.source.ipaLastModified,
-  opencoesione: openCoesioneSnapshot.referenceDate,
-  opencivitas: openCivitasSnapshot.publishedAt,
-  "partecipazioni-pubbliche": mefParticipationsSnapshot.publishedAt,
-  consulenti: consulentiSnapshot.source.observedAt,
-  camera: parliamentSnapshot.observedAt,
 };
 
 export default function SourcesPage() {
@@ -64,7 +47,12 @@ export default function SourcesPage() {
                 return (
                   <tr id={source.slug} key={source.slug}>
                     <th scope="row">
-                      <a href={source.url} target="_blank" rel="noreferrer">
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`${source.name}, fonte ufficiale, si apre in una nuova scheda`}
+                      >
                         {source.name} ↗
                       </a>
                       <small>{source.area}</small>
@@ -73,7 +61,11 @@ export default function SourcesPage() {
                     <td>{source.owner}</td>
                     <td>{source.cadence}</td>
                     <td className={styles.latest}>
-                      {latest ? shortDate(latest) : "scoperta automatica"}
+                      {latest?.kind === "date"
+                        ? shortDate(latest.value)
+                        : latest?.kind === "period"
+                          ? latest.label
+                          : "scoperta automatica"}
                     </td>
                   </tr>
                 );
@@ -87,9 +79,9 @@ export default function SourcesPage() {
         <section className="panel">
           <h2 className="panel-title">Come lavoriamo</h2>
           <p>
-            Scarichiamo i file ufficiali, li ricontiamo e mostriamo sempre la data della fonte e la
-            data in cui l&apos;abbiamo controllata. Non cambiamo mai il significato di un dato e non
-            inventiamo numeri che la fonte non pubblica.
+            Scarichiamo i file ufficiali, li ricontiamo e mostriamo sempre il periodo o la data
+            dichiarata dalla fonte, separandoli dal momento in cui li abbiamo controllati. Non
+            cambiamo mai il significato di un dato e non inventiamo numeri che la fonte non pubblica.
           </p>
         </section>
         <section className="panel">
@@ -121,7 +113,12 @@ export default function SourcesPage() {
         <ul className={styles.linkList}>
           {publicSources.map((source) => (
             <li key={source.slug}>
-              <a href={source.url} target="_blank" rel="noreferrer">
+              <a
+                href={source.url}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`${source.name} di ${source.owner}, si apre in una nuova scheda`}
+              >
                 {source.name} · {source.owner} <i aria-hidden="true">↗</i>
               </a>
             </li>

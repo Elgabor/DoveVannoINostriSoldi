@@ -38,7 +38,7 @@ const byCode: Record<string, SiopeTitleCopy> = {
     name: "Partite di giro",
     official: "uscite per conto terzi",
     explanation:
-      "Soldi che entrano ed escono uguali, come tasse riscosse per altri. Non sono spesa vera.",
+      "Soldi che il Comune incassa e riversa per conto di altri, come alcune ritenute. Non rappresentano acquisti o servizi del Comune.",
   },
   "0": {
     name: "Ancora da classificare",
@@ -89,7 +89,7 @@ export const HOME_SPENDING_BUCKETS: { name: string; explanation: string; codes: 
   {
     name: "Partite di giro",
     explanation:
-      "Soldi che entrano ed escono uguali, come tasse riscosse per conto dello Stato. Non è spesa vera.",
+      "Soldi che il Comune incassa e riversa per conto dello Stato o di altri soggetti. Non rappresentano acquisti o servizi del Comune.",
     codes: ["7"],
   },
   {

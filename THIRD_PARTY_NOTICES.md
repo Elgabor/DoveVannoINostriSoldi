@@ -33,3 +33,43 @@ Attribution: `OpenCivitas, Comuni - Servizi totali - Indicatori e determinanti 2
 - **Changes:** annual statistics were normalized, amounts were converted to integer cents, and source meanings and current-year limits were preserved.
 
 Attribution: `Consulenti Pubblici, Dipartimento della Funzione Pubblica. Data adapted by DoveVannoINostriSoldi under the source reuse terms.`
+
+## ANAC CIG 2025
+
+- **Work:** twelve monthly CIG distributions for reference year 2025;
+- **Publisher:** Autorità Nazionale Anticorruzione (ANAC);
+- **Source:** https://dati.anticorruzione.it/opendata/dataset/cig-2025;
+- **License:** Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0), https://creativecommons.org/licenses/by-sa/4.0/;
+- **Changes:** the official monthly files were independently counted and reconciled into aggregate coverage and screening statistics; source URLs, sizes, modification dates and SHA-256 hashes are retained.
+
+Attribution: `Autorità Nazionale Anticorruzione, CIG 2025, CC BY-SA 4.0. Aggregate analysis by DoveVannoINostriSoldi.`
+
+## INPS civil-invalidity documents
+
+- **Works:** official INPS annual accounts, management report material and statistical analysis listed in `src/data/generated/inps-civil-invalidity.json`;
+- **Publisher:** Istituto Nazionale della Previdenza Sociale (INPS) and its Consiglio di Indirizzo e Vigilanza where indicated;
+- **Source:** https://www.inps.it/it/it/dati-e-bilanci.html and the document-specific official URLs stored in the snapshot;
+- **Reuse terms:** verify the terms applying to each institutional document before redistribution; the project does not present these documents as an IODL-licensed open dataset;
+- **Changes:** selected national expenditure, benefit-stock and regional new-pension figures were transcribed into a reconciled structured snapshot. Measures with different scopes remain separate and no individual or medical data are included.
+
+Attribution: `INPS institutional documents. Selected aggregate figures normalized by DoveVannoINostriSoldi; document-specific reuse terms apply.`
+
+## Conti Pubblici Territoriali regional accounts
+
+- **Works:** `EN_PA_CEMACRO` and `SP_PA_CEMACRO`, consolidated Public Administration revenue and expenditure series for 2000-2023;
+- **Publisher:** Dipartimento per le Politiche di Coesione e per il Sud, Sistema Conti Pubblici Territoriali;
+- **Source:** https://politichecoesione.governo.it/it/politica-di-coesione/misurazione-valutazione-e-trasparenza/la-misurazione-delle-politiche-di-coesione/conti-pubblici-territoriali-cpt/i-dati/catalogo-open-cpt/;
+- **Reuse terms:** verify the license shown on each catalog resource; the general website terms do not override a resource-specific indication;
+- **Changes:** matching revenue and expenditure totals were normalized to integer euro cents and combined as a territorial accounting balance. The balance is not presented as a fiscal residual.
+
+Attribution: `Sistema Conti Pubblici Territoriali, consolidated PA revenue and expenditure 2000-2023. Adapted by DoveVannoINostriSoldi under the resource-specific terms.`
+
+## ISTAT population at 31 December 2023
+
+- **Work:** `Censimento e dinamica della popolazione - Anno 2023`;
+- **Publisher:** Istituto Nazionale di Statistica (ISTAT);
+- **Source:** https://www.istat.it/wp-content/uploads/2024/12/CENSIMENTO-E-DINAMICA-DELLA-POPOLAZIONE-2023.pdf;
+- **Reuse terms:** verify the conditions applying to the specific document before redistribution;
+- **Changes:** the 21 regional and autonomous-province population values were manually normalized, fingerprinted and used only as 2023 per-capita denominators for the CPT snapshot.
+
+Attribution: `Istituto Nazionale di Statistica, Censimento e dinamica della popolazione 2023. Selected aggregate values normalized by DoveVannoINostriSoldi; source-specific reuse terms apply.`

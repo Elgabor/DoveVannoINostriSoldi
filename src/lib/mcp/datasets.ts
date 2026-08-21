@@ -48,7 +48,10 @@ function jsonSafe<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
-export async function queryPublicDataset(query: DatasetQuery): Promise<unknown> {
+export async function queryPublicDataset(
+  query: DatasetQuery,
+  options: { signal?: AbortSignal } = {},
+): Promise<unknown> {
   rejectUnsupportedFilters(query);
   rejectAmbiguousFilters(query);
   const limit = boundedInteger(query.limit, 50, 1, 100);
@@ -88,13 +91,13 @@ export async function queryPublicDataset(query: DatasetQuery): Promise<unknown> 
     case "openbdap_spesa_stato": {
       const period = referencePeriod(query);
       const { getStateSpendingSnapshot } = await import("@/lib/bdap-payments");
-      return jsonSafe(await getStateSpendingSnapshot(period));
+      return jsonSafe(await getStateSpendingSnapshot({ ...period, signal: options.signal }));
     }
     case "openbdap_amministrazione": {
       const code = requireText(query.code, "code");
       const period = referencePeriod(query);
       const { getStateAdministrationSpending } = await import("@/lib/bdap-payments");
-      return jsonSafe(await getStateAdministrationSpending(code, period));
+      return jsonSafe(await getStateAdministrationSpending(code, { ...period, signal: options.signal }));
     }
     case "openbdap_opere_pubbliche": {
       const cup = requireText(query.cup, "cup");

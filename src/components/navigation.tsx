@@ -16,6 +16,7 @@ const primary = [
   { href: "/coesione", label: "Fondi e progetti" },
   { href: "/enti", label: "Enti e società", aliases: ["/partecipazioni"] },
   { href: "/controlli", label: "Cosa controllare" },
+  { href: "/assistente", label: "Assistente" },
   { href: "/fonti", label: "Fonti", aliases: ["/metodologia"] },
 ];
 

@@ -19,6 +19,8 @@
 
 - [MCP Streamable HTTP](https://www.dovevannoinostrisoldi.com/api/mcp): endpoint pubblico read-only. Chiama prima `list_datasets`, poi `query_dataset`; il catalogo dichiara filtri, freschezza, provenienza e caveat.
 - [Pagina MCP](https://www.dovevannoinostrisoldi.com/mcp): configurazione del client, dataset interrogabili e servizi complementari.
+- [Assistente testuale](https://www.dovevannoinostrisoldi.com/assistente): interfaccia deterministica read-only con pochi intenti allowlisted; non usa provider LLM o voce e non conserva il prompt.
+- [API assistente](https://www.dovevannoinostrisoldi.com/api/assistant): `POST` JSON same-origin con `{ "prompt": "..." }`; una sola query, prompt massimo 500 caratteri e timeout bounded.
 - [Catalogo fonti via API](https://www.dovevannoinostrisoldi.com/api/fonti/stato): stato operativo delle fonti quando disponibile.
 - [API pagamenti comunali](https://www.dovevannoinostrisoldi.com/api/spese/comuni): pagamenti SIOPE dei Comuni, con periodo e filtri dichiarati.
 - [API distribuzione comunale](https://www.dovevannoinostrisoldi.com/api/spese/comuni/distribuzione): aggregati completi pesati per residenti e per Comune, pubblicati solo dopo un refresh raw verificato; non restituisce righe comunali.

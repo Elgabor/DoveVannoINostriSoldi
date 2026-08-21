@@ -110,6 +110,13 @@ Per Manufact, ChatGPT e Claude si collega lo stesso endpoint pubblico: non si ef
 deploy del server. Challenge di dominio, pagine pubbliche, starter prompt e test di submission sono
 documentati in [docs/MCP_DISTRIBUTION.md](docs/MCP_DISTRIBUTION.md).
 
+### Assistente testuale deterministico
+
+La pagina [/assistente](/assistente) offre una prima interfaccia testuale in sola lettura. Risponde
+soltanto a pochi intenti allowlisted in italiano e richiama direttamente gli adapter pubblici già
+verificati; non usa provider LLM o voce, non salva il prompt e non accetta URL, SQL o dataset scelti
+dal testo. Il contratto, i limiti HTTP e la roadmap sono in [docs/ASSISTENTE.md](docs/ASSISTENTE.md).
+
 Il form di consulenza usa configurazione email fail-closed, richieste same-origin limitate e invii
 idempotenti. Honeypot e validazione non vengono presentati come rate limit: la regola WAF e la
 procedura di cancellazione restano controlli operativi del deployment, descritti in

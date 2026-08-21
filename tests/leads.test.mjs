@@ -120,9 +120,8 @@ test("consulting API sends a plain-text email to the configured inbox", async ()
     assert.match(calls[0].init.headers.Authorization, /Bearer re_test/);
     const sent = JSON.parse(calls[0].init.body);
     assert.deepEqual(sent.to, [CONTACT_EMAIL]);
-    assert.equal(sent.from, "beth.t@example.com");
-    assert.equal(sent.reply_to, undefined);
-    assert.match(sent.text, /anna\.rossi@example\.com/);
+    assert.equal(sent.from, "Consulenza <beth.t@example.com>");
+    assert.equal(sent.reply_to, validLead.email);
     assert.match(sent.subject, /Comune di Esempio/);
     assert.match(sent.text, /Dirigente finanziario/);
     assert.equal(sent.html, undefined);
@@ -139,15 +138,7 @@ test("leadFromAddress ignores consumer mailboxes that Resend cannot send from", 
   const previous = process.env.RESEND_FROM_EMAIL;
   process.env.RESEND_FROM_EMAIL = "gagliardidomenico46@gmail.com";
   try {
-    assert.equal(leadFromAddress(), "beth.t@example.com");
-  } finally {
-    if (previous === undefined) delete process.env.RESEND_FROM_EMAIL;
-    else process.env.RESEND_FROM_EMAIL = previous;
-  }
-
-  process.env.RESEND_FROM_EMAIL = "Acme <hello@example.com>";
-  try {
-    assert.equal(leadFromAddress(), "beth.t@example.com");
+    assert.equal(leadFromAddress(), "Consulenza <beth.t@example.com>");
   } finally {
     if (previous === undefined) delete process.env.RESEND_FROM_EMAIL;
     else process.env.RESEND_FROM_EMAIL = previous;

@@ -104,7 +104,7 @@ export function formatLeadEmail(lead: Lead, receivedAt: Date): string {
     "",
     `Ricevuta: ${received}`,
     `Nome: ${lead.name}`,
-    `Email (rispondi a questo indirizzo): ${lead.email}`,
+    `Email: ${lead.email}`,
     `Organizzazione: ${lead.organization}`,
     `Tipo: ${ORGANIZATION_TYPES[lead.organizationType]}`,
     `Ruolo: ${role}`,
@@ -119,8 +119,8 @@ export function leadEmailSubject(lead: Lead): string {
   return `Richiesta consulenza: ${lead.organization}`;
 }
 
-const RESEND_TEST_FROM = "beth.t@example.com";
-const BLOCKED_FROM_DOMAINS = /@(gmail|googlemail|yahoo|outlook|hotmail|icloud|example)\./i;
+const RESEND_TEST_FROM = "Consulenza <beth.t@example.com>";
+const CONSUMER_INBOX = /@(gmail|googlemail|yahoo|outlook|hotmail|icloud)\./i;
 
 export function leadInbox(): string {
   return process.env.LEAD_INBOX_EMAIL?.trim() || CONTACT_EMAIL;
@@ -133,7 +133,7 @@ export function leadFromAddress(): string {
   const address = configured.includes("<")
     ? configured.slice(configured.indexOf("<") + 1, configured.lastIndexOf(">")).trim()
     : configured;
-  if (!address || BLOCKED_FROM_DOMAINS.test(address)) return RESEND_TEST_FROM;
+  if (!address || CONSUMER_INBOX.test(address)) return RESEND_TEST_FROM;
   return configured;
 }
 
@@ -156,6 +156,7 @@ export async function sendLeadEmail(
     body: JSON.stringify({
       from: leadFromAddress(),
       to: [leadInbox()],
+      reply_to: lead.email,
       subject: leadEmailSubject(lead),
       text: formatLeadEmail(lead, receivedAt),
     }),

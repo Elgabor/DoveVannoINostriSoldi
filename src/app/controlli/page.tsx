@@ -50,8 +50,8 @@ const scenarioComponentNumber = new Intl.NumberFormat("it-IT", {
 const OUTLIER_TABLE_SIZE = 15;
 const populationBandLabels = {
   "meno-di-1.000": "Meno di 1.000",
-  "1.000-4.999": "1.000–4.999",
-  "5.000-19.999": "5.000–19.999",
+  "1.000-4.999": "Da 1.000 a 4.999",
+  "5.000-19.999": "Da 5.000 a 19.999",
   "20.000-o-piu": "20.000 o più",
   "non-disponibile": "Non disponibile",
 } as const;

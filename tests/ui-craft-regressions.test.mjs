@@ -43,6 +43,27 @@ test("information tooltips expose and dismiss their description", async () => {
   assert.match(tooltip, /event\.key === "Escape"/);
 });
 
+test("information tooltips clamp to the viewport and keep their heading trigger stable", async () => {
+  const [tooltip, tooltipCss, home, globals] = await Promise.all([
+    source("../src/components/info-tooltip.tsx"),
+    source("../src/components/info-tooltip.module.css"),
+    source("../src/app/home.module.css"),
+    source("../src/app/globals.css"),
+  ]);
+
+  assert.match(tooltip, /getBoundingClientRect\(\)/);
+  assert.match(tooltip, /window\.innerWidth/);
+  assert.match(tooltip, /left: `\$\{tooltipLeft\}px`/);
+  assert.match(tooltip, /data-positioned=\{tooltipLeft !== null\}/);
+  assert.match(
+    tooltipCss,
+    /\.tooltip\[data-open="true"\]\[data-positioned="false"\][\s\S]*?visibility: hidden;/,
+  );
+  assert.match(home, /\.panelHead > h2 \{[\s\S]*?flex: 1 1 auto;[\s\S]*?min-width: 0;/);
+  assert.match(globals, /@media \(min-width: 901px\) and \(max-width: 980px\)/);
+  assert.match(globals, /\.header-search \{ order: 3; width: 100%; \}/);
+});
+
 test("the regional map has a deterministic fallback and roving keyboard focus", async () => {
   const map = await source("../src/components/italy-regions-map.tsx");
 

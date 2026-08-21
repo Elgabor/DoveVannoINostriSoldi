@@ -211,6 +211,8 @@ Il registro delle fonti è in [src/lib/sources.ts](src/lib/sources.ts). Le regol
 
 Sono utili segnalazioni di fonti mancanti, correzioni alle spiegazioni, controlli sulla qualità dei dati e miglioramenti di accessibilità.
 
+Prima di aprire una pull request, leggi [CONTRIBUTING.md](CONTRIBUTING.md): contiene i contratti minimi per fonti, claim, UI, API e MCP e i gate locali richiesti.
+
 Per proporre una nuova fonte, apri una issue con:
 
 - ente che pubblica il dato;

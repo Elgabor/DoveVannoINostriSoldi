@@ -642,6 +642,82 @@ try {
   }
 
   for (const width of [390, 1280]) {
+    const label = `Macro-aree territori ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/territori?anno=2024",
+      width,
+      validate: async (page) => {
+        const groups = await page.$$eval("main table tbody", (bodies) =>
+          bodies.slice(0, 3).map((body) => ({
+            heading: body.querySelector("tr:first-child th")?.textContent?.trim(),
+            rows: body.querySelectorAll("tr").length,
+          })),
+        );
+        assert.deepEqual(groups, [
+          { heading: "Nord", rows: 9 },
+          { heading: "Centro", rows: 5 },
+          { heading: "Sud e Isole", rows: 9 },
+        ]);
+        assert.equal(
+          await page.$$eval('main a[href^="/territori/fisco#regione-"]', (links) => links.length),
+          19,
+          `${label}: numero inatteso di link CPT univoci`,
+        );
+        const trentinoHasLink = await page.$$eval("main table tbody th", (headings) => {
+          const heading = headings.find((item) =>
+            item.textContent?.includes("Trentino-Alto Adige"),
+          );
+          return Boolean(heading?.querySelector("a"));
+        });
+        assert.equal(trentinoHasLink, false, `${label}: il Trentino non deve avere un link CPT ambiguo`);
+      },
+    });
+    completed.push(label);
+  }
+
+  for (const width of [390, 1280]) {
+    const label = `Ricerca header ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/",
+      width,
+      validate: async (page) => {
+        const input = await page.$("#global-entity-search");
+        assert.ok(input, `${label}: campo di ricerca assente`);
+        await input.type("Roma");
+        await page.waitForSelector('[role="listbox"] [role="option"]', { visible: true });
+        assert.equal(await input.evaluate((element) => element.getAttribute("aria-expanded")), "true");
+
+        await page.keyboard.press("ArrowDown");
+        assert.ok(
+          await input.evaluate((element) => element.getAttribute("aria-activedescendant")),
+          `${label}: opzione attiva non esposta`,
+        );
+        await page.keyboard.press("Enter");
+        await page.waitForFunction(() => /^\/enti\//.test(window.location.pathname));
+        assert.match(new URL(page.url()).pathname, /^\/enti\//, `${label}: destinazione inattesa`);
+      },
+    });
+    completed.push(label);
+  }
+
+  await runScenario(browser, {
+    label: "Ricerca header Escape 390px",
+    pathname: "/",
+    width: 390,
+    validate: async (page) => {
+      const input = await page.$("#global-entity-search");
+      assert.ok(input, "Ricerca header Escape: campo assente");
+      await input.type("Roma");
+      await page.waitForSelector('[role="listbox"] [role="option"]', { visible: true });
+      await page.keyboard.press("Escape");
+      assert.equal(await input.evaluate((element) => element.getAttribute("aria-expanded")), "false");
+    },
+  });
+  completed.push("Ricerca header Escape 390px");
+
+  for (const width of [390, 1280]) {
     const label = `Parlamento previdenza ${width}px`;
     await runScenario(browser, {
       label,

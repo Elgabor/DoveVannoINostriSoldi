@@ -95,7 +95,7 @@ function relevantRequestFailure(request) {
   return `${resourceType} ${requestUrl}: ${failure.errorText}`;
 }
 
-function installDiagnostics(page, label) {
+function installDiagnostics(page, label, isExpectedFailure = () => false) {
   const failures = [];
 
   page.on("pageerror", (error) => {
@@ -120,7 +120,12 @@ function installDiagnostics(page, label) {
 
   return async function assertNoBrowserErrors() {
     await delay(150);
-    assert.deepEqual(failures, [], `${label}: errori browser:\n${failures.join("\n")}`);
+    const unexpectedFailures = failures.filter((failure) => !isExpectedFailure(failure));
+    assert.deepEqual(
+      unexpectedFailures,
+      [],
+      `${label}: errori browser:\n${unexpectedFailures.join("\n")}`,
+    );
   };
 }
 
@@ -466,7 +471,7 @@ async function navigate(page, pathname, label) {
   await page.waitForNetworkIdle({ idleTime: 350, timeout: 10_000 });
 }
 
-async function runScenario(browser, { label, pathname, validate, width }) {
+async function runScenario(browser, { expectedFailure, label, pathname, validate, width }) {
   const page = await browser.newPage();
   let thrown;
 
@@ -481,7 +486,7 @@ async function runScenario(browser, { label, pathname, validate, width }) {
       hasTouch: width <= 390,
       isMobile: width <= 390,
     });
-    const assertNoBrowserErrors = installDiagnostics(page, label);
+    const assertNoBrowserErrors = installDiagnostics(page, label, expectedFailure);
     await navigate(page, pathname, label);
     await assertResponsiveShell(page, label, width);
     await validate(page);
@@ -713,9 +718,77 @@ try {
       await page.waitForSelector('[role="listbox"] [role="option"]', { visible: true });
       await page.keyboard.press("Escape");
       assert.equal(await input.evaluate((element) => element.getAttribute("aria-expanded")), "false");
+      assert.equal(await input.evaluate((element) => element.value), "Roma");
     },
   });
   completed.push("Ricerca header Escape 390px");
+
+  await runScenario(browser, {
+    label: "Ricerca header errore 390px",
+    pathname: "/",
+    width: 390,
+    expectedFailure: (failure) => failure.includes("/api/enti?q=Roma&limit=7"),
+    validate: async (page) => {
+      await page.setRequestInterception(true);
+      page.on("request", (request) => {
+        if (new URL(request.url()).pathname === "/api/enti") {
+          void request.respond({
+            status: 503,
+            contentType: "application/json",
+            body: JSON.stringify({ ok: false }),
+          });
+        } else {
+          void request.continue();
+        }
+      });
+      const input = await page.$("#global-entity-search");
+      assert.ok(input, "Ricerca header errore: campo assente");
+      await input.type("Roma");
+      await page.waitForFunction(() =>
+        document.body.innerText.includes("La ricerca rapida non è disponibile"),
+      );
+      await page.keyboard.press("Escape");
+      assert.equal(await input.evaluate((element) => element.getAttribute("aria-expanded")), "false");
+    },
+  });
+  completed.push("Ricerca header errore 390px");
+
+  await runScenario(browser, {
+    label: "Ricerca header testo lungo 320px",
+    pathname: "/",
+    width: 320,
+    validate: async (page) => {
+      await page.setRequestInterception(true);
+      page.on("request", (request) => {
+        if (new URL(request.url()).pathname === "/api/enti") {
+          void request.respond({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              ok: true,
+              records: [{
+                codiceIpa: "ente_test",
+                denominazione: "Amministrazione straordinariamente lunga senza separatori utili alla visualizzazione",
+                tipologia: "Pubblica amministrazione territoriale",
+              }],
+            }),
+          });
+        } else {
+          void request.continue();
+        }
+      });
+      const input = await page.$("#global-entity-search");
+      assert.ok(input, "Ricerca header testo lungo: campo assente");
+      await input.type("ente");
+      await page.waitForSelector('[role="listbox"] [role="option"]', { visible: true });
+      const widths = await page.$eval(".header-search-dropdown", (dropdown) => ({
+        client: dropdown.clientWidth,
+        scroll: dropdown.scrollWidth,
+      }));
+      assert.ok(widths.scroll <= widths.client + 1, "Ricerca header: testo lungo oltre il dropdown");
+    },
+  });
+  completed.push("Ricerca header testo lungo 320px");
 
   for (const width of [390, 1280]) {
     const label = `Parlamento previdenza ${width}px`;

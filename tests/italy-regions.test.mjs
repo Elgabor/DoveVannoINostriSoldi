@@ -69,6 +69,18 @@ test("macro-area grouping rejects an unmapped region", () => {
   );
 });
 
+test("macro-area grouping rejects missing and duplicate regions", async () => {
+  const snapshot = JSON.parse(await readFile(snapshotUrl, "utf8"));
+  assert.throws(
+    () => groupRegionsByMacroArea(snapshot.regions.slice(1)),
+    /Regioni mancanti/,
+  );
+  assert.throws(
+    () => groupRegionsByMacroArea([...snapshot.regions, snapshot.regions[0]]),
+    /Regione duplicata/,
+  );
+});
+
 test("macro-area totals reconcile for every committed SIOPE year", async () => {
   const cents = (value) => Math.round(value * 100);
 

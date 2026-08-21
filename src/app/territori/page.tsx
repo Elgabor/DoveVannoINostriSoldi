@@ -97,7 +97,10 @@ export default async function TerritoriesPage({
                       <tr key={region.region}>
                         <th scope="row">
                           {cptAnchor ? (
-                            <Link href={`/territori/fisco#${cptAnchor}`}>
+                            <Link
+                              href={`/territori/fisco#${cptAnchor}`}
+                              aria-label={`${region.region}: apri dati CPT 2023`}
+                            >
                               {region.region}
                             </Link>
                           ) : (
@@ -125,8 +128,9 @@ export default async function TerritoriesPage({
           <p className={styles.note}>Nota di metodo: {data.methodology.warning}</p>
           <p className={styles.note}>Copertura pro capite: {data.methodology.perCapitaCoverage}.</p>
           <p className={styles.note}>
-            Nei CPT, Trento e Bolzano sono pubblicati come due Province autonome: il dato SIOPE
-            aggregato del Trentino-Alto Adige non viene collegato artificialmente a una sola voce.
+            I link regionali aprono i dati CPT 2023, un perimetro distinto da SIOPE. Nei CPT,
+            Trento e Bolzano sono pubblicati come due Province autonome: il dato SIOPE aggregato
+            del Trentino-Alto Adige non viene collegato artificialmente a una sola voce.
           </p>
         </section>
 

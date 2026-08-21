@@ -186,7 +186,12 @@ main td a:not(.btn) {
 .header-search-option:first-child { border-top: 0; }
 .header-search-option:hover,
 .header-search-option[data-active="true"] { background: var(--color-accent-100); color: var(--color-text); }
-.header-search-option-name { font-weight: 700; font-size: 13px; }
+.header-search-option-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 700;
+  font-size: 13px;
+}
 .header-search-option-type {
   flex: none;
   margin-left: auto;

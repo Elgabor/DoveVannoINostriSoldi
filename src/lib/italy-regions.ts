@@ -137,11 +137,16 @@ export function groupRegionsByMacroArea<T extends SiopeRegionPoint>(
   regions: T[],
 ): Array<{ area: ItalyMacroArea; regions: T[]; summary: ItalyMacroAreaSummary }> {
   const byArea = new Map<ItalyMacroArea, T[]>(ITALY_MACRO_AREAS.map((area) => [area, []]));
+  const seen = new Set<string>();
   for (const region of regions) {
     const area = macroAreaOf(region.region);
     if (!area) throw new Error(`Regione non associata a una macro-area: ${region.region}`);
+    if (seen.has(region.region)) throw new Error(`Regione duplicata: ${region.region}`);
+    seen.add(region.region);
     byArea.get(area)!.push(region);
   }
+  const missing = Object.values(REGION_NAME_BY_ISTAT_CODE).filter((region) => !seen.has(region));
+  if (missing.length > 0) throw new Error(`Regioni mancanti: ${missing.join(", ")}`);
   return ITALY_MACRO_AREAS.map((area) => {
     const areaRegions = byArea.get(area)!;
     return { area, regions: areaRegions, summary: summarizeRegionGroup(area, areaRegions) };

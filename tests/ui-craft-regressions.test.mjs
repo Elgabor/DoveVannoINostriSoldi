@@ -79,6 +79,15 @@ test("CI verifies every main commit and uses the current artifact runtime", asyn
   assert.match(browserE2e, /timeout: BROWSER_LAUNCH_TIMEOUT_MS/);
 });
 
+test("Lighthouse budgets use a three-run median instead of a single noisy sample", async () => {
+  const lighthouse = await source("../scripts/lighthouse_budget.mjs");
+
+  assert.match(lighthouse, /const LIGHTHOUSE_RUN_COUNT = 3;/);
+  assert.match(lighthouse, /function medianMetricValues\(runs\)/);
+  assert.match(lighthouse, /medianMetricValues\(runs\.map\(\(run\) => run\.values\)\)/);
+  assert.match(lighthouse, /irpef-lighthouse-summary\.json/);
+});
+
 test("the regional map has a deterministic fallback and roving keyboard focus", async () => {
   const map = await source("../src/components/italy-regions-map.tsx");
 

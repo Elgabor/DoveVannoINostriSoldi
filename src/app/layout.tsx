@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo } from "next/font/google";
 import { Navigation } from "@/components/navigation";
+import { mefIrpefSourceMeta } from "@/lib/data/mef-irpef-source";
 import { siopeMunicipalSnapshot } from "@/lib/siope-snapshot";
 import "./design-system.css";
 import "./globals.css";
@@ -12,12 +13,16 @@ const archivo = Archivo({
 });
 
 /** The freshest "we looked at it" timestamp the app has, shown in the footer. */
+const lastCheckedAt = Math.max(
+  Date.parse(siopeMunicipalSnapshot.source.observedAt),
+  Date.parse(mefIrpefSourceMeta.period.observedAt),
+);
 const lastCheckedLabel = new Intl.DateTimeFormat("it-IT", {
   day: "numeric",
   month: "long",
   year: "numeric",
   timeZone: "Europe/Rome",
-}).format(new Date(siopeMunicipalSnapshot.source.observedAt));
+}).format(new Date(lastCheckedAt));
 
 export const metadata: Metadata = {
   title: {

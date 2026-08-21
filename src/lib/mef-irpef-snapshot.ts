@@ -126,9 +126,12 @@ type NormalizedQuery = Readonly<{
 }>;
 
 type InternalRecord = Readonly<{
-  publicRecord: MefIrpefTerritoryRecord;
+  territory: MefIrpefTerritoryRecord["territory"];
   aggregate: MefIrpefStoredAggregate;
-  sortName: string;
+  sortKey: string;
+  regionCode: string;
+  provinceCode?: string;
+  searchText?: string;
 }>;
 
 // The ETL writes canonical compact JSON plus one trailing newline. Keep this
@@ -149,10 +152,6 @@ const CAVEATS = Object.freeze([
   "La riga Mancante/errata resta separata dagli aggregati territoriali e compare soltanto nella riconciliazione nazionale.",
   "Questi aggregati non dimostrano evasione, frode, responsabilità individuali o qualità dei servizi.",
 ]);
-
-const municipalitiesByCode = new Map(snapshot.municipalities.map((row) => [row[0], row]));
-const provincesByCode = new Map(snapshot.provinces.map((row) => [row.code, row]));
-const regionsByCode = new Map(snapshot.regions.map((row) => [row.code, row]));
 
 function invalid(message: string): never {
   throw new MefIrpefQueryError("invalid_query", message);
@@ -252,13 +251,13 @@ function normalizedSearch(value: string): string {
 }
 
 function compareRecords(left: InternalRecord, right: InternalRecord): number {
-  const nameOrder = normalizedSearch(left.sortName).localeCompare(
-    normalizedSearch(right.sortName),
+  const nameOrder = left.sortKey.localeCompare(
+    right.sortKey,
     "it-IT",
     { sensitivity: "base" },
   );
   if (nameOrder !== 0) return nameOrder;
-  return left.publicRecord.territory.code.localeCompare(right.publicRecord.territory.code, "en");
+  return left.territory.code.localeCompare(right.territory.code, "en");
 }
 
 function toReportedMeasure(measure: MefIrpefAggregateMeasure): ReportedMeasure {
@@ -283,6 +282,13 @@ function toPublicAggregate(aggregate: MefIrpefStoredAggregate): MefIrpefPublicAg
   return { taxpayers: aggregate.taxpayers, measures: toMeasures(aggregate.measures) };
 }
 
+function toPublicRecord(record: InternalRecord): MefIrpefTerritoryRecord {
+  const territory = record.territory.level === "region"
+    ? { ...record.territory, sourceNames: [...record.territory.sourceNames] }
+    : { ...record.territory };
+  return { territory, ...toPublicAggregate(record.aggregate) };
+}
+
 function municipalityAggregate(row: MefIrpefPackedMunicipality): MefIrpefStoredAggregate {
   return {
     taxpayers: row[6],
@@ -299,15 +305,13 @@ function municipalityAggregate(row: MefIrpefPackedMunicipality): MefIrpefStoredA
 function regionRecord(region: MefIrpefStoredRegion): InternalRecord {
   return {
     aggregate: region,
-    sortName: region.name,
-    publicRecord: {
-      territory: {
-        level: "region",
-        code: region.code,
-        name: region.name,
-        sourceNames: region.sourceNames,
-      },
-      ...toPublicAggregate(region),
+    sortKey: normalizedSearch(region.name),
+    regionCode: region.code,
+    territory: {
+      level: "region",
+      code: region.code,
+      name: region.name,
+      sourceNames: region.sourceNames,
     },
   };
 }
@@ -315,15 +319,14 @@ function regionRecord(region: MefIrpefStoredRegion): InternalRecord {
 function provinceRecord(province: MefIrpefStoredProvince): InternalRecord {
   return {
     aggregate: province,
-    sortName: province.abbreviation,
-    publicRecord: {
-      territory: {
-        level: "province",
-        code: province.code,
-        abbreviation: province.abbreviation,
-        regionCode: province.regionCode,
-      },
-      ...toPublicAggregate(province),
+    sortKey: normalizedSearch(province.abbreviation),
+    regionCode: province.regionCode,
+    provinceCode: province.code,
+    territory: {
+      level: "province",
+      code: province.code,
+      abbreviation: province.abbreviation,
+      regionCode: province.regionCode,
     },
   };
 }
@@ -332,21 +335,31 @@ function municipalityRecord(row: MefIrpefPackedMunicipality): InternalRecord {
   const aggregate = municipalityAggregate(row);
   return {
     aggregate,
-    sortName: row[2],
-    publicRecord: {
-      territory: {
-        level: "municipality",
-        code: row[0],
-        cadastralCode: row[1],
-        name: row[2],
-        provinceCode: row[3],
-        provinceAbbreviation: row[4],
-        regionCode: row[5],
-      },
-      ...toPublicAggregate(aggregate),
+    sortKey: normalizedSearch(row[2]),
+    regionCode: row[5],
+    provinceCode: row[3],
+    searchText: [row[0], row[1], row[2]].map(normalizedSearch).join("\n"),
+    territory: {
+      level: "municipality",
+      code: row[0],
+      cadastralCode: row[1],
+      name: row[2],
+      provinceCode: row[3],
+      provinceAbbreviation: row[4],
+      regionCode: row[5],
     },
   };
 }
+
+const regionRecords = snapshot.regions.map(regionRecord).sort(compareRecords);
+const provinceRecords = snapshot.provinces.map(provinceRecord).sort(compareRecords);
+const municipalityRecords = snapshot.municipalities.map(municipalityRecord).sort(compareRecords);
+
+const regionsByCode = new Map(regionRecords.map((record) => [record.territory.code, record]));
+const provincesByCode = new Map(provinceRecords.map((record) => [record.territory.code, record]));
+const municipalitiesByCode = new Map(
+  municipalityRecords.map((record) => [record.territory.code, record]),
+);
 
 function emptyAggregate(): { taxpayers: number; measures: Array<[number, number, number]> } {
   return { taxpayers: 0, measures: MEF_IRPEF_MEASURE_ORDER.map(() => [0, 0, 0]) };
@@ -391,12 +404,9 @@ function selectRecords(query: NormalizedQuery): InternalRecord[] {
     if (query.code) {
       const match = regionsByCode.get(query.code);
       if (!match) notFound(`Regione non trovata: ${query.code}.`);
-      return [regionRecord(match)];
+      return [match];
     }
-    return snapshot.regions
-      .filter((region) => !regionCode || region.code === regionCode)
-      .map(regionRecord)
-      .sort(compareRecords);
+    return regionRecords.filter((record) => !regionCode || record.regionCode === regionCode);
   }
 
   if (query.level === "province") {
@@ -405,36 +415,30 @@ function selectRecords(query: NormalizedQuery): InternalRecord[] {
       if (!match || (regionCode && match.regionCode !== regionCode)) {
         notFound(`Provincia non trovata: ${query.code}.`);
       }
-      return [provinceRecord(match)];
+      return [match];
     }
-    return snapshot.provinces
-      .filter((province) =>
-        (!regionCode || province.regionCode === regionCode) &&
-        (!provinceCode || province.code === provinceCode))
-      .map(provinceRecord)
-      .sort(compareRecords);
+    return provinceRecords.filter((record) =>
+      (!regionCode || record.regionCode === regionCode) &&
+      (!provinceCode || record.provinceCode === provinceCode));
   }
 
   if (query.code) {
     const match = municipalitiesByCode.get(query.code);
     if (
       !match ||
-      (regionCode && match[5] !== regionCode) ||
-      (provinceCode && match[3] !== provinceCode)
+      (regionCode && match.regionCode !== regionCode) ||
+      (provinceCode && match.provinceCode !== provinceCode)
     ) {
       notFound(`Comune non trovato: ${query.code}.`);
     }
-    return [municipalityRecord(match)];
+    return [match];
   }
 
   const term = query.query ? normalizedSearch(query.query) : undefined;
-  return snapshot.municipalities
-    .filter((row) =>
-      (!regionCode || row[5] === regionCode) &&
-      (!provinceCode || row[3] === provinceCode) &&
-      (!term || [row[0], row[1], row[2]].some((value) => normalizedSearch(value).includes(term))))
-    .map(municipalityRecord)
-    .sort(compareRecords);
+  return municipalityRecords.filter((record) =>
+    (!regionCode || record.regionCode === regionCode) &&
+    (!provinceCode || record.provinceCode === provinceCode) &&
+    (!term || record.searchText?.includes(term)));
 }
 
 export function queryMefMunicipalIrpef(query?: MefIrpefQuery): MefIrpefQueryResult {
@@ -458,7 +462,7 @@ export function queryMefMunicipalIrpef(query?: MefIrpefQuery): MefIrpefQueryResu
       returned: page.length,
     },
     matchedTotals: toPublicAggregate(foldAggregates(matches)),
-    data: page.map((record) => record.publicRecord),
+    data: page.map(toPublicRecord),
     national: {
       assigned: toPublicAggregate(snapshot.national.assigned),
       unassigned: { label: "Mancante/errata", ...unassigned },

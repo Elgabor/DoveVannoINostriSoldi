@@ -15,6 +15,10 @@ In Manufact Cloud scegliere `Servers → New Server → Connect an existing serv
 l'endpoint canonico. Questa modalità usa il server già pubblicato per chat, test e publish checks;
 non richiede una migrazione a `mcp-use` né un secondo deployment.
 
+Questa è la configurazione attuale. Una migrazione a `mcp-use` avrebbe senso soltanto se in futuro
+si decidesse di spostare anche il runtime su Manufact o di sviluppare interfacce MCP Apps native;
+in quel caso va pianificata come modifica architetturale, con test di parità prima del passaggio.
+
 Prima di abilitare analytics o cattura dei payload, verificare impostazioni, retention e informativa
 privacy. Non includere prompt o dati personali nei test: i tool DVNS interrogano fonti pubbliche.
 

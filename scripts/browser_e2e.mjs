@@ -264,6 +264,83 @@ async function assertInfoTooltips(page, label) {
   }
 }
 
+async function assertRegionalMapSelection(page, label) {
+  const mapSelector = '[data-region-map="true"]';
+  const detailSelector = '[data-region-detail="true"] b';
+  await page.waitForSelector(mapSelector, { visible: true });
+  const regionPaths = await page.$$(
+    `${mapSelector} path[role="button"][aria-label]`,
+  );
+  assert.equal(regionPaths.length, 20, `${label}: la mappa deve esporre 20 regioni`);
+
+  const lombardia = await page.$(`${mapSelector} path[aria-label^="Lombardia:"]`);
+  const veneto = await page.$(`${mapSelector} path[aria-label^="Veneto:"]`);
+  assert.ok(lombardia, `${label}: percorso Lombardia assente`);
+  assert.ok(veneto, `${label}: percorso Veneto assente`);
+
+  await lombardia.hover();
+  await page.waitForFunction(
+    (selector) => Boolean(document.querySelector(`${selector} path[data-hovered="true"]`)),
+    { timeout: 2_000 },
+    mapSelector,
+  );
+  const previewName = await page.$eval(detailSelector, (element) => element.textContent?.trim());
+  assert.equal(previewName, "Lombardia", `${label}: hover non aggiorna l’anteprima`);
+
+  const hoveredOutline = await page.$eval(mapSelector, (map) => {
+    const outlines = [...map.querySelectorAll('path[aria-hidden="true"]')];
+    return {
+      outlineCount: outlines.length,
+      overlayStroke: outlines.map((outline) => getComputedStyle(outline).stroke),
+      overlayPointerEvents: outlines.map((outline) => getComputedStyle(outline).pointerEvents),
+    };
+  });
+  assert.ok(
+    hoveredOutline.outlineCount >= 1 && hoveredOutline.outlineCount <= 2,
+    `${label}: numero inatteso di layer di contorno (${hoveredOutline.outlineCount})`,
+  );
+  assert.ok(
+    hoveredOutline.overlayStroke.every((stroke) => stroke !== "none"),
+    `${label}: contorno overlay non visibile`,
+  );
+  assert.ok(
+    hoveredOutline.overlayPointerEvents.every((value) => value === "none"),
+    `${label}: il contorno overlay intercetta il puntatore`,
+  );
+
+  await lombardia.click();
+  await page.waitForFunction(
+    () => document.querySelector('[data-region-detail="true"] b')?.textContent?.trim() === "Lombardia",
+    { timeout: 2_000 },
+  );
+  const fixedName = await page.$eval(detailSelector, (element) => element.textContent?.trim());
+
+  await veneto.hover();
+  await page.waitForFunction(
+    (selector) => Boolean(document.querySelector(`${selector} path[data-hovered="true"]`)),
+    { timeout: 2_000 },
+    mapSelector,
+  );
+  const afterHoverName = await page.$eval(detailSelector, (element) => element.textContent?.trim());
+  assert.equal(
+    afterHoverName,
+    fixedName,
+    `${label}: l’hover sovrascrive la regione fissata con un clic`,
+  );
+
+  await veneto.click();
+  await page.waitForFunction(
+    () => document.querySelector('[data-region-detail="true"] b')?.textContent?.trim() === "Veneto",
+    { timeout: 2_000 },
+  );
+  const switchedName = await page.$eval(detailSelector, (element) => element.textContent?.trim());
+  assert.equal(switchedName, "Veneto", `${label}: il clic non cambia la selezione fissata`);
+
+  await lombardia.dispose();
+  await veneto.dispose();
+  for (const path of regionPaths) await path.dispose();
+}
+
 async function assertTableKeyboardScroll(page, label) {
   await page.waitForSelector(TABLE_REGION, { visible: true });
   const tableState = await page.$eval(TABLE_REGION, (region) => ({
@@ -530,6 +607,19 @@ try {
       width,
       validate: async (page) => {
         await assertInfoTooltips(page, label);
+      },
+    });
+    completed.push(label);
+  }
+
+  for (const width of [390, 1280]) {
+    const label = `Mappa regioni hover/selezione ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/",
+      width,
+      validate: async (page) => {
+        await assertRegionalMapSelection(page, label);
       },
     });
     completed.push(label);

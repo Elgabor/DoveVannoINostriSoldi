@@ -6,5 +6,5 @@
 
 export const REPO_URL = "https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi";
 
-/** Inbox for consulting leads. Override in production with LEAD_INBOX_EMAIL. */
+/** Public contact shown in the privacy notice; delivery is configured separately. */
 export const CONTACT_EMAIL = "gagliardidomenico46@gmail.com";

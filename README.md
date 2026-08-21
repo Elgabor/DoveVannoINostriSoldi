@@ -104,6 +104,11 @@ considerata presente; la configurazione proposta è documentata in [docs/MCP.md]
 
 Per aggiungere una fonte all'MCP si registra la descrizione in `src/lib/mcp/catalog.ts` e l'adapter in `src/lib/mcp/datasets.ts`. Gli strumenti restano gli stessi, quindi i client non devono essere riconfigurati quando il catalogo cresce. Dettagli e checklist sono in [docs/MCP.md](docs/MCP.md).
 
+Il form di consulenza usa configurazione email fail-closed, richieste same-origin limitate e invii
+idempotenti. Honeypot e validazione non vengono presentati come rate limit: la regola WAF e la
+procedura di cancellazione restano controlli operativi del deployment, descritti in
+[docs/CONSULTING.md](docs/CONSULTING.md).
+
 Per OpenCivitas, la differenza tra spesa storica e spesa standard non viene chiamata spreco. L'API restituisce anche i valori per abitante, il confronto sui servizi e i limiti territoriali della fonte.
 
 Per le opere pubbliche, l'API può segnalare date da controllare, crescita dei costi, finanziamenti ancora da trovare o problemi di qualità del dato. Sono indicazioni per scegliere cosa approfondire, non prove automatiche di spreco.

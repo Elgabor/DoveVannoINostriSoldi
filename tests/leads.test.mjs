@@ -6,12 +6,12 @@ const {
   formatLeadEmail,
   leadEmailSubject,
   leadFromAddress,
+  leadInbox,
   parseLead,
+  sendLeadEmail,
 } = await import("../src/lib/leads.ts");
 const { POST } = await import("../src/app/api/consulenza/route.ts");
 const { CONTACT_EMAIL } = await import("../src/lib/site.ts");
-
-const startedAt = Date.now() - 10_000;
 
 const validLead = {
   name: "Anna Rossi",
@@ -23,19 +23,23 @@ const validLead = {
   budget: "da_5k_a_15k",
   message: "Vorremmo una lettura dei pagamenti comunali 2025 e un confronto con i capoluoghi vicini.",
   consent: true,
-  startedAt,
+  submissionId: "b5b05a55-22df-4dc1-a6a4-175cd1b8490f",
 };
 
 function request(body, headers = {}) {
   return new Request("https://example.test/api/consulenza", {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...headers },
+    headers: {
+      "Content-Type": "application/json",
+      Origin: "https://example.test",
+      ...headers,
+    },
     body: JSON.stringify(body),
   });
 }
 
 test("parseLead accepts a complete consulting request", () => {
-  const parsed = parseLead(validLead, startedAt + 10_000);
+  const parsed = parseLead(validLead);
   assert.equal(parsed.status, "valid");
   if (parsed.status !== "valid") return;
   assert.equal(parsed.lead.organizationType, "pa");
@@ -49,30 +53,30 @@ test("parseLead accepts a complete consulting request", () => {
 });
 
 test("parseLead rejects a missing consent and a short message", () => {
-  const withoutConsent = parseLead({ ...validLead, consent: false }, startedAt + 10_000);
+  const withoutConsent = parseLead({ ...validLead, consent: false });
   assert.equal(withoutConsent.status, "invalid");
   if (withoutConsent.status === "invalid") {
     assert.match(withoutConsent.error, /consenso/i);
   }
 
-  const short = parseLead({ ...validLead, message: "Ciao" }, startedAt + 10_000);
+  const short = parseLead({ ...validLead, message: "Ciao" });
   assert.equal(short.status, "invalid");
   if (short.status === "invalid") {
     assert.match(short.error, /30 caratteri/);
   }
 
-  const almost = parseLead({ ...validLead, message: "a".repeat(29) }, startedAt + 10_000);
+  const almost = parseLead({ ...validLead, message: "a".repeat(29) });
   assert.equal(almost.status, "invalid");
-  const enough = parseLead({ ...validLead, message: "a".repeat(30) }, startedAt + 10_000);
+  const enough = parseLead({ ...validLead, message: "a".repeat(30) });
   assert.equal(enough.status, "valid");
 
-  const withoutBudget = parseLead({ ...validLead, budget: undefined }, startedAt + 10_000);
+  const withoutBudget = parseLead({ ...validLead, budget: undefined });
   assert.equal(withoutBudget.status, "invalid");
   if (withoutBudget.status === "invalid") {
     assert.match(withoutBudget.error, /budget/i);
   }
 
-  const unknownBudget = parseLead({ ...validLead, budget: "non_so" }, startedAt + 10_000);
+  const unknownBudget = parseLead({ ...validLead, budget: "non_so" });
   assert.equal(unknownBudget.status, "valid");
   if (unknownBudget.status === "valid") {
     assert.equal(unknownBudget.lead.budget, "non_so");
@@ -80,7 +84,6 @@ test("parseLead rejects a missing consent and a short message", () => {
 
   const withSite = parseLead(
     { ...validLead, organizationWebsite: "comune.esempio.it" },
-    startedAt + 10_000,
   );
   assert.equal(withSite.status, "valid");
   if (withSite.status === "valid") {
@@ -88,24 +91,24 @@ test("parseLead rejects a missing consent and a short message", () => {
     assert.match(formatLeadEmail(withSite.lead, new Date("2026-08-21T12:00:00Z")), /https:\/\/comune\.esempio\.it/);
   }
 
-  const badSite = parseLead({ ...validLead, organizationWebsite: "not a site" }, startedAt + 10_000);
+  const badSite = parseLead({ ...validLead, organizationWebsite: "not a site" });
   assert.equal(badSite.status, "invalid");
   if (badSite.status === "invalid") {
     assert.match(badSite.error, /sito/i);
   }
 });
 
-test("parseLead discards honeypot and too-fast submissions", () => {
-  assert.equal(parseLead({ ...validLead, company_fax: "https://spam.test" }, startedAt + 10_000).status, "discarded");
-  assert.equal(parseLead({ ...validLead, website: "https://spam.test" }, startedAt + 10_000).status, "discarded");
-  assert.equal(parseLead({ ...validLead, startedAt: Date.now() }, Date.now()).status, "discarded");
+test("parseLead discards honeypots without rejecting fast human submissions", () => {
+  assert.equal(parseLead({ ...validLead, company_fax: "https://spam.test" }).status, "discarded");
+  assert.equal(parseLead({ ...validLead, website: "https://spam.test" }).status, "discarded");
+  assert.equal(parseLead({ ...validLead, startedAt: Date.now() }).status, "valid");
 });
 
 test("consulting API rejects invalid JSON and incomplete leads", async () => {
   const invalidJson = await POST(
     new Request("https://example.test/api/consulenza", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Origin: "https://example.test" },
       body: "{",
     }),
   );
@@ -136,8 +139,10 @@ test("consulting API pretends success on spam and needs Resend for real leads", 
 test("consulting API sends a plain-text email to the configured inbox", async () => {
   const previousKey = process.env.RESEND_API_KEY;
   const previousInbox = process.env.LEAD_INBOX_EMAIL;
+  const previousFrom = process.env.RESEND_FROM_EMAIL;
   process.env.RESEND_API_KEY = "re_test";
   process.env.LEAD_INBOX_EMAIL = CONTACT_EMAIL;
+  process.env.RESEND_FROM_EMAIL = "Consulenza <consulenza@dovevannoinostrisoldi.com>";
 
   const calls = [];
   const originalFetch = globalThis.fetch;
@@ -152,10 +157,12 @@ test("consulting API sends a plain-text email to the configured inbox", async ()
     assert.equal(calls.length, 1);
     assert.equal(calls[0].url, "https://api.resend.com/emails");
     assert.match(calls[0].init.headers.Authorization, /Bearer re_test/);
+    assert.equal(calls[0].init.headers["Idempotency-Key"], `consulting/${validLead.submissionId}`);
+    assert.ok(calls[0].init.signal instanceof AbortSignal);
     const sent = JSON.parse(calls[0].init.body);
     assert.deepEqual(sent.to, [CONTACT_EMAIL]);
     assert.equal(sent.from, "Consulenza <consulenza@dovevannoinostrisoldi.com>");
-    assert.equal(sent.reply_to, undefined);
+    assert.equal(sent.reply_to, validLead.email);
     assert.match(sent.text, /anna\.rossi@example\.com/);
     assert.match(sent.subject, /Comune di Esempio/);
     assert.match(sent.text, /Dirigente finanziario/);
@@ -166,24 +173,102 @@ test("consulting API sends a plain-text email to the configured inbox", async ()
     else process.env.RESEND_API_KEY = previousKey;
     if (previousInbox === undefined) delete process.env.LEAD_INBOX_EMAIL;
     else process.env.LEAD_INBOX_EMAIL = previousInbox;
+    if (previousFrom === undefined) delete process.env.RESEND_FROM_EMAIL;
+    else process.env.RESEND_FROM_EMAIL = previousFrom;
   }
 });
 
-test("leadFromAddress ignores consumer mailboxes that Resend cannot send from", () => {
-  const previous = process.env.RESEND_FROM_EMAIL;
-  process.env.RESEND_FROM_EMAIL = "gagliardidomenico46@gmail.com";
+test("lead email configuration fails closed", () => {
+  const previousFrom = process.env.RESEND_FROM_EMAIL;
+  const previousInbox = process.env.LEAD_INBOX_EMAIL;
+  delete process.env.RESEND_FROM_EMAIL;
+  delete process.env.LEAD_INBOX_EMAIL;
   try {
-    assert.equal(leadFromAddress(), "Consulenza <consulenza@dovevannoinostrisoldi.com>");
+    assert.equal(leadFromAddress(), null);
+    assert.equal(leadInbox(), null);
   } finally {
-    if (previous === undefined) delete process.env.RESEND_FROM_EMAIL;
-    else process.env.RESEND_FROM_EMAIL = previous;
+    if (previousFrom === undefined) delete process.env.RESEND_FROM_EMAIL;
+    else process.env.RESEND_FROM_EMAIL = previousFrom;
+    if (previousInbox === undefined) delete process.env.LEAD_INBOX_EMAIL;
+    else process.env.LEAD_INBOX_EMAIL = previousInbox;
   }
 
   process.env.RESEND_FROM_EMAIL = "Acme <hello@example.com>";
+  process.env.LEAD_INBOX_EMAIL = "not-an-email";
   try {
-    assert.equal(leadFromAddress(), "Consulenza <consulenza@dovevannoinostrisoldi.com>");
+    assert.equal(leadFromAddress(), "Acme <hello@example.com>");
+    assert.equal(leadInbox(), null);
   } finally {
-    if (previous === undefined) delete process.env.RESEND_FROM_EMAIL;
-    else process.env.RESEND_FROM_EMAIL = previous;
+    if (previousFrom === undefined) delete process.env.RESEND_FROM_EMAIL;
+    else process.env.RESEND_FROM_EMAIL = previousFrom;
+    if (previousInbox === undefined) delete process.env.LEAD_INBOX_EMAIL;
+    else process.env.LEAD_INBOX_EMAIL = previousInbox;
+  }
+});
+
+test("consulting API rejects cross-origin, wrong content type and oversized bodies", async () => {
+  const crossOrigin = await POST(request(validLead, { Origin: "https://attacker.test" }));
+  assert.equal(crossOrigin.status, 403);
+
+  const wrongType = await POST(request(validLead, { "Content-Type": "text/plain" }));
+  assert.equal(wrongType.status, 415);
+
+  const oversized = await POST(request({ ...validLead, message: "a".repeat(17_000) }));
+  assert.equal(oversized.status, 413);
+});
+
+test("consulting API accepts a same-host origin when Next normalizes request.url", async () => {
+  const previousKey = process.env.RESEND_API_KEY;
+  delete process.env.RESEND_API_KEY;
+  try {
+    const response = await POST(
+      new Request("http://localhost:3107/api/consulenza", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Host: "127.0.0.1:3107",
+          Origin: "http://127.0.0.1:3107",
+        },
+        body: JSON.stringify(validLead),
+      }),
+    );
+    assert.equal(response.status, 503);
+  } finally {
+    if (previousKey === undefined) delete process.env.RESEND_API_KEY;
+    else process.env.RESEND_API_KEY = previousKey;
+  }
+});
+
+test("email subjects cannot inject additional headers", () => {
+  const parsed = parseLead({ ...validLead, organization: "Comune\r\nBcc: victim@example.com" });
+  assert.equal(parsed.status, "valid");
+  if (parsed.status !== "valid") return;
+  assert.equal(leadEmailSubject(parsed.lead), "Richiesta consulenza: Comune Bcc: victim@example.com");
+});
+
+test("Resend rejection bodies are not retained or returned for logging", async () => {
+  const previousKey = process.env.RESEND_API_KEY;
+  const previousInbox = process.env.LEAD_INBOX_EMAIL;
+  const previousFrom = process.env.RESEND_FROM_EMAIL;
+  process.env.RESEND_API_KEY = "re_test";
+  process.env.LEAD_INBOX_EMAIL = CONTACT_EMAIL;
+  process.env.RESEND_FROM_EMAIL = "Consulenza <consulenza@dovevannoinostrisoldi.com>";
+  try {
+    const parsed = parseLead(validLead);
+    assert.equal(parsed.status, "valid");
+    if (parsed.status !== "valid") return;
+    const result = await sendLeadEmail(
+      parsed.lead,
+      new Date("2026-08-21T12:00:00Z"),
+      async () => new Response("echoed PII and\nforged log line", { status: 422 }),
+    );
+    assert.deepEqual(result, { ok: false, status: 422, detail: "provider-rejected" });
+  } finally {
+    if (previousKey === undefined) delete process.env.RESEND_API_KEY;
+    else process.env.RESEND_API_KEY = previousKey;
+    if (previousInbox === undefined) delete process.env.LEAD_INBOX_EMAIL;
+    else process.env.LEAD_INBOX_EMAIL = previousInbox;
+    if (previousFrom === undefined) delete process.env.RESEND_FROM_EMAIL;
+    else process.env.RESEND_FROM_EMAIL = previousFrom;
   }
 });

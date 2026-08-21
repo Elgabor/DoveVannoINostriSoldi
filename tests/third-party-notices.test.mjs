@@ -4,12 +4,13 @@ import test from "node:test";
 
 const notices = await readFile(new URL("../THIRD_PARTY_NOTICES.md", import.meta.url), "utf8");
 
-test("embedded ANAC, INPS, CPT and ISTAT inputs have third-party notices", () => {
+test("embedded official inputs have third-party notices", () => {
   for (const publisher of [
     "Autorità Nazionale Anticorruzione",
     "Istituto Nazionale della Previdenza Sociale",
     "Sistema Conti Pubblici Territoriali",
     "Istituto Nazionale di Statistica",
+    "Italia Domani",
   ]) {
     assert.match(notices, new RegExp(publisher));
   }

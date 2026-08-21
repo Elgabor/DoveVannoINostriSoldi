@@ -1,6 +1,7 @@
 import { setTimeout as delay } from "node:timers/promises";
 import { APP_USER_AGENT } from "@/lib/app-version";
 import { MEF_IRPEF_SOURCE } from "@/lib/data/mef-irpef-source";
+import { PNRR_CHILDCARE_SOURCE } from "@/lib/data/pnrr-childcare-source";
 import { getSourcePolicy, type SourceId } from "@/lib/data/source-policy";
 
 export type SourceFetchKind = "discovery" | "data";
@@ -40,6 +41,7 @@ const ALLOWED_HOSTS: Readonly<Record<SourceId, readonly string[]>> = {
     "bdap-opendata.rgs.mef.gov.it",
   ],
   opencoesione: ["opencoesione.gov.it", "www.opencoesione.gov.it"],
+  italiadomani: PNRR_CHILDCARE_SOURCE.allowedHosts,
   opencivitas: ["opencivitas.it", "www.opencivitas.it", "docs.opencivitas.it"],
   consulenti: [
     "consulentipubblici.dfp.gov.it",

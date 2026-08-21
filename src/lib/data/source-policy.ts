@@ -1,4 +1,5 @@
 import { MEF_IRPEF_SOURCE } from "@/lib/data/mef-irpef-source";
+import { PNRR_CHILDCARE_SOURCE } from "@/lib/data/pnrr-childcare-source";
 
 export type SourceId =
   | "ipa"
@@ -10,6 +11,7 @@ export type SourceId =
   | "mef-irpef"
   | "siope"
   | "opencoesione"
+  | "italiadomani"
   | "opencivitas"
   | "consulenti"
   | "camera"
@@ -178,6 +180,13 @@ export const SOURCE_POLICIES: Readonly<Record<SourceId, SourcePolicy>> = {
     timeoutMs: 15_000,
     maxRetries: 1,
     tags: ["source:opencoesione", "domain:cohesion"],
+  },
+  italiadomani: {
+    id: PNRR_CHILDCARE_SOURCE.id,
+    label: PNRR_CHILDCARE_SOURCE.label,
+    owner: PNRR_CHILDCARE_SOURCE.owner,
+    sourceUrl: PNRR_CHILDCARE_SOURCE.sourceUrl,
+    ...PNRR_CHILDCARE_SOURCE.policy,
   },
   opencivitas: {
     id: "opencivitas",

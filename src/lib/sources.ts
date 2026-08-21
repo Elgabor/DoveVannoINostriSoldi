@@ -1,4 +1,5 @@
 import { MEF_IRPEF_SOURCE } from "@/lib/data/mef-irpef-source";
+import { PNRR_CHILDCARE_SOURCE } from "@/lib/data/pnrr-childcare-source";
 
 export type PublicSource = {
   slug: string;
@@ -119,6 +120,18 @@ export const publicSources: PublicSource[] = [
     format: "API · CSV · open data",
     url: "https://opencoesione.gov.it/it/opendata/",
     note: "Dashboard nazionale attiva; nessun drill-down per progetto, soggetto o territorio. Aggiornamento automatico dall'API ufficiale.",
+  },
+  {
+    slug: PNRR_CHILDCARE_SOURCE.id,
+    name: PNRR_CHILDCARE_SOURCE.public.name,
+    owner: PNRR_CHILDCARE_SOURCE.owner,
+    area: PNRR_CHILDCARE_SOURCE.public.area,
+    cadence: PNRR_CHILDCARE_SOURCE.public.cadence,
+    coverage: PNRR_CHILDCARE_SOURCE.public.coverage,
+    format: PNRR_CHILDCARE_SOURCE.public.format,
+    url: PNRR_CHILDCARE_SOURCE.sourceUrl,
+    note: PNRR_CHILDCARE_SOURCE.public.note,
+    joinKeys: [...PNRR_CHILDCARE_SOURCE.public.joinKeys],
   },
   {
     slug: "opencivitas",

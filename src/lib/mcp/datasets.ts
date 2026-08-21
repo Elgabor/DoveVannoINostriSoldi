@@ -146,6 +146,17 @@ export async function queryPublicDataset(query: DatasetQuery): Promise<unknown> 
         },
       });
     }
+    case "pnrr_asili": {
+      const { queryPnrrChildcare } = await import("@/lib/pnrr-childcare-snapshot");
+      return jsonSafe(queryPnrrChildcare({
+        cup: query.cup,
+        query: query.query,
+        region: query.region,
+        province: query.province,
+        limit: query.limit,
+        offset: query.offset,
+      }));
+    }
     case "anac_cig_snapshot": {
       const { getAnacCigSnapshot } = await import("@/lib/anac-cig-snapshot");
       return jsonSafe(getAnacCigSnapshot(query.year));

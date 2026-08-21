@@ -8,6 +8,7 @@ import {
   openCoesioneSnapshot as snapshot,
   type OpenCoesioneDimensionMetrics,
 } from "@/lib/opencoesione-snapshot";
+import { pnrrChildcareMeta } from "@/lib/pnrr-childcare-snapshot";
 import styles from "./coesione.module.css";
 
 export const metadata: Metadata = {
@@ -167,6 +168,23 @@ export default function CohesionPage() {
           diversi: non misura qualità, beneficio ricevuto, completamento o irregolarità.
         </p>
       </div>
+
+      <section className={styles.tracePanel}>
+        <div>
+          <span>Nuovo · traccia PNRR</span>
+          <h2>Il totale non basta. Segui un progetto fino alla gara.</h2>
+          <p>
+            {integer(pnrrChildcareMeta.coverage.uniqueProjects)} CUP per asili e prima infanzia,
+            con localizzazioni, finanziamenti, {integer(pnrrChildcareMeta.coverage.tenderRows)} gare
+            e aggiudicatari collegati senza confondere importi e pagamenti.
+          </p>
+        </div>
+        <div className={styles.traceAction}>
+          <strong>{compactEuro(pnrrChildcareMeta.totals.pnrrFundingCents / 100)}</strong>
+          <span>finanziamento PNRR registrato</span>
+          <Link className="btn btn-primary" href="/coesione/asili">Apri Traccia PNRR →</Link>
+        </div>
+      </section>
 
       <div className={styles.tables}>
         <section className="panel">

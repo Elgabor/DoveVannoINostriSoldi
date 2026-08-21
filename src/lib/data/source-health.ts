@@ -19,6 +19,7 @@ import { anacCigSnapshot } from "@/lib/anac-cig-snapshot";
 import { inpsCivilInvaliditySnapshot } from "@/lib/inps-invalidity-snapshot";
 import { cptRegionalFiscalSnapshot } from "@/lib/cpt-regional-fiscal-snapshot";
 import { MEF_IRPEF_SOURCE } from "@/lib/data/mef-irpef-source";
+import { PNRR_CHILDCARE_SOURCE } from "@/lib/data/pnrr-childcare-source";
 
 export type SourceIntegrationState = "active";
 export type SourceReachability = "up" | "down" | "not-probed";
@@ -331,6 +332,17 @@ function snapshotManagedOpenCoesione(): SourceHealth {
   };
 }
 
+function snapshotManagedPnrrChildcare(): SourceHealth {
+  return {
+    ...baseHealth(PNRR_CHILDCARE_SOURCE.id),
+    reachability: "not-probed",
+    freshness: freshnessFor(PNRR_CHILDCARE_SOURCE.id, PNRR_CHILDCARE_SOURCE.health.publishedAt),
+    latencyMs: null,
+    detail: PNRR_CHILDCARE_SOURCE.health.detail,
+    recordCount: PNRR_CHILDCARE_SOURCE.health.recordCount,
+  };
+}
+
 function snapshotManagedAnac(): SourceHealth {
   const latestSourceModified = anacCigSnapshot.inputs
     .map((input) => input.sourceLastModified)
@@ -440,6 +452,7 @@ export function getSnapshotManagedSourceHealth(): SourceHealth[] {
     snapshotManagedCpt(),
     snapshotManagedMefIrpef(),
     snapshotManagedOpenCoesione(),
+    snapshotManagedPnrrChildcare(),
     snapshotManagedOpenCivitas(),
     snapshotManagedMefParticipations(),
     snapshotManagedConsulenti(),

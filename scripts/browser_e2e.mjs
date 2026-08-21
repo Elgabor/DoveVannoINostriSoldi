@@ -447,6 +447,41 @@ async function assertTableKeyboardScroll(page, label) {
   );
 }
 
+async function assertHealthSpendingTables(page, label) {
+  const selector = '[role="region"].table-scroll';
+  const tableStates = await page.$$eval(selector, (regions) =>
+    regions.map((region) => ({
+      clientWidth: region.clientWidth,
+      hasTable: Boolean(region.querySelector("table")),
+      scrollWidth: region.scrollWidth,
+      tabIndex: region.tabIndex,
+    })),
+  );
+
+  assert.equal(tableStates.length, 3, `${label}: sono attese tre tabelle`);
+  for (const [index, state] of tableStates.entries()) {
+    assert.equal(state.hasTable, true, `${label}: tabella ${index + 1} assente`);
+    assert.equal(state.tabIndex, 0, `${label}: tabella ${index + 1} non raggiungibile da tastiera`);
+  }
+
+  for (const index of tableStates.keys()) {
+    if (tableStates[index].scrollWidth <= tableStates[index].clientWidth) continue;
+    await page.$$eval(selector, (regions, selectedIndex) => {
+      const region = regions[selectedIndex];
+      region.scrollTo({ left: 0, behavior: "auto" });
+      region.focus();
+    }, index);
+    await page.keyboard.press("ArrowRight");
+    await page.waitForFunction(
+      (tableSelector, selectedIndex) =>
+        document.querySelectorAll(tableSelector)[selectedIndex]?.scrollLeft > 0,
+      { timeout: 2_000 },
+      selector,
+      index,
+    );
+  }
+}
+
 async function bodyText(page) {
   return page.$eval("body", (body) => body.innerText);
 }
@@ -947,6 +982,23 @@ try {
       pathname,
       width: 320,
       validate: async () => {},
+    });
+    completed.push(label);
+  }
+
+  for (const width of [320, 390, 768, 1280]) {
+    const label = `Conto economico SSN ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/spese/sanita",
+      width,
+      validate: async (page) => {
+        const text = await bodyText(page);
+        assertTextMatches(text, /competenza economica, non pagamenti di cassa/i, label);
+        assertTextMatches(text, /non pubblica una voce chiamata “gettonisti” o “cooperative”/i, label);
+        assertTextMatches(text, /Non è una graduatoria/i, label);
+        await assertHealthSpendingTables(page, label);
+      },
     });
     completed.push(label);
   }

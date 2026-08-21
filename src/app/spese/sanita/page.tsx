@@ -185,11 +185,11 @@ export default function HealthSpendingPage() {
                 <th scope="row">Totale nazionale ufficiale</th>
                 <td className="num">{compactEuro(euro(national.personnelCost))}</td>
                 <td className="num">{compactEuro(euro(national.healthcareWorkServices))}</td>
-                <td className="num">
-                  <span aria-hidden="true">&mdash;</span>
-                  <span className={styles.visuallyHidden}>
-                    Non applicabile: il totale nazionale non è un conteggio di enti
-                  </span>
+                <td
+                  className="num"
+                  aria-label="Non applicabile: il totale nazionale non è un conteggio di enti"
+                >
+                  <span aria-hidden="true">n.a.</span>
                 </td>
               </tr>
             </tbody>

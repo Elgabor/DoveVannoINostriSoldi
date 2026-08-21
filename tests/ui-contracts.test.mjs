@@ -100,6 +100,14 @@ test("the SSN view labels accounting scope and remains responsive", () => {
   assert.match(healthPage, /Aggregato nazionale ufficiale/);
   assert.match(healthPage, /integer\(data\.detailCoverage\.entityCount\)/);
   assert.match(healthPage, /Enti di dettaglio esposti/i);
+  assert.match(
+    healthPage,
+    /aria-label="Non applicabile: il totale nazionale non è un conteggio di enti"/,
+  );
+  assert.doesNotMatch(
+    healthPage,
+    /<span className=\{styles\.visuallyHidden\}>\s*Non applicabile:/,
+  );
   assert.match(healthCss, /grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(healthCss, /@media \(max-width: 620px\)[\s\S]*?grid-template-columns: 1fr/);
   assert.doesNotMatch(healthCss, /border-radius\s*:/);

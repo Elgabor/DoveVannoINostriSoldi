@@ -27,6 +27,10 @@ test("MCP catalog has one descriptor per stable dataset id and valid source refe
   const siope = datasetCatalog.find((dataset) => dataset.id === "siope_comuni");
   assert.match(siope.caveat, /distribution/i);
   assert.match(siope.caveat, /primi 100/i);
+  const ssn = datasetCatalog.find((dataset) => dataset.id === "openbdap_ssn_conto_economico");
+  assert.match(ssn.summary, /Consuntivo 2024 OpenBDAP/i);
+  assert.match(ssn.caveat, /gettonisti.*cooperative/i);
+  assert.deepEqual(ssn.filters, ["year", "region", "code", "limit", "offset"]);
 });
 
 test("SIOPE query validates years and can filter a region", async () => {
@@ -73,6 +77,25 @@ test("OpenCivitas query bounds pagination and rejects unavailable years", async 
   assert.equal(result.pagination.limit, 100);
   assert.equal(result.pagination.offset, 0);
   assert.ok(result.data.length <= 100);
+});
+
+test("OpenBDAP SSN MCP query preserves accounting scope and official geography", async () => {
+  const result = await queryPublicDataset({
+    dataset: "openbdap_ssn_conto_economico",
+    year: 2024,
+    region: "P. A. Trento",
+    limit: 2,
+  });
+  assert.equal(result.referenceYear, 2024);
+  assert.equal(result.observation.type, "CONSUNTIVO");
+  assert.match(result.observation.accountingBasis, /competenza economica/);
+  assert.deepEqual(result.regions.map((region) => region.code), ["042"]);
+  assert.equal(result.entities.length, 1);
+  assert.equal(result.selectedAggregate.level, "region");
+  assert.equal(result.selectedAggregate.code, "042");
+  assert.deepEqual(result.selectedAggregate.values, result.regions[0].values);
+  assert.match(result.methodology.externalStaffBoundary, /non usa.*gettonisti.*cooperative/i);
+  assert.ok(JSON.stringify(result).length < 750 * 1024);
 });
 
 test("datasets requiring a domain identifier fail closed", async () => {

@@ -140,6 +140,14 @@ export default async function MoneyPage({
           </p>
         </div>
         <div className="scope-notice__section">
+          <h3>Enti SSN · Conto Economico consuntivo 2024</h3>
+          <p>
+            Il Conto Economico OpenBDAP misura costi di competenza economica, non pagamenti di
+            cassa e non si somma a SIOPE o alla contabilità INPS. <Link href="/spese/sanita">Apri
+            personale e servizi degli enti SSN →</Link>
+          </p>
+        </div>
+        <div className="scope-notice__section">
           <h3>Altri livelli della spesa pubblica</h3>
           <p>
             Per gli altri livelli apri le <Link href="/stato">spese delle amministrazioni

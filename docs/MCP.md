@@ -36,6 +36,20 @@ parziali sia, in `queryLimitations.regionAggregateCoverage`, i Comuni e l'import
 regionalizzabili. I quantili non vanno ricostruiti dai primi 100 e non sono classifiche di
 efficienza o spreco.
 
+`openbdap_ssn_conto_economico` restituisce il dataset snapshot OpenBDAP `spd_ssn_cce_elb_voccn_01_2024`.
+Le voci `BA2080`, `BA1350`, `BA1750`, `BA0390` e `BZ9999` sono mantenute con codice e descrizione
+ufficiali; gli importi sono costi di competenza economica del Conto Economico consuntivo, non
+pagamenti di cassa. La risposta include aggregati nazionali, per codice geografico ufficiale e
+per ente con chiave composita, oltre a provenienza, hash e copertura. La provenienza espone tre
+input distinti (enti, nazionale e regionale), ciascuno con landing URL e SHA-256. `selectedAggregate`
+indica esplicitamente il contesto: `national` senza filtri, `region` con il solo filtro regione e
+`entity_match` quando è presente un codice ente, anche se accompagnato da una regione (in
+quest'ultimo caso non viene inventato un aggregato). Il codice viene normalizzato una sola volta e
+i limiti REST/MCP impediscono risposte non paginabili.
+Le voci di consulenze,
+collaborazioni, interinale e altre prestazioni di lavoro non vengono rinominate “gettonisti” o
+“cooperative”, e il tool non produce classifiche di efficienza o giudizi sulla qualità sanitaria.
+
 ## Federazione senza proxy
 
 Il servizio MCP di [Cruscotto Italia](https://cruscotto-italia.dati.gov.it/about.html#accesso-mcp),

@@ -11,9 +11,12 @@ test("embedded official inputs have third-party notices", () => {
     "Sistema Conti Pubblici Territoriali",
     "Istituto Nazionale di Statistica",
     "Italia Domani",
+    "Ragioneria Generale dello Stato",
   ]) {
     assert.match(notices, new RegExp(publisher));
   }
   assert.match(notices, /resource-specific terms/);
   assert.match(notices, /document-specific reuse terms/);
+  assert.match(notices, /spd_ssn_cce_elb_voccn_01_2024/);
+  assert.match(notices, /cc-by/);
 });

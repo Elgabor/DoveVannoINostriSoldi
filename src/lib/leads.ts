@@ -8,9 +8,9 @@ export const ORGANIZATION_TYPES = {
 } as const;
 
 export const CONSULTING_TOPICS = {
-  lettura: "Lettura con AI di un ente, un territorio o un progetto",
+  lettura: "Lettura con AI di un problema, un dataset o un progetto",
   dashboard: "Report o cruscotto interno con AI",
-  formazione: "Formazione all'uso dell'AI sui dati pubblici",
+  formazione: "Formazione all'uso dell'AI",
   applicazione: "Strumento AI per l'impresa o per la PA",
   altro: "Altro",
 } as const;

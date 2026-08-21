@@ -6,25 +6,25 @@ import { LeadForm } from "./lead-form";
 export const metadata: Metadata = {
   title: "Consulenza",
   description:
-    "Progetti di intelligenza artificiale su dati pubblici per aziende e amministrazioni. Il sito resta gratuito e indipendente.",
+    "Progetti di intelligenza artificiale per aziende e amministrazioni. Il sito resta gratuito e indipendente.",
 };
 
 const offers = [
   [
     "Lettura con AI",
-    "Partiamo da un ente, un territorio o un progetto. I modelli leggono le fonti ufficiali e ricostruiscono che cosa dicono i numeri, che cosa manca e che cosa si può confrontare. Ogni cifra resta agganciata alla fonte.",
+    "Partiamo da un problema concreto. I modelli leggono i dati che ci date: fonti pubbliche, archivi interni, fogli, o un mix. Ricostruiamo che cosa dicono i numeri, che cosa manca e che cosa si può confrontare. Ogni cifra resta agganciata alla sua origine.",
   ],
   [
     "Report o cruscotto interno",
-    "Costruiamo una vista per un ufficio, un consiglio o un team: si chiede in italiano e si ottiene una risposta sui dati pubblici, con fonte, data, perimetro e limiti di ogni cifra.",
+    "Costruiamo una vista per un ufficio, un consiglio o un team: si chiede in italiano e si ottiene una risposta sui dati del progetto, con fonte, data, perimetro e limiti di ogni cifra.",
   ],
   [
     "Formazione",
-    "Addestriamo chi deve usare l'intelligenza artificiale sui dati pubblici senza inventare numeri: gare, controllo di gestione, comunicazione, uffici che lavorano con la PA.",
+    "Addestriamo chi deve usare l'intelligenza artificiale sul lavoro vero, senza inventare numeri: dati pubblici, dati aziendali, gare, controllo di gestione, comunicazione.",
   ],
   [
     "Strumento AI per l'impresa o per la PA",
-    "Progettiamo e mettiamo in opera un assistente o un flusso interno sul lavoro vero: cercare bandi, seguire affidamenti e pagamenti, interrogare anagrafi e progetti. Serve a chi vende alla pubblica amministrazione e a chi la pubblica amministrazione la gestisce.",
+    "Progettiamo e mettiamo in opera un assistente o un flusso interno: cercare documenti, seguire pratiche, interrogare archivi. Può stare sulle fonti pubbliche, sui dati dell'organizzazione, o su tutti e due.",
   ],
 ] as const;
 
@@ -32,11 +32,12 @@ export default function ConsultingPage() {
   return (
     <main className="shell page">
       <div className="page-intro">
-        <h1>Intelligenza artificiale su dati pubblici</h1>
+        <h1>Intelligenza artificiale per aziende e PA</h1>
         <p>
           Il sito resta gratuito. Qui si parla di incarichi: progetti di intelligenza
-          artificiale per un&apos;azienda o un&apos;amministrazione, costruiti sulle stesse fonti
-          pubbliche del sito.
+          artificiale per un&apos;azienda o un&apos;amministrazione. Si può lavorare sui dati
+          pubblici, sui dati interni, o su entrambi. Non è obbligatorio usare le fonti
+          del sito.
         </p>
       </div>
 
@@ -45,7 +46,8 @@ export default function ConsultingPage() {
         <p>
           I dati pubblici restano pubblici. Un incarico di consulenza non compra accesso
           privilegiato, non cambia i numeri sul sito e non è un parere legale, contabile o
-          un accertamento. Per le amministrazioni questa è una richiesta di contatto: un
+          un accertamento. I dati dell&apos;organizzazione restano dell&apos;organizzazione: non
+          finiscono sul sito. Per le amministrazioni questa è una richiesta di contatto: un
           eventuale incarico segue le regole di affidamento previste.
         </p>
       </div>

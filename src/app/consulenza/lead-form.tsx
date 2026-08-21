@@ -168,7 +168,7 @@ export function LeadForm() {
           minLength={30}
           maxLength={4000}
           rows={6}
-          placeholder="Per chi è, su quali dati, che cosa deve trovare o scrivere. Esempio: un assistente interno sui bandi di un ministero, o un cruscotto sui pagamenti del Comune."
+          placeholder="Per chi è, su quali dati (pubblici, aziendali, o altri), che cosa deve trovare o scrivere."
         />
       </label>
 

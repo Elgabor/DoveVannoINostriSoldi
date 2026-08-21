@@ -99,6 +99,17 @@ export default function PrivacyPage() {
       </section>
 
       <section className="panel">
+        <h2 className="panel-title">Assistente testuale del portale</h2>
+        <p>
+          L&apos;assistente deterministico in <a href="/assistente">/assistente</a> interpreta solo
+          poche domande allowlisted e interroga direttamente gli adapter read-only. Il testo della
+          domanda non viene salvato, inserito in una cronologia o scritto nei log applicativi; la
+          versione attuale non usa voce, modelli linguistici o analytics sulle domande. Restano
+          possibili i log tecnici del provider di hosting descritti sopra.
+        </p>
+      </section>
+
+      <section className="panel">
         <h2 className="panel-title">I tuoi diritti</h2>
         <p>
           Puoi chiedere accesso, correzione, cancellazione, limitazione, portabilità quando

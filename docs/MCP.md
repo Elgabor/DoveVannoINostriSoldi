@@ -4,6 +4,9 @@
 
 Il server MCP espone i dati pubblici già disponibili nel portale attraverso un contratto unico, read-only ed estensibile. Non sostituisce provenance, metodologia o cautele: le restituisce insieme ai dati.
 
+La prima interfaccia testuale deterministica del portale è documentata separatamente in
+[ASSISTENTE.md](ASSISTENTE.md): non è un provider LLM e non inoltra prompt al server MCP.
+
 L'endpoint Streamable HTTP è `/api/mcp`. L'implementazione usa l'SDK TypeScript ufficiale e mantiene compatibilità stateless con i client MCP della generazione precedente.
 
 Le procedure per collegare l'endpoint esistente a Manufact, ChatGPT e Claude, insieme a starter

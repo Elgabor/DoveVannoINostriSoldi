@@ -36,7 +36,7 @@ Il backend espone inoltre:
 - `GET /api/controlli`, con indicatori classificati, scenari separati e regole per il loro uso.
 - `GET /api/spese/invalidita?anno=2024&regione=Calabria`, con spesa nazionale e nuove pensioni di invalidità civile per la granularità pubblica verificata.
 - `GET /api/territori/fisco?anno=2023&regione=Calabria`, con entrate, spese e saldo contabile CPT nello stesso perimetro PA consolidato.
-- `GET /api/controlli/spesa-comuni?regione=Calabria&limit=20`, con i Comuni OpenCivitas fuori dall'intervallo tipico della propria Regione (metodo Tukey sulla differenza spesa storica/fabbisogno standard pro capite), esclusioni per qualità del dato e avvertenze di metodo.
+- `GET /api/controlli/spesa-comuni?regione=Calabria&limit=20`, con i Comuni OpenCivitas fuori dall'intervallo tipico della propria Regione (Tukey IQR, quartili R-7, metrica v1 sulla differenza pro capite tra spesa storica e standard). Il filtro territoriale governa l'intera risposta; parametri sconosciuti, duplicati o fuori intervallo vengono rifiutati.
 
 ## MCP per assistenti AI
 

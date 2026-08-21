@@ -3,21 +3,22 @@ import type { OpenCivitasMunicipality } from "@/lib/data/opencivitas-contract";
 /**
  * Cross-entity spending-outlier screening for Comuni.
  *
- * We start from the official OpenCivitas comparison — spesa storica meno
- * fabbisogno standard per abitante, a figure the source already normalizes
- * for population size, territorial characteristics and services offered —
- * and flag Comuni whose per-capita difference sits far outside the range of
- * *other Comuni in the same Regione*, using the Tukey IQR fence.
+ * We start from the official OpenCivitas difference between historical and
+ * standard spending per inhabitant. We then flag Comuni whose difference sits
+ * far outside the range of other Comuni in the same Regione, using a Tukey IQR
+ * fence. Service levels remain a separate source dimension and do not enter
+ * this screening metric.
  *
- * This finds Comuni that stand out even after the official model's own
- * normalization, without inventing a second model. It is screening, not a
+ * This finds Comuni that stand out in a peer distribution without treating
+ * the difference as a normalized performance score. It is screening, not a
  * verdict: see METHODOLOGY_WARNING.
  */
 
 export const METHODOLOGY_WARNING =
   "Un Comune fuori dall'intervallo dei Comuni della stessa Regione non ha automaticamente sprechi o meriti: " +
   "può dipendere da servizi aggiuntivi, costi locali, eventi eccezionali (per esempio ricostruzioni) o dati " +
-  "segnalati dalla fonte come da verificare. Il metodo segnala dove guardare, non chi ha ragione.";
+  "segnalati dalla fonte come da verificare. Lo screening non misura quantità o qualità dei servizi: " +
+  "segnala dove guardare, non chi ha ragione.";
 
 export type OutlierDirection = "sopra" | "sotto";
 
@@ -36,15 +37,19 @@ export type RegionOutlierBreakdown = {
   region: string;
   evaluated: number;
   excludedForDataQuality: number;
-  medianPerCapitaCents: number;
-  iqrPerCapitaCents: number;
+  medianPerCapitaCents: number | null;
+  iqrPerCapitaCents: number | null;
   above: number;
   below: number;
 };
 
 export type SpendingOutlierSummary = {
+  metricVersion: 1;
+  measure: "historical-minus-standard-spending-per-capita-cents";
   method: "tukey-iqr";
+  quantileConvention: "linear-interpolation-r7";
   fenceMultiplier: number;
+  minimumRegionSize: 4;
   evaluatedMunicipalities: number;
   excludedForDataQuality: number;
   outliers: SpendingOutlier[];
@@ -53,6 +58,20 @@ export type SpendingOutlierSummary = {
 };
 
 const DEFAULT_FENCE_MULTIPLIER = 1.5;
+const MINIMUM_REGION_SIZE = 4;
+
+const WARNINGS_UNRELATED_TO_SPENDING_DIFFERENCE = new Set([
+  "DIFF_OUT_PERC_TOT",
+  "POSIZIONE_SPESA_PERC_TOT",
+  "POSIZIONE_OUTPUT_PERC_TOT",
+  "DESCR_NON_VALUTABILE_SPESA_TOT",
+  "DESCR_NON_VALUTABILE_OUT_TOT",
+]);
+
+function warningAffectsSpendingDifference(warning: string): boolean {
+  const field = warning.split(":", 1)[0]?.trim();
+  return !field || !WARNINGS_UNRELATED_TO_SPENDING_DIFFERENCE.has(field);
+}
 
 /**
  * Linear-interpolation quantile (the same convention as Excel's
@@ -125,9 +144,10 @@ function summarizeRegion(
 
 /**
  * Computes per-Regione spending outliers among Comuni covered by OpenCivitas.
- * Comuni the source itself flags with sourceWarnings are excluded from the
- * statistics (their figures are not yet reliable enough to anchor a fence),
- * but the exclusion is counted so nothing silently disappears.
+ * Only warnings affecting the four monetary inputs exclude a Comune. Warnings
+ * about service indicators do not invalidate the spending difference used by
+ * this metric. Unknown warning fields fail closed. Every exclusion is counted
+ * nationally and in its Regione.
  */
 export function computeSpendingOutliers(
   municipalities: readonly OpenCivitasMunicipality[],
@@ -137,32 +157,39 @@ export function computeSpendingOutliers(
     throw new Error("fenceMultiplier deve essere un numero positivo");
   }
 
-  const byRegion = new Map<string, OpenCivitasMunicipality[]>();
-  let excludedForDataQuality = 0;
+  const byRegion = new Map<
+    string,
+    { municipalities: OpenCivitasMunicipality[]; excludedForDataQuality: number }
+  >();
 
   for (const municipality of municipalities) {
-    if (municipality.sourceWarnings.length > 0) {
-      excludedForDataQuality += 1;
+    const bucket = byRegion.get(municipality.region) ?? {
+      municipalities: [],
+      excludedForDataQuality: 0,
+    };
+    byRegion.set(municipality.region, bucket);
+
+    if (municipality.sourceWarnings.some(warningAffectsSpendingDifference)) {
+      bucket.excludedForDataQuality += 1;
       continue;
     }
-    const existing = byRegion.get(municipality.region);
-    if (existing) existing.push(municipality);
-    else byRegion.set(municipality.region, [municipality]);
+    bucket.municipalities.push(municipality);
   }
 
   const byRegionBreakdown: RegionOutlierBreakdown[] = [];
   const outliers: SpendingOutlier[] = [];
 
   for (const region of [...byRegion.keys()].sort((left, right) => left.localeCompare(right, "it-IT"))) {
-    const regionMunicipalities = byRegion.get(region)!;
+    const bucket = byRegion.get(region)!;
+    const regionMunicipalities = bucket.municipalities;
     // Fewer than 4 Comuni cannot support a stable quartile estimate.
-    if (regionMunicipalities.length < 4) {
+    if (regionMunicipalities.length < MINIMUM_REGION_SIZE) {
       byRegionBreakdown.push({
         region,
         evaluated: regionMunicipalities.length,
-        excludedForDataQuality: 0,
-        medianPerCapitaCents: 0,
-        iqrPerCapitaCents: 0,
+        excludedForDataQuality: bucket.excludedForDataQuality,
+        medianPerCapitaCents: null,
+        iqrPerCapitaCents: null,
         above: 0,
         below: 0,
       });
@@ -171,7 +198,7 @@ export function computeSpendingOutliers(
     const { breakdown, outliers: regionOutliers } = summarizeRegion(
       region,
       regionMunicipalities,
-      0,
+      bucket.excludedForDataQuality,
       fenceMultiplier,
     );
     byRegionBreakdown.push(breakdown);
@@ -179,11 +206,23 @@ export function computeSpendingOutliers(
   }
 
   outliers.sort((left, right) => right.excessMultiple - left.excessMultiple);
+  const excludedForDataQuality = byRegionBreakdown.reduce(
+    (total, region) => total + region.excludedForDataQuality,
+    0,
+  );
+  const evaluatedMunicipalities = byRegionBreakdown.reduce(
+    (total, region) => total + region.evaluated,
+    0,
+  );
 
   return {
+    metricVersion: 1,
+    measure: "historical-minus-standard-spending-per-capita-cents",
     method: "tukey-iqr",
+    quantileConvention: "linear-interpolation-r7",
     fenceMultiplier,
-    evaluatedMunicipalities: municipalities.length - excludedForDataQuality,
+    minimumRegionSize: MINIMUM_REGION_SIZE,
+    evaluatedMunicipalities,
     excludedForDataQuality,
     outliers,
     byRegion: byRegionBreakdown,

@@ -43,6 +43,9 @@ test("flags a Comune far above its Regione's range and leaves ordinary Comuni al
   assert.equal(summary.evaluatedMunicipalities, tightlyClustered.length + 1);
   assert.equal(summary.excludedForDataQuality, 0);
   assert.equal(summary.outliers.length, 1);
+  assert.equal(summary.metricVersion, 1);
+  assert.equal(summary.quantileConvention, "linear-interpolation-r7");
+  assert.equal(summary.minimumRegionSize, 4);
   assert.equal(summary.outliers[0].istatCode, "999999");
   assert.equal(summary.outliers[0].direction, "sopra");
   assert.ok(summary.outliers[0].excessMultiple > 0);
@@ -77,6 +80,24 @@ test("flags outliers below the range too, and orders outliers by severity", () =
   assert.ok(summary.outliers[0].excessMultiple > summary.outliers[1].excessMultiple);
 });
 
+test("pins the R-7 quartile convention for even and odd region sizes", () => {
+  const even = computeSpendingOutliers(
+    [0, 10, 20, 30].map((value, index) =>
+      municipality({ istatCode: `Q${index}`, region: "Regione Pari", differencePerCapitaCents: value }),
+    ),
+  );
+  const odd = computeSpendingOutliers(
+    [0, 10, 20, 30, 40].map((value, index) =>
+      municipality({ istatCode: `R${index}`, region: "Regione Dispari", differencePerCapitaCents: value }),
+    ),
+  );
+
+  assert.equal(even.byRegion[0].medianPerCapitaCents, 15);
+  assert.equal(even.byRegion[0].iqrPerCapitaCents, 15);
+  assert.equal(odd.byRegion[0].medianPerCapitaCents, 20);
+  assert.equal(odd.byRegion[0].iqrPerCapitaCents, 20);
+});
+
 test("excludes Comuni the source flags with data-quality warnings, without dropping them silently", () => {
   const cluster = [100, 105, 95, 110, 90].map((value, index) =>
     municipality({ istatCode: `B${index}`, region: "Regione Z", differencePerCapitaCents: value }),
@@ -93,6 +114,39 @@ test("excludes Comuni the source flags with data-quality warnings, without dropp
   assert.equal(summary.excludedForDataQuality, 1);
   assert.equal(summary.evaluatedMunicipalities, cluster.length);
   assert.ok(!summary.outliers.some((item) => item.istatCode === "FLAGGED"));
+  assert.equal(summary.byRegion[0].excludedForDataQuality, 1);
+});
+
+test("keeps monetary differences when only a service indicator is warned", () => {
+  const municipalities = [100, 105, 95, 110].map((value, index) =>
+    municipality({
+      istatCode: `S${index}`,
+      region: "Regione Servizi",
+      differencePerCapitaCents: value,
+      sourceWarnings: index === 0 ? ["DIFF_OUT_PERC_TOT: cod_anomalo"] : [],
+    }),
+  );
+
+  const summary = computeSpendingOutliers(municipalities);
+  assert.equal(summary.evaluatedMunicipalities, municipalities.length);
+  assert.equal(summary.excludedForDataQuality, 0);
+  assert.equal(summary.byRegion[0].excludedForDataQuality, 0);
+});
+
+test("keeps a Regione visible when every monetary record is excluded", () => {
+  const summary = computeSpendingOutliers([
+    municipality({
+      region: "Regione Solo Esclusi",
+      sourceWarnings: ["SPESA_STORICA_PROAB: cod_anomalo"],
+    }),
+  ]);
+
+  assert.equal(summary.evaluatedMunicipalities, 0);
+  assert.equal(summary.excludedForDataQuality, 1);
+  assert.equal(summary.byRegion.length, 1);
+  assert.equal(summary.byRegion[0].excludedForDataQuality, 1);
+  assert.equal(summary.byRegion[0].medianPerCapitaCents, null);
+  assert.equal(summary.byRegion[0].iqrPerCapitaCents, null);
 });
 
 test("does not evaluate a Regione with fewer than 4 Comuni (unstable quartiles)", () => {
@@ -105,7 +159,7 @@ test("does not evaluate a Regione with fewer than 4 Comuni (unstable quartiles)"
   assert.equal(summary.outliers.length, 0);
   const region = summary.byRegion.find((entry) => entry.region === "Regione Piccola");
   assert.ok(region);
-  assert.equal(region.iqrPerCapitaCents, 0);
+  assert.equal(region.iqrPerCapitaCents, null);
 });
 
 test("rejects a non-positive fence multiplier", () => {
@@ -132,6 +186,11 @@ test("runs end to end on the committed OpenCivitas snapshot without throwing", (
   assert.ok(summary.outliers.length > 0);
   assert.ok(summary.outliers.length < snapshot.municipalities.length / 4, "outliers should stay a minority");
   assert.equal(summary.byRegion.length, snapshot.coverage.regions);
+  assert.equal(summary.excludedForDataQuality, 0);
+  assert.equal(
+    summary.byRegion.reduce((total, region) => total + region.excludedForDataQuality, 0),
+    summary.excludedForDataQuality,
+  );
   for (const outlier of summary.outliers) {
     assert.ok(Number.isFinite(outlier.excessMultiple));
     assert.ok(outlier.excessMultiple > 0);

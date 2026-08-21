@@ -16,13 +16,16 @@ import {
   procurementServicesAndSupplies2025,
   type AuditSignal,
 } from "@/lib/audit-data";
-import { computeSpendingOutliers } from "@/lib/anomaly-indicators";
 import { integer, exactEuro, longDate, percent } from "@/lib/format";
 import { municipalityName } from "@/lib/municipality-name";
 import { openCivitasSnapshot } from "@/lib/opencivitas-snapshot";
+import { openCivitasSpendingOutliers } from "@/lib/opencivitas-outliers";
 import styles from "./controlli.module.css";
 
 const OUTLIER_TABLE_SIZE = 15;
+const availableControlYears = [
+  ...new Set([...availableAuditYears, openCivitasSnapshot.referenceYear]),
+].sort((left, right) => right - left);
 
 function signedEuroFromCents(cents: number): string {
   const value = exactEuro(Math.abs(cents) / 100);
@@ -93,16 +96,23 @@ function formatScenarioComponent(valueBillion: number): string {
 function requestedYear(raw: string | string[] | undefined): number | null {
   if (typeof raw !== "string" || !/^20\d{2}$/.test(raw)) return null;
   const year = Number.parseInt(raw, 10);
-  return availableAuditYears.includes(year) ? year : null;
+  return availableControlYears.includes(year) ? year : null;
 }
 
 export default async function ControlsPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const selectedYear = requestedYear(params.anno);
-  const signals = selectedYear ? getAuditSignalsForYear(selectedYear) : auditSignals;
-  const comparison = selectedYear
+  const selectedAuditYear = selectedYear !== null && availableAuditYears.includes(selectedYear);
+  const signals = selectedYear === null
+    ? auditSignals
+    : selectedAuditYear
+      ? getAuditSignalsForYear(selectedYear)
+      : [];
+  const comparison = selectedAuditYear
     ? getProcurementComparisonForYear(selectedYear)
-    : procurementComparisons[2025];
+    : selectedYear === null
+      ? procurementComparisons[2025]
+      : null;
   const procurementAvailability = selectedYear
     ? getProcurementAvailability(selectedYear)
     : null;
@@ -116,7 +126,7 @@ export default async function ControlsPage({ searchParams }: PageProps) {
     ? (comparison.totalValueBillion * comparison.byValue) / 100
     : null;
   const classificationEntries = Object.entries(auditClassifications);
-  const spendingOutliers = computeSpendingOutliers(openCivitasSnapshot.municipalities);
+  const spendingOutliers = openCivitasSpendingOutliers;
   const topSpendingOutliers = spendingOutliers.outliers.slice(0, OUTLIER_TABLE_SIZE);
 
   return (
@@ -135,7 +145,7 @@ export default async function ControlsPage({ searchParams }: PageProps) {
           <Link href="/controlli" aria-current={selectedYear === null ? "page" : undefined}>
             Tutti
           </Link>
-          {availableAuditYears.map((year) => (
+          {availableControlYears.map((year) => (
             <Link
               href={`/controlli?anno=${year}`}
               key={year}
@@ -298,88 +308,98 @@ export default async function ControlsPage({ searchParams }: PageProps) {
         </p>
       </section>
 
-      <section className="panel">
-        <h2 className="panel-title">
-          Comuni fuori dal range della loro Regione · spesa storica vs fabbisogno standard
-        </h2>
-        <p>
-          Partiamo dal confronto ufficiale OpenCivitas tra spesa storica e fabbisogno standard per
-          abitante, già corretto per popolazione e caratteristiche del territorio, e segnaliamo i
-          Comuni che restano fuori dall&apos;intervallo tipico della propria Regione (metodo
-          statistico Tukey, 1,5 volte lo scarto interquartile).
-        </p>
+      {(selectedYear === null || selectedYear === openCivitasSnapshot.referenceYear) && (
+        <section className="panel">
+          <h2 className="panel-title">
+            Scostamenti comunali da approfondire · {openCivitasSnapshot.coverage.regions} Regioni a
+            statuto ordinario
+          </h2>
+          <p>
+            Usiamo la differenza per abitante pubblicata da OpenCivitas tra spesa storica e spesa
+            standard. Segnaliamo i Comuni oltre l&apos;intervallo statistico della propria Regione con
+            il metodo Tukey. Quantità e qualità dei servizi sono dimensioni separate e non entrano
+            in questo screening.
+          </p>
 
-        <div className="stat-strip">
-          <div>
-            <span className="stat-label">Comuni valutati</span>
-            <span className="stat-value">{integer(spendingOutliers.evaluatedMunicipalities)}</span>
-            <span className="stat-note">
-              {spendingOutliers.excludedForDataQuality > 0
-                ? `${integer(spendingOutliers.excludedForDataQuality)} esclusi: dato segnalato dalla fonte`
-                : "Nessuna esclusione per qualità del dato"}
-            </span>
+          <div className="stat-strip">
+            <div>
+              <span className="stat-label">Comuni valutati</span>
+              <span className="stat-value">{integer(spendingOutliers.evaluatedMunicipalities)}</span>
+              <span className="stat-note">
+                {spendingOutliers.excludedForDataQuality > 0
+                  ? `${integer(spendingOutliers.excludedForDataQuality)} esclusi: campi monetari segnalati dalla fonte`
+                  : "Nessuna esclusione sui campi monetari"}
+              </span>
+            </div>
+            <div>
+              <span className="stat-label">Oltre la soglia</span>
+              <span className="stat-value">{integer(spendingOutliers.outliers.length)}</span>
+              <span className="stat-note">
+                su {integer(spendingOutliers.evaluatedMunicipalities)} valutati
+              </span>
+            </div>
           </div>
-          <div>
-            <span className="stat-label">Fuori dal range</span>
-            <span className="stat-value">{integer(spendingOutliers.outliers.length)}</span>
-            <span className="stat-note">su {integer(spendingOutliers.evaluatedMunicipalities)} valutati</span>
-          </div>
-        </div>
 
-        {topSpendingOutliers.length > 0 ? (
-          <div
-            className="table-scroll"
-            role="region"
-            aria-label="Comuni con la differenza per abitante più estrema rispetto alla propria Regione; scorri orizzontalmente per vedere tutte le colonne"
-            tabIndex={0}
-          >
-            <table className="table">
-              <caption>
-                I {topSpendingOutliers.length} Comuni più fuori scala rispetto ai Comuni della
-                stessa Regione, OpenCivitas {openCivitasSnapshot.referenceYear}
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Comune</th>
-                  <th scope="col" className="num">Differenza per abitante</th>
-                  <th scope="col">Direzione</th>
-                  <th scope="col" className="num">Distanza dal range</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topSpendingOutliers.map((outlier) => (
-                  <tr key={outlier.istatCode}>
-                    <th scope="row">
-                      {municipalityName(outlier.name)}
-                      <small>
-                        {municipalityName(outlier.province)} · {municipalityName(outlier.region)}
-                      </small>
-                    </th>
-                    <td className="num">{signedEuroFromCents(outlier.differencePerCapitaCents)}</td>
-                    <td>
-                      {outlier.direction === "sopra" ? "spesa oltre il range" : "spesa sotto il range"}
-                    </td>
-                    <td className="num">×{outlier.excessMultiple.toFixed(1)}</td>
+          {topSpendingOutliers.length > 0 ? (
+            <div
+              className="table-scroll"
+              role="region"
+              aria-label="Comuni con la maggiore distanza dalla soglia regionale della differenza per abitante; scorri orizzontalmente per vedere tutte le colonne"
+              tabIndex={0}
+            >
+              <table className="table">
+                <caption>
+                  I {topSpendingOutliers.length} Comuni con la maggiore distanza dalla soglia della
+                  propria Regione, OpenCivitas {openCivitasSnapshot.referenceYear}
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Comune</th>
+                    <th scope="col" className="num">Differenza per abitante</th>
+                    <th scope="col">Direzione della differenza</th>
+                    <th scope="col" className="num">Oltre la soglia</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {topSpendingOutliers.map((outlier) => (
+                    <tr key={outlier.istatCode}>
+                      <th scope="row">
+                        {municipalityName(outlier.name)}
+                        <small>
+                          {municipalityName(outlier.province)} · {municipalityName(outlier.region)}
+                        </small>
+                      </th>
+                      <td className="num">
+                        {signedEuroFromCents(outlier.differencePerCapitaCents)}
+                      </td>
+                      <td>
+                        {outlier.direction === "sopra" ? "sopra la soglia" : "sotto la soglia"}
+                      </td>
+                      <td className="num">{number.format(outlier.excessMultiple)} × IQR</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className={styles.note}>Nessun Comune supera la soglia con i dati attuali.</p>
+          )}
+
+          <div className="notice">
+            <strong>Un segnale non è una condanna</strong>
+            <p>{spendingOutliers.methodologyWarning}</p>
           </div>
-        ) : (
-          <p className={styles.note}>Nessun Comune risulta fuori dal range con i dati attuali.</p>
-        )}
 
-        <div className="notice">
-          <strong>Un fuori scala non è una condanna</strong>
-          <p>{spendingOutliers.methodologyWarning}</p>
-        </div>
-
-        <p className={styles.note}>
-          Guarda il Comune nel dettaglio storico e servizi nel{" "}
-          <Link href="/territori/confronto">confronto spesa e fabbisogno standard →</Link>. Dato{" "}
-          {openCivitasSnapshot.referenceYear}, {openCivitasSnapshot.coverage.territorialScope}.
-        </p>
-      </section>
+          <p className={styles.note}>
+            Guarda il Comune nel dettaglio storico e servizi nel{" "}
+            <Link href="/territori/confronto">confronto spesa e fabbisogno standard →</Link>. Dato{" "}
+            {openCivitasSnapshot.referenceYear}, {openCivitasSnapshot.coverage.territorialScope}.{" "}
+            Metrica v{spendingOutliers.metricVersion}: Tukey{" "}
+            {number.format(spendingOutliers.fenceMultiplier)} × IQR, quartili con interpolazione
+            lineare R-7, almeno {spendingOutliers.minimumRegionSize} Comuni per Regione.
+          </p>
+        </section>
+      )}
 
       {(selectedYear === null || selectedYear === 2025) && (
         <section className="panel">

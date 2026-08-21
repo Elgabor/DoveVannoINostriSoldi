@@ -6,25 +6,25 @@ import { LeadForm } from "./lead-form";
 export const metadata: Metadata = {
   title: "Consulenza",
   description:
-    "Consulenza su dati pubblici per aziende e amministrazioni. Il sito resta gratuito e indipendente.",
+    "Progetti di intelligenza artificiale su dati pubblici per aziende e amministrazioni. Il sito resta gratuito e indipendente.",
 };
 
 const offers = [
   [
-    "Lettura guidata",
-    "Partiamo da un ente, un territorio o un progetto e ricostruiamo che cosa dicono le fonti, che cosa manca e quali numeri si possono confrontare.",
+    "Lettura con AI",
+    "Partiamo da un ente, un territorio o un progetto. I modelli leggono le fonti ufficiali e ricostruiscono che cosa dicono i numeri, che cosa manca e che cosa si può confrontare. Ogni cifra resta agganciata alla fonte.",
   ],
   [
     "Report o cruscotto interno",
-    "Allestiamo una vista adatta a un ufficio o a un consiglio, con le stesse cautele del sito: fonte, data, perimetro e limiti di ogni cifra.",
+    "Costruiamo una vista per un ufficio, un consiglio o un team: si chiede in italiano e si ottiene una risposta sui dati pubblici, con fonte, data, perimetro e limiti di ogni cifra.",
   ],
   [
     "Formazione",
-    "Lavoriamo con chi deve spiegare i numeri: comunicazione, controllo di gestione, uffici gare, giornalismo o advocacy.",
+    "Addestriamo chi deve usare l'intelligenza artificiale sui dati pubblici senza inventare numeri: gare, controllo di gestione, comunicazione, uffici che lavorano con la PA.",
   ],
   [
-    "Imprese che lavorano con la PA",
-    "Aiutiamo a leggere bandi, affidamenti, pagamenti e anagrafi pubbliche senza confondere un dato aperto con un vantaggio informativo privato.",
+    "Strumento AI per l'impresa o per la PA",
+    "Progettiamo e mettiamo in opera un assistente o un flusso interno sul lavoro vero: cercare bandi, seguire affidamenti e pagamenti, interrogare anagrafi e progetti. Serve a chi vende alla pubblica amministrazione e a chi la pubblica amministrazione la gestisce.",
   ],
 ] as const;
 
@@ -32,11 +32,11 @@ export default function ConsultingPage() {
   return (
     <main className="shell page">
       <div className="page-intro">
-        <h1>Consulenza su dati pubblici</h1>
+        <h1>Intelligenza artificiale su dati pubblici</h1>
         <p>
-          Il sito resta gratuito. Se un&apos;azienda o un&apos;amministrazione ha bisogno di una
-          lettura più stretta, di un report interno o di un percorso di formazione, si può
-          partire da questo form.
+          Il sito resta gratuito. Qui si parla di incarichi: progetti di intelligenza
+          artificiale per un&apos;azienda o un&apos;amministrazione, costruiti sulle stesse fonti
+          pubbliche del sito.
         </p>
       </div>
 
@@ -53,7 +53,7 @@ export default function ConsultingPage() {
       <div className={styles.layout}>
         <section className={styles.offers} aria-labelledby="offers-title">
           <h2 id="offers-title" className="panel-title">
-            Che cosa possiamo fare
+            Che cosa costruiamo
           </h2>
           {offers.map(([title, text]) => (
             <article className="panel" key={title}>
@@ -71,7 +71,8 @@ export default function ConsultingPage() {
             Richiedi un contatto
           </h2>
           <p className={styles.formIntro}>
-            Compila i campi. Rispondiamo di solito entro due giorni lavorativi, sullo stesso
+            Indica il tipo di progetto e che lavoro dovrebbe fare l&apos;intelligenza
+            artificiale. Rispondiamo di solito entro due giorni lavorativi, sullo stesso
             indirizzo che indichi nel form.
           </p>
           <LeadForm />

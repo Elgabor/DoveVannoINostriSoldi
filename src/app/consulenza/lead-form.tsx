@@ -132,7 +132,7 @@ export function LeadForm() {
       </label>
 
       <label>
-        <span>Di che cosa hai bisogno *</span>
+        <span>Che tipo di progetto ti interessa *</span>
         <select className="input" name="topic" required defaultValue="">
           <option value="" disabled>
             Seleziona
@@ -160,7 +160,7 @@ export function LeadForm() {
       </label>
 
       <label className={styles.message}>
-        <span>Spiega meglio di che cosa hai bisogno *</span>
+        <span>Che lavoro dovrebbe fare l&apos;intelligenza artificiale *</span>
         <textarea
           className="input"
           name="message"
@@ -168,7 +168,7 @@ export function LeadForm() {
           minLength={30}
           maxLength={4000}
           rows={6}
-          placeholder="Ente, territorio, periodo, e che cosa ti serve dalla prima conversazione."
+          placeholder="Per chi è, su quali dati, che cosa deve trovare o scrivere. Esempio: un assistente interno sui bandi di un ministero, o un cruscotto sui pagamenti del Comune."
         />
       </label>
 

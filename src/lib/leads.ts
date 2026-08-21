@@ -8,10 +8,10 @@ export const ORGANIZATION_TYPES = {
 } as const;
 
 export const CONSULTING_TOPICS = {
-  lettura: "Lettura guidata di un ente, un territorio o un progetto",
-  dashboard: "Report o cruscotto interno",
-  formazione: "Formazione per uffici e team",
-  imprese: "Supporto a imprese che lavorano con la PA",
+  lettura: "Lettura con AI di un ente, un territorio o un progetto",
+  dashboard: "Report o cruscotto interno con AI",
+  formazione: "Formazione all'uso dell'AI sui dati pubblici",
+  applicazione: "Strumento AI per l'impresa o per la PA",
   altro: "Altro",
 } as const;
 
@@ -41,7 +41,7 @@ const leadFields = z.object({
   organizationWebsite: z.url({ error: "Indica un sito web valido, o lascia il campo vuoto." }).max(300).optional(),
   topic: z.enum(
     Object.keys(CONSULTING_TOPICS) as [ConsultingTopic, ...ConsultingTopic[]],
-    { error: "Scegli l'argomento della richiesta." },
+    { error: "Scegli il tipo di progetto." },
   ),
   budget: z.enum(
     Object.keys(PROJECT_BUDGETS) as [ProjectBudget, ...ProjectBudget[]],

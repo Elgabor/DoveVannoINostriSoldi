@@ -1,0 +1,52 @@
+# DoveVannoINostriSoldi
+
+> Portale civico open source per leggere dati pubblici italiani con fonte, periodo, perimetro e limiti sempre espliciti. I dati aiutano a scegliere cosa verificare; non attribuiscono sprechi, illeciti o responsabilità.
+
+## Superficie principale
+
+- [Home](https://www.dovevannoinostrisoldi.com/): quadro dei pagamenti comunali, mappa e collegamenti alle fonti.
+- [Soldi](https://www.dovevannoinostrisoldi.com/spese): uscite di cassa dei Comuni da SIOPE, con serie temporali e voci contabili.
+- [Territori](https://www.dovevannoinostrisoldi.com/territori): confronti territoriali sui pagamenti comunali e collegamenti a CPT e MEF IRPEF.
+- [IRPEF territoriale](https://www.dovevannoinostrisoldi.com/territori/irpef): contribuenti, redditi, imposta netta dichiarata e addizionali MEF 2024 per Regione, Provincia e Comune.
+- [Spese dello Stato](https://www.dovevannoinostrisoldi.com/stato): pagamenti OpenBDAP per missione, amministrazione e categoria.
+- [Fondi e progetti](https://www.dovevannoinostrisoldi.com/coesione): aggregati OpenCoesione su costi, pagamenti, temi, nature e stati.
+- [Enti e società](https://www.dovevannoinostrisoldi.com/enti): ricerca nell'Indice PA e collegamenti alle partecipazioni pubbliche.
+- [Parlamento](https://www.dovevannoinostrisoldi.com/parlamento): documenti e valori strutturati verificati della Camera, quando disponibili.
+- [Cosa controllare](https://www.dovevannoinostrisoldi.com/controlli): indicatori e segnali per orientare verifiche ulteriori.
+- [Fonti](https://www.dovevannoinostrisoldi.com/fonti): registro, copertura, aggiornamento e stato operativo delle fonti.
+
+## API e MCP
+
+- [MCP Streamable HTTP](https://www.dovevannoinostrisoldi.com/api/mcp): endpoint pubblico read-only. Chiama prima `list_datasets`, poi `query_dataset`; il catalogo dichiara filtri, freschezza, provenienza e caveat.
+- [Pagina MCP](https://www.dovevannoinostrisoldi.com/mcp): configurazione del client, dataset interrogabili e servizi complementari.
+- [Catalogo fonti via API](https://www.dovevannoinostrisoldi.com/api/fonti/stato): stato operativo delle fonti quando disponibile.
+- [API pagamenti comunali](https://www.dovevannoinostrisoldi.com/api/spese/comuni): pagamenti SIOPE dei Comuni, con periodo e filtri dichiarati.
+- [API distribuzione comunale](https://www.dovevannoinostrisoldi.com/api/spese/comuni/distribuzione): aggregati completi pesati per residenti e per Comune, pubblicati solo dopo un refresh raw verificato; non restituisce righe comunali.
+- [API spesa invalidità civile](https://www.dovevannoinostrisoldi.com/api/spese/invalidita): contabilità INPS separata da SIOPE; spesa nazionale e granularità regionale verificata.
+- [API CPT](https://www.dovevannoinostrisoldi.com/api/territori/fisco): entrate, spese e saldo contabile nello stesso perimetro CPT.
+- [API MEF IRPEF](https://www.dovevannoinostrisoldi.com/api/territori/irpef): rilascio comunale 2024 paginato.
+
+## Dataset e fonti
+
+Il catalogo MCP è la fonte più compatta per identificativi e filtri. Comprende SIOPE, OpenBDAP,
+OpenCoesione, ANAC, INPS, CPT, MEF IRPEF, IPA, partecipazioni MEF, Consulenti Pubblici,
+Parlamento e registro delle fonti. Le pagine [Fonti](https://www.dovevannoinostrisoldi.com/fonti)
+e [Metodo](https://www.dovevannoinostrisoldi.com/metodologia) riportano proprietario, formato,
+periodo, aggiornamento e limiti; la [documentazione MCP su GitHub](https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi/blob/main/docs/MCP.md)
+descrive il contratto e la procedura di integrazione.
+
+## Regole di interpretazione
+
+- Non sommare contabilità diverse: pagamenti SIOPE, costi previsti, debiti, prestazioni INPS, IRPEF dichiarata e saldo CPT misurano oggetti diversi.
+- Conservare sempre fonte, anno/periodo, data di osservazione, perimetro e unità di misura.
+- “Imposta netta dichiarata” non significa gettito totale e non si sottrae al saldo CPT.
+- Un’anomalia o un segnale orienta un controllo: non è prova di spreco, corruzione, frode o illecito.
+- Non distribuire totali nazionali a Comuni o Regioni e non dedurre fenomeni individuali da aggregati territoriali.
+- Le classifiche e i confronti richiedono denominatori e popolazioni coerenti; se la copertura non è comparabile, dichiararlo.
+
+## Privacy e codice
+
+- [Privacy](https://www.dovevannoinostrisoldi.com/privacy): il sito non richiede account; il form di consulenza ha un trattamento separato.
+- [Consulenza](https://www.dovevannoinostrisoldi.com/consulenza): canale per richieste di progetto, non endpoint dati.
+- [Repository](https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi): codice, ETL, test, documentazione e licenza MIT.
+- [Attribuzioni di terze parti](https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi/blob/main/THIRD_PARTY_NOTICES.md): licenze delle fonti e dei componenti riusati.

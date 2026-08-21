@@ -231,7 +231,10 @@ export default async function HomePage({
                 <div>
                   <span>Da gennaio a {monthLabel}</span>
                   <strong>{compactEuro(siope.totalPaid)}</strong>
-                  <small>pagati dai Comuni</small>
+                  <small>
+                    totale nazionale dei Comuni · {compactEuro(siope.coverage.paymentsWithoutRegion)}
+                    {" "}senza Regione IPA non mappati
+                  </small>
                 </div>
                 <div>
                   <span>Ultimo mese completo</span>
@@ -254,7 +257,9 @@ export default async function HomePage({
                 <div>
                   <span>Comuni inclusi</span>
                   <strong>{integer(siope.coverage.withMovements)}</strong>
-                  <small>su {integer(siope.coverage.activeSiopeMunicipalities)} registrati</small>
+                  <small>
+                    su {integer(siope.coverage.activeSiopeMunicipalities)} validi nel periodo
+                  </small>
                 </div>
               </div>
             }

@@ -133,33 +133,35 @@ export default async function ControlsPage({ searchParams }: PageProps) {
         </div>
       </nav>
 
-      <div className="notice">
-        <strong>Come leggere questi dati</strong>
+      <section
+        className="notice scope-notice"
+        aria-labelledby="controlli-reading-title"
+      >
+        <h2 id="controlli-reading-title">Come leggere questi dati</h2>
         <p>
           Pagamenti, debiti, costi e ipotesi misurano cose diverse e non vanno sommati. Un segnale
           indica cosa approfondire, non dimostra una colpa. Consulta le <Link href="/fonti">fonti
           ufficiali</Link> e il <Link href="/metodologia">metodo usato per leggere i dati</Link>.
         </p>
-      </div>
-
-      <div className="notice">
-        <strong>Dove l&apos;automazione aiuta davvero</strong>
-        <p>
-          Il portale può confrontare casi omogenei, trovare dati mancanti e ordinare le verifiche.
-          Non conduce indagini e non sostituisce Guardia di finanza, ANAC, Corte dei conti o il
-          controllo umano. Gli aggregati CIG 2025 verificati sono disponibili nel{" "}
-          <Link href="/mcp">dataset MCP ANAC</Link>; il{" "}
-          <a
-            href="https://dati.anticorruzione.it/opendata/dataset"
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Apri il catalogo open data ANAC in una nuova scheda"
-          >
-            catalogo ufficiale ANAC ↗
-          </a>{" "}
-          resta la fonte primaria.
-        </p>
-      </div>
+        <div className="scope-notice__section">
+          <h3>Dove l&apos;automazione aiuta davvero</h3>
+          <p>
+            Il portale può confrontare casi omogenei, trovare dati mancanti e ordinare le verifiche.
+            Non conduce indagini e non sostituisce Guardia di finanza, ANAC, Corte dei conti o il
+            controllo umano. Gli aggregati CIG 2025 verificati sono disponibili nel{" "}
+            <Link href="/mcp">dataset MCP ANAC</Link>; il{" "}
+            <a
+              href="https://dati.anticorruzione.it/opendata/dataset"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Apri il catalogo open data ANAC in una nuova scheda"
+            >
+              catalogo ufficiale ANAC ↗
+            </a>{" "}
+            resta la fonte primaria.
+          </p>
+        </div>
+      </section>
 
       <details className={`panel ${styles.readingGuide}`}>
         <summary>Come distinguere questi numeri</summary>

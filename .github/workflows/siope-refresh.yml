@@ -115,6 +115,8 @@ jobs:
           )
           assert data["source"]["siopeMovementsLastModified"]
           assert data["source"]["siopeRegistryLastModified"]
+          for field in ("siopeMovementsEtag", "siopeRegistryEtag", "ipaEtag"):
+              assert isinstance(data["source"][field], str) and data["source"][field]
           for field in ("siopeMovementsSha256", "siopeRegistrySha256", "ipaSha256"):
               assert re.fullmatch(r"[0-9a-f]{64}", data["source"][field]), field
           assert (

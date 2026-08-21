@@ -494,6 +494,9 @@ def build_distribution(
             "siopeMovementsLastModified": validators["movements"].get("lastModified"),
             "siopeRegistryLastModified": validators["registry"].get("lastModified"),
             "ipaLastModified": validators["ipa"].get("lastModified"),
+            "siopeMovementsEtag": validators["movements"].get("etag"),
+            "siopeRegistryEtag": validators["registry"].get("etag"),
+            "ipaEtag": validators["ipa"].get("etag"),
             "siopeMovementsSha256": validators["movements"].get("sha256"),
             "siopeRegistrySha256": validators["registry"].get("sha256"),
             "ipaSha256": validators["ipa"].get("sha256"),
@@ -712,6 +715,9 @@ def build_snapshot(
             "siopeMovementsLastModified": validators["movements"].get("lastModified"),
             "siopeRegistryLastModified": validators["registry"].get("lastModified"),
             "ipaLastModified": validators["ipa"].get("lastModified"),
+            "siopeMovementsEtag": validators["movements"].get("etag"),
+            "siopeRegistryEtag": validators["registry"].get("etag"),
+            "ipaEtag": validators["ipa"].get("etag"),
             "siopeMovementsSha256": validators["movements"].get("sha256"),
             "siopeRegistrySha256": validators["registry"].get("sha256"),
             "ipaSha256": validators["ipa"].get("sha256"),
@@ -756,15 +762,24 @@ def is_unchanged(output: Path, year: int, validators: dict) -> bool:
     except (OSError, json.JSONDecodeError):
         return False
     source = current.get("source", {})
+    source_keys = (
+        ("movements", "siopeMovements"),
+        ("registry", "siopeRegistry"),
+        ("ipa", "ipa"),
+    )
+    validators_match = all(
+        validators[key].get("lastModified") is not None
+        and source.get(f"{prefix}LastModified") == validators[key].get("lastModified")
+        and (
+            validators[key].get("etag") is None
+            or source.get(f"{prefix}Etag") == validators[key].get("etag")
+        )
+        for key, prefix in source_keys
+    )
     return (
         current.get("schemaVersion") == 3
         and current.get("year") == year
-        and source.get("siopeMovementsLastModified")
-        == validators["movements"].get("lastModified")
-        and source.get("siopeRegistryLastModified")
-        == validators["registry"].get("lastModified")
-        and source.get("ipaLastModified") == validators["ipa"].get("lastModified")
-        and validators["movements"].get("lastModified") is not None
+        and validators_match
         and isinstance(current.get("distribution"), dict)
         and all(
             re.fullmatch(r"[0-9a-f]{64}", str(source.get(field, "")))

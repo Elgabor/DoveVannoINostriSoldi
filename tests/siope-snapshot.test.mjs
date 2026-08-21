@@ -42,6 +42,9 @@ test("SIOPE snapshot exposes a complete national municipal aggregation", async (
   assert.ok(data.source.siopeMovementsLastModified);
   assert.ok(data.source.siopeRegistryLastModified);
   assert.ok(data.source.ipaLastModified);
+  assert.ok(data.source.siopeMovementsEtag);
+  assert.ok(data.source.siopeRegistryEtag);
+  assert.ok(data.source.ipaEtag);
   assert.match(data.methodology.populationReference, /non dichiarata/i);
   assert.equal(
     data.methodology.populationSourceLastModified,
@@ -208,5 +211,19 @@ test("runtime validation rejects missing or divergent distribution metadata", as
   assert.throws(
     () => assertSiopeDistributionIntegrity(divergentShare, source.year),
     /quota nazionale/i,
+  );
+
+  const divergentMethod = structuredClone(source);
+  divergentMethod.distribution.measure.quantileMethod = "interpolazione arbitraria";
+  assert.throws(
+    () => assertSiopeDistributionIntegrity(divergentMethod, source.year),
+    /semantica della distribuzione/i,
+  );
+
+  const missingQuantile = structuredClone(source);
+  missingQuantile.distribution.regions[0].perCapita.residentWeighted.p50 = null;
+  assert.throws(
+    () => assertSiopeDistributionIntegrity(missingQuantile, source.year),
+    /presenza dei quantili/i,
   );
 });

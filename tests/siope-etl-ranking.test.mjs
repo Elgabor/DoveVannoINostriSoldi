@@ -149,3 +149,35 @@ test("SIOPE distribution rejects fake provenance and inconsistent title componen
   assert.match(errors[0], /SHA-256 .*non valido/);
   assert.match(errors[1], /Titolo 1 supera il totale/);
 });
+
+test("SIOPE refresh skip includes upstream ETag when it is available", async () => {
+  const code = [
+    "import json, tempfile",
+    "from pathlib import Path",
+    "from scripts.etl.siope_municipal_snapshot import is_unchanged",
+    "source = {",
+    "  'siopeMovementsLastModified': 'one', 'siopeMovementsEtag': 'etag-one',",
+    "  'siopeRegistryLastModified': 'two', 'siopeRegistryEtag': 'etag-two',",
+    "  'ipaLastModified': 'three', 'ipaEtag': 'etag-three',",
+    "  'siopeMovementsSha256': 'a' * 64, 'siopeRegistrySha256': 'b' * 64, 'ipaSha256': 'c' * 64,",
+    "}",
+    "validators = {",
+    "  'movements': {'lastModified': 'one', 'etag': 'etag-one'},",
+    "  'registry': {'lastModified': 'two', 'etag': 'etag-two'},",
+    "  'ipa': {'lastModified': 'three', 'etag': 'etag-three'},",
+    "}",
+    "with tempfile.TemporaryDirectory() as directory:",
+    "  path = Path(directory) / 'snapshot.json'",
+    "  path.write_text(json.dumps({'schemaVersion': 3, 'year': 2026, 'source': source, 'distribution': {}}))",
+    "  same = is_unchanged(path, 2026, validators)",
+    "  validators['movements']['etag'] = 'etag-replaced-in-place'",
+    "  drift = is_unchanged(path, 2026, validators)",
+    "  validators['movements']['etag'] = None",
+    "  no_etag = is_unchanged(path, 2026, validators)",
+    "print(json.dumps({'same': same, 'drift': drift, 'noEtag': no_etag}))",
+  ].join("\n");
+  const { stdout } = await execFileAsync("python3", ["-c", code], {
+    cwd: new URL("..", import.meta.url),
+  });
+  assert.deepEqual(JSON.parse(stdout), { same: true, drift: false, noEtag: true });
+});

@@ -91,6 +91,9 @@ export type SiopeMunicipalDistribution = {
     siopeMovementsLastModified: string | null;
     siopeRegistryLastModified: string | null;
     ipaLastModified: string | null;
+    siopeMovementsEtag: string | null;
+    siopeRegistryEtag: string | null;
+    ipaEtag: string | null;
     siopeMovementsSha256: string | null;
     siopeRegistrySha256: string | null;
     ipaSha256: string | null;
@@ -136,6 +139,9 @@ export type SiopeMunicipalSnapshot = {
     siopeMovementsLastModified: string | null;
     siopeRegistryLastModified: string | null;
     ipaLastModified: string | null;
+    siopeMovementsEtag: string | null;
+    siopeRegistryEtag: string | null;
+    ipaEtag: string | null;
     siopeMovementsSha256: string;
     siopeRegistrySha256: string;
     ipaSha256: string;
@@ -222,6 +228,19 @@ function assertPerCapita(value: unknown, field: string): SiopeDistributionGroup[
   };
 }
 
+function assertQuantilePresence(
+  perCapita: SiopeDistributionGroup["perCapita"],
+  hasMunicipalities: boolean,
+  field: string,
+) {
+  for (const [weighting, quantiles] of Object.entries(perCapita)) {
+    const values = Object.values(quantiles);
+    if (hasMunicipalities ? values.some((value) => value === null) : values.some((value) => value !== null)) {
+      throw new Error(`${field}.${weighting}: presenza dei quantili non coerente con i Comuni`);
+    }
+  }
+}
+
 function assertGroup(value: unknown, field: string): SiopeDistributionGroup {
   const item = record(value, field);
   const municipalities = count(item.municipalities, `${field}.municipalities`);
@@ -240,13 +259,15 @@ function assertGroup(value: unknown, field: string): SiopeDistributionGroup {
   if ((municipalities === 0) !== (population === 0)) {
     throw new Error(`${field}: popolazione e Comuni vuoti non coerenti`);
   }
+  const perCapita = assertPerCapita(item.perCapita, `${field}.perCapita`);
+  assertQuantilePresence(perCapita, municipalities > 0, `${field}.perCapita`);
   return {
     municipalities,
     population,
     titleAmount,
     totalAmount,
     share,
-    perCapita: assertPerCapita(item.perCapita, `${field}.perCapita`),
+    perCapita,
   };
 }
 
@@ -292,6 +313,9 @@ export function assertSiopeDistributionIntegrity(value: unknown, expectedYear: n
   ]) {
     nonEmptyText(source[modifiedField], `SIOPE ${expectedYear}.source.${modifiedField}`);
   }
+  for (const etagField of ["siopeMovementsEtag", "siopeRegistryEtag", "ipaEtag"]) {
+    nonEmptyText(source[etagField], `SIOPE ${expectedYear}.source.${etagField}`);
+  }
 
   const distribution = record(snapshot.distribution, `SIOPE ${expectedYear}.distribution`);
   if (distribution.schemaVersion !== 1) throw new Error(`SIOPE ${expectedYear}: distribution v1 attesa`);
@@ -299,9 +323,14 @@ export function assertSiopeDistributionIntegrity(value: unknown, expectedYear: n
   if (measure.titleCode !== "1" || measure.titleLabel !== "Spese correnti") {
     throw new Error(`SIOPE ${expectedYear}: misura della distribuzione inattesa`);
   }
-  nonEmptyText(measure.metric, `SIOPE ${expectedYear}.distribution.measure.metric`);
-  nonEmptyText(measure.shareDenominator, `SIOPE ${expectedYear}.distribution.measure.shareDenominator`);
-  nonEmptyText(measure.quantileMethod, `SIOPE ${expectedYear}.distribution.measure.quantileMethod`);
+  if (
+    measure.metric !== "pagamenti del Titolo 1 per abitante del Comune" ||
+    measure.shareDenominator !== "tutti i pagamenti SIOPE dei Comuni" ||
+    measure.quantileMethod !==
+      "nearest-rank pesato: prima osservazione la cui cumulata raggiunge p·peso totale"
+  ) {
+    throw new Error(`SIOPE ${expectedYear}: semantica della distribuzione inattesa`);
+  }
 
   const period = record(distribution.period, `SIOPE ${expectedYear}.distribution.period`);
   if (period.year !== expectedYear || period.startMonth !== 1 || period.endMonth !== latestMonth) {
@@ -345,7 +374,15 @@ export function assertSiopeDistributionIntegrity(value: unknown, expectedYear: n
     `SIOPE ${expectedYear}.distribution.nationalShareCovered`,
   );
   if (shareAll > 1 || shareCovered > 1) throw new Error(`SIOPE ${expectedYear}: quota nazionale oltre 1`);
-  assertPerCapita(distribution.perCapita, `SIOPE ${expectedYear}.distribution.perCapita`);
+  const nationalPerCapita = assertPerCapita(
+    distribution.perCapita,
+    `SIOPE ${expectedYear}.distribution.perCapita`,
+  );
+  assertQuantilePresence(
+    nationalPerCapita,
+    withPopulation > 0,
+    `SIOPE ${expectedYear}.distribution.perCapita`,
+  );
 
   if (!Array.isArray(distribution.populationBands) || distribution.populationBands.length !== EXPECTED_BAND_IDS.length) {
     throw new Error(`SIOPE ${expectedYear}: otto fasce di popolazione attese`);
@@ -410,6 +447,9 @@ export function assertSiopeDistributionIntegrity(value: unknown, expectedYear: n
     "siopeMovementsLastModified",
     "siopeRegistryLastModified",
     "ipaLastModified",
+    "siopeMovementsEtag",
+    "siopeRegistryEtag",
+    "ipaEtag",
     "siopeMovementsSha256",
     "siopeRegistrySha256",
     "ipaSha256",

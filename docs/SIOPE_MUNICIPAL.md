@@ -69,7 +69,7 @@ Lo snapshot contiene:
 - `distribution`, quando il refresh ha elaborato tutti i movimenti raw verificati: quote nazionali,
   quantili per abitante, fasce dimensionali e riepiloghi regionali; non contiene righe comunali;
 - copertura del join;
-- URL, `Last-Modified` e hash SHA-256 dei file upstream quando il refresh è stato completato;
+- URL, `Last-Modified`, `ETag` e hash SHA-256 dei file upstream quando il refresh è stato completato;
 - warning metodologico mostrato anche nella dashboard.
 
 L'API pubblica è `/api/spese/comuni`.
@@ -109,6 +109,10 @@ Il raw completo resta un input dell'ETL e non viene caricato nel client. Uno sna
 essere pubblicato. Le liste `topMunicipalitiesByValue` e `topMunicipalitiesByPerCapita` restano
 limitate ai primi 100 e non possono essere usate per calcolare quartili, medie nazionali o
 distribuzioni regionali.
+
+Il refresh evita il download soltanto quando i `Last-Modified` coincidono e, quando la fonte lo
+pubblica, coincide anche l'`ETag`. Una sostituzione in-place con `ETag` diverso forza quindi un
+nuovo download e un nuovo hash del contenuto.
 
 ## Quality gates
 

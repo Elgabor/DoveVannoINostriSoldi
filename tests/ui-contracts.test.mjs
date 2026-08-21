@@ -73,6 +73,7 @@ test("the spending analysis explains the share without turning it into a merit r
   assert.match(spendingPage, /non dice se una spesa sia utile/);
   assert.match(spendingPage, /Il confronto non è un trend/);
   assert.match(spendingPage, /<th scope="col" className="num">Quota<\/th>/);
+  assert.match(spendingPage, /<th scope="col">Stato<\/th>/);
   assert.match(spendingPage, /distribuzione completa/);
   assert.match(spendingPage, /data\.distribution\.perCapita\.residentWeighted/);
   assert.doesNotMatch(spendingPage, /primi 100/);

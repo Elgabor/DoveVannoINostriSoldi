@@ -7,18 +7,42 @@ import { relatedMcpServices } from "@/lib/mcp/related-services";
 
 const querySchema = z.object({
   dataset: z.enum(DATASET_IDS).describe("Identificativo restituito da list_datasets."),
-  year: z.number().int().min(2000).max(2100).optional(),
-  month: z.number().int().min(1).max(12).optional(),
-  query: z.string().max(200).optional(),
-  region: z.string().max(100).optional(),
-  province: z.string().max(3).optional(),
-  level: z.enum(["region", "province", "municipality"]).optional(),
-  code: z.string().max(100).optional(),
-  cup: z.string().max(15).optional(),
-  area: z.string().max(100).optional(),
-  chamber: z.enum(["camera", "senato"]).optional(),
-  limit: z.number().int().min(1).max(100).optional(),
-  offset: z.number().int().min(0).max(100_000).optional(),
+  year: z.number().int().min(2000).max(2100)
+    .describe("Anno di riferimento a quattro cifre, solo se dichiarato tra i filtri del dataset.")
+    .optional(),
+  month: z.number().int().min(1).max(12)
+    .describe("Mese di riferimento da 1 a 12; richiede anche year e un dataset che supporti month.")
+    .optional(),
+  query: z.string().max(200)
+    .describe("Testo libero da cercare nel dataset, con significato e copertura indicati nel catalogo.")
+    .optional(),
+  region: z.string().max(100)
+    .describe("Nome o codice della Regione accettato dal dataset selezionato.")
+    .optional(),
+  province: z.string().max(3)
+    .describe("Sigla o codice provinciale accettato dal dataset selezionato, massimo 3 caratteri.")
+    .optional(),
+  level: z.enum(["region", "province", "municipality"])
+    .describe("Livello territoriale della risposta: region, province oppure municipality.")
+    .optional(),
+  code: z.string().max(100)
+    .describe("Codice identificativo richiesto dal dataset, per esempio codice IPA o ISTAT.")
+    .optional(),
+  cup: z.string().max(15)
+    .describe("Codice Unico di Progetto dell'opera pubblica da cercare, massimo 15 caratteri.")
+    .optional(),
+  area: z.string().max(100)
+    .describe("Area tematica usata dai dataset che espongono classificazioni o segnali di controllo.")
+    .optional(),
+  chamber: z.enum(["camera", "senato"])
+    .describe("Ramo del Parlamento: camera oppure senato.")
+    .optional(),
+  limit: z.number().int().min(1).max(100)
+    .describe("Numero massimo di record da restituire, da 1 a 100, solo per dataset che supportano limit.")
+    .optional(),
+  offset: z.number().int().min(0).max(100_000)
+    .describe("Numero di record da saltare, da 0 a 100000, solo per dataset che supportano offset.")
+    .optional(),
 }).strict();
 
 function toolResult(value: unknown) {

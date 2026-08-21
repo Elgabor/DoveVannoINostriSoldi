@@ -167,6 +167,37 @@ test("MCP endpoint exposes the read-only tools over Streamable HTTP", async () =
   assert.equal(response.headers.get("cache-control"), "private, no-store");
 });
 
+test("MCP query tool describes every input parameter for clients and directories", async () => {
+  const response = await POST(request({ Origin: "https://example.test" }));
+  const rpcEvent = parseRpcEvent(await response.text());
+  const queryTool = rpcEvent.result.tools.find((tool) => tool.name === "query_dataset");
+  assert.ok(queryTool, "query_dataset tool missing");
+  const properties = queryTool.inputSchema?.properties;
+  assert.ok(properties && Object.keys(properties).length > 0, "query_dataset properties missing");
+  assert.deepEqual(Object.keys(properties), [
+    "dataset",
+    "year",
+    "month",
+    "query",
+    "region",
+    "province",
+    "level",
+    "code",
+    "cup",
+    "area",
+    "chamber",
+    "limit",
+    "offset",
+  ]);
+  for (const [name, schema] of Object.entries(properties)) {
+    assert.equal(
+      typeof schema.description === "string" && schema.description.trim().length > 0,
+      true,
+      `${name} is missing a non-empty description`,
+    );
+  }
+});
+
 test("MCP endpoint exposes the machine-readable dataset catalog resource", async () => {
   const response = await POST(request({}, JSON.stringify({
     jsonrpc: "2.0",

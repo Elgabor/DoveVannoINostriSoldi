@@ -104,6 +104,14 @@ test("MEF IRPEF query keeps periods and semantic boundaries explicit", () => {
   assert.match(result.caveats.join(" "), /non è il gettito fiscale totale/i);
   assert.match(result.caveats.join(" "), /non vengono sottratti.*CPT/i);
   assert.doesNotMatch(JSON.stringify(result), /ABANO TERME/);
+
+  const originalName = result.data[0].territory.name;
+  const originalSourceName = result.data[0].territory.sourceNames[0];
+  result.data[0].territory.name = "MUTATED";
+  result.data[0].territory.sourceNames[0] = "MUTATED";
+  const freshResult = queryMefMunicipalIrpef();
+  assert.equal(freshResult.data[0].territory.name, originalName);
+  assert.equal(freshResult.data[0].territory.sourceNames[0], originalSourceName);
 });
 
 test("MEF IRPEF query is bounded, stable and preserves suppressed values", () => {
@@ -121,6 +129,17 @@ test("MEF IRPEF query is bounded, stable and preserves suppressed values", () =>
     knownFrequency: 0,
     knownAmountCents: 0,
     suppressedRows: 1,
+  });
+
+  const abanoByName = queryMefMunicipalIrpef({
+    level: "municipality",
+    query: "abano térme",
+  });
+  assert.equal(abanoByName.pagination.total, 1);
+  assert.equal(abanoByName.data[0].territory.code, abano.data[0].territory.code);
+  assert.deepEqual(abanoByName.matchedTotals, {
+    taxpayers: abano.data[0].taxpayers,
+    measures: abano.data[0].measures,
   });
 
   const firstPage = queryMefMunicipalIrpef({

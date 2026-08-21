@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { CONSULTING_TOPICS } from "@/lib/leads";
-import { CONTACT_EMAIL } from "@/lib/site";
 import styles from "./consulenza.module.css";
 import { LeadForm } from "./lead-form";
 
@@ -72,9 +71,8 @@ export default function ConsultingPage() {
             Richiedi un contatto
           </h2>
           <p className={styles.formIntro}>
-            Compila i campi. Rispondiamo di solito entro due giorni lavorativi. Se preferisci
-            scrivere tu, l&apos;indirizzo è{" "}
-            <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+            Compila i campi. Rispondiamo di solito entro due giorni lavorativi, sullo stesso
+            indirizzo che indichi nel form.
           </p>
           <LeadForm />
         </section>

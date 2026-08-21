@@ -71,9 +71,6 @@ export function Navigation() {
         </form>
 
         <div className="header-actions">
-          <Link className="header-action" href="/fonti">
-            Scarica i dati
-          </Link>
           <Link className="header-action" href="/consulenza">
             Consulenza
           </Link>

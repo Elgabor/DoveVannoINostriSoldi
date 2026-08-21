@@ -130,7 +130,7 @@ export function LeadForm() {
       </label>
 
       <label className={styles.message}>
-        <span>Messaggio *</span>
+        <span>Spiega meglio di che cosa hai bisogno *</span>
         <textarea
           className="input"
           name="message"
@@ -138,7 +138,7 @@ export function LeadForm() {
           minLength={30}
           maxLength={4000}
           rows={6}
-          placeholder="Ente o territorio, periodo, e che cosa ti servirebbe dopo la prima conversazione."
+          placeholder="Ente, territorio, periodo, e che cosa ti serve dalla prima conversazione."
         />
       </label>
 

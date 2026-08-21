@@ -178,6 +178,57 @@ async function assertResponsiveShell(page, label, width) {
   );
 }
 
+async function assertCohesionStatusLayout(page, label) {
+  const state = await page.$eval("main", (main) => {
+    const section = [...main.querySelectorAll("section")].find(
+      (candidate) => candidate.querySelector("h2")?.textContent?.trim() === "A che punto sono i progetti",
+    );
+    const list = section?.querySelector("ul");
+    if (!section || !list) return null;
+
+    const listRect = list.getBoundingClientRect();
+    return {
+      listClientWidth: list.clientWidth,
+      listScrollWidth: list.scrollWidth,
+      listRight: listRect.right,
+      rows: [...list.querySelectorAll(":scope > li")].map((row) => {
+        const value = row.lastElementChild;
+        const rowRect = row.getBoundingClientRect();
+        const valueRect = value?.getBoundingClientRect();
+        return {
+          rowClientWidth: row.clientWidth,
+          rowScrollWidth: row.scrollWidth,
+          rowRight: rowRect.right,
+          valueClientWidth: value?.clientWidth ?? 0,
+          valueScrollWidth: value?.scrollWidth ?? 0,
+          valueRight: valueRect?.right ?? 0,
+        };
+      }),
+    };
+  });
+
+  assert.ok(state, `${label}: elenco degli stati non trovato`);
+  assert.equal(state.rows.length, 5, `${label}: numero di stati inatteso`);
+  assert.ok(
+    state.listScrollWidth <= state.listClientWidth + 1,
+    `${label}: elenco stati oltre il proprio contenitore`,
+  );
+  for (const [index, row] of state.rows.entries()) {
+    assert.ok(
+      row.rowScrollWidth <= row.rowClientWidth + 1,
+      `${label}: riga ${index + 1} oltre il proprio contenitore`,
+    );
+    assert.ok(
+      row.valueScrollWidth <= row.valueClientWidth + 1,
+      `${label}: valore della riga ${index + 1} tagliato o eccedente`,
+    );
+    assert.ok(
+      row.valueRight <= row.rowRight + 1 && row.valueRight <= state.listRight + 1,
+      `${label}: valore della riga ${index + 1} esce dal pannello`,
+    );
+  }
+}
+
 async function assertInfoTooltips(page, label) {
   for (const tooltipId of INFO_TOOLTIP_IDS) {
     const selector = `button[aria-controls="${tooltipId}"]`;
@@ -596,6 +647,20 @@ try {
         assertTextMatches(text, /Personale in quiescenza/, label);
         assertTextMatches(text, /non equivale ai soli vitalizi/i, label);
         await assertResponsiveShell(page, label, width);
+      },
+    });
+    completed.push(label);
+  }
+
+  for (const width of [320, 390, 768, 1280, 1600]) {
+    const label = `Coesione stati ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/coesione",
+      width,
+      validate: async (page) => {
+        assertTextMatches(await bodyText(page), /A che punto sono i progetti/i, label);
+        await assertCohesionStatusLayout(page, label);
       },
     });
     completed.push(label);

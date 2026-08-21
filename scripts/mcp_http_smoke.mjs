@@ -70,6 +70,14 @@ assert.equal(apiResponse.status, 200);
 assert.match(api, /"taxYear":2024/);
 assert.match(api, /netTaxDeclared/);
 
+const pnrrApiResponse = await fetch(new URL("/api/pnrr/asili?cup=B11B21001610005", baseUrl), {
+  signal: AbortSignal.timeout(10_000),
+});
+const pnrrApi = await responseText(pnrrApiResponse, "API PNRR asili");
+assert.equal(pnrrApiResponse.status, 200);
+assert.match(pnrrApi, /"dataset":"pnrr_asili"/);
+assert.match(pnrrApi, /"cup":"B11B21001610005"/);
+
 const legacyTools = await mcpRequest({ jsonrpc: "2.0", id: 1, method: "tools/list" });
 assert.match(legacyTools, /list_datasets/);
 assert.match(legacyTools, /query_dataset/);
@@ -88,6 +96,20 @@ assert.match(legacyDataset, /Imposta netta dichiarata/i);
 const legacyData = successfulMcpToolResult(legacyDataset, "mef_irpef_comunale").data;
 assert.equal(legacyData.level, "region");
 assert.equal(legacyData.pagination.returned, 20);
+
+const pnrrDataset = await mcpRequest({
+  jsonrpc: "2.0",
+  id: 21,
+  method: "tools/call",
+  params: {
+    name: "query_dataset",
+    arguments: { dataset: "pnrr_asili", cup: "B11B21001610005" },
+  },
+});
+const pnrrData = successfulMcpToolResult(pnrrDataset, "pnrr_asili").data;
+assert.equal(pnrrData.pagination.total, 1);
+assert.equal(pnrrData.data[0].cup, "B11B21001610005");
+assert.match(pnrrData.methodology.fundingWarning, /non è un pagamento osservato/i);
 
 const meta = {
   "io.modelcontextprotocol/protocolVersion": "2026-07-28",

@@ -19,8 +19,8 @@ const querySchema = z.object({
   region: z.string().max(100)
     .describe("Nome o codice della Regione accettato dal dataset selezionato.")
     .optional(),
-  province: z.string().max(3)
-    .describe("Sigla o codice provinciale accettato dal dataset selezionato, massimo 3 caratteri.")
+  province: z.string().max(100)
+    .describe("Nome, sigla o codice provinciale accettato dal dataset selezionato, massimo 100 caratteri.")
     .optional(),
   level: z.enum(["region", "province", "municipality"])
     .describe("Livello territoriale della risposta: region, province oppure municipality.")

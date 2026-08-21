@@ -75,6 +75,11 @@ test("source health registry covers every operational source, including ANAC, IN
   assert.equal(mefIrpef?.freshness.sourceTimestamp, "2026-04-23");
   assert.match(mefIrpef?.detail ?? "", /7\.897 righe fonte/);
   assert.match(mefIrpef?.detail ?? "", /Mancante\/errata separata/);
+  const pnrr = overview.find((entry) => entry.sourceId === "italiadomani");
+  assert.equal(pnrr?.reachability, "not-probed");
+  assert.equal(pnrr?.recordCount, 3_841);
+  assert.equal(pnrr?.freshness.sourceTimestamp, "2026-06-13");
+  assert.match(pnrr?.detail ?? "", /18\.851 gare/);
 });
 
 test("source health registry fails closed when an adapter is omitted", () => {

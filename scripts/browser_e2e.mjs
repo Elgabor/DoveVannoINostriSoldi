@@ -859,6 +859,42 @@ try {
     completed.push(label);
   }
 
+  for (const width of [390, 768, 1280]) {
+    const label = `PNRR asili catalogo ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/coesione/asili?regione=LAZIO",
+      width,
+      validate: async (page) => {
+        const text = await bodyText(page);
+        assertTextMatches(text, /Da miliardi nazionali a un CUP verificabile/i, label);
+        assertTextMatches(text, /progetti trovati/i, label);
+        assert.ok(await page.$('input[name="q"]'), `${label}: ricerca assente`);
+        assert.ok(await page.$('select[name="regione"]'), `${label}: filtro regione assente`);
+        assert.ok(await page.$('article a[href^="/progetti/"]'), `${label}: schede progetto assenti`);
+      },
+    });
+    completed.push(label);
+  }
+
+  for (const width of [390, 768, 1280]) {
+    const label = `PNRR traccia CUP ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/progetti/B11B21001610005",
+      width,
+      validate: async (page) => {
+        const text = await bodyText(page);
+        assertTextMatches(text, /Finanziamento PNRR registrato/i, label);
+        assertTextMatches(text, /Pagamenti ReGiS/i, label);
+        assertTextMatches(text, /Fonte e limiti/i, label);
+        assert.ok(await page.$('[class*="evidence"]'), `${label}: etichette evidenza assenti`);
+        assert.ok(await page.$('a[href*="/api/pnrr/asili?cup="]'), `${label}: JSON scheda assente`);
+      },
+    });
+    completed.push(label);
+  }
+
   console.log(JSON.stringify({
     baseUrl: baseUrl.origin,
     checks: completed,

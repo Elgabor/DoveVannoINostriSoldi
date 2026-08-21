@@ -14,7 +14,7 @@ L'AI serve a confrontare dati omogenei, trovare scostamenti e ordinare i casi da
 | Soldi | Pagamenti effettuati dai Comuni: voci di uscita e flusso mese per mese, distinti dalle tasse dei residenti | SIOPE |
 | Invalidità civile | Spesa nazionale, prestazioni vigenti e nuove pensioni per regione | INPS |
 | Territori | Pagamenti comunali, conti territoriali e redditi/IRPEF dichiarati, con perimetri separati | SIOPE, IPA, CPT, MEF |
-| Fondi e progetti | Costo previsto, pagamenti e stato dei progetti di coesione | OpenCoesione |
+| Fondi e progetti | Costo previsto e pagamenti OpenCoesione; traccia PNRR per asili con CUP, gare e aggiudicatari | OpenCoesione, Italia Domani |
 | Enti e società | Ministeri, enti pubblici, uffici, contatti e società partecipate | IPA, AgID, MEF |
 | Spese dello Stato | Pagamenti per funzione, amministrazione e tipo di spesa | RGS, OpenBDAP |
 | Fabbisogni comunali | Spesa storica, spesa standard e servizi dei Comuni nel 2022 | OpenCivitas |
@@ -23,7 +23,7 @@ L'AI serve a confrontare dati omogenei, trovare scostamenti e ordinare i casi da
 | Controlli | Dati che meritano verifiche più approfondite, con spiegazioni e fonti | ANAC, MEF, Corte dei conti e altre fonti ufficiali |
 | Fonti | Stato dei collegamenti e date di aggiornamento | Registro interno delle fonti |
 
-Per ANAC è disponibile uno snapshot verificato sui dodici file mensili CIG 2025; non è ancora una ricerca live per singolo CIG o fornitore. Il PNRR ReGiS e altre fonti già censite non sono ancora presentati come dati correnti. Il sito dichiara questi limiti e non usa numeri dimostrativi per riempire gli spazi mancanti.
+Per ANAC è disponibile uno snapshot verificato sui dodici file mensili CIG 2025; non è ancora una ricerca live per singolo CIG o fornitore. Per il PNRR è operativo il perimetro asili e prima infanzia di Italia Domani: non include i pagamenti ReGiS e non viene esteso artificialmente al resto del Piano. Il sito dichiara questi limiti e non usa numeri dimostrativi per riempire gli spazi mancanti.
 
 Il backend espone inoltre:
 
@@ -32,6 +32,7 @@ Il backend espone inoltre:
 - `GET /api/spese/stato?anno=2024`, con il consuntivo annuale OpenBDAP quando disponibile; in sua assenza, l'ultimo rilascio mensile dell'anno;
 - `GET /api/spese/stato/amministrazioni/2?anno=2024`, con missioni e categorie di una singola amministrazione;
 - `GET /api/opere?cup=I39B05000060005`, con stato, date, costi e finanziamenti di un'opera pubblica OpenBDAP;
+- `GET /api/pnrr/asili?region=Lazio&limit=20`, con progetti Italia Domani, localizzazioni, finanziamenti, gare e aggiudicatari; la ricerca esatta usa `cup`;
 - `GET /api/parlamento`, con i dati strutturati verificati della Camera; il monitor segue anche i nuovi documenti del Senato senza pubblicare valori non ancora estraibili in modo affidabile;
 - `GET /api/controlli`, con indicatori classificati, scenari separati e regole per il loro uso.
 - `GET /api/spese/invalidita?anno=2024&regione=Calabria`, con spesa nazionale e nuove pensioni di invalidità civile per la granularità pubblica verificata.
@@ -58,7 +59,7 @@ Il server espone:
 - la risorsa `dvns://related-mcp-services`, che segnala servizi pubblici complementari senza
   confonderli con gli adapter gestiti dal portale.
 
-Tra i dataset c'è `anac_cig_snapshot`: espone copertura annuale, conteggi, procedure, fasce di importo, hash degli input e cautele della replica CIG 2025. `inps_invalidita_civile` tiene separate spesa nazionale, stock di prestazioni e nuove decorrenze regionali, senza inferire dati comunali o responsabilità individuali. `cpt_finanza_regionale` espone entrate, spese e saldo territoriale 2000-2023, con valori pro capite solo dove il denominatore ISTAT è coerente. `mef_irpef_comunale` espone il rilascio comunale 2024 come dato dichiarativo, conserva celle soppresse e riga non attribuita e non lo tratta come gettito o saldo di cassa. `opencoesione_progetti` include anche quota del costo pubblico, rapporto pagamenti/costo e costo medio per progetto per tema, natura e stato.
+Tra i dataset c'è `anac_cig_snapshot`: espone copertura annuale, conteggi, procedure, fasce di importo, hash degli input e cautele della replica CIG 2025. `pnrr_asili` restituisce progetti Italia Domani per CUP con localizzazioni, quadro finanziario, gare e aggiudicatari collegati per chiavi esatte. `inps_invalidita_civile` tiene separate spesa nazionale, stock di prestazioni e nuove decorrenze regionali, senza inferire dati comunali o responsabilità individuali. `cpt_finanza_regionale` espone entrate, spese e saldo territoriale 2000-2023, con valori pro capite solo dove il denominatore ISTAT è coerente. `mef_irpef_comunale` espone il rilascio comunale 2024 come dato dichiarativo, conserva celle soppresse e riga non attribuita e non lo tratta come gettito o saldo di cassa. `opencoesione_progetti` include anche quota del costo pubblico, rapporto pagamenti/costo e costo medio per progetto per tema, natura e stato.
 
 Per il dettaglio civico per singolo Comune segnaliamo anche il MCP pubblico di
 [Cruscotto Italia](https://cruscotto-italia.dati.gov.it/about.html#accesso-mcp), gestito da AgID:
@@ -186,11 +187,12 @@ python3 scripts/etl/mef_irpef_municipal_snapshot.py --check \
   --spec scripts/etl/specs/mef-irpef-2024.source.json \
   --meta-output src/data/generated/mef-irpef-2024.meta.json \
   --data-output src/data/generated/mef-irpef-2024.data.json
+python3 scripts/etl/pnrr_childcare_snapshot.py --check
 ```
 
 Le attività automatiche controllano periodicamente la presenza di nuovi dati. Un'interruzione di una fonte esterna non viene confusa con un errore del codice.
 
-Dettagli: [docs/FRESHNESS_AND_REFRESH.md](docs/FRESHNESS_AND_REFRESH.md).
+Dettagli generali: [docs/FRESHNESS_AND_REFRESH.md](docs/FRESHNESS_AND_REFRESH.md). Contratto, join e limiti del tracciato PNRR: [docs/PNRR_CHILDCARE.md](docs/PNRR_CHILDCARE.md).
 
 ## Struttura essenziale
 

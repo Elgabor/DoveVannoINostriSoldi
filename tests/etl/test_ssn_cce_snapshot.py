@@ -203,6 +203,20 @@ class SsnCceSnapshotTests(unittest.TestCase):
         self.assertTrue(snapshot["reconciliation"]["nationalEqualsRegions"])
         self.assertTrue(snapshot["reconciliation"]["regionalMatchesEntityAggregateRows"])
 
+        divergent_regional_rows = list(regional_rows)
+        original = divergent_regional_rows[1]
+        divergent_regional_rows[1] = ETL.ParsedAggregateRow(
+            original.year,
+            original.region_code,
+            "Nome Regione divergente",
+            original.voice_code,
+            original.voice_label,
+            original.updated_at,
+            original.amount_cents,
+        )
+        with self.assertRaisesRegex(ETL.SnapshotError, "nome Regione dataset regionale incoerente"):
+            ETL.build_snapshot(lock, entity_rows, national_rows, divergent_regional_rows, "2026-08-22T00:00:00Z")
+
     def test_snapshot_validation_rejects_missing_count_out_of_range(self):
         lock = ETL.load_lock(SPEC_PATH)
         snapshot = json.loads((ROOT / "src/data/generated/ssn-cce-2024.json").read_text(encoding="utf-8"))

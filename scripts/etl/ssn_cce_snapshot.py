@@ -355,6 +355,7 @@ def parse_odata(payload: bytes, lock: dict[str, object], source_name: str) -> li
     expected_year = int(lock["referenceYear"])
     parsed: list[ParsedAggregateRow] = []
     seen: set[tuple[str | None, str]] = set()
+    region_names: dict[str, str] = {}
     for row_number, raw in enumerate(rows, start=1):
         row = require_dict(raw, f"odata.{source_name}.results[{row_number}]")
         if set(row) != expected_keys:
@@ -374,6 +375,10 @@ def parse_odata(payload: bytes, lock: dict[str, object], source_name: str) -> li
             region_name = text(row["Ccdescrizione_r1013517246"], f"Regione OData riga {row_number}")
             if not re.fullmatch(r"\d{3}", region_code):
                 raise SnapshotError(f"codice Regione OData non valido alla riga {row_number}")
+            previous_name = region_names.get(region_code)
+            if previous_name is not None and previous_name != region_name:
+                raise SnapshotError(f"nome Regione OData {source_name} incoerente per {region_code} alla riga {row_number}")
+            region_names[region_code] = region_name
         voice_code = text(row["Cccodice_voce_c1597042508"], f"Voce OData {source_name} riga {row_number}")
         voice_label = text(row["Ccdescrizione_vo915899106"], f"Descrizione voce OData riga {row_number}")
         if voice_code not in metrics or voice_label != metrics[voice_code]:
@@ -486,6 +491,9 @@ def build_snapshot(
         if key in aggregate_values:
             raise SnapshotError(f"riga aggregate codeSsn=999 duplicata: {key}")
         aggregate_values[key] = row.amount_cents
+        previous_name = aggregate_names.get(row.region_code)
+        if previous_name is not None and previous_name != row.region_name:
+            raise SnapshotError(f"nome Regione aggregate incoerente per {row.region_code}")
         aggregate_names[row.region_code] = row.region_name
         aggregate_present[metric_id] += 1
     if len(aggregate_names) != int(expected["aggregateEntities"]):
@@ -514,6 +522,9 @@ def build_snapshot(
         if key in regional_values:
             raise SnapshotError(f"voce regionale duplicata: {key}")
         regional_values[key] = row.amount_cents
+        previous_name = regional_names.get(row.region_code)
+        if previous_name is not None and previous_name != row.region_name:
+            raise SnapshotError(f"nome Regione dataset regionale incoerente per {row.region_code}")
         regional_names[row.region_code] = row.region_name
         regional_dates.add(row.updated_at)
     if len(regional_names) != int(expected["regions"]):

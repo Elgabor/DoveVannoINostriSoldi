@@ -16,6 +16,8 @@ Questa è la mappa iniziale delle fonti. Il criterio è semplice: prima fonti is
 **Accesso:** catalogo e API OData ufficiali.
 **Endpoint implementati:** pagamenti dello Stato e `GET /api/opere?cup=...` per le opere pubbliche MOP.
 
+Per i pagamenti dello Stato, i rilasci `PBS_SPE_Mxx_*` sono mensili e cumulati dal 1° gennaio al mese contabile indicato. I rilasci `PBS_SPE_RND_*` sono consuntivi annuali: per una query con il solo anno vengono preferiti quando disponibili, mentre query mensili e storico restano esclusivamente sulla serie mensile. Le serie non vengono sommate o mescolate.
+
 Il connettore MOP legge prima i metadati e lo schema ufficiale. Gli alias tecnici delle colonne vengono scoperti a ogni controllo e accettati soltanto se nome, significato e tipo restano quelli previsti dal contratto. Questo evita di pubblicare valori nella colonna sbagliata dopo una modifica della fonte.
 
 Al controllo del 3 agosto 2026, lo schema dichiarava 560.245 codici locali di progetto e 541.539 CUP distinti. La ricerca usa il CUP esatto e interroga soltanto le righe necessarie: non scarica oltre mezzo milione di opere durante una richiesta web.

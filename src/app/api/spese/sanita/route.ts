@@ -4,9 +4,17 @@ import { querySsnCce, querySsnCceMetric, SsnCceQueryError } from "@/lib/ssn-cce-
 
 const ALLOWED_PARAMS = new Set(["anno", "regione", "code", "metrica", "limit", "offset"]);
 
+function singleParam(request: NextRequest, key: string): string | undefined {
+  const values = request.nextUrl.searchParams.getAll(key);
+  if (values.length > 1) {
+    throw new SsnCceQueryError("invalid_query", `Il parametro ${key} non può essere ripetuto.`);
+  }
+  return values[0];
+}
+
 function integerParam(request: NextRequest, key: string, minimum: number, maximum: number): number | undefined {
-  const value = request.nextUrl.searchParams.get(key);
-  if (value === null) return undefined;
+  const value = singleParam(request, key);
+  if (value === undefined) return undefined;
   if (!/^\d+$/.test(value)) throw new SsnCceQueryError("invalid_query", `Il parametro ${key} deve essere un intero.`);
   const parsed = Number(value);
   if (!Number.isSafeInteger(parsed) || parsed < minimum || parsed > maximum) {
@@ -23,9 +31,9 @@ export function GET(request: NextRequest) {
     const year = integerParam(request, "anno", 2000, 2100);
     const limit = integerParam(request, "limit", 1, 100);
     const offset = integerParam(request, "offset", 0, 100_000);
-    const region = request.nextUrl.searchParams.get("regione") ?? undefined;
-    const code = request.nextUrl.searchParams.get("code") ?? undefined;
-    const metric = request.nextUrl.searchParams.get("metrica") as SsnCceMetricId | null;
+    const region = singleParam(request, "regione");
+    const code = singleParam(request, "code");
+    const metric = singleParam(request, "metrica") as SsnCceMetricId | undefined;
     const payload = metric
       ? querySsnCceMetric({ year, region, code, limit, offset, metric })
       : querySsnCce({ year, region, code, limit, offset });

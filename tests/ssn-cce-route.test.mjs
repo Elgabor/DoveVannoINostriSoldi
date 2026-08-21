@@ -70,4 +70,17 @@ test("SSN API rejects unknown parameters, unsupported years and invalid metrics"
 
   const limit = GET(new NextRequest("http://localhost/api/spese/sanita?limit=101"));
   assert.equal(limit.status, 400);
+
+  for (const repeated of [
+    "anno=2024&anno=2023",
+    "regione=Calabria&regione=Lazio",
+    "code=000&code=001",
+    "metrica=personnelCost&metrica=productionCosts",
+    "limit=1&limit=2",
+    "offset=0&offset=1",
+  ]) {
+    const duplicate = GET(new NextRequest(`http://localhost/api/spese/sanita?${repeated}`));
+    assert.equal(duplicate.status, 400);
+    assert.match((await duplicate.json()).error, /non può essere ripetuto/);
+  }
 });

@@ -15,8 +15,17 @@ export const CONSULTING_TOPICS = {
   altro: "Altro",
 } as const;
 
+export const PROJECT_BUDGETS = {
+  fino_5k: "Fino a 5.000 euro",
+  da_5k_a_15k: "Da 5.000 a 15.000 euro",
+  da_15k_a_30k: "Da 15.000 a 30.000 euro",
+  oltre_30k: "Oltre 30.000 euro",
+  non_so: "Non so ancora",
+} as const;
+
 export type OrganizationType = keyof typeof ORGANIZATION_TYPES;
 export type ConsultingTopic = keyof typeof CONSULTING_TOPICS;
+export type ProjectBudget = keyof typeof PROJECT_BUDGETS;
 
 const MIN_SUBMIT_MS = 4_000;
 
@@ -29,9 +38,14 @@ const leadFields = z.object({
     { error: "Scegli il tipo di organizzazione." },
   ),
   role: z.string().trim().max(120).optional(),
+  organizationWebsite: z.url({ error: "Indica un sito web valido, o lascia il campo vuoto." }).max(300).optional(),
   topic: z.enum(
     Object.keys(CONSULTING_TOPICS) as [ConsultingTopic, ...ConsultingTopic[]],
     { error: "Scegli l'argomento della richiesta." },
+  ),
+  budget: z.enum(
+    Object.keys(PROJECT_BUDGETS) as [ProjectBudget, ...ProjectBudget[]],
+    { error: "Indica il budget da dedicare al progetto, o scegli non so ancora." },
   ),
   message: z
     .string()
@@ -65,6 +79,20 @@ function isTooFast(startedAt: unknown, now: number): boolean {
   return now - startedAt < MIN_SUBMIT_MS;
 }
 
+function emptyToUndefined(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  return trimmed === "" ? undefined : trimmed;
+}
+
+/** Empty is allowed. Bare domains become https URLs. Invalid values stay invalid for Zod. */
+function normalizeOptionalWebsite(value: unknown): unknown {
+  const trimmed = emptyToUndefined(value);
+  if (typeof trimmed !== "string") return trimmed;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
 export function parseLead(payload: unknown, now = Date.now()): LeadParseResult {
   const record = asRecord(payload);
 
@@ -77,8 +105,10 @@ export function parseLead(payload: unknown, now = Date.now()): LeadParseResult {
     email: record.email,
     organization: record.organization,
     organizationType: record.organizationType,
-    role: record.role === "" ? undefined : record.role,
+    role: emptyToUndefined(record.role),
+    organizationWebsite: normalizeOptionalWebsite(record.organizationWebsite),
     topic: record.topic,
+    budget: record.budget,
     message: record.message,
     consent: record.consent === true || record.consent === "true" || record.consent === "on",
   });
@@ -98,6 +128,7 @@ export function formatLeadEmail(lead: Lead, receivedAt: Date): string {
   }).format(receivedAt);
 
   const role = lead.role?.trim() ? lead.role : "non indicato";
+  const website = lead.organizationWebsite?.trim() ? lead.organizationWebsite : "non indicato";
 
   return [
     "Nuova richiesta di consulenza da DoveVannoINostriSoldi.",
@@ -106,9 +137,11 @@ export function formatLeadEmail(lead: Lead, receivedAt: Date): string {
     `Nome: ${lead.name}`,
     `Email (rispondi a questo indirizzo): ${lead.email}`,
     `Organizzazione: ${lead.organization}`,
+    `Sito web: ${website}`,
     `Tipo: ${ORGANIZATION_TYPES[lead.organizationType]}`,
     `Ruolo: ${role}`,
     `Argomento: ${CONSULTING_TOPICS[lead.topic]}`,
+    `Budget progetto AI: ${PROJECT_BUDGETS[lead.budget]}`,
     "",
     "Messaggio:",
     lead.message,

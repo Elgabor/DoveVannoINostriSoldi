@@ -20,6 +20,7 @@ const validLead = {
   organizationType: "pa",
   role: "Dirigente finanziario",
   topic: "lettura",
+  budget: "da_5k_a_15k",
   message: "Vorremmo una lettura dei pagamenti comunali 2025 e un confronto con i capoluoghi vicini.",
   consent: true,
   startedAt,
@@ -39,7 +40,11 @@ test("parseLead accepts a complete consulting request", () => {
   if (parsed.status !== "valid") return;
   assert.equal(parsed.lead.organizationType, "pa");
   assert.equal(parsed.lead.topic, "lettura");
+  assert.equal(parsed.lead.budget, "da_5k_a_15k");
+  assert.equal(parsed.lead.organizationWebsite, undefined);
   assert.match(formatLeadEmail(parsed.lead, new Date("2026-08-21T12:00:00Z")), /Comune di Esempio/);
+  assert.match(formatLeadEmail(parsed.lead, new Date("2026-08-21T12:00:00Z")), /Da 5\.000 a 15\.000 euro/);
+  assert.match(formatLeadEmail(parsed.lead, new Date("2026-08-21T12:00:00Z")), /Sito web: non indicato/);
   assert.equal(leadEmailSubject(parsed.lead), "Richiesta consulenza: Comune di Esempio");
 });
 
@@ -60,10 +65,39 @@ test("parseLead rejects a missing consent and a short message", () => {
   assert.equal(almost.status, "invalid");
   const enough = parseLead({ ...validLead, message: "a".repeat(30) }, startedAt + 10_000);
   assert.equal(enough.status, "valid");
+
+  const withoutBudget = parseLead({ ...validLead, budget: undefined }, startedAt + 10_000);
+  assert.equal(withoutBudget.status, "invalid");
+  if (withoutBudget.status === "invalid") {
+    assert.match(withoutBudget.error, /budget/i);
+  }
+
+  const unknownBudget = parseLead({ ...validLead, budget: "non_so" }, startedAt + 10_000);
+  assert.equal(unknownBudget.status, "valid");
+  if (unknownBudget.status === "valid") {
+    assert.equal(unknownBudget.lead.budget, "non_so");
+  }
+
+  const withSite = parseLead(
+    { ...validLead, organizationWebsite: "comune.esempio.it" },
+    startedAt + 10_000,
+  );
+  assert.equal(withSite.status, "valid");
+  if (withSite.status === "valid") {
+    assert.equal(withSite.lead.organizationWebsite, "https://comune.esempio.it");
+    assert.match(formatLeadEmail(withSite.lead, new Date("2026-08-21T12:00:00Z")), /https:\/\/comune\.esempio\.it/);
+  }
+
+  const badSite = parseLead({ ...validLead, organizationWebsite: "not a site" }, startedAt + 10_000);
+  assert.equal(badSite.status, "invalid");
+  if (badSite.status === "invalid") {
+    assert.match(badSite.error, /sito/i);
+  }
 });
 
 test("parseLead discards honeypot and too-fast submissions", () => {
   assert.equal(parseLead({ ...validLead, company_fax: "https://spam.test" }, startedAt + 10_000).status, "discarded");
+  assert.equal(parseLead({ ...validLead, website: "https://spam.test" }, startedAt + 10_000).status, "discarded");
   assert.equal(parseLead({ ...validLead, startedAt: Date.now() }, Date.now()).status, "discarded");
 });
 

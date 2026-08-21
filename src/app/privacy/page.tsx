@@ -29,10 +29,10 @@ export default function PrivacyPage() {
       <section className="panel">
         <h2 className="panel-title">Quali dati e perché</h2>
         <p>
-          Nome, email, organizzazione, tipo di ente, ruolo, oggetto della richiesta e
-          messaggio. Li usiamo solo per rispondere e, se ha senso, per un eventuale
-          incarico. Base giuridica: consenso e, se avviamo una trattativa, misure
-          precontrattuali.
+          Nome, email, organizzazione, sito web se indicato, tipo di ente, ruolo, oggetto
+          della richiesta, budget del progetto e messaggio. Li usiamo solo per rispondere
+          e, se ha senso, per un eventuale incarico. Base giuridica: consenso e, se
+          avviamo una trattativa, misure precontrattuali.
         </p>
       </section>
 

@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
-import { CONSULTING_TOPICS, ORGANIZATION_TYPES } from "@/lib/leads";
+import { CONSULTING_TOPICS, ORGANIZATION_TYPES, PROJECT_BUDGETS } from "@/lib/leads";
 import styles from "./consulenza.module.css";
 
 type FormStatus = "idle" | "sending" | "success" | "error";
 
 const TOPIC_KEYS = Object.keys(CONSULTING_TOPICS) as Array<keyof typeof CONSULTING_TOPICS>;
 const TYPE_KEYS = Object.keys(ORGANIZATION_TYPES) as Array<keyof typeof ORGANIZATION_TYPES>;
+const BUDGET_KEYS = Object.keys(PROJECT_BUDGETS) as Array<keyof typeof PROJECT_BUDGETS>;
 
 export function LeadForm() {
   const [startedAt] = useState(() => Date.now());
@@ -42,7 +43,9 @@ export function LeadForm() {
       organization: String(data.get("organization") ?? ""),
       organizationType: String(data.get("organizationType") ?? ""),
       role: String(data.get("role") ?? ""),
+      organizationWebsite: String(data.get("organizationWebsite") ?? ""),
       topic: String(data.get("topic") ?? ""),
+      budget: String(data.get("budget") ?? ""),
       message: String(data.get("message") ?? ""),
       consent: data.get("consent") === "on",
       company_fax: String(data.get("company_fax") ?? ""),
@@ -97,6 +100,19 @@ export function LeadForm() {
       </label>
 
       <label>
+        <span>Sito web dell&apos;ente o dell&apos;azienda</span>
+        <input
+          className="input"
+          name="organizationWebsite"
+          type="url"
+          inputMode="url"
+          autoComplete="url"
+          maxLength={300}
+          placeholder="https://www.esempio.it"
+        />
+      </label>
+
+      <label>
         <span>Tipo *</span>
         <select className="input" name="organizationType" required defaultValue="">
           <option value="" disabled>
@@ -124,6 +140,20 @@ export function LeadForm() {
           {TOPIC_KEYS.map((key) => (
             <option key={key} value={key}>
               {CONSULTING_TOPICS[key]}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label>
+        <span>Budget da dedicare al progetto AI *</span>
+        <select className="input" name="budget" required defaultValue="">
+          <option value="" disabled>
+            Seleziona
+          </option>
+          {BUDGET_KEYS.map((key) => (
+            <option key={key} value={key}>
+              {PROJECT_BUDGETS[key]}
             </option>
           ))}
         </select>

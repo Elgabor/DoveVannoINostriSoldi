@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
+import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
+import { promisify } from "node:util";
 import test from "node:test";
 import "./helpers/register-ts-alias.mjs";
+
+const execFileAsync = promisify(execFile);
 
 const snapshotUrl = new URL("../src/data/generated/siope-municipal.json", import.meta.url);
 const historicalSnapshotUrls = [
@@ -13,6 +17,38 @@ const historicalSnapshotUrls = [
 async function loadSnapshot() {
   return JSON.parse(await readFile(snapshotUrl, "utf8"));
 }
+
+test("distribution keeps an explicit region-null municipality national but not regional", async () => {
+  const code = [
+    "import json",
+    "from scripts.etl.siope_municipal_snapshot import build_distribution",
+    "rows = [",
+    "    {'region': 'Nord', 'population': 100, 'totalCents': 200_000, 'titleCents': 100_000},",
+    "    {'region': 'Sud', 'population': 300, 'totalCents': 1_200_000, 'titleCents': 600_000},",
+    "    {'region': None, 'population': 500, 'totalCents': 1_000_000, 'titleCents': 500_000},",
+    "]",
+    "validators = {k: {'lastModified': 'now', 'sha256': letter * 64} for k, letter in (('movements', 'a'), ('registry', 'b'), ('ipa', 'c'))}",
+    "result = build_distribution(rows=rows, year=2026, latest_month=8, observed_at='2026-08-21T00:00:00+00:00', validators=validators)",
+    "print(json.dumps(result))",
+  ].join("\n");
+  const { stdout } = await execFileAsync("python3", ["-c", code], {
+    cwd: new URL("..", import.meta.url),
+  });
+  const result = JSON.parse(stdout);
+
+  assert.equal(result.coverage.municipalitiesWithMovements, 3);
+  assert.equal(result.coverage.municipalitiesWithRegion, 2);
+  assert.equal(result.coverage.municipalitiesWithoutRegion, 1);
+  assert.equal(result.coverage.municipalitiesWithValidPopulationAndRegion, 2);
+  assert.equal(result.coverage.populationCovered, 900);
+  assert.equal(result.coverage.populationRegionalized, 400);
+  assert.equal(result.coverage.paymentsWithoutRegion, 10_000);
+  assert.equal(result.coverage.paymentsWithPopulationWithoutRegion, 10_000);
+  assert.deepEqual(result.regions.map((item) => item.region), ["Nord", "Sud"]);
+  assert.equal(result.regions.reduce((total, item) => total + item.municipalities, 0), 2);
+  assert.equal(result.populationBands.reduce((total, item) => total + item.municipalities, 0), 3);
+  assert.equal(result.nationalShareAll, 0.5);
+});
 
 function sum(values) {
   return values.reduce((total, value) => total + value, 0);
@@ -52,6 +88,23 @@ test("SIOPE snapshot exposes a complete national municipal aggregation", async (
   );
 });
 
+test("SIOPE refresh manifest and imported snapshot years stay aligned", async () => {
+  const workflow = await readFile(
+    new URL("../.github/workflows/siope-refresh.yml", import.meta.url),
+    "utf8",
+  );
+  const manifest = workflow.match(/years=\(([^)]+)\)/);
+  assert.ok(manifest, "the refresh workflow must declare its snapshot year manifest");
+  const workflowYears = manifest[1]
+    .trim()
+    .split(/\s+/)
+    .map((year) => Number(year));
+  const snapshotYears = historicalSnapshotUrls
+    .map((url) => Number(url.pathname.match(/siope-municipal(?:-(\d{4}))?\.json$/)?.[1] ?? "2026"))
+    .sort((left, right) => left - right);
+  assert.deepEqual(workflowYears, snapshotYears);
+});
+
 test("monthly flows, regional totals and headline total reconcile", async () => {
   const data = await loadSnapshot();
   const monthlyTotal = sum(data.monthly.map((point) => point.flow));
@@ -59,7 +112,7 @@ test("monthly flows, regional totals and headline total reconcile", async () => 
   const lastCumulative = data.monthly.at(-1)?.cumulative;
 
   assertMoneyClose(monthlyTotal, data.totalPaid);
-  assertMoneyClose(regionalTotal, data.totalPaid);
+  assertMoneyClose(regionalTotal + data.coverage.paymentsWithoutRegion, data.totalPaid);
   assertMoneyClose(lastCumulative, data.totalPaid);
   assert.equal(data.latestMonth, Math.max(...data.monthly.map((point) => point.month)));
   assertMoneyClose(
@@ -127,7 +180,10 @@ test("the period selector is backed by three reconciled SIOPE years", async () =
     assert.ok(data.monthly.length > 0);
     assert.equal(data.latestMonth, data.monthly.at(-1).month);
     assertMoneyClose(sum(data.monthly.map((point) => point.flow)), data.totalPaid);
-    assertMoneyClose(sum(data.regions.map((region) => region.value)), data.totalPaid);
+    assertMoneyClose(
+      sum(data.regions.map((region) => region.value)) + data.coverage.paymentsWithoutRegion,
+      data.totalPaid,
+    );
   }
 });
 
@@ -138,7 +194,7 @@ test("full-population distribution artifacts are bounded and reconcile", async (
 
   for (const data of snapshots) {
     const distribution = data.distribution;
-    assert.equal(distribution.schemaVersion, 1);
+    assert.equal(distribution.schemaVersion, 2);
     assert.equal(distribution.period.year, data.year);
     assert.equal(distribution.period.endMonth, data.latestMonth);
     assert.equal(distribution.coverage.municipalitiesWithMovements, data.coverage.withMovements);
@@ -147,6 +203,12 @@ test("full-population distribution artifacts are bounded and reconcile", async (
     assert.equal(
       distribution.coverage.municipalitiesWithoutPopulation,
       data.coverage.withoutPopulation,
+    );
+    assert.equal(distribution.coverage.municipalitiesWithRegion, data.coverage.withRegion);
+    assert.equal(distribution.coverage.municipalitiesWithoutRegion, data.coverage.withoutRegion);
+    assertMoneyClose(
+      distribution.coverage.paymentsWithoutRegion,
+      data.coverage.paymentsWithoutRegion,
     );
     assert.match(data.source.siopeMovementsSha256, /^[a-f0-9]{64}$/);
     assert.match(data.source.siopeRegistrySha256, /^[a-f0-9]{64}$/);
@@ -163,7 +225,7 @@ test("full-population distribution artifacts are bounded and reconcile", async (
     );
     assert.equal(
       sum(distribution.regions.map((group) => group.municipalities)),
-      distribution.coverage.municipalitiesWithValidPopulation,
+      distribution.coverage.municipalitiesWithValidPopulationAndRegion,
     );
     assert.equal(
       sum(distribution.populationBands.map((group) => group.population)),
@@ -171,7 +233,17 @@ test("full-population distribution artifacts are bounded and reconcile", async (
     );
     assert.equal(
       sum(distribution.regions.map((group) => group.population)),
-      distribution.coverage.populationCovered,
+      distribution.coverage.populationRegionalized,
+    );
+    assertMoneyClose(
+      sum(distribution.regions.map((group) => group.totalAmount)) +
+        distribution.coverage.paymentsWithPopulationWithoutRegion,
+      sum(distribution.populationBands.map((group) => group.totalAmount)),
+    );
+    assertMoneyClose(
+      sum(distribution.regions.map((group) => group.titleAmount)) +
+        distribution.coverage.titlePaymentsWithPopulationWithoutRegion,
+      sum(distribution.populationBands.map((group) => group.titleAmount)),
     );
 
     for (const group of [

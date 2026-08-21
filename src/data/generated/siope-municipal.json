@@ -1,73 +1,76 @@
 {
   "schemaVersion": 3,
-  "generatedAt": "2026-08-21T18:39:39+00:00",
+  "generatedAt": "2026-08-21T19:57:58+00:00",
   "scope": "municipalities",
   "year": 2026,
   "latestMonth": 8,
   "latestMonthLabel": "Agosto",
-  "totalPaid": 72908820621.71,
-  "paymentsWithPopulation": 72890899326.0,
-  "populationCovered": 58939646,
-  "nationalPerCapita": 1236.7,
+  "totalPaid": 72939204759.07,
+  "paymentsWithPopulation": 72921283463.36,
+  "populationCovered": 58963330,
+  "nationalPerCapita": 1236.72,
   "coverage": {
-    "activeSiopeMunicipalities": 7902,
+    "activeSiopeMunicipalities": 7903,
     "matchedToIpaRegion": 7893,
-    "withMovements": 7893,
-    "unmatchedToIpaRegion": 9,
+    "withMovements": 7896,
+    "withRegion": 7893,
+    "withoutRegion": 3,
+    "paymentsWithoutRegion": 30384137.36,
+    "unmatchedToIpaRegion": 10,
     "movementRows": 5432149,
-    "includedMovementRows": 4339316,
+    "includedMovementRows": 4341044,
     "malformedRows": 0,
-    "withPopulation": 7889,
+    "withPopulation": 7892,
     "withoutPopulation": 4
   },
   "monthly": [
     {
       "month": 1,
       "label": "Gennaio",
-      "flow": 7453170659.22,
-      "cumulative": 7453170659.22
+      "flow": 7455521548.01,
+      "cumulative": 7455521548.01
     },
     {
       "month": 2,
       "label": "Febbraio",
-      "flow": 8429388734.69,
-      "cumulative": 15882559393.91
+      "flow": 8434172125.9,
+      "cumulative": 15889693673.91
     },
     {
       "month": 3,
       "label": "Marzo",
-      "flow": 9684922726.0,
-      "cumulative": 25567482119.91
+      "flow": 9690424193.42,
+      "cumulative": 25580117867.33
     },
     {
       "month": 4,
       "label": "Aprile",
-      "flow": 9885492166.88,
-      "cumulative": 35452974286.79
+      "flow": 9889918909.42,
+      "cumulative": 35470036776.75
     },
     {
       "month": 5,
       "label": "Maggio",
-      "flow": 9602476667.41,
-      "cumulative": 45055450954.2
+      "flow": 9605805092.38,
+      "cumulative": 45075841869.13
     },
     {
       "month": 6,
       "label": "Giugno",
-      "flow": 11428594265.63,
-      "cumulative": 56484045219.83
+      "flow": 11432879585.99,
+      "cumulative": 56508721455.12
     },
     {
       "month": 7,
       "label": "Luglio",
-      "flow": 11076406841.09,
-      "cumulative": 67560452060.92
+      "flow": 11080262065.62,
+      "cumulative": 67588983520.74
     },
     {
       "month": 8,
       "label": "Agosto",
-      "flow": 5348368560.79,
-      "cumulative": 72908820621.71
+      "flow": 5350221238.33,
+      "cumulative": 72939204759.07
     }
   ],
   "regions": [
@@ -256,37 +259,37 @@
     {
       "code": "1",
       "label": "Spese correnti",
-      "value": 40555092305.81
+      "value": 40564174416.1
     },
     {
       "code": "2",
       "label": "Spese in conto capitale",
-      "value": 16749703330.12
+      "value": 16754059612.63
     },
     {
       "code": "7",
       "label": "Uscite per conto terzi e partite di giro",
-      "value": 9821201999.47
+      "value": 9824893317.17
     },
     {
       "code": "0",
       "label": "Pagamenti da regolarizzare",
-      "value": 2065151704.86
+      "value": 2066285436.77
     },
     {
       "code": "5",
       "label": "Chiusura anticipazioni da tesoriere/cassiere",
-      "value": 1682669897.35
+      "value": 1694266388.12
     },
     {
       "code": "4",
       "label": "Rimborso prestiti",
-      "value": 1297708183.62
+      "value": 1298229195.9
     },
     {
       "code": "3",
       "label": "Spese per incremento di attività finanziarie",
-      "value": 737293200.48
+      "value": 737296392.38
     }
   ],
   "topMunicipalities": [
@@ -2996,12 +2999,12 @@
     }
   ],
   "distribution": {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "measure": {
       "titleCode": "1",
       "titleLabel": "Spese correnti",
       "metric": "pagamenti del Titolo 1 per abitante del Comune",
-      "shareDenominator": "tutti i pagamenti SIOPE dei Comuni",
+      "shareDenominator": "tutti i pagamenti SIOPE degli enti riconosciuti come Comuni dall'anagrafica SIOPE nel periodo",
       "quantileMethod": "nearest-rank pesato: prima osservazione la cui cumulata raggiunge p·peso totale"
     },
     "period": {
@@ -3011,27 +3014,35 @@
       "completeness": "partial"
     },
     "coverage": {
-      "municipalitiesWithMovements": 7893,
-      "municipalitiesWithValidPopulation": 7889,
-      "populationCovered": 58939646,
+      "municipalitiesWithMovements": 7896,
+      "municipalitiesWithValidPopulation": 7892,
+      "populationCovered": 58963330,
       "municipalitiesWithoutPopulation": 4,
+      "municipalitiesWithRegion": 7893,
+      "municipalitiesWithoutRegion": 3,
+      "municipalitiesWithValidPopulationAndRegion": 7889,
       "paymentsWithoutPopulation": 17921295.71,
-      "titlePaymentsWithoutPopulation": 9559061.68
+      "titlePaymentsWithoutPopulation": 9559061.68,
+      "populationRegionalized": 58939646,
+      "paymentsWithoutRegion": 30384137.36,
+      "titlePaymentsWithoutRegion": 9082110.29,
+      "paymentsWithPopulationWithoutRegion": 30384137.36,
+      "titlePaymentsWithPopulationWithoutRegion": 9082110.29
     },
-    "nationalShareAll": 0.55624398,
-    "nationalShareCovered": 0.5562496,
+    "nationalShareAll": 0.55613678,
+    "nationalShareCovered": 0.55614237,
     "perCapita": {
       "municipalityWeighted": {
-        "p10": 393.3,
-        "p25": 466.18,
-        "p50": 584.28,
-        "p75": 821.11,
-        "p90": 1239.51
+        "p10": 393.29,
+        "p25": 466.09,
+        "p50": 584.21,
+        "p75": 820.97,
+        "p90": 1238.38
       },
       "residentWeighted": {
         "p10": 393.14,
         "p25": 475.05,
-        "p50": 603.82,
+        "p50": 603.78,
         "p75": 811.22,
         "p90": 1152.81
       }
@@ -3065,24 +3076,24 @@
       {
         "id": "1000-4999",
         "label": "1.000–4.999",
-        "municipalities": 3498,
-        "population": 8582739,
-        "titleAmount": 5455220293.47,
-        "totalAmount": 11427034058.88,
-        "share": 0.47739599,
+        "municipalities": 3500,
+        "population": 8588650,
+        "titleAmount": 5455969722.75,
+        "totalAmount": 11428613427.76,
+        "share": 0.4773956,
         "perCapita": {
           "municipalityWeighted": {
-            "p10": 391.2,
-            "p25": 451.97,
-            "p50": 551.39,
-            "p75": 747.72,
-            "p90": 1029.72
+            "p10": 390.99,
+            "p25": 451.71,
+            "p50": 551.02,
+            "p75": 747.55,
+            "p90": 1029.38
           },
           "residentWeighted": {
-            "p10": 381.41,
-            "p25": 440.71,
-            "p50": 533.61,
-            "p75": 716.13,
+            "p10": 380.77,
+            "p25": 440.65,
+            "p50": 533.57,
+            "p75": 716.05,
             "p90": 1000.34
           }
         }
@@ -3090,24 +3101,24 @@
       {
         "id": "5000-19999",
         "label": "5.000–19.999",
-        "municipalities": 1863,
-        "population": 17811955,
-        "titleAmount": 9870078751.45,
-        "totalAmount": 18140581261.53,
-        "share": 0.54408834,
+        "municipalities": 1864,
+        "population": 17829728,
+        "titleAmount": 9878411432.46,
+        "totalAmount": 18169386030.01,
+        "share": 0.54368438,
         "perCapita": {
           "municipalityWeighted": {
             "p10": 353.12,
             "p25": 419.97,
-            "p50": 497.57,
-            "p75": 620.04,
+            "p50": 497.1,
+            "p75": 619.4,
             "p90": 808.41
           },
           "residentWeighted": {
-            "p10": 354.42,
-            "p25": 420.69,
-            "p50": 499.61,
-            "p75": 620.04,
+            "p10": 354.52,
+            "p25": 420.88,
+            "p50": 499.26,
+            "p75": 619.4,
             "p90": 784.4
           }
         }
@@ -3733,7 +3744,7 @@
       "siopeMovementsSha256": "cdb75e2411317de66816de4abe2d0d87bbb7eab445af0ee5497abf4872b0df83",
       "siopeRegistrySha256": "bf5ec3331ce62be671d5d2789e22e18009ab48526cec30f9ae31e649195244c3",
       "ipaSha256": "8e5e33663975e4ad0e6828e084463cd53367b38cd7398719ae479940e357768d",
-      "observedAt": "2026-08-21T18:39:39+00:00"
+      "observedAt": "2026-08-21T19:57:58+00:00"
     }
   },
   "source": {
@@ -3750,7 +3761,7 @@
     "siopeMovementsSha256": "cdb75e2411317de66816de4abe2d0d87bbb7eab445af0ee5497abf4872b0df83",
     "siopeRegistrySha256": "bf5ec3331ce62be671d5d2789e22e18009ab48526cec30f9ae31e649195244c3",
     "ipaSha256": "8e5e33663975e4ad0e6828e084463cd53367b38cd7398719ae479940e357768d",
-    "observedAt": "2026-08-21T18:39:39+00:00"
+    "observedAt": "2026-08-21T19:57:58+00:00"
   },
   "methodology": {
     "measure": "pagamenti di cassa SIOPE dei Comuni",

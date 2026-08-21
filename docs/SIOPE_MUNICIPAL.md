@@ -36,6 +36,19 @@ Il join regionale usa:
 
 Non vengono usati matching fuzzy sul nome dell'ente. Se un codice fiscale non produce una regione univoca, l'ente resta fuori dall'aggregazione geografica e viene contabilizzato nella metrica `unmatchedToIpaRegion`.
 
+Un Comune senza Regione IPA non viene scartato dal periodo nazionale: i suoi movimenti entrano
+nel totale nazionale, nelle quote nazionali e nelle fasce dimensionali quando la popolazione è
+valida. Non viene invece assegnato artificialmente a una Regione: resta fuori dagli aggregati
+regionali, dai riepiloghi geografici della distribuzione e dalle classifiche comunali che mostrano
+Provincia e Regione. `withRegion` e `withoutRegion` descrivono quindi soltanto i Comuni con
+movimenti del periodo; `paymentsWithoutRegion` e le metriche analoghe della distribuzione
+rendono riconciliabile l'importo che non è regionalizzabile.
+
+La validità dell'anagrafica è valutata rispetto all'anno richiesto: `activeSiopeMunicipalities`
+significa valido per almeno un giorno di quell'anno, non necessariamente ancora attivo oggi. Un
+Comune storico cessato può quindi restare nel totale nazionale mentre la Regione IPA corrente non
+è più disponibile; il dato non viene retrodistribuito sulla base del nome o di una Regione attuale.
+
 Il contesto provinciale delle graduatorie usa invece una relazione interna allo stesso registro ufficiale:
 
 `ANAG_ENTI_SIOPE.codice provincia → ANAG_REG_PROV → Provincia`
@@ -69,6 +82,7 @@ Lo snapshot contiene:
 - `distribution`, quando il refresh ha elaborato tutti i movimenti raw verificati: quote nazionali,
   quantili per abitante, fasce dimensionali e riepiloghi regionali; non contiene righe comunali;
 - copertura del join;
+- distinzione tra Comuni con e senza Regione IPA, con pagamenti non regionalizzabili riconciliati;
 - URL, `Last-Modified`, `ETag` e hash SHA-256 dei file upstream quando il refresh è stato completato;
 - warning metodologico mostrato anche nella dashboard.
 
@@ -95,8 +109,10 @@ pubblica due famiglie di quantili, entrambe con nearest-rank senza interpolazion
 
 Il valore del quantile è la prima osservazione ordinata la cui cumulata raggiunge `p × peso totale`.
 Le fasce dimensionali sono intervalli analitici fissi del portale, non una classificazione ufficiale
-SIOPE e non una graduatoria di best/worst practice. I riepiloghi regionali sommano soltanto i
-Comuni abbinati alla Regione pubblicata da IPA.
+SIOPE e non una graduatoria di best/worst practice: includono tutti i Comuni con popolazione valida,
+anche quando la Regione IPA manca. I riepiloghi regionali sommano soltanto i Comuni abbinati alla
+Regione pubblicata da IPA; il loro scarto rispetto alle fasce è esposto come importo non
+regionalizzabile, non colmato con una stima.
 
 Il 2026, finché l'anno non è chiuso, è etichettato `partial`. Un confronto 2026 con gli anni chiusi
 è descrittivo e non è presentato come trend: servono gli stessi mesi, lo stesso denominatore e una
@@ -120,8 +136,9 @@ La CI ordinaria non dipende dalla disponibilità della rete SIOPE. Testa invece 
 
 - siano presenti tutte le 20 regioni;
 - i Comuni con movimenti siano più di 7.000;
+- `withRegion + withoutRegion` coincida con i Comuni con movimenti;
+- i pagamenti regionali più quelli senza Regione ricompongano il totale nazionale;
 - la somma dei flussi mensili ricomponga il totale;
-- la somma delle regioni ricomponga il totale entro la tolleranza di arrotondamento;
 - il cumulato finale coincida con il totale headline;
 - i ranking restino ordinati;
 - Provincia e Regione siano presenti in ogni riga dei ranking;

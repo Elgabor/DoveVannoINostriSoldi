@@ -57,7 +57,7 @@ export type SiopeDistributionGroup = {
 };
 
 export type SiopeMunicipalDistribution = {
-  schemaVersion: 1;
+  schemaVersion: 2;
   measure: {
     titleCode: "1";
     titleLabel: string;
@@ -76,8 +76,16 @@ export type SiopeMunicipalDistribution = {
     municipalitiesWithValidPopulation: number;
     populationCovered: number;
     municipalitiesWithoutPopulation: number;
+    municipalitiesWithRegion: number;
+    municipalitiesWithoutRegion: number;
+    municipalitiesWithValidPopulationAndRegion: number;
     paymentsWithoutPopulation: number;
     titlePaymentsWithoutPopulation: number;
+    populationRegionalized: number;
+    paymentsWithoutRegion: number;
+    titlePaymentsWithoutRegion: number;
+    paymentsWithPopulationWithoutRegion: number;
+    titlePaymentsWithPopulationWithoutRegion: number;
   };
   nationalShareAll: number | null;
   nationalShareCovered: number | null;
@@ -116,6 +124,9 @@ export type SiopeMunicipalSnapshot = {
     activeSiopeMunicipalities: number;
     matchedToIpaRegion: number;
     withMovements: number;
+    withRegion: number;
+    withoutRegion: number;
+    paymentsWithoutRegion: number;
     unmatchedToIpaRegion: number;
     movementRows: number;
     includedMovementRows: number;
@@ -289,6 +300,18 @@ export function assertSiopeDistributionIntegrity(value: unknown, expectedYear: n
     `SIOPE ${expectedYear}.populationCovered`,
   );
   const coverage = record(snapshot.coverage, `SIOPE ${expectedYear}.coverage`);
+  const activeMunicipalities = count(
+    coverage.activeSiopeMunicipalities,
+    `SIOPE ${expectedYear}.coverage.activeSiopeMunicipalities`,
+  );
+  const matchedToIpaRegion = count(
+    coverage.matchedToIpaRegion,
+    `SIOPE ${expectedYear}.coverage.matchedToIpaRegion`,
+  );
+  const unmatchedToIpaRegion = count(
+    coverage.unmatchedToIpaRegion,
+    `SIOPE ${expectedYear}.coverage.unmatchedToIpaRegion`,
+  );
   const source = record(snapshot.source, `SIOPE ${expectedYear}.source`);
   const observedAt = nonEmptyText(source.observedAt, `SIOPE ${expectedYear}.source.observedAt`);
   if (Number.isNaN(new Date(observedAt).getTime())) throw new Error(`SIOPE ${expectedYear}: observedAt non valido`);
@@ -318,14 +341,15 @@ export function assertSiopeDistributionIntegrity(value: unknown, expectedYear: n
   }
 
   const distribution = record(snapshot.distribution, `SIOPE ${expectedYear}.distribution`);
-  if (distribution.schemaVersion !== 1) throw new Error(`SIOPE ${expectedYear}: distribution v1 attesa`);
+  if (distribution.schemaVersion !== 2) throw new Error(`SIOPE ${expectedYear}: distribution v2 attesa`);
   const measure = record(distribution.measure, `SIOPE ${expectedYear}.distribution.measure`);
   if (measure.titleCode !== "1" || measure.titleLabel !== "Spese correnti") {
     throw new Error(`SIOPE ${expectedYear}: misura della distribuzione inattesa`);
   }
   if (
     measure.metric !== "pagamenti del Titolo 1 per abitante del Comune" ||
-    measure.shareDenominator !== "tutti i pagamenti SIOPE dei Comuni" ||
+    measure.shareDenominator !==
+      "tutti i pagamenti SIOPE degli enti riconosciuti come Comuni dall'anagrafica SIOPE nel periodo" ||
     measure.quantileMethod !==
       "nearest-rank pesato: prima osservazione la cui cumulata raggiunge p·peso totale"
   ) {
@@ -350,11 +374,42 @@ export function assertSiopeDistributionIntegrity(value: unknown, expectedYear: n
   const withMovements = count(coverage.withMovements, `SIOPE ${expectedYear}.coverage.withMovements`);
   const withPopulation = count(coverage.withPopulation, `SIOPE ${expectedYear}.coverage.withPopulation`);
   const withoutPopulation = count(coverage.withoutPopulation, `SIOPE ${expectedYear}.coverage.withoutPopulation`);
+  const withRegion = count(coverage.withRegion, `SIOPE ${expectedYear}.coverage.withRegion`);
+  const withoutRegion = count(coverage.withoutRegion, `SIOPE ${expectedYear}.coverage.withoutRegion`);
+  const snapshotPaymentsWithoutRegion = finite(
+    coverage.paymentsWithoutRegion,
+    `SIOPE ${expectedYear}.coverage.paymentsWithoutRegion`,
+  );
+  const municipalitiesWithRegion = count(
+    distributionCoverage.municipalitiesWithRegion,
+    `SIOPE ${expectedYear}.distribution.coverage.municipalitiesWithRegion`,
+  );
+  const municipalitiesWithoutRegion = count(
+    distributionCoverage.municipalitiesWithoutRegion,
+    `SIOPE ${expectedYear}.distribution.coverage.municipalitiesWithoutRegion`,
+  );
+  const municipalitiesWithValidPopulationAndRegion = count(
+    distributionCoverage.municipalitiesWithValidPopulationAndRegion,
+    `SIOPE ${expectedYear}.distribution.coverage.municipalitiesWithValidPopulationAndRegion`,
+  );
+  const populationRegionalized = count(
+    distributionCoverage.populationRegionalized,
+    `SIOPE ${expectedYear}.distribution.coverage.populationRegionalized`,
+  );
   if (
     distributionCoverage.municipalitiesWithMovements !== withMovements ||
     distributionCoverage.municipalitiesWithValidPopulation !== withPopulation ||
     distributionCoverage.municipalitiesWithoutPopulation !== withoutPopulation ||
-    distributionCoverage.populationCovered !== populationCovered
+    distributionCoverage.populationCovered !== populationCovered ||
+    municipalitiesWithRegion !== withRegion ||
+    municipalitiesWithoutRegion !== withoutRegion ||
+    matchedToIpaRegion + unmatchedToIpaRegion !== activeMunicipalities ||
+    withRegion + withoutRegion !== withMovements ||
+    withRegion > matchedToIpaRegion ||
+    withoutRegion > unmatchedToIpaRegion ||
+    municipalitiesWithValidPopulationAndRegion > withPopulation ||
+    withPopulation - municipalitiesWithValidPopulationAndRegion > withoutRegion ||
+    populationRegionalized > populationCovered
   ) {
     throw new Error(`SIOPE ${expectedYear}: copertura della distribuzione non riconciliata`);
   }
@@ -366,7 +421,32 @@ export function assertSiopeDistributionIntegrity(value: unknown, expectedYear: n
     distributionCoverage.titlePaymentsWithoutPopulation,
     `SIOPE ${expectedYear}.distribution.coverage.titlePaymentsWithoutPopulation`,
   );
+  const paymentsWithoutRegion = finite(
+    distributionCoverage.paymentsWithoutRegion,
+    `SIOPE ${expectedYear}.distribution.coverage.paymentsWithoutRegion`,
+  );
+  const titlePaymentsWithoutRegion = finite(
+    distributionCoverage.titlePaymentsWithoutRegion,
+    `SIOPE ${expectedYear}.distribution.coverage.titlePaymentsWithoutRegion`,
+  );
+  const paymentsWithPopulationWithoutRegion = finite(
+    distributionCoverage.paymentsWithPopulationWithoutRegion,
+    `SIOPE ${expectedYear}.distribution.coverage.paymentsWithPopulationWithoutRegion`,
+  );
+  const titlePaymentsWithPopulationWithoutRegion = finite(
+    distributionCoverage.titlePaymentsWithPopulationWithoutRegion,
+    `SIOPE ${expectedYear}.distribution.coverage.titlePaymentsWithPopulationWithoutRegion`,
+  );
   close(paymentsWithPopulation + paymentsWithoutPopulation, totalPaid, `SIOPE ${expectedYear}: pagamenti coperti`);
+  close(paymentsWithoutRegion, snapshotPaymentsWithoutRegion, `SIOPE ${expectedYear}: pagamenti non regionalizzati`);
+  if (
+    paymentsWithPopulationWithoutRegion > paymentsWithoutRegion ||
+    titlePaymentsWithoutRegion > paymentsWithoutRegion ||
+    titlePaymentsWithPopulationWithoutRegion > titlePaymentsWithoutRegion ||
+    titlePaymentsWithPopulationWithoutRegion > paymentsWithPopulationWithoutRegion
+  ) {
+    throw new Error(`SIOPE ${expectedYear}: copertura non regionalizzata incoerente`);
+  }
 
   const shareAll = finite(distribution.nationalShareAll, `SIOPE ${expectedYear}.distribution.nationalShareAll`);
   const shareCovered = finite(
@@ -420,22 +500,44 @@ export function assertSiopeDistributionIntegrity(value: unknown, expectedYear: n
     items.reduce((total, item) => total + item[field], 0);
   if (
     sum(bands, "municipalities") !== withPopulation ||
-    sum(regions, "municipalities") !== withPopulation ||
+    sum(regions, "municipalities") !== municipalitiesWithValidPopulationAndRegion ||
     sum(bands, "population") !== populationCovered ||
-    sum(regions, "population") !== populationCovered
+    sum(regions, "population") !== populationRegionalized
   ) {
     throw new Error(`SIOPE ${expectedYear}: fasce o Regioni non riconciliate`);
   }
-  const coveredTitle = sum(regions, "titleAmount");
-  const coveredTotal = sum(regions, "totalAmount");
-  close(sum(bands, "titleAmount"), coveredTitle, `SIOPE ${expectedYear}: Titolo 1 per fasce`);
-  close(sum(bands, "totalAmount"), coveredTotal, `SIOPE ${expectedYear}: totale per fasce`);
-  close(coveredTotal, paymentsWithPopulation, `SIOPE ${expectedYear}: totale regionale coperto`);
+  const coveredTitle = sum(bands, "titleAmount");
+  const coveredTotal = sum(bands, "totalAmount");
+  const regionalizedCoveredTitle = sum(regions, "titleAmount");
+  const regionalizedCoveredTotal = sum(regions, "totalAmount");
+  close(coveredTotal, paymentsWithPopulation, `SIOPE ${expectedYear}: totale coperto`);
+  close(
+    regionalizedCoveredTotal + paymentsWithPopulationWithoutRegion,
+    coveredTotal,
+    `SIOPE ${expectedYear}: totale coperto regionalizzato`,
+  );
+  close(
+    regionalizedCoveredTitle + titlePaymentsWithPopulationWithoutRegion,
+    coveredTitle,
+    `SIOPE ${expectedYear}: Titolo 1 coperto regionalizzato`,
+  );
   const titles = Array.isArray(snapshot.titles) ? snapshot.titles : [];
   const titleOne = titles.find((item) => record(item, `SIOPE ${expectedYear}.titles`).code === "1");
   if (!titleOne) throw new Error(`SIOPE ${expectedYear}: Titolo 1 assente`);
   const titleOneValue = finite(record(titleOne, `SIOPE ${expectedYear}.title1`).value, `SIOPE ${expectedYear}.title1.value`);
   close(coveredTitle + titlePaymentsWithoutPopulation, titleOneValue, `SIOPE ${expectedYear}: Titolo 1 coperto`);
+  const snapshotRegionalTotal = (snapshot.regions as unknown[]).reduce<number>(
+    (total, item, index) => total + finite(
+      record(item, `SIOPE ${expectedYear}.regions[${index}]`).value,
+      `SIOPE ${expectedYear}.regions[${index}].value`,
+    ),
+    0,
+  );
+  close(
+    snapshotRegionalTotal + paymentsWithoutRegion,
+    totalPaid,
+    `SIOPE ${expectedYear}: totale regionale`,
+  );
   close(shareAll, titleOneValue / totalPaid, `SIOPE ${expectedYear}: quota nazionale`, 0.00000002);
   close(shareCovered, coveredTitle / coveredTotal, `SIOPE ${expectedYear}: quota coperta`, 0.00000002);
 

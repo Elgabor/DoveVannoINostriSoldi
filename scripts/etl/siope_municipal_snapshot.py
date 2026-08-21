@@ -29,7 +29,7 @@ import time
 import urllib.request
 import zipfile
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
@@ -43,7 +43,7 @@ DEFAULT_OUTPUT = Path("src/data/generated/siope-municipal.json")
 USER_AGENT = "DoveVannoINostriSoldi-ETL/1.0 (+https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi)"
 CHUNK_SIZE = 1 << 20
 MAX_ATTEMPTS = 3
-DISTRIBUTION_SCHEMA_VERSION = 1
+DISTRIBUTION_SCHEMA_VERSION = 2
 QUANTILE_PROBABILITIES = {
     "p10": 0.10,
     "p25": 0.25,
@@ -252,11 +252,13 @@ def parse_siope_provinces(registry_zip: Path) -> dict[str, str]:
 def load_municipalities(
     registry_zip: Path,
     ipa_regions: dict[str, str],
+    year: int,
 ) -> tuple[dict[str, dict], dict[str, dict], int]:
-    """Return mappings by SIOPE code and canonical municipality key (CF)."""
+    """Return municipalities whose SIOPE validity intersects the requested year."""
     active: dict[str, dict] = {}
-    active_municipalities = 0
     provinces = parse_siope_provinces(registry_zip)
+    period_start = date(year, 1, 1)
+    period_end = date(year, 12, 31)
 
     for row in zip_rows(registry_zip, "ANAG_ENTI_SIOPE"):
         if len(row) != 9:
@@ -264,16 +266,24 @@ def load_municipalities(
         code, valid_from, valid_to, cf, name, _municipality, province_code, population, entity_type = (
             value.strip() for value in row
         )
-        if valid_to != "9999-12-31" or entity_type.upper() != "COMUNE":
+        if entity_type.upper() != "COMUNE":
             continue
-        active_municipalities += 1
+        try:
+            valid_from_date = date.fromisoformat(valid_from)
+            valid_to_date = date.fromisoformat(valid_to)
+        except ValueError as error:
+            raise RuntimeError(f"ANAG_ENTI_SIOPE: validità non valida per il Comune {cf or code}")
+        if valid_from_date > valid_to_date:
+            raise RuntimeError(f"ANAG_ENTI_SIOPE: intervallo invertito per il Comune {cf or code}")
+        if valid_from_date > period_end or valid_to_date < period_start:
+            continue
+        if not code or not cf:
+            raise RuntimeError("ANAG_ENTI_SIOPE: Comune senza codice ente o codice fiscale")
         region = ipa_regions.get(cf)
-        if not code or not cf or not region:
-            continue
         province = provinces.get(province_code)
         if province is None:
             raise RuntimeError(f"Provincia SIOPE sconosciuta per il Comune {cf}: {province_code}")
-        active[code] = {
+        municipality = {
             "key": cf,
             "code": code,
             "name": name or "Comune non indicato",
@@ -282,7 +292,15 @@ def load_municipalities(
             "province": province,
             "population": parse_population(population),
             "validFrom": valid_from,
+            "validTo": valid_to,
         }
+        previous = active.get(code)
+        if previous is not None and previous["key"] != cf:
+            raise RuntimeError(
+                f"ANAG_ENTI_SIOPE: codice ente {code} associato a più codici fiscali"
+            )
+        if previous is None or municipality["validFrom"] > previous["validFrom"]:
+            active[code] = municipality
 
     canonical: dict[str, dict] = {}
     for municipality in active.values():
@@ -291,7 +309,7 @@ def load_municipalities(
         if current is None or municipality["validFrom"] > current["validFrom"]:
             canonical[key] = municipality.copy()
 
-    return active, canonical, active_municipalities
+    return active, canonical, len(canonical)
 
 
 def title_digit(code: str) -> str:
@@ -418,7 +436,15 @@ def build_distribution(
     for row in rows:
         if int(row["titleCents"]) > int(row["totalCents"]):
             raise RuntimeError("SIOPE distribution: Titolo 1 supera il totale del Comune")
-    valid_rows = [row for row in rows if row.get("population") is not None and row["population"] > 0]
+    valid_rows = [
+        row
+        for row in rows
+        if row.get("population") is not None and row["population"] > 0
+    ]
+    regionalized_rows = [row for row in rows if row.get("region")]
+    regionalized_valid_rows = [row for row in valid_rows if row.get("region")]
+    unregionalized_rows = [row for row in rows if not row.get("region")]
+    unregionalized_valid_rows = [row for row in valid_rows if not row.get("region")]
     all_title_cents = sum(int(row["titleCents"]) for row in rows)
     all_total_cents = sum(int(row["totalCents"]) for row in rows)
     covered_title_cents = sum(int(row["titleCents"]) for row in valid_rows)
@@ -443,8 +469,11 @@ def build_distribution(
         bands.append({"id": band_id, "label": label, **_distribution_group(band_rows)})
 
     regions: list[dict] = []
-    for region in sorted({row["region"] for row in valid_rows}, key=lambda value: value.casefold()):
-        region_rows = [row for row in valid_rows if row["region"] == region]
+    for region in sorted(
+        {row["region"] for row in regionalized_valid_rows},
+        key=lambda value: value.casefold(),
+    ):
+        region_rows = [row for row in regionalized_valid_rows if row["region"] == region]
         regions.append({"region": region, **_distribution_group(region_rows)})
 
     return {
@@ -453,7 +482,10 @@ def build_distribution(
             "titleCode": "1",
             "titleLabel": "Spese correnti",
             "metric": "pagamenti del Titolo 1 per abitante del Comune",
-            "shareDenominator": "tutti i pagamenti SIOPE dei Comuni",
+            "shareDenominator": (
+                "tutti i pagamenti SIOPE degli enti riconosciuti come Comuni "
+                "dall'anagrafica SIOPE nel periodo"
+            ),
             "quantileMethod": (
                 "nearest-rank pesato: prima osservazione la cui cumulata raggiunge p·peso totale"
             ),
@@ -469,11 +501,29 @@ def build_distribution(
             "municipalitiesWithValidPopulation": len(valid_rows),
             "populationCovered": sum(int(row["population"]) for row in valid_rows),
             "municipalitiesWithoutPopulation": len(excluded_rows),
+            "municipalitiesWithRegion": len(regionalized_rows),
+            "municipalitiesWithoutRegion": len(unregionalized_rows),
+            "municipalitiesWithValidPopulationAndRegion": len(regionalized_valid_rows),
             "paymentsWithoutPopulation": euro(
                 all_total_cents - covered_total_cents
             ),
             "titlePaymentsWithoutPopulation": euro(
                 all_title_cents - covered_title_cents
+            ),
+            "populationRegionalized": sum(
+                int(row["population"]) for row in regionalized_valid_rows
+            ),
+            "paymentsWithoutRegion": euro(
+                sum(int(row["totalCents"]) for row in unregionalized_rows)
+            ),
+            "titlePaymentsWithoutRegion": euro(
+                sum(int(row["titleCents"]) for row in unregionalized_rows)
+            ),
+            "paymentsWithPopulationWithoutRegion": euro(
+                sum(int(row["totalCents"]) for row in unregionalized_valid_rows)
+            ),
+            "titlePaymentsWithPopulationWithoutRegion": euro(
+                sum(int(row["titleCents"]) for row in unregionalized_valid_rows)
             ),
         },
         "nationalShareAll": (
@@ -517,6 +567,7 @@ def build_snapshot(
     by_code, municipalities, active_siope_count = load_municipalities(
         registry_zip,
         ipa_regions,
+        year,
     )
 
     municipality_cents: dict[str, int] = defaultdict(int)
@@ -561,7 +612,8 @@ def build_snapshot(
         digit = title_digit(management_code)
         municipality_cents[key] += cents
         municipality_title_cents[key][digit] += cents
-        region_cents[region] += cents
+        if region:
+            region_cents[region] += cents
         title_cents[digit] += cents
         national_monthly[month - 1] += cents
         observed_keys.add(key)
@@ -611,17 +663,18 @@ def build_snapshot(
                 "titleCents": municipality_title_cents[key].get("1", 0),
             }
         )
-        municipalities_with_movements.append(
-            {
-                "name": municipality["name"],
-                "region": municipality["region"],
-                "province": municipality["province"],
-                "codiceFiscale": municipality["cf"],
-                "population": population,
-                "value": euro(cents),
-                "perCapita": per_capita(cents, population),
-            }
-        )
+        if municipality["region"]:
+            municipalities_with_movements.append(
+                {
+                    "name": municipality["name"],
+                    "region": municipality["region"],
+                    "province": municipality["province"],
+                    "codiceFiscale": municipality["cf"],
+                    "population": population,
+                    "value": euro(cents),
+                    "perCapita": per_capita(cents, population),
+                }
+            )
     top_municipalities_by_value, top_municipalities_by_per_capita = (
         municipality_rankings(municipalities_with_movements)
     )
@@ -664,6 +717,15 @@ def build_snapshot(
     municipalities_with_population = sum(
         municipalities[key]["population"] is not None for key in observed_keys
     )
+    observed_with_region = {
+        key for key in observed_keys if municipalities[key]["region"]
+    }
+    payments_without_region_cents = sum(
+        municipality_cents[key] for key in observed_keys - observed_with_region
+    )
+    matched_to_ipa_region = sum(
+        municipality["region"] is not None for municipality in municipalities.values()
+    )
     latest_total_cents = sum(national_monthly)
     observed_at = utc_now()
     distribution = build_distribution(
@@ -690,9 +752,15 @@ def build_snapshot(
         ),
         "coverage": {
             "activeSiopeMunicipalities": active_siope_count,
-            "matchedToIpaRegion": len(municipalities),
+            "matchedToIpaRegion": matched_to_ipa_region,
             "withMovements": len(observed_keys),
-            "unmatchedToIpaRegion": max(active_siope_count - len(municipalities), 0),
+            "withRegion": len(observed_with_region),
+            "withoutRegion": len(observed_keys - observed_with_region),
+            "paymentsWithoutRegion": euro(payments_without_region_cents),
+            "unmatchedToIpaRegion": max(
+                active_siope_count - matched_to_ipa_region,
+                0,
+            ),
             "movementRows": rows_total,
             "includedMovementRows": rows_included,
             "malformedRows": malformed,
@@ -781,6 +849,7 @@ def is_unchanged(output: Path, year: int, validators: dict) -> bool:
         and current.get("year") == year
         and validators_match
         and isinstance(current.get("distribution"), dict)
+        and current["distribution"].get("schemaVersion") == DISTRIBUTION_SCHEMA_VERSION
         and all(
             re.fullmatch(r"[0-9a-f]{64}", str(source.get(field, "")))
             for field in (

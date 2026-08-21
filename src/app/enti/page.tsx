@@ -105,7 +105,7 @@ export default async function EntiPage({ searchParams }: PageProps) {
 
       <div className={`stat-strip ${styles.fiveUp}`}>
         <div>
-          <span className="stat-label">Comuni attivi in SIOPE</span>
+          <span className="stat-label">Comuni validi nel periodo SIOPE</span>
           <span className="stat-value">
             {integer(siopeMunicipalSnapshot.coverage.activeSiopeMunicipalities)}
           </span>

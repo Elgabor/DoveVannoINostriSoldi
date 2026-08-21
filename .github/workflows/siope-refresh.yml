@@ -47,6 +47,11 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Setup Node.js for the independent snapshot contract
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22.23.2"
+
       - name: Build snapshot
         shell: bash
         env:
@@ -57,7 +62,19 @@ jobs:
           if [[ "${FORCE_REFRESH}" == "true" ]]; then
             args+=(--force)
           fi
-          python scripts/etl/siope_municipal_snapshot.py "${args[@]}"
+          years=(2024 2025 2026)
+          for year in "${years[@]}"; do
+            case "${year}" in
+              2024) output="src/data/generated/siope-municipal-2024.json" ;;
+              2025) output="src/data/generated/siope-municipal-2025.json" ;;
+              2026) output="src/data/generated/siope-municipal.json" ;;
+              *) echo "Unsupported SIOPE snapshot year: ${year}" >&2; exit 1 ;;
+            esac
+            python scripts/etl/siope_municipal_snapshot.py \
+              --year "${year}" \
+              --output "${output}" \
+              "${args[@]}"
+          done
 
       - name: Validate generated contract
         shell: python
@@ -88,6 +105,23 @@ jobs:
               + data["coverage"]["withoutPopulation"]
               == data["coverage"]["withMovements"]
           )
+          assert (
+              data["coverage"]["withRegion"]
+              + data["coverage"]["withoutRegion"]
+              == data["coverage"]["withMovements"]
+          )
+          assert (
+              data["coverage"]["matchedToIpaRegion"]
+              + data["coverage"]["unmatchedToIpaRegion"]
+              == data["coverage"]["activeSiopeMunicipalities"]
+          )
+          assert data["coverage"]["withRegion"] <= data["coverage"]["matchedToIpaRegion"]
+          assert data["coverage"]["withoutRegion"] <= data["coverage"]["unmatchedToIpaRegion"]
+          assert abs(
+              sum(item["value"] for item in data["regions"])
+              + data["coverage"]["paymentsWithoutRegion"]
+              - data["totalPaid"]
+          ) < 0.05
           assert len(data["topMunicipalitiesByValue"]) == 100
           assert len(data["topMunicipalitiesByPerCapita"]) == 100
           assert data["topMunicipalities"] == data["topMunicipalitiesByValue"]
@@ -126,9 +160,12 @@ jobs:
 
           distribution = data.get("distribution")
           assert isinstance(distribution, dict), "Full-population distribution is missing"
-          assert distribution["schemaVersion"] == 1
+          assert distribution["schemaVersion"] == 2
           assert distribution["measure"]["titleCode"] == "1"
-          assert distribution["measure"]["shareDenominator"] == "tutti i pagamenti SIOPE dei Comuni"
+          assert distribution["measure"]["shareDenominator"] == (
+              "tutti i pagamenti SIOPE degli enti riconosciuti come Comuni "
+              "dall'anagrafica SIOPE nel periodo"
+          )
           assert distribution["period"]["year"] == data["year"]
           assert distribution["period"]["startMonth"] == 1
           assert distribution["period"]["endMonth"] == data["latestMonth"]
@@ -139,6 +176,27 @@ jobs:
           assert coverage["municipalitiesWithValidPopulation"] == data["coverage"]["withPopulation"]
           assert coverage["municipalitiesWithoutPopulation"] == data["coverage"]["withoutPopulation"]
           assert coverage["populationCovered"] == data["populationCovered"]
+          assert coverage["municipalitiesWithRegion"] == data["coverage"]["withRegion"]
+          assert coverage["municipalitiesWithoutRegion"] == data["coverage"]["withoutRegion"]
+          assert coverage["paymentsWithoutRegion"] == data["coverage"]["paymentsWithoutRegion"]
+          assert (
+              coverage["municipalitiesWithValidPopulation"]
+              - coverage["municipalitiesWithValidPopulationAndRegion"]
+              <= coverage["municipalitiesWithoutRegion"]
+          )
+          assert coverage["titlePaymentsWithoutRegion"] <= coverage["paymentsWithoutRegion"]
+          assert (
+              coverage["paymentsWithPopulationWithoutRegion"]
+              <= coverage["paymentsWithoutRegion"]
+          )
+          assert (
+              coverage["titlePaymentsWithPopulationWithoutRegion"]
+              <= coverage["titlePaymentsWithoutRegion"]
+          )
+          assert (
+              coverage["titlePaymentsWithPopulationWithoutRegion"]
+              <= coverage["paymentsWithPopulationWithoutRegion"]
+          )
           assert abs(
               coverage["paymentsWithoutPopulation"]
               + data["paymentsWithPopulation"]
@@ -161,9 +219,9 @@ jobs:
               check_quantiles(group["municipalityWeighted"])
               check_quantiles(group["residentWeighted"])
           assert sum(item["municipalities"] for item in distribution["populationBands"]) == coverage["municipalitiesWithValidPopulation"]
-          assert sum(item["municipalities"] for item in distribution["regions"]) == coverage["municipalitiesWithValidPopulation"]
+          assert sum(item["municipalities"] for item in distribution["regions"]) == coverage["municipalitiesWithValidPopulationAndRegion"]
           assert sum(item["population"] for item in distribution["populationBands"]) == coverage["populationCovered"]
-          assert sum(item["population"] for item in distribution["regions"]) == coverage["populationCovered"]
+          assert sum(item["population"] for item in distribution["regions"]) == coverage["populationRegionalized"]
           assert all("municipalities" not in item or item["municipalities"] >= 0 for item in distribution["regions"])
           print(json.dumps({
               "year": data["year"],
@@ -177,19 +235,27 @@ jobs:
               "movementRows": data["coverage"]["movementRows"],
           }, ensure_ascii=False, indent=2))
 
+      - name: Validate every published SIOPE year with the runtime contract
+        run: node --experimental-strip-types --test tests/siope-snapshot.test.mjs
+
       - name: Commit source update
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -z "$(git status --porcelain -- src/data/generated/siope-municipal.json)" ]]; then
+          artifacts=(
+            src/data/generated/siope-municipal-2024.json
+            src/data/generated/siope-municipal-2025.json
+            src/data/generated/siope-municipal.json
+          )
+          if [[ -z "$(git status --porcelain -- "${artifacts[@]}")" ]]; then
             echo "No SIOPE snapshot change to commit."
             exit 0
           fi
 
           git config user.name "dove-vanno-i-nostri-soldi-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add src/data/generated/siope-municipal.json
+          git add "${artifacts[@]}"
           git commit -m "chore(data): refresh SIOPE municipal snapshot"
 
           # The ETL can take several minutes. If another commit landed while it

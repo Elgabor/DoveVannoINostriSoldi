@@ -151,7 +151,7 @@ export default async function MoneyPage({
           <section className={styles.analysis} aria-labelledby="spese-analysis-title">
             <h3 id="spese-analysis-title">Il {titleOneShareLabel} è tanto o poco?</h3>
             <p className={styles.analysisLead}>
-              È la quota dei pagamenti registrati nel <strong>Titolo 1 · spese correnti</strong>
+              È la quota dei pagamenti registrati nel <strong>Titolo 1 · spese correnti</strong>{" "}
               sul totale delle uscite SIOPE dei Comuni nel periodo selezionato. È una misura di
               cassa e di classificazione contabile: da sola non dice se una spesa sia utile,
               efficiente o di buona qualità.
@@ -240,7 +240,13 @@ export default async function MoneyPage({
                 {integer(data.distribution.coverage.municipalitiesWithValidPopulation)} Comuni ·{" "}
                 {integer(data.distribution.coverage.populationCovered)} residenti · periodo{" "}
                 {data.distribution.period.completeness === "partial" ? "parziale" : "chiuso"}.
-                La fonte non dichiara l&apos;anno di riferimento della popolazione SIOPE.
+                La fonte non dichiara l&apos;anno di riferimento della popolazione SIOPE. Il totale
+                nazionale include anche{" "}
+                {integer(data.distribution.coverage.municipalitiesWithoutRegion)} Comuni senza un
+                abbinamento regionale IPA, pari a{" "}
+                {exactEuro(data.distribution.coverage.paymentsWithoutRegion)} di pagamenti. Le fasce
+                includono soltanto i Comuni con popolazione valida; i riepiloghi regionali escludono
+                quelli senza abbinamento, senza distribuirli artificialmente.
               </p>
             </div>
           </section>
@@ -334,8 +340,9 @@ export default async function MoneyPage({
           Misura: {data.methodology.measure}. {data.methodology.periodicity}. Righe lette:{" "}
           {integer(data.coverage.movementRows)} · incluse:{" "}
           {integer(data.coverage.includedMovementRows)} · malformate:{" "}
-          {integer(data.coverage.malformedRows)}. Il collegamento territoriale usa il{" "}
-          {data.methodology.territorialJoin}.
+          {integer(data.coverage.malformedRows)}. I totali nazionali includono i Comuni riconosciuti
+          dall&apos;anagrafica SIOPE; le aggregazioni territoriali includono soltanto quelli collegati
+          a una Regione tramite {data.methodology.territorialJoin}.
         </p>
         <p>
           Fonte:{" "}

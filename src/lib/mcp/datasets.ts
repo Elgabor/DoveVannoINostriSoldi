@@ -72,7 +72,12 @@ export async function queryPublicDataset(query: DatasetQuery): Promise<unknown> 
         topMunicipalitiesByValue: snapshot.topMunicipalitiesByValue.filter((item) => item.region.toLocaleLowerCase("it-IT") === region),
         topMunicipalitiesByPerCapita: snapshot.topMunicipalitiesByPerCapita.filter((item) => item.region.toLocaleLowerCase("it-IT") === region),
         queryLimitations: {
-          regionAggregateComplete: true,
+          regionAggregateComplete: false,
+          regionAggregateCompleteDeprecated:
+            "Campo legacy: false perché il totale nazionale include pagamenti non regionalizzabili. Usare regionAggregateCompleteWithinIpaJoin e regionAggregateCoverage.",
+          regionAggregateCompleteWithinIpaJoin: true,
+          regionAggregateCoverage:
+            `Il totale nazionale include anche ${snapshot.coverage.withoutRegion} Comuni con movimenti senza Regione IPA, pari a ${snapshot.coverage.paymentsWithoutRegion} euro; non vengono distribuiti artificialmente tra le Regioni.`,
           municipalityLists:
             "Sottoinsieme dei primi 100 Comuni nazionali per totale o pro capite, non elenco completo della regione.",
           distribution:

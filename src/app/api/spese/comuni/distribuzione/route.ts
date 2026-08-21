@@ -68,7 +68,8 @@ export function GET(request: NextRequest) {
       snapshotCoverage: snapshot.coverage,
       source: snapshot.source,
       limitations: [
-        "La distribuzione è pubblicata soltanto quando l'ETL ha elaborato tutti i movimenti raw verificati.",
+        "La distribuzione è pubblicata soltanto quando l'ETL ha elaborato tutti i movimenti raw verificati degli enti riconosciuti come Comuni dall'anagrafica SIOPE nel periodo.",
+        "Il totale nazionale include i Comuni senza Regione IPA; le fasce includono soltanto quelli con popolazione valida. Gli aggregati regionali li escludono e la copertura ne dichiara conteggi e importi.",
         "Le liste dei primi 100 Comuni non sono un sostituto della distribuzione completa.",
         "Le quote di cassa non misurano efficienza, qualità, spreco o causalità.",
       ],

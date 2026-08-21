@@ -17,7 +17,7 @@ test("SIOPE distribution API is complete, bounded, and has no municipality rows"
     assert.equal(body.year, year);
     assert.equal(body.available, true);
     assert.equal(body.availability, "verified_full_raw_refresh");
-    assert.equal(body.distribution.schemaVersion, 1);
+    assert.equal(body.distribution.schemaVersion, 2);
     assert.equal(body.distribution.period.year, year);
     assert.ok(body.distribution.coverage.municipalitiesWithValidPopulation > 7_000);
     assert.equal(body.distribution.regions.length, 20);

@@ -42,7 +42,10 @@ test("SIOPE query validates years and can filter a region", async () => {
   assert.ok(result.topMunicipalitiesByValue.every((item) => item.region === "Lazio"));
   assert.ok(result.topMunicipalitiesByPerCapita.every((item) => item.region === "Lazio"));
   assert.ok(result.topMunicipalitiesByPerCapita.every((item) => item.province.length > 0));
-  assert.equal(result.queryLimitations.regionAggregateComplete, true);
+  assert.equal(result.queryLimitations.regionAggregateComplete, false);
+  assert.match(result.queryLimitations.regionAggregateCompleteDeprecated, /campo legacy/i);
+  assert.equal(result.queryLimitations.regionAggregateCompleteWithinIpaJoin, true);
+  assert.match(result.queryLimitations.regionAggregateCoverage, /non vengono distribuiti/i);
   assert.match(result.queryLimitations.municipalityLists, /non elenco completo/i);
   assert.equal(Object.hasOwn(result, "distribution"), false);
   assert.match(result.queryLimitations.distribution, /non è pubblicata|risposta nazionale/i);
@@ -50,7 +53,7 @@ test("SIOPE query validates years and can filter a region", async () => {
 
 test("SIOPE national MCP query carries only compact full-population aggregates", async () => {
   const result = await queryPublicDataset({ dataset: "siope_comuni", year: 2026 });
-  assert.equal(result.distribution.schemaVersion, 1);
+  assert.equal(result.distribution.schemaVersion, 2);
   assert.equal(result.distribution.regions.length, 20);
   assert.equal(result.distribution.populationBands.length, 8);
   assert.equal(Object.hasOwn(result.distribution, "municipalities"), false);

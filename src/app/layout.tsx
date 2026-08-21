@@ -13,17 +13,17 @@ const archivo = Archivo({
   variable: "--font-archivo",
 });
 
-/** The freshest "we looked at it" timestamp the app has, shown in the footer. */
-const lastCheckedAt = Math.max(
+/** The freshest verification timestamp among the two territorial tax/spending snapshots. */
+const latestTerritorialCheckAt = Math.max(
   Date.parse(siopeMunicipalSnapshot.source.observedAt),
   Date.parse(mefIrpefSourceMeta.period.observedAt),
 );
-const lastCheckedLabel = new Intl.DateTimeFormat("it-IT", {
+const latestTerritorialCheckLabel = new Intl.DateTimeFormat("it-IT", {
   day: "numeric",
   month: "long",
   year: "numeric",
   timeZone: "Europe/Rome",
-}).format(new Date(lastCheckedAt));
+}).format(new Date(latestTerritorialCheckAt));
 
 export const metadata: Metadata = {
   title: {
@@ -54,7 +54,7 @@ export default function RootLayout({
         <div id="contenuto-principale" tabIndex={-1}>{children}</div>
         <footer className="shell site-footer">
           <div className="footer-row">
-            <span>Ultimo controllo dei dati: {lastCheckedLabel}</span>
+            <span>Ultimo controllo SIOPE o IRPEF: {latestTerritorialCheckLabel}</span>
             <span>Dati pubblici, liberi da riusare</span>
             <span className="footer-spacer" />
             <a className="footer-link" href={REPO_URL} target="_blank" rel="noreferrer">

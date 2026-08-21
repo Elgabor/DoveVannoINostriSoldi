@@ -35,7 +35,9 @@ Il backend espone inoltre:
 - `GET /api/pnrr/asili?region=Lazio&limit=20`, con progetti Italia Domani, localizzazioni, finanziamenti, gare e aggiudicatari; la ricerca esatta usa `cup`;
 - `GET /api/parlamento`, con i dati strutturati verificati della Camera; il monitor segue anche i nuovi documenti del Senato senza pubblicare valori non ancora estraibili in modo affidabile;
 - `GET /api/controlli`, con indicatori classificati, scenari separati e regole per il loro uso.
+- `GET /api/controlli/spesa-comuni?anno=2022`, con screening derivato OpenCivitas paginato per la differenza di spesa per abitante; formula e limiti sono in [docs/CONTROLLI_SPESE_COMUNI.md](docs/CONTROLLI_SPESE_COMUNI.md).
 - `GET /api/spese/invalidita?anno=2024&regione=Calabria`, con spesa nazionale e nuove pensioni di invalidità civile per la granularità pubblica verificata.
+- `GET /api/spese/comuni/distribuzione?anno=2026`, con quote e quantili compatti soltanto dopo un refresh raw SIOPE completo verificato; non restituisce righe comunali.
 - `GET /api/territori/fisco?anno=2023&regione=Calabria`, con entrate, spese e saldo contabile CPT nello stesso perimetro PA consolidato.
 - `GET /api/territori/irpef?anno=2024&livello=regione`, con contribuenti, redditi, imposta netta dichiarata e addizionali MEF; Province e Comuni sono filtrati e paginati.
 

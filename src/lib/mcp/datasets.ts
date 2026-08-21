@@ -64,16 +64,24 @@ export async function queryPublicDataset(query: DatasetQuery): Promise<unknown> 
       const snapshot = getSiopeMunicipalSnapshot(year);
       const region = query.region?.trim().toLocaleLowerCase("it-IT");
       if (!region) return jsonSafe(snapshot);
+      const { distribution: nationalDistribution, ...snapshotWithoutDistribution } = snapshot;
       return jsonSafe({
-        ...snapshot,
+        ...snapshotWithoutDistribution,
         regions: snapshot.regions.filter((item) => item.region.toLocaleLowerCase("it-IT") === region),
         topMunicipalities: snapshot.topMunicipalities.filter((item) => item.region.toLocaleLowerCase("it-IT") === region),
         topMunicipalitiesByValue: snapshot.topMunicipalitiesByValue.filter((item) => item.region.toLocaleLowerCase("it-IT") === region),
         topMunicipalitiesByPerCapita: snapshot.topMunicipalitiesByPerCapita.filter((item) => item.region.toLocaleLowerCase("it-IT") === region),
         queryLimitations: {
-          regionAggregateComplete: true,
+          regionAggregateComplete: false,
+          regionAggregateCompleteDeprecated:
+            "Campo legacy: false perché il totale nazionale include pagamenti non regionalizzabili. Usare regionAggregateCompleteWithinIpaJoin e regionAggregateCoverage.",
+          regionAggregateCompleteWithinIpaJoin: true,
+          regionAggregateCoverage:
+            `Il totale nazionale include anche ${snapshot.coverage.withoutRegion} Comuni con movimenti senza Regione IPA, pari a ${snapshot.coverage.paymentsWithoutRegion} euro; non vengono distribuiti artificialmente tra le Regioni.`,
           municipalityLists:
             "Sottoinsieme dei primi 100 Comuni nazionali per totale o pro capite, non elenco completo della regione.",
+          distribution:
+            `La distribuzione completa ${nationalDistribution.period.year} è disponibile soltanto nella risposta nazionale senza filtro regione; qui l'aggregato regionale è in regions.`,
         },
       });
     }
@@ -219,8 +227,9 @@ export async function queryPublicDataset(query: DatasetQuery): Promise<unknown> 
         auditSignals,
         procurementComparisons,
       } = await import("@/lib/audit-data");
+      const { queryOpenCivitasSpendingOutliers } = await import("@/lib/opencivitas-outliers");
       const area = query.area?.trim().toLocaleLowerCase("it-IT");
-      return jsonSafe({
+      const result: Record<string, unknown> = {
         reviewedAt: auditReviewedAt,
         signals: auditSignals.filter((signal) =>
           (!area || signal.area.toLocaleLowerCase("it-IT") === area) &&
@@ -228,7 +237,16 @@ export async function queryPublicDataset(query: DatasetQuery): Promise<unknown> 
         classifications: auditClassifications,
         procurementComparisons,
         methodology: auditMethodology,
-      });
+      };
+      if (area === "spesa-comuni") {
+        result.spendingOutliers = queryOpenCivitasSpendingOutliers({
+          year: query.year,
+          region: query.region,
+          limit: query.limit,
+          offset: query.offset,
+        });
+      }
+      return jsonSafe(result);
     }
     case "registro_fonti": {
       const { publicSources } = await import("@/lib/sources");

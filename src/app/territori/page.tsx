@@ -254,12 +254,12 @@ export default async function TerritoriesPage({
               <dd>{integer(data.coverage.withMovements)}</dd>
             </div>
             <div>
-              <dt>Comuni attivi in SIOPE</dt>
+              <dt>Comuni validi nel periodo</dt>
               <dd>{integer(data.coverage.activeSiopeMunicipalities)}</dd>
             </div>
             <div>
-              <dt>Non abbinati a una regione</dt>
-              <dd>{integer(data.coverage.unmatchedToIpaRegion)}</dd>
+              <dt>Con movimenti senza regione</dt>
+              <dd>{integer(data.coverage.withoutRegion)}</dd>
             </div>
             <div>
               <dt>Righe malformate</dt>
@@ -275,9 +275,11 @@ export default async function TerritoriesPage({
             </div>
           </dl>
           <p>
-            Gli enti non abbinati restano fuori dai totali regionali: non assegniamo una regione
-            senza una corrispondenza ufficiale. Il denominatore è la {data.methodology.populationSource};
-            {data.methodology.populationReference}; anagrafica aggiornata il{" "}
+            I {exactEuro(data.coverage.paymentsWithoutRegion)} dei Comuni senza abbinamento IPA
+            restano nel totale nazionale ma fuori dai totali regionali: non assegniamo una regione
+            senza una corrispondenza ufficiale. Il denominatore è la{" "}
+            {data.methodology.populationSource}; {data.methodology.populationReference}; anagrafica
+            aggiornata il{" "}
             {data.methodology.populationSourceLastModified
               ? longDate(data.methodology.populationSourceLastModified)
               : "data non disponibile"}. Fonte SIOPE · {data.source.siopeOwner},

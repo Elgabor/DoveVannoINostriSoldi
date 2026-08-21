@@ -86,12 +86,12 @@ const exampleQueries = {
   mef_partecipazioni: { dataset: "mef_partecipazioni" },
   consulenti_incarichi: { dataset: "consulenti_incarichi", year: 2024 },
   parlamento_bilanci: { dataset: "parlamento_bilanci", chamber: "camera", year: 2024 },
-  controlli_segnali: { dataset: "controlli_segnali", area: "appalti", year: 2025 },
+  controlli_segnali: { dataset: "controlli_segnali", area: "spesa-comuni", year: 2022, limit: 20 },
   registro_fonti: { dataset: "registro_fonti", query: "SIOPE" },
 } as const satisfies Record<DatasetId, DatasetQuery>;
 
 const datasetDescriptors: DatasetDescriptorInput[] = [
-  { id: "siope_comuni", title: "Pagamenti dei Comuni", summary: "Pagamenti di cassa SIOPE, serie mensile, titoli, regioni e principali Comuni.", sourceIds: ["siope", "ipa"], freshness: "snapshot", filters: ["year", "region"], caveat: "Gli aggregati regionali coprono tutti i Comuni abbinati; le liste comunali contengono soltanto i primi 100 nazionali per totale o pro capite." },
+  { id: "siope_comuni", title: "Pagamenti dei Comuni", summary: "Pagamenti di cassa SIOPE, serie mensile, titoli, regioni e principali Comuni.", sourceIds: ["siope", "ipa"], freshness: "snapshot", filters: ["year", "region"], caveat: "I totali nazionali includono gli enti riconosciuti come Comuni in SIOPE; gli aggregati regionali coprono soltanto quelli abbinati tramite IPA e dichiarano conteggi e importi non regionalizzabili. Le liste comunali contengono i primi 100 nazionali per totale o pro capite. distribution contiene solo aggregati completi calcolati durante un refresh raw verificato e non autorizza a ricostruire quartili dai primi 100." },
   { id: "openbdap_spesa_stato", title: "Spesa dello Stato", summary: "Pagamenti dello Stato per missione, amministrazione e categoria economica; la query annuale preferisce il consuntivo ufficiale.", sourceIds: ["openbdap"], freshness: "live", filters: ["year", "month"], caveat: "I rilasci mensili sono cumulati dal 1° gennaio al mese indicato; il consuntivo annuale è una serie distinta e non viene mescolato con i mesi." },
   { id: "openbdap_amministrazione", title: "Spesa di una amministrazione statale", summary: "Dettaglio OpenBDAP di una amministrazione per missione e categoria, con consuntivo annuale o rilascio mensile coerente.", sourceIds: ["openbdap"], freshness: "live", filters: ["code", "year", "month"], caveat: "Una query annuale senza mese preferisce il consuntivo; una query con mese resta sul rilascio mensile corrispondente." },
   { id: "openbdap_opere_pubbliche", title: "Opere pubbliche per CUP", summary: "Stato, date, costi e finanziamenti delle opere pubbliche MOP.", sourceIds: ["openbdap"], freshness: "live", filters: ["cup"], caveat: "I segnali di qualità o ritardo richiedono verifica e non provano uno spreco." },
@@ -107,7 +107,7 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
   { id: "mef_partecipazioni", title: "Partecipazioni pubbliche", summary: "Aggregati della rilevazione annuale MEF sulle partecipazioni pubbliche.", sourceIds: ["partecipazioni-pubbliche"], freshness: "snapshot", filters: [] },
   { id: "consulenti_incarichi", title: "Incarichi e consulenze", summary: "Statistiche nazionali ufficiali su incarichi esterni e a dipendenti pubblici.", sourceIds: ["consulenti"], freshness: "snapshot", filters: ["year"] },
   { id: "parlamento_bilanci", title: "Bilanci del Parlamento", summary: "Documenti e valori strutturati verificati per Camera e Senato quando disponibili.", sourceIds: ["camera"], freshness: "snapshot", filters: ["chamber", "year"] },
-  { id: "controlli_segnali", title: "Segnali da controllare", summary: "Indicatori, classificazioni e confronti che orientano verifiche ulteriori.", sourceIds: [], freshness: "snapshot", filters: ["area", "year"], caveat: "Un segnale non attribuisce responsabilità e non dimostra da solo spreco o illecito." },
+  { id: "controlli_segnali", title: "Segnali da controllare", summary: "Indicatori, classificazioni e screening derivati che orientano verifiche ulteriori.", sourceIds: ["opencivitas"], freshness: "snapshot", filters: ["area", "year", "region", "limit", "offset"], caveat: "Un segnale, compreso lo screening OpenCivitas, non attribuisce responsabilità e non dimostra da solo spreco o illecito." },
   { id: "registro_fonti", title: "Registro delle fonti", summary: "Proprietari, copertura, formati, cadenza e stato di integrazione delle fonti censite.", sourceIds: [], freshness: "snapshot", filters: ["query"] },
 ];
 

@@ -1,73 +1,76 @@
 {
   "schemaVersion": 3,
-  "generatedAt": "2026-08-21T11:34:54+00:00",
+  "generatedAt": "2026-08-21T19:57:58+00:00",
   "scope": "municipalities",
   "year": 2026,
   "latestMonth": 8,
   "latestMonthLabel": "Agosto",
-  "totalPaid": 72908820621.71,
-  "paymentsWithPopulation": 72890899326.0,
-  "populationCovered": 58939646,
-  "nationalPerCapita": 1236.7,
+  "totalPaid": 72939204759.07,
+  "paymentsWithPopulation": 72921283463.36,
+  "populationCovered": 58963330,
+  "nationalPerCapita": 1236.72,
   "coverage": {
-    "activeSiopeMunicipalities": 7902,
+    "activeSiopeMunicipalities": 7903,
     "matchedToIpaRegion": 7893,
-    "withMovements": 7893,
-    "unmatchedToIpaRegion": 9,
+    "withMovements": 7896,
+    "withRegion": 7893,
+    "withoutRegion": 3,
+    "paymentsWithoutRegion": 30384137.36,
+    "unmatchedToIpaRegion": 10,
     "movementRows": 5432149,
-    "includedMovementRows": 4339316,
+    "includedMovementRows": 4341044,
     "malformedRows": 0,
-    "withPopulation": 7889,
+    "withPopulation": 7892,
     "withoutPopulation": 4
   },
   "monthly": [
     {
       "month": 1,
       "label": "Gennaio",
-      "flow": 7453170659.22,
-      "cumulative": 7453170659.22
+      "flow": 7455521548.01,
+      "cumulative": 7455521548.01
     },
     {
       "month": 2,
       "label": "Febbraio",
-      "flow": 8429388734.69,
-      "cumulative": 15882559393.91
+      "flow": 8434172125.9,
+      "cumulative": 15889693673.91
     },
     {
       "month": 3,
       "label": "Marzo",
-      "flow": 9684922726.0,
-      "cumulative": 25567482119.91
+      "flow": 9690424193.42,
+      "cumulative": 25580117867.33
     },
     {
       "month": 4,
       "label": "Aprile",
-      "flow": 9885492166.88,
-      "cumulative": 35452974286.79
+      "flow": 9889918909.42,
+      "cumulative": 35470036776.75
     },
     {
       "month": 5,
       "label": "Maggio",
-      "flow": 9602476667.41,
-      "cumulative": 45055450954.2
+      "flow": 9605805092.38,
+      "cumulative": 45075841869.13
     },
     {
       "month": 6,
       "label": "Giugno",
-      "flow": 11428594265.63,
-      "cumulative": 56484045219.83
+      "flow": 11432879585.99,
+      "cumulative": 56508721455.12
     },
     {
       "month": 7,
       "label": "Luglio",
-      "flow": 11076406841.09,
-      "cumulative": 67560452060.92
+      "flow": 11080262065.62,
+      "cumulative": 67588983520.74
     },
     {
       "month": 8,
       "label": "Agosto",
-      "flow": 5348368560.79,
-      "cumulative": 72908820621.71
+      "flow": 5350221238.33,
+      "cumulative": 72939204759.07
     }
   ],
   "regions": [
@@ -256,37 +259,37 @@
     {
       "code": "1",
       "label": "Spese correnti",
-      "value": 40555092305.81
+      "value": 40564174416.1
     },
     {
       "code": "2",
       "label": "Spese in conto capitale",
-      "value": 16749703330.12
+      "value": 16754059612.63
     },
     {
       "code": "7",
       "label": "Uscite per conto terzi e partite di giro",
-      "value": 9821201999.47
+      "value": 9824893317.17
     },
     {
       "code": "0",
       "label": "Pagamenti da regolarizzare",
-      "value": 2065151704.86
+      "value": 2066285436.77
     },
     {
       "code": "5",
       "label": "Chiusura anticipazioni da tesoriere/cassiere",
-      "value": 1682669897.35
+      "value": 1694266388.12
     },
     {
       "code": "4",
       "label": "Rimborso prestiti",
-      "value": 1297708183.62
+      "value": 1298229195.9
     },
     {
       "code": "3",
       "label": "Spese per incremento di attività finanziarie",
-      "value": 737293200.48
+      "value": 737296392.38
     }
   ],
   "topMunicipalities": [
@@ -2995,6 +2998,755 @@
       "perCapita": 8382.55
     }
   ],
+  "distribution": {
+    "schemaVersion": 2,
+    "measure": {
+      "titleCode": "1",
+      "titleLabel": "Spese correnti",
+      "metric": "pagamenti del Titolo 1 per abitante del Comune",
+      "shareDenominator": "tutti i pagamenti SIOPE degli enti riconosciuti come Comuni dall'anagrafica SIOPE nel periodo",
+      "quantileMethod": "nearest-rank pesato: prima osservazione la cui cumulata raggiunge p·peso totale"
+    },
+    "period": {
+      "year": 2026,
+      "startMonth": 1,
+      "endMonth": 8,
+      "completeness": "partial"
+    },
+    "coverage": {
+      "municipalitiesWithMovements": 7896,
+      "municipalitiesWithValidPopulation": 7892,
+      "populationCovered": 58963330,
+      "municipalitiesWithoutPopulation": 4,
+      "municipalitiesWithRegion": 7893,
+      "municipalitiesWithoutRegion": 3,
+      "municipalitiesWithValidPopulationAndRegion": 7889,
+      "paymentsWithoutPopulation": 17921295.71,
+      "titlePaymentsWithoutPopulation": 9559061.68,
+      "populationRegionalized": 58939646,
+      "paymentsWithoutRegion": 30384137.36,
+      "titlePaymentsWithoutRegion": 9082110.29,
+      "paymentsWithPopulationWithoutRegion": 30384137.36,
+      "titlePaymentsWithPopulationWithoutRegion": 9082110.29
+    },
+    "nationalShareAll": 0.55613678,
+    "nationalShareCovered": 0.55614237,
+    "perCapita": {
+      "municipalityWeighted": {
+        "p10": 393.29,
+        "p25": 466.09,
+        "p50": 584.21,
+        "p75": 820.97,
+        "p90": 1238.38
+      },
+      "residentWeighted": {
+        "p10": 393.14,
+        "p25": 475.05,
+        "p50": 603.78,
+        "p75": 811.22,
+        "p90": 1152.81
+      }
+    },
+    "populationBands": [
+      {
+        "id": "under-1000",
+        "label": "Meno di 1.000",
+        "municipalities": 2016,
+        "population": 1080304,
+        "titleAmount": 1027414641.2,
+        "totalAmount": 2569245699.98,
+        "share": 0.3998896,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 500.38,
+            "p25": 614.1,
+            "p50": 823.59,
+            "p75": 1288.75,
+            "p90": 1898.93
+          },
+          "residentWeighted": {
+            "p10": 484.21,
+            "p25": 576.87,
+            "p50": 751.46,
+            "p75": 1121.73,
+            "p90": 1624.16
+          }
+        }
+      },
+      {
+        "id": "1000-4999",
+        "label": "1.000–4.999",
+        "municipalities": 3500,
+        "population": 8588650,
+        "titleAmount": 5455969722.75,
+        "totalAmount": 11428613427.76,
+        "share": 0.4773956,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 390.99,
+            "p25": 451.71,
+            "p50": 551.02,
+            "p75": 747.55,
+            "p90": 1029.38
+          },
+          "residentWeighted": {
+            "p10": 380.77,
+            "p25": 440.65,
+            "p50": 533.57,
+            "p75": 716.05,
+            "p90": 1000.34
+          }
+        }
+      },
+      {
+        "id": "5000-19999",
+        "label": "5.000–19.999",
+        "municipalities": 1864,
+        "population": 17829728,
+        "titleAmount": 9878411432.46,
+        "totalAmount": 18169386030.01,
+        "share": 0.54368438,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 353.12,
+            "p25": 419.97,
+            "p50": 497.1,
+            "p75": 619.4,
+            "p90": 808.41
+          },
+          "residentWeighted": {
+            "p10": 354.52,
+            "p25": 420.88,
+            "p50": 499.26,
+            "p75": 619.4,
+            "p90": 784.4
+          }
+        }
+      },
+      {
+        "id": "20000-49999",
+        "label": "20.000–49.999",
+        "municipalities": 373,
+        "population": 11361599,
+        "titleAmount": 6649278369.0,
+        "totalAmount": 11377455906.44,
+        "share": 0.58442576,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 379.59,
+            "p25": 457.93,
+            "p50": 561.35,
+            "p75": 664.21,
+            "p90": 814.93
+          },
+          "residentWeighted": {
+            "p10": 385.32,
+            "p25": 461.41,
+            "p50": 561.35,
+            "p75": 664.88,
+            "p90": 822.96
+          }
+        }
+      },
+      {
+        "id": "50000-99999",
+        "label": "50.000–99.999",
+        "municipalities": 95,
+        "population": 6432909,
+        "titleAmount": 4182259289.18,
+        "totalAmount": 7500323231.76,
+        "share": 0.55761054,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 464.96,
+            "p25": 532.55,
+            "p50": 622.72,
+            "p75": 735.18,
+            "p90": 832.03
+          },
+          "residentWeighted": {
+            "p10": 465.06,
+            "p25": 532.55,
+            "p50": 622.72,
+            "p75": 735.18,
+            "p90": 832.03
+          }
+        }
+      },
+      {
+        "id": "100000-249999",
+        "label": "100.000–249.999",
+        "municipalities": 32,
+        "population": 4715937,
+        "titleAmount": 3696617774.16,
+        "totalAmount": 6380278567.88,
+        "share": 0.57938188,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 587.84,
+            "p25": 652.05,
+            "p50": 706.1,
+            "p75": 885.44,
+            "p90": 1010.39
+          },
+          "residentWeighted": {
+            "p10": 587.84,
+            "p25": 660.81,
+            "p50": 745.41,
+            "p75": 893.05,
+            "p90": 1010.39
+          }
+        }
+      },
+      {
+        "id": "250000-499999",
+        "label": "250.000–499.999",
+        "municipalities": 6,
+        "population": 1873205,
+        "titleAmount": 2032584039.29,
+        "totalAmount": 3565890272.08,
+        "share": 0.57000746,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 748.52,
+            "p25": 857.27,
+            "p50": 894.83,
+            "p75": 1215.22,
+            "p90": 1834.89
+          },
+          "residentWeighted": {
+            "p10": 748.52,
+            "p25": 857.27,
+            "p50": 1054.8,
+            "p75": 1215.22,
+            "p90": 1834.89
+          }
+        }
+      },
+      {
+        "id": "500000-plus",
+        "label": "500.000 o più",
+        "municipalities": 6,
+        "population": 7080998,
+        "titleAmount": 7632080086.38,
+        "totalAmount": 11930090327.45,
+        "share": 0.63973364,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 575.49,
+            "p25": 802.79,
+            "p50": 813.02,
+            "p75": 1152.81,
+            "p90": 1581.39
+          },
+          "residentWeighted": {
+            "p10": 802.79,
+            "p25": 813.02,
+            "p50": 1152.81,
+            "p75": 1152.81,
+            "p90": 1581.39
+          }
+        }
+      }
+    ],
+    "regions": [
+      {
+        "region": "Abruzzo",
+        "municipalities": 305,
+        "population": 1269571,
+        "titleAmount": 816722819.97,
+        "totalAmount": 1954016535.57,
+        "share": 0.41797129,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 449.28,
+            "p25": 527.08,
+            "p50": 662.15,
+            "p75": 1004.48,
+            "p90": 1841.63
+          },
+          "residentWeighted": {
+            "p10": 451.69,
+            "p25": 519.55,
+            "p50": 585.78,
+            "p75": 647.1,
+            "p90": 804.94
+          }
+        }
+      },
+      {
+        "region": "Basilicata",
+        "municipalities": 131,
+        "population": 533233,
+        "titleAmount": 324186237.41,
+        "totalAmount": 702840955.13,
+        "share": 0.4612512,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 447.38,
+            "p25": 524.1,
+            "p50": 649.76,
+            "p75": 857.77,
+            "p90": 1100.46
+          },
+          "residentWeighted": {
+            "p10": 426.71,
+            "p25": 494.16,
+            "p50": 540.35,
+            "p75": 630.46,
+            "p90": 814.0
+          }
+        }
+      },
+      {
+        "region": "Calabria",
+        "municipalities": 404,
+        "population": 1838568,
+        "titleAmount": 1181484255.37,
+        "totalAmount": 3104744825.75,
+        "share": 0.3805415,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 430.79,
+            "p25": 514.22,
+            "p50": 634.76,
+            "p75": 798.19,
+            "p90": 1086.58
+          },
+          "residentWeighted": {
+            "p10": 459.78,
+            "p25": 533.24,
+            "p50": 609.17,
+            "p75": 699.56,
+            "p90": 821.11
+          }
+        }
+      },
+      {
+        "region": "Campania",
+        "municipalities": 549,
+        "population": 5576133,
+        "titleAmount": 3083125917.63,
+        "totalAmount": 6218989363.4,
+        "share": 0.49575996,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 347.59,
+            "p25": 410.65,
+            "p50": 506.24,
+            "p75": 659.55,
+            "p90": 888.34
+          },
+          "residentWeighted": {
+            "p10": 336.72,
+            "p25": 389.86,
+            "p50": 496.48,
+            "p75": 736.14,
+            "p90": 802.79
+          }
+        }
+      },
+      {
+        "region": "Emilia-Romagna",
+        "municipalities": 330,
+        "population": 4451938,
+        "titleAmount": 2876290623.88,
+        "totalAmount": 5123094776.27,
+        "share": 0.56143615,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 403.71,
+            "p25": 470.13,
+            "p50": 556.08,
+            "p75": 672.72,
+            "p90": 861.3
+          },
+          "residentWeighted": {
+            "p10": 426.98,
+            "p25": 513.93,
+            "p50": 605.67,
+            "p75": 701.41,
+            "p90": 1054.8
+          }
+        }
+      },
+      {
+        "region": "Friuli-Venezia Giulia",
+        "municipalities": 215,
+        "population": 1194616,
+        "titleAmount": 1079849101.66,
+        "totalAmount": 1765786049.54,
+        "share": 0.61154017,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 515.04,
+            "p25": 595.31,
+            "p50": 718.96,
+            "p75": 1081.14,
+            "p90": 1657.13
+          },
+          "residentWeighted": {
+            "p10": 519.37,
+            "p25": 631.96,
+            "p50": 909.55,
+            "p75": 1081.14,
+            "p90": 1262.54
+          }
+        }
+      },
+      {
+        "region": "Lazio",
+        "municipalities": 378,
+        "population": 5714745,
+        "titleAmount": 4872513976.12,
+        "totalAmount": 8139450643.67,
+        "share": 0.59862934,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 400.99,
+            "p25": 469.91,
+            "p50": 575.28,
+            "p75": 741.56,
+            "p90": 1057.86
+          },
+          "residentWeighted": {
+            "p10": 440.76,
+            "p25": 541.1,
+            "p50": 921.45,
+            "p75": 1152.81,
+            "p90": 1152.81
+          }
+        }
+      },
+      {
+        "region": "Liguria",
+        "municipalities": 234,
+        "population": 1509140,
+        "titleAmount": 1290463080.02,
+        "totalAmount": 2315652542.34,
+        "share": 0.55727837,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 470.66,
+            "p25": 581.95,
+            "p50": 741.19,
+            "p75": 1049.99,
+            "p90": 1504.71
+          },
+          "residentWeighted": {
+            "p10": 581.95,
+            "p25": 710.32,
+            "p50": 893.65,
+            "p75": 893.65,
+            "p90": 1161.84
+          }
+        }
+      },
+      {
+        "region": "Lombardia",
+        "municipalities": 1501,
+        "population": 10011929,
+        "titleAmount": 7039670465.16,
+        "totalAmount": 11066679779.02,
+        "share": 0.63611405,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 387.94,
+            "p25": 440.12,
+            "p50": 504.55,
+            "p75": 622.05,
+            "p90": 867.94
+          },
+          "residentWeighted": {
+            "p10": 410.11,
+            "p25": 456.99,
+            "p50": 540.15,
+            "p75": 736.74,
+            "p90": 1581.39
+          }
+        }
+      },
+      {
+        "region": "Marche",
+        "municipalities": 225,
+        "population": 1482746,
+        "titleAmount": 1047990242.92,
+        "totalAmount": 2128979648.44,
+        "share": 0.49225001,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 452.1,
+            "p25": 523.65,
+            "p50": 665.84,
+            "p75": 887.81,
+            "p90": 1518.7
+          },
+          "residentWeighted": {
+            "p10": 477.88,
+            "p25": 540.79,
+            "p50": 689.35,
+            "p75": 822.96,
+            "p90": 911.28
+          }
+        }
+      },
+      {
+        "region": "Molise",
+        "municipalities": 136,
+        "population": 289224,
+        "titleAmount": 186735225.54,
+        "totalAmount": 411641688.98,
+        "share": 0.45363536,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 451.64,
+            "p25": 530.29,
+            "p50": 670.13,
+            "p75": 845.33,
+            "p90": 1133.32
+          },
+          "residentWeighted": {
+            "p10": 451.71,
+            "p25": 525.13,
+            "p50": 656.2,
+            "p75": 768.6,
+            "p90": 808.61
+          }
+        }
+      },
+      {
+        "region": "Piemonte",
+        "municipalities": 1179,
+        "population": 4251354,
+        "titleAmount": 2622638751.82,
+        "totalAmount": 4560011769.49,
+        "share": 0.57513859,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 408.13,
+            "p25": 468.92,
+            "p50": 552.37,
+            "p75": 732.46,
+            "p90": 1144.27
+          },
+          "residentWeighted": {
+            "p10": 422.91,
+            "p25": 478.11,
+            "p50": 590.12,
+            "p75": 768.16,
+            "p90": 813.02
+          }
+        }
+      },
+      {
+        "region": "Puglia",
+        "municipalities": 257,
+        "population": 3890661,
+        "titleAmount": 2267192369.17,
+        "totalAmount": 4209972672.76,
+        "share": 0.538529,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 391.19,
+            "p25": 437.85,
+            "p50": 511.75,
+            "p75": 648.6,
+            "p90": 835.49
+          },
+          "residentWeighted": {
+            "p10": 403.73,
+            "p25": 461.49,
+            "p50": 551.71,
+            "p75": 698.4,
+            "p90": 813.25
+          }
+        }
+      },
+      {
+        "region": "Sardegna",
+        "municipalities": 376,
+        "population": 1568210,
+        "titleAmount": 1511407523.24,
+        "totalAmount": 2394690602.29,
+        "share": 0.63114939,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 754.39,
+            "p25": 884.5,
+            "p50": 1084.27,
+            "p75": 1414.84,
+            "p90": 1867.73
+          },
+          "residentWeighted": {
+            "p10": 691.57,
+            "p25": 780.18,
+            "p50": 925.2,
+            "p75": 1000.19,
+            "p90": 1253.75
+          }
+        }
+      },
+      {
+        "region": "Sicilia",
+        "municipalities": 391,
+        "population": 4797359,
+        "titleAmount": 3039142326.32,
+        "totalAmount": 5997370229.02,
+        "share": 0.50674583,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 454.09,
+            "p25": 566.66,
+            "p50": 703.44,
+            "p75": 955.5,
+            "p90": 1214.5
+          },
+          "residentWeighted": {
+            "p10": 405.45,
+            "p25": 505.1,
+            "p50": 582.15,
+            "p75": 732.04,
+            "p90": 857.27
+          }
+        }
+      },
+      {
+        "region": "Toscana",
+        "municipalities": 273,
+        "population": 3660530,
+        "titleAmount": 2711143682.44,
+        "totalAmount": 4578044584.14,
+        "share": 0.59220561,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 458.16,
+            "p25": 556.38,
+            "p50": 671.64,
+            "p75": 872.89,
+            "p90": 1257.19
+          },
+          "residentWeighted": {
+            "p10": 456.29,
+            "p25": 568.25,
+            "p50": 652.05,
+            "p75": 821.44,
+            "p90": 1215.22
+          }
+        }
+      },
+      {
+        "region": "Trentino-Alto Adige/Südtirol",
+        "municipalities": 281,
+        "population": 1077439,
+        "titleAmount": 1099603918.79,
+        "totalAmount": 2131422122.66,
+        "share": 0.51590152,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 557.24,
+            "p25": 715.95,
+            "p50": 974.4,
+            "p75": 1294.16,
+            "p90": 1793.47
+          },
+          "residentWeighted": {
+            "p10": 584.28,
+            "p25": 723.81,
+            "p50": 986.9,
+            "p75": 1121.48,
+            "p90": 1448.15
+          }
+        }
+      },
+      {
+        "region": "Umbria",
+        "municipalities": 92,
+        "population": 853068,
+        "titleAmount": 549853762.82,
+        "totalAmount": 964270551.38,
+        "share": 0.57022768,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 433.38,
+            "p25": 501.04,
+            "p50": 618.53,
+            "p75": 717.22,
+            "p90": 1275.2
+          },
+          "residentWeighted": {
+            "p10": 445.79,
+            "p25": 527.99,
+            "p50": 640.48,
+            "p75": 745.41,
+            "p90": 800.44
+          }
+        }
+      },
+      {
+        "region": "Valle d'Aosta/Vallée d'Aoste",
+        "municipalities": 74,
+        "population": 122877,
+        "titleAmount": 158272378.19,
+        "totalAmount": 267619962.8,
+        "share": 0.59140722,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 875.67,
+            "p25": 1052.33,
+            "p50": 1731.72,
+            "p75": 3055.98,
+            "p90": 4609.47
+          },
+          "residentWeighted": {
+            "p10": 821.17,
+            "p25": 875.67,
+            "p50": 915.89,
+            "p75": 1166.4,
+            "p90": 2517.52
+          }
+        }
+      },
+      {
+        "region": "Veneto",
+        "municipalities": 558,
+        "population": 4846305,
+        "titleAmount": 2787246585.66,
+        "totalAmount": 4855620023.35,
+        "share": 0.57402486,
+        "perCapita": {
+          "municipalityWeighted": {
+            "p10": 299.33,
+            "p25": 341.65,
+            "p50": 408.11,
+            "p75": 507.96,
+            "p90": 745.76
+          },
+          "residentWeighted": {
+            "p10": 300.15,
+            "p25": 347.57,
+            "p50": 428.61,
+            "p75": 608.45,
+            "p90": 977.81
+          }
+        }
+      }
+    ],
+    "provenance": {
+      "siopeMovementsUrl": "https://www.siope.it/documenti/siope2/open/last/SIOPE_USCITE.2026.zip",
+      "siopeRegistryUrl": "https://www.siope.it/documenti/siope2/open/last/SIOPE_ANAGRAFICHE.zip",
+      "ipaUrl": "https://indicepa.gov.it/ipa-dati/dataset/502ff370-1b2c-4310-94c7-f39ceb7500e3/resource/3ed63523-ff9c-41f6-a6fe-980f3d9e501f/download/amministrazioni.txt",
+      "siopeMovementsLastModified": "Thu, 20 Aug 2026 18:53:54 GMT",
+      "siopeRegistryLastModified": "Thu, 20 Aug 2026 18:53:54 GMT",
+      "ipaLastModified": "Fri, 21 Aug 2026 03:14:18 GMT",
+      "siopeMovementsEtag": "\"2f80b30-6597f0aaa88fc\"",
+      "siopeRegistryEtag": "\"d17de-6597f0a9fafa7\"",
+      "ipaEtag": "\"1787282058.8933113-8585495-185014459\"",
+      "siopeMovementsSha256": "cdb75e2411317de66816de4abe2d0d87bbb7eab445af0ee5497abf4872b0df83",
+      "siopeRegistrySha256": "bf5ec3331ce62be671d5d2789e22e18009ab48526cec30f9ae31e649195244c3",
+      "ipaSha256": "8e5e33663975e4ad0e6828e084463cd53367b38cd7398719ae479940e357768d",
+      "observedAt": "2026-08-21T19:57:58+00:00"
+    }
+  },
   "source": {
     "siopeOwner": "Ragioneria Generale dello Stato · banca dati gestita da Banca d'Italia",
     "siopeMovementsUrl": "https://www.siope.it/documenti/siope2/open/last/SIOPE_USCITE.2026.zip",
@@ -3003,7 +3755,13 @@
     "siopeMovementsLastModified": "Thu, 20 Aug 2026 18:53:54 GMT",
     "siopeRegistryLastModified": "Thu, 20 Aug 2026 18:53:54 GMT",
     "ipaLastModified": "Fri, 21 Aug 2026 03:14:18 GMT",
-    "observedAt": "2026-08-21T11:34:54+00:00"
+    "siopeMovementsEtag": "\"2f80b30-6597f0aaa88fc\"",
+    "siopeRegistryEtag": "\"d17de-6597f0a9fafa7\"",
+    "ipaEtag": "\"1787282058.8933113-8585495-185014459\"",
+    "siopeMovementsSha256": "cdb75e2411317de66816de4abe2d0d87bbb7eab445af0ee5497abf4872b0df83",
+    "siopeRegistrySha256": "bf5ec3331ce62be671d5d2789e22e18009ab48526cec30f9ae31e649195244c3",
+    "ipaSha256": "8e5e33663975e4ad0e6828e084463cd53367b38cd7398719ae479940e357768d",
+    "observedAt": "2026-08-21T19:57:58+00:00"
   },
   "methodology": {
     "measure": "pagamenti di cassa SIOPE dei Comuni",

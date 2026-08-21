@@ -45,5 +45,7 @@ test("municipal screening is marked derived, bounded and dimension-aware", () =>
   assert.match(controlsPage, /Popolazione implicita/);
   assert.match(controlsPage, /sensitivityByPopulationBand/);
   assert.match(controlsPage, /OpenCivitas/);
+  assert.match(controlsPage, /selectedYear !== null/);
+  assert.match(controlsPage, /non\s+sono una graduatoria di Comuni/);
   assert.match(controlsCss, /\.outlierTable table \{[\s\S]*?min-width: 900px;/);
 });

@@ -22,6 +22,7 @@ test("spesa-comuni returns complete pagination and provenance", async () => {
   assert.ok(typeof payload.pagination.hasMore === "boolean");
   assert.ok(Array.isArray(payload.warnings) && payload.warnings.length >= 3);
   assert.ok(payload.outliers.every((item) => "impliedPopulation" in item));
+  assert.ok(Buffer.byteLength(JSON.stringify(payload), "utf8") < 128_000);
 });
 
 test("spesa-comuni scopes the complete summary and page to a region", async () => {

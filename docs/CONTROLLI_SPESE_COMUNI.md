@@ -48,5 +48,8 @@ Comuni resta non valutata.
   `region`, `limit`, `offset`. I risultati MCP e REST riusano la stessa funzione di query tipizzata
   e sono coperti da un test anti-divergenza.
 
+L'ordinamento per distanza dalla soglia serve soltanto a rendere leggibile una risposta paginata;
+non è una graduatoria di Comuni e non identifica i migliori o i peggiori.
+
 Il dettaglio di spesa storica, spesa standard e servizi resta nel [confronto OpenCivitas](/territori/confronto).
 Il dataset ufficiale e il metodo di lettura devono rimanere la base per qualsiasi verifica ulteriore.

@@ -119,7 +119,7 @@ export default async function ControlsPage({ searchParams }: PageProps) {
     : selectedYear === null
       ? procurementComparisons[2025]
       : null;
-  const procurementAvailability = selectedAuditYear
+  const procurementAvailability = selectedYear !== null
     ? getProcurementAvailability(selectedYear)
     : null;
   const procurementRows = Object.values(procurementComparisons).sort(
@@ -253,9 +253,9 @@ export default async function ControlsPage({ searchParams }: PageProps) {
             >
               <table className="table">
                 <caption>
-                  Primi {topSpendingOutliers.length} di {integer(spendingOutliers.pagination.total)}
-                  {" "}risultati: distanza normalizzata in multipli di IQR, poi distanza assoluta ·
-                  OpenCivitas {openCivitasSnapshot.referenceYear}
+                  {topSpendingOutliers.length} di {integer(spendingOutliers.pagination.total)}
+                  {" "}risultati dello screening, ordinati per distanza dalla soglia per facilitare
+                  la lettura · OpenCivitas {openCivitasSnapshot.referenceYear}
                 </caption>
                 <thead>
                   <tr>
@@ -348,6 +348,10 @@ export default async function ControlsPage({ searchParams }: PageProps) {
             </p>
           </div>
           <p className={styles.note}>
+            I risultati sono ordinati per distanza dalla soglia solo per facilitare la lettura: non
+            sono una graduatoria di Comuni.
+          </p>
+          <p className={styles.note}>
             Per il dettaglio di spesa storica, spesa standard e servizi consulta il{" "}
             <Link href="/territori/confronto">confronto tra Comuni →</Link>.
           </p>
@@ -417,7 +421,10 @@ export default async function ControlsPage({ searchParams }: PageProps) {
         ) : (
           <div className={styles.unavailable}>
             <strong>Dati annuali ANAC non disponibili per questo periodo.</strong>
-            <p>{procurementAvailability?.message}</p>
+            <p>
+              {procurementAvailability?.message ??
+                "Per questo periodo non abbiamo una serie ANAC annuale verificata."}
+            </p>
           </div>
         )}
 

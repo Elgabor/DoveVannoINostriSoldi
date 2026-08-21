@@ -10,6 +10,7 @@ const { GET } = await import("../src/app/api/controlli/spesa-comuni/route.ts");
 test("MCP controls catalog advertises the bounded municipal screening filters", () => {
   const descriptor = datasetCatalog.find((dataset) => dataset.id === "controlli_segnali");
   assert.ok(descriptor);
+  assert.deepEqual(descriptor.sourceIds, ["opencivitas"]);
   assert.deepEqual(descriptor.filters, ["area", "year", "region", "limit", "offset"]);
 });
 

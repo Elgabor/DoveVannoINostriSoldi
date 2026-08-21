@@ -53,6 +53,13 @@ test("assistant API accepts an HTTPS or loopback HTTP origin with an IPv6 host a
   }));
   assert.equal(response.status, 200);
   assert.equal((await response.json()).kind, "help");
+
+  const alternateLoopback = await POST(request({
+    url: "http://localhost:3000/api/assistant",
+    headers: { Host: "127.0.0.1:3000", Origin: "http://127.0.0.1:3000" },
+  }));
+  assert.equal(alternateLoopback.status, 200);
+  assert.equal((await alternateLoopback.json()).kind, "help");
 });
 
 test("assistant API enforces declared and streamed body limits", async () => {

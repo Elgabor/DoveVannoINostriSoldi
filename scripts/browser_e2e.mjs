@@ -987,6 +987,51 @@ try {
     completed.push(label);
   }
 
+  for (const width of [320, 390, 768, 1280]) {
+    const label = `Assistente deterministico ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/assistente",
+      width,
+      validate: async (page) => {
+        const text = await bodyText(page);
+        assertTextMatches(text, /Assistente sui dati pubblici/i, label);
+        assertTextMatches(text, /deterministica e in sola lettura/i, label);
+        assert.ok(await page.$("#assistant-prompt"), `${label}: campo domanda assente`);
+        assert.ok(await page.$('main form button[type="submit"]'), `${label}: invio assente`);
+      },
+    });
+    completed.push(label);
+  }
+
+  for (const width of [390, 1280]) {
+    const label = `Assistente risposta verificata ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/assistente",
+      width,
+      validate: async (page) => {
+        await page.type("#assistant-prompt", "Quanto hanno speso i Comuni nel 2025?");
+        await page.click('main form button[type="submit"]');
+        await page.waitForFunction(() =>
+          document.body.innerText.includes("Pagamenti SIOPE dei Comuni") &&
+          document.body.innerText.includes("anno completo 2025"),
+        );
+        const text = await bodyText(page);
+        assertTextMatches(text, /Risposta verificata/i, label);
+        assertTextMatches(text, /Fonte/i, label);
+        assertTextMatches(text, /Da leggere con attenzione/i, label);
+        assert.doesNotMatch(text, /Quanto hanno speso i Comuni nel 2025\?[\s\S]*Quanto hanno speso i Comuni nel 2025\?/u, `${label}: prompt duplicato nella risposta`);
+        assert.equal(
+          await page.$eval('[aria-live="polite"]', (element) => element.getAttribute("aria-busy")),
+          "false",
+          `${label}: stato busy non concluso`,
+        );
+      },
+    });
+    completed.push(label);
+  }
+
   console.log(JSON.stringify({
     baseUrl: baseUrl.origin,
     checks: completed,

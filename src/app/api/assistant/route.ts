@@ -19,12 +19,31 @@ function json(body: unknown, status = 200, headers?: HeadersInit) {
   return Response.json(body, { status, headers: { ...NO_STORE, ...headers } });
 }
 
-function isLoopbackHost(host: string): boolean {
-  const normalizedHost = host.trim().toLocaleLowerCase("en-US");
-  const hostname = normalizedHost.startsWith("[")
-    ? normalizedHost.slice(1, normalizedHost.indexOf("]"))
-    : normalizedHost.replace(/:\d+$/u, "");
-  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+function normalizedHost(value: string): string | null {
+  const candidate = value.trim().toLocaleLowerCase("en-US").replace(/\.$/u, "");
+  if (!candidate || /[\s/@]/u.test(candidate)) return null;
+  return candidate;
+}
+
+function isLoopbackHost(value: string): boolean {
+  return /^(?:localhost|127\.0\.0\.1|\[::1\])(?::\d{1,5})?$/u.test(value);
+}
+
+function allowedHosts(request: Request): Set<string> {
+  const requestUrlHost = normalizedHost(new URL(request.url).host);
+  const configured = [process.env.VERCEL_PROJECT_PRODUCTION_URL, process.env.VERCEL_URL]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .map((value) => value.replace(/^https?:\/\//iu, ""))
+    .map(normalizedHost)
+    .filter((value): value is string => value !== null);
+  const allowed = new Set(configured);
+  if (requestUrlHost) allowed.add(requestUrlHost);
+
+  const requestHost = normalizedHost(request.headers.get("host") ?? "");
+  if (requestHost && requestUrlHost && isLoopbackHost(requestHost) && isLoopbackHost(requestUrlHost)) {
+    allowed.add(requestHost);
+  }
+  return allowed;
 }
 
 function rejectRequest(request: Request): Response | null {
@@ -33,9 +52,8 @@ function rejectRequest(request: Request): Response | null {
     return json({ ok: false, error: "Content-Type non supportato" }, 415);
   }
 
-  const requestUrl = new URL(request.url);
-  const requestHost = (request.headers.get("host") ?? requestUrl.host).trim().toLocaleLowerCase("en-US");
-  if (!requestHost || requestHost !== requestUrl.host.toLocaleLowerCase("en-US")) {
+  const requestHost = normalizedHost(request.headers.get("host") ?? "");
+  if (!requestHost || !allowedHosts(request).has(requestHost)) {
     return json({ ok: false, error: "Host non consentito" }, 403);
   }
 
@@ -46,9 +64,10 @@ function rejectRequest(request: Request): Response | null {
   } catch {
     return json({ ok: false, error: "Origin non consentita" }, 403);
   }
+  const originHost = normalizedHost(originUrl.host);
   const allowedProtocol = originUrl.protocol === "https:" ||
     (originUrl.protocol === "http:" && isLoopbackHost(requestHost));
-  if (originUrl.host.toLocaleLowerCase("en-US") !== requestHost || !allowedProtocol) {
+  if (originHost !== requestHost || !allowedProtocol) {
     return json({ ok: false, error: "Origin non consentita" }, 403);
   }
 

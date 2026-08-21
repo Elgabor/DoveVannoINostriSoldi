@@ -95,7 +95,7 @@ function relevantRequestFailure(request) {
   return `${resourceType} ${requestUrl}: ${failure.errorText}`;
 }
 
-function installDiagnostics(page, label) {
+function installDiagnostics(page, label, isExpectedFailure = () => false) {
   const failures = [];
 
   page.on("pageerror", (error) => {
@@ -120,7 +120,12 @@ function installDiagnostics(page, label) {
 
   return async function assertNoBrowserErrors() {
     await delay(150);
-    assert.deepEqual(failures, [], `${label}: errori browser:\n${failures.join("\n")}`);
+    const unexpectedFailures = failures.filter((failure) => !isExpectedFailure(failure));
+    assert.deepEqual(
+      unexpectedFailures,
+      [],
+      `${label}: errori browser:\n${unexpectedFailures.join("\n")}`,
+    );
   };
 }
 
@@ -466,7 +471,7 @@ async function navigate(page, pathname, label) {
   await page.waitForNetworkIdle({ idleTime: 350, timeout: 10_000 });
 }
 
-async function runScenario(browser, { label, pathname, validate, width }) {
+async function runScenario(browser, { expectedFailure, label, pathname, validate, width }) {
   const page = await browser.newPage();
   let thrown;
 
@@ -481,7 +486,7 @@ async function runScenario(browser, { label, pathname, validate, width }) {
       hasTouch: width <= 390,
       isMobile: width <= 390,
     });
-    const assertNoBrowserErrors = installDiagnostics(page, label);
+    const assertNoBrowserErrors = installDiagnostics(page, label, expectedFailure);
     await navigate(page, pathname, label);
     await assertResponsiveShell(page, label, width);
     await validate(page);
@@ -640,6 +645,150 @@ try {
     });
     completed.push(label);
   }
+
+  for (const width of [390, 1280]) {
+    const label = `Macro-aree territori ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/territori?anno=2024",
+      width,
+      validate: async (page) => {
+        const groups = await page.$$eval("main table tbody", (bodies) =>
+          bodies.slice(0, 3).map((body) => ({
+            heading: body.querySelector("tr:first-child th")?.textContent?.trim(),
+            rows: body.querySelectorAll("tr").length,
+          })),
+        );
+        assert.deepEqual(groups, [
+          { heading: "Nord", rows: 9 },
+          { heading: "Centro", rows: 5 },
+          { heading: "Sud e Isole", rows: 9 },
+        ]);
+        assert.equal(
+          await page.$$eval('main a[href^="/territori/fisco#regione-"]', (links) => links.length),
+          19,
+          `${label}: numero inatteso di link CPT univoci`,
+        );
+        const trentinoHasLink = await page.$$eval("main table tbody th", (headings) => {
+          const heading = headings.find((item) =>
+            item.textContent?.includes("Trentino-Alto Adige"),
+          );
+          return Boolean(heading?.querySelector("a"));
+        });
+        assert.equal(trentinoHasLink, false, `${label}: il Trentino non deve avere un link CPT ambiguo`);
+      },
+    });
+    completed.push(label);
+  }
+
+  for (const width of [390, 1280]) {
+    const label = `Ricerca header ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/",
+      width,
+      validate: async (page) => {
+        const input = await page.$("#global-entity-search");
+        assert.ok(input, `${label}: campo di ricerca assente`);
+        await input.type("Roma");
+        await page.waitForSelector('[role="listbox"] [role="option"]', { visible: true });
+        assert.equal(await input.evaluate((element) => element.getAttribute("aria-expanded")), "true");
+
+        await page.keyboard.press("ArrowDown");
+        assert.ok(
+          await input.evaluate((element) => element.getAttribute("aria-activedescendant")),
+          `${label}: opzione attiva non esposta`,
+        );
+        await page.keyboard.press("Enter");
+        await page.waitForFunction(() => /^\/enti\//.test(window.location.pathname));
+        assert.match(new URL(page.url()).pathname, /^\/enti\//, `${label}: destinazione inattesa`);
+      },
+    });
+    completed.push(label);
+  }
+
+  await runScenario(browser, {
+    label: "Ricerca header Escape 390px",
+    pathname: "/",
+    width: 390,
+    validate: async (page) => {
+      const input = await page.$("#global-entity-search");
+      assert.ok(input, "Ricerca header Escape: campo assente");
+      await input.type("Roma");
+      await page.waitForSelector('[role="listbox"] [role="option"]', { visible: true });
+      await page.keyboard.press("Escape");
+      assert.equal(await input.evaluate((element) => element.getAttribute("aria-expanded")), "false");
+      assert.equal(await input.evaluate((element) => element.value), "Roma");
+    },
+  });
+  completed.push("Ricerca header Escape 390px");
+
+  await runScenario(browser, {
+    label: "Ricerca header errore 390px",
+    pathname: "/",
+    width: 390,
+    expectedFailure: (failure) => failure.includes("/api/enti?q=Roma&limit=7"),
+    validate: async (page) => {
+      await page.setRequestInterception(true);
+      page.on("request", (request) => {
+        if (new URL(request.url()).pathname === "/api/enti") {
+          void request.respond({
+            status: 503,
+            contentType: "application/json",
+            body: JSON.stringify({ ok: false }),
+          });
+        } else {
+          void request.continue();
+        }
+      });
+      const input = await page.$("#global-entity-search");
+      assert.ok(input, "Ricerca header errore: campo assente");
+      await input.type("Roma");
+      await page.waitForFunction(() =>
+        document.body.innerText.includes("La ricerca rapida non è disponibile"),
+      );
+      await page.keyboard.press("Escape");
+      assert.equal(await input.evaluate((element) => element.getAttribute("aria-expanded")), "false");
+    },
+  });
+  completed.push("Ricerca header errore 390px");
+
+  await runScenario(browser, {
+    label: "Ricerca header testo lungo 320px",
+    pathname: "/",
+    width: 320,
+    validate: async (page) => {
+      await page.setRequestInterception(true);
+      page.on("request", (request) => {
+        if (new URL(request.url()).pathname === "/api/enti") {
+          void request.respond({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              ok: true,
+              records: [{
+                codiceIpa: "ente_test",
+                denominazione: "Amministrazione straordinariamente lunga senza separatori utili alla visualizzazione",
+                tipologia: "Pubblica amministrazione territoriale",
+              }],
+            }),
+          });
+        } else {
+          void request.continue();
+        }
+      });
+      const input = await page.$("#global-entity-search");
+      assert.ok(input, "Ricerca header testo lungo: campo assente");
+      await input.type("ente");
+      await page.waitForSelector('[role="listbox"] [role="option"]', { visible: true });
+      const widths = await page.$eval(".header-search-dropdown", (dropdown) => ({
+        client: dropdown.clientWidth,
+        scroll: dropdown.scrollWidth,
+      }));
+      assert.ok(widths.scroll <= widths.client + 1, "Ricerca header: testo lungo oltre il dropdown");
+    },
+  });
+  completed.push("Ricerca header testo lungo 320px");
 
   for (const width of [390, 1280]) {
     const label = `Parlamento previdenza ${width}px`;

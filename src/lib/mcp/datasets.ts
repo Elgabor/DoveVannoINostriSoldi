@@ -216,8 +216,9 @@ export async function queryPublicDataset(query: DatasetQuery): Promise<unknown> 
         auditSignals,
         procurementComparisons,
       } = await import("@/lib/audit-data");
+      const { queryOpenCivitasSpendingOutliers } = await import("@/lib/opencivitas-outliers");
       const area = query.area?.trim().toLocaleLowerCase("it-IT");
-      return jsonSafe({
+      const result: Record<string, unknown> = {
         reviewedAt: auditReviewedAt,
         signals: auditSignals.filter((signal) =>
           (!area || signal.area.toLocaleLowerCase("it-IT") === area) &&
@@ -225,7 +226,16 @@ export async function queryPublicDataset(query: DatasetQuery): Promise<unknown> 
         classifications: auditClassifications,
         procurementComparisons,
         methodology: auditMethodology,
-      });
+      };
+      if (area === "spesa-comuni") {
+        result.spendingOutliers = queryOpenCivitasSpendingOutliers({
+          year: query.year,
+          region: query.region,
+          limit: query.limit,
+          offset: query.offset,
+        });
+      }
+      return jsonSafe(result);
     }
     case "registro_fonti": {
       const { publicSources } = await import("@/lib/sources");

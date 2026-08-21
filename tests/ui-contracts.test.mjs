@@ -18,8 +18,19 @@ const invalidityCss = await readFile(
   new URL("../src/app/spese/invalidita/invalidita.module.css", import.meta.url),
   "utf8",
 );
-const controlsPage = await readFile(new URL("../src/app/controlli/page.tsx", import.meta.url), "utf8");
-const controlsCss = await readFile(new URL("../src/app/controlli/controlli.module.css", import.meta.url), "utf8");
+const spendingPage = await readFile(new URL("../src/app/spese/page.tsx", import.meta.url), "utf8");
+const spendingCss = await readFile(
+  new URL("../src/app/spese/spese.module.css", import.meta.url),
+  "utf8",
+);
+const controlsPage = await readFile(
+  new URL("../src/app/controlli/page.tsx", import.meta.url),
+  "utf8",
+);
+const controlsCss = await readFile(
+  new URL("../src/app/controlli/controlli.module.css", import.meta.url),
+  "utf8",
+);
 
 test("the fiscal formula has one explicit screen-reader relationship", () => {
   const accessibleFormula =
@@ -48,4 +59,43 @@ test("municipal screening is marked derived, bounded and dimension-aware", () =>
   assert.match(controlsPage, /selectedYear !== null/);
   assert.match(controlsPage, /non\s+sono una graduatoria di Comuni/);
   assert.match(controlsCss, /\.outlierTable table \{[\s\S]*?min-width: 900px;/);
+});
+
+test("scope guidance is consolidated without losing its source boundaries", () => {
+  assert.equal(
+    spendingPage.match(/className="notice scope-notice"/g)?.length,
+    1,
+  );
+  assert.equal(
+    controlsPage.match(/className="notice scope-notice"/g)?.length,
+    1,
+  );
+  assert.match(spendingPage, /href=\{`\/territori\?anno=\$\{year\}`\}/);
+  assert.match(spendingPage, /href="\/spese\/invalidita"/);
+  assert.match(spendingPage, /href="\/stato"/);
+  assert.match(spendingPage, /href="\/parlamento"/);
+  assert.match(controlsPage, /href="\/fonti"/);
+  assert.match(controlsPage, /href="\/metodologia"/);
+  assert.match(controlsPage, /href="\/mcp"/);
+  assert.match(controlsPage, /dati\.anticorruzione\.it\/opendata\/dataset/);
+  assert.match(controlsPage, /non dimostra una colpa/);
+  assert.match(controlsPage, /non sostituisce Guardia di finanza, ANAC, Corte dei conti/);
+});
+
+test("the spending analysis explains the share without turning it into a merit ranking", () => {
+  assert.equal(spendingPage.match(/className=\{styles\.analysis\}/g)?.length, 1);
+  assert.match(spendingPage, /Titolo 1 · spese correnti/);
+  assert.match(spendingPage, /non dice se una spesa sia utile/);
+  assert.match(spendingPage, /Il confronto non è un trend/);
+  assert.match(spendingPage, /partialComparisonYears/);
+  assert.doesNotMatch(spendingPage, /il 2026 è ancora parziale/);
+  assert.match(spendingPage, /<th scope="col" className="num">Quota<\/th>/);
+  assert.match(spendingPage, /<th scope="col">Stato<\/th>/);
+  assert.match(spendingPage, /distribuzione completa/);
+  assert.match(spendingPage, /data\.distribution\.perCapita\.residentWeighted/);
+  assert.doesNotMatch(spendingPage, /primi 100/);
+  assert.doesNotMatch(spendingPage, /warning-notice/);
+  assert.match(spendingCss, /\.analysis \{/);
+  assert.match(spendingCss, /@media \(max-width: 620px\)[\s\S]*?\.quantiles \{/);
+  assert.match(spendingCss, /@media \(max-width: 420px\)[\s\S]*?table-layout: fixed/);
 });

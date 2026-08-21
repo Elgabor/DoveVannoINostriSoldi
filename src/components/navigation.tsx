@@ -5,7 +5,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Search01Icon } from "@hugeicons/core-free-icons";
+import { GithubIcon, Search01Icon } from "@hugeicons/core-free-icons";
+import { REPO_URL } from "@/lib/site";
 
 const primary = [
   { href: "/", label: "Home" },
@@ -76,6 +77,16 @@ export function Navigation() {
           <Link className="header-action header-action-accent" href="/mcp">
             MCP
           </Link>
+          <a
+            className="header-action header-action-icon"
+            href={REPO_URL}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Codice su GitHub, si apre in una nuova scheda"
+            title="Codice su GitHub"
+          >
+            <HugeiconsIcon icon={GithubIcon} size={19} strokeWidth={1.7} aria-hidden="true" />
+          </a>
         </div>
       </div>
 

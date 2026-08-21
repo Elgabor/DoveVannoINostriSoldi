@@ -30,7 +30,7 @@ export const publicSources: PublicSource[] = [
     name: "OpenBDAP",
     owner: "Ragioneria Generale dello Stato",
     area: "Bilancio, spesa, SIOPE, opere, PNRR",
-    cadence: "Variabile per dataset; pagamenti Stato per mese contabile",
+    cadence: "Variabile per dataset; pagamenti Stato mensili e consuntivi annuali",
     coverage: "Pagamenti dello Stato e ricerca opere pubbliche per CUP",
     format: "CKAN API · OData · CSV · open data",
     url: "https://bdap-opendata.rgs.mef.gov.it/content/api",

@@ -79,4 +79,5 @@ test("the spending analysis explains the share without turning it into a merit r
   assert.doesNotMatch(spendingPage, /warning-notice/);
   assert.match(spendingCss, /\.analysis \{/);
   assert.match(spendingCss, /@media \(max-width: 620px\)[\s\S]*?\.quantiles \{/);
+  assert.match(spendingCss, /@media \(max-width: 420px\)[\s\S]*?table-layout: fixed/);
 });

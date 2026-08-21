@@ -227,4 +227,7 @@
 
 @media (max-width: 420px) {
   .quantiles { grid-template-columns: 1fr; }
+  .analysisComparison :global(.table) { table-layout: fixed; }
+  .analysisComparison :global(.table) th,
+  .analysisComparison :global(.table) td { padding-inline: 4px; }
 }

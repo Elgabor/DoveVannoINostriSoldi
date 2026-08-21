@@ -36,7 +36,7 @@ const leadFields = z.object({
   message: z
     .string()
     .trim()
-    .min(30, "Scrivi almeno 30 caratteri su che cosa ti serve.")
+    .min(20, "Descrivi in almeno una frase che cosa ti serve.")
     .max(4000),
   consent: z.literal(true, { error: "Serve il consenso al trattamento dei dati." }),
 });

@@ -135,7 +135,7 @@ export function LeadForm() {
           className="input"
           name="message"
           required
-          minLength={30}
+          minLength={20}
           maxLength={4000}
           rows={6}
           placeholder="Ente o territorio, periodo, e che cosa ti servirebbe dopo la prima conversazione."

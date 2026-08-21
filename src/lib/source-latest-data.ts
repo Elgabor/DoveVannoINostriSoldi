@@ -8,6 +8,7 @@ import { openCoesioneSnapshot } from "@/lib/opencoesione-snapshot";
 import { parliamentSnapshot } from "@/lib/parliament-snapshot";
 import { siopeMunicipalSnapshot } from "@/lib/siope-snapshot";
 import { MEF_IRPEF_SOURCE } from "@/lib/data/mef-irpef-source";
+import { PNRR_CHILDCARE_SOURCE } from "@/lib/data/pnrr-childcare-source";
 import type { SourceId } from "@/lib/data/source-policy";
 
 export type SourceLatestData =
@@ -28,6 +29,7 @@ const exhaustiveLatestDataBySlug = {
   "ipa-struttura": null,
   openbdap: null,
   opencoesione: { kind: "date", value: openCoesioneSnapshot.referenceDate },
+  [PNRR_CHILDCARE_SOURCE.id]: PNRR_CHILDCARE_SOURCE.latestData,
   opencivitas: { kind: "date", value: openCivitasSnapshot.publishedAt },
   "partecipazioni-pubbliche": { kind: "date", value: mefParticipationsSnapshot.publishedAt },
   anac: { kind: "period", label: String(anacCigSnapshot.referenceYear) },

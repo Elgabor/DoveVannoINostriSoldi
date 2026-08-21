@@ -9,6 +9,7 @@ export const DATASET_IDS = [
   "openbdap_opere_pubbliche",
   "opencivitas_fabbisogni",
   "opencoesione_progetti",
+  "pnrr_asili",
   "anac_cig_snapshot",
   "inps_invalidita_civile",
   "cpt_finanza_regionale",
@@ -69,6 +70,7 @@ const exampleQueries = {
   openbdap_opere_pubbliche: { dataset: "openbdap_opere_pubbliche", cup: "I39B05000060005" },
   opencivitas_fabbisogni: { dataset: "opencivitas_fabbisogni", region: "CALABRIA", limit: 20 },
   opencoesione_progetti: { dataset: "opencoesione_progetti" },
+  pnrr_asili: { dataset: "pnrr_asili", region: "Lazio", limit: 20 },
   anac_cig_snapshot: { dataset: "anac_cig_snapshot", year: 2025 },
   inps_invalidita_civile: { dataset: "inps_invalidita_civile", year: 2023, region: "Calabria" },
   cpt_finanza_regionale: { dataset: "cpt_finanza_regionale", year: 2023, region: "Calabria" },
@@ -84,7 +86,7 @@ const exampleQueries = {
   mef_partecipazioni: { dataset: "mef_partecipazioni" },
   consulenti_incarichi: { dataset: "consulenti_incarichi", year: 2024 },
   parlamento_bilanci: { dataset: "parlamento_bilanci", chamber: "camera", year: 2024 },
-  controlli_segnali: { dataset: "controlli_segnali", area: "appalti", year: 2025 },
+  controlli_segnali: { dataset: "controlli_segnali", area: "spesa-comuni", year: 2022, limit: 20 },
   registro_fonti: { dataset: "registro_fonti", query: "SIOPE" },
 } as const satisfies Record<DatasetId, DatasetQuery>;
 
@@ -95,6 +97,7 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
   { id: "openbdap_opere_pubbliche", title: "Opere pubbliche per CUP", summary: "Stato, date, costi e finanziamenti delle opere pubbliche MOP.", sourceIds: ["openbdap"], freshness: "live", filters: ["cup"], caveat: "I segnali di qualità o ritardo richiedono verifica e non provano uno spreco." },
   { id: "opencivitas_fabbisogni", title: "Fabbisogni e servizi comunali", summary: "Spesa storica, spesa standard e livelli dei servizi dei Comuni coperti da OpenCivitas.", sourceIds: ["opencivitas"], freshness: "snapshot", filters: ["year", "region", "code", "limit", "offset"], caveat: "La differenza dalla spesa standard non è una misura automatica di spreco." },
   { id: "opencoesione_progetti", title: "OpenCoesione", summary: "Aggregati nazionali su costo pubblico, pagamenti, temi, natura e stato dei progetti.", sourceIds: ["opencoesione"], freshness: "snapshot", filters: [], caveat: "Il rapporto pagamenti/costo non misura il completamento o la qualità dei progetti." },
+  { id: "pnrr_asili", title: "PNRR asili e prima infanzia", summary: "Progetti Italia Domani per CUP, localizzazioni, finanziamenti, gare e aggiudicatari.", sourceIds: ["italiadomani"], freshness: "snapshot", filters: ["cup", "query", "region", "province", "limit", "offset"], caveat: "Il finanziamento PNRR non è un pagamento osservato; gare e aggiudicazioni sono livelli distinti." },
   { id: "anac_cig_snapshot", title: "Contratti pubblici ANAC · CIG 2025", summary: "Aggregati verificati sui dodici file mensili CIG 2025, con copertura, hash, procedure e fasce di importo.", sourceIds: ["anac"], freshness: "snapshot", filters: ["year"], caveat: "È uno strumento di screening aggregato: non prova spreco, illecito, corruzione o frazionamento e non consente ancora la ricerca live per CIG." },
   { id: "inps_invalidita_civile", title: "Prestazioni INPS di invalidità civile", summary: "Spesa nazionale, stock di prestazioni e nuove pensioni di invalidità civile per regione.", sourceIds: ["inps"], freshness: "snapshot", filters: ["year", "region"], caveat: "Prestazioni, pensioni, spesa e nuove decorrenze sono misure diverse. I dati aggregati non provano frode e non consentono attribuzioni individuali." },
   { id: "cpt_finanza_regionale", title: "Entrate e spese pubbliche per territorio", summary: "Entrate, spese e saldo contabile territorializzato della PA consolidata CPT, con valori pro capite 2023.", sourceIds: ["cpt"], freshness: "snapshot", filters: ["year", "region"], caveat: "Il saldo è entrate meno spese nello stesso perimetro CPT PA. Non misura pressione fiscale, qualità dei servizi, merito politico o trasferimenti netti fra regioni e non è il residuo fiscale di Banca d'Italia." },
@@ -104,7 +107,7 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
   { id: "mef_partecipazioni", title: "Partecipazioni pubbliche", summary: "Aggregati della rilevazione annuale MEF sulle partecipazioni pubbliche.", sourceIds: ["partecipazioni-pubbliche"], freshness: "snapshot", filters: [] },
   { id: "consulenti_incarichi", title: "Incarichi e consulenze", summary: "Statistiche nazionali ufficiali su incarichi esterni e a dipendenti pubblici.", sourceIds: ["consulenti"], freshness: "snapshot", filters: ["year"] },
   { id: "parlamento_bilanci", title: "Bilanci del Parlamento", summary: "Documenti e valori strutturati verificati per Camera e Senato quando disponibili.", sourceIds: ["camera"], freshness: "snapshot", filters: ["chamber", "year"] },
-  { id: "controlli_segnali", title: "Segnali da controllare", summary: "Indicatori, classificazioni e confronti che orientano verifiche ulteriori.", sourceIds: [], freshness: "snapshot", filters: ["area", "year"], caveat: "Un segnale non attribuisce responsabilità e non dimostra da solo spreco o illecito." },
+  { id: "controlli_segnali", title: "Segnali da controllare", summary: "Indicatori, classificazioni e screening derivati che orientano verifiche ulteriori.", sourceIds: ["opencivitas"], freshness: "snapshot", filters: ["area", "year", "region", "limit", "offset"], caveat: "Un segnale, compreso lo screening OpenCivitas, non attribuisce responsabilità e non dimostra da solo spreco o illecito." },
   { id: "registro_fonti", title: "Registro delle fonti", summary: "Proprietari, copertura, formati, cadenza e stato di integrazione delle fonti censite.", sourceIds: [], freshness: "snapshot", filters: ["query"] },
 ];
 

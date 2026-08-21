@@ -320,7 +320,9 @@ def load_raw_data(payload: bytes) -> dict[str, dict[str, dict[str, str]]]:
 
 def clean_metric(rows: dict[str, dict[str, str]], code: str, warnings: list[str], *, required: bool = True) -> Decimal | None:
     if code not in rows:
-        raise StructuralError(f"Indicatore {code} mancante")
+        if required:
+            raise StructuralError(f"Indicatore {code} mancante")
+        return None
     row = rows[code]
     flags = [flag for flag in (row["anomaly"], row["privacy"]) if flag]
     if flags:
@@ -370,8 +372,8 @@ def normalize(data_payload: bytes, entities_payload: bytes, indicators_payload: 
             if value is not None and (value != value.to_integral_value() or not 0 <= value <= 10):
                 raise StructuralError(f"{username}: {field} fuori intervallo")
 
-        spending_reason = rows["DESCR_NON_VALUTABILE_SPESA_TOT"]["value"] or None
-        services_reason = rows["DESCR_NON_VALUTABILE_OUT_TOT"]["value"] or None
+        spending_reason = rows.get("DESCR_NON_VALUTABILE_SPESA_TOT", {}).get("value") or None
+        services_reason = rows.get("DESCR_NON_VALUTABILE_OUT_TOT", {}).get("value") or None
         municipalities.append({
             **entity,
             "historicalSpendingCents": historical_cents,

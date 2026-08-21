@@ -2,6 +2,16 @@
 
 The MIT license in `LICENSE` applies to the project code. Embedded or linked datasets keep their original licenses and attribution requirements.
 
+## Italia Domani PNRR childcare data
+
+- **Works:** `PNRR_Progetti.csv`, `PNRR_Localizzazione.csv`, `PNRR_Gare.csv` and `PNRR_Aggiudicatari_Gare.csv`, filtered to submeasure `M4C1I1.01.00`;
+- **Publisher:** Presidenza del Consiglio dei Ministri, Italia Domani;
+- **Source:** https://www.italiadomani.gov.it/content/sogei-ng/it/it/catalogo-open-data.html;
+- **License:** Creative Commons Attribution 4.0 International (CC BY 4.0), https://creativecommons.org/licenses/by/4.0/;
+- **Changes:** the four official CSVs were filtered by exact submeasure code, monetary amounts were converted to integer cents, dates were normalized, and rows were linked by CUP, CIG and procedure identifiers. Missing links remain explicit.
+
+Attribution: `Italia Domani, dati di attuazione del PNRR, submisura M4C1I1.01.00, CC BY 4.0. Adapted by DoveVannoINostriSoldi.`
+
 ## MEF municipal IRPEF data 2024
 
 - **Work:** `Redditi e principali variabili IRPEF su base comunale`, anno d'imposta 2024, dichiarazioni 2025;

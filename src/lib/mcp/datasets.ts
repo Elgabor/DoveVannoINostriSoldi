@@ -149,6 +149,17 @@ export async function queryPublicDataset(
         },
       });
     }
+    case "pnrr_asili": {
+      const { queryPnrrChildcare } = await import("@/lib/pnrr-childcare-snapshot");
+      return jsonSafe(queryPnrrChildcare({
+        cup: query.cup,
+        query: query.query,
+        region: query.region,
+        province: query.province,
+        limit: query.limit,
+        offset: query.offset,
+      }));
+    }
     case "anac_cig_snapshot": {
       const { getAnacCigSnapshot } = await import("@/lib/anac-cig-snapshot");
       return jsonSafe(getAnacCigSnapshot(query.year));
@@ -219,8 +230,9 @@ export async function queryPublicDataset(
         auditSignals,
         procurementComparisons,
       } = await import("@/lib/audit-data");
+      const { queryOpenCivitasSpendingOutliers } = await import("@/lib/opencivitas-outliers");
       const area = query.area?.trim().toLocaleLowerCase("it-IT");
-      return jsonSafe({
+      const result: Record<string, unknown> = {
         reviewedAt: auditReviewedAt,
         signals: auditSignals.filter((signal) =>
           (!area || signal.area.toLocaleLowerCase("it-IT") === area) &&
@@ -228,7 +240,16 @@ export async function queryPublicDataset(
         classifications: auditClassifications,
         procurementComparisons,
         methodology: auditMethodology,
-      });
+      };
+      if (area === "spesa-comuni") {
+        result.spendingOutliers = queryOpenCivitasSpendingOutliers({
+          year: query.year,
+          region: query.region,
+          limit: query.limit,
+          offset: query.offset,
+        });
+      }
+      return jsonSafe(result);
     }
     case "registro_fonti": {
       const { publicSources } = await import("@/lib/sources");

@@ -27,6 +27,10 @@ const controlsPage = await readFile(
   new URL("../src/app/controlli/page.tsx", import.meta.url),
   "utf8",
 );
+const controlsCss = await readFile(
+  new URL("../src/app/controlli/controlli.module.css", import.meta.url),
+  "utf8",
+);
 
 test("the fiscal formula has one explicit screen-reader relationship", () => {
   const accessibleFormula =
@@ -44,6 +48,17 @@ test("the three INPS headline statistics use a complete responsive grid", () => 
   assert.match(invalidityCss, /> div:nth-child\(-n \+ 2\) \{\s*border-bottom: 0;/);
   assert.match(invalidityCss, /@media \(max-width: 620px\)[\s\S]*?\.stats:global\(\.stat-strip\) \{ grid-template-columns: 1fr; \}/);
   assert.match(invalidityCss, /@media \(max-width: 620px\)[\s\S]*?> div:nth-child\(-n \+ 2\) \{[\s\S]*?border-bottom: 1px solid/);
+});
+
+test("municipal screening is marked derived, bounded and dimension-aware", () => {
+  assert.match(controlsPage, /Screening derivato sui Comuni/);
+  assert.match(controlsPage, /non è una classifica di/);
+  assert.match(controlsPage, /Popolazione implicita/);
+  assert.match(controlsPage, /sensitivityByPopulationBand/);
+  assert.match(controlsPage, /OpenCivitas/);
+  assert.match(controlsPage, /selectedYear !== null/);
+  assert.match(controlsPage, /non\s+sono una graduatoria di Comuni/);
+  assert.match(controlsCss, /\.outlierTable table \{[\s\S]*?min-width: 900px;/);
 });
 
 test("scope guidance is consolidated without losing its source boundaries", () => {

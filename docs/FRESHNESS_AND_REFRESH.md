@@ -88,6 +88,12 @@ OpenCoesione usa un flusso dedicato perché la dashboard deve rimanere disponibi
 
 La cadenza dichiarata dalla fonte resta bimestrale prevista. `/api/fonti/stato` classifica la freshness dalla data del rilascio ma non ripete il probe di rete: la reachability è controllata dal workflow dedicato.
 
+### Italia Domani PNRR asili
+
+Il verticale PNRR usa uno snapshot di quattro CSV ufficiali bloccati con SHA-256. La CI valida offline artefatto, metadati, copertura e join. Ogni lunedì il workflow `pnrr-childcare-refresh.yml` scarica in streaming i quattro asset e confronta hash e dimensione; una variazione apre un errore revisionabile e non aggiorna automaticamente i dati pubblicati. La rigenerazione manuale produce un artefatto candidato, mai un commit automatico.
+
+La data di freshness è la `Data di Estrazione` comune ai quattro file, non il giorno in cui GitHub Actions li ha ricontrollati. Non viene assegnata una soglia “stale” inventata perché Italia Domani non dichiara nel contratto una periodicità garantita.
+
 ### Consulenti Pubblici
 
 Il workflow controlla ogni 6 ore l'endpoint ufficiale usato dal portale. Gli importi vengono salvati in centesimi interi e l'anno corrente resta indicato come parziale. Se il contenuto non cambia, il timestamp di osservazione non produce un nuovo commit.

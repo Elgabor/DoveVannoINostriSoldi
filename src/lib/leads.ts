@@ -1,33 +1,14 @@
 import { z } from "zod";
-import { CONTACT_EMAIL } from "@/lib/site";
+import {
+  CONSULTING_TOPICS,
+  ORGANIZATION_TYPES,
+  PROJECT_BUDGETS,
+  type ConsultingTopic,
+  type OrganizationType,
+  type ProjectBudget,
+} from "@/lib/consulting-contract";
 
-export const ORGANIZATION_TYPES = {
-  azienda: "Azienda",
-  pa: "Ente pubblico o PA",
-  altro: "Altro",
-} as const;
-
-export const CONSULTING_TOPICS = {
-  lettura: "Lettura con AI di un problema, un dataset o un progetto",
-  dashboard: "Report o cruscotto interno con AI",
-  formazione: "Formazione all'uso dell'AI",
-  applicazione: "Strumento AI per l'impresa o per la PA",
-  altro: "Altro",
-} as const;
-
-export const PROJECT_BUDGETS = {
-  fino_5k: "Fino a 5.000 euro",
-  da_5k_a_15k: "Da 5.000 a 15.000 euro",
-  da_15k_a_30k: "Da 15.000 a 30.000 euro",
-  oltre_30k: "Oltre 30.000 euro",
-  non_so: "Non so ancora",
-} as const;
-
-export type OrganizationType = keyof typeof ORGANIZATION_TYPES;
-export type ConsultingTopic = keyof typeof CONSULTING_TOPICS;
-export type ProjectBudget = keyof typeof PROJECT_BUDGETS;
-
-const MIN_SUBMIT_MS = 4_000;
+const RESEND_TIMEOUT_MS = 8_000;
 
 const leadFields = z.object({
   name: z.string().trim().min(2, "Indica nome e cognome.").max(120),
@@ -53,6 +34,7 @@ const leadFields = z.object({
     .min(30, "Scrivi almeno 30 caratteri su che cosa ti serve.")
     .max(4000),
   consent: z.literal(true, { error: "Serve il consenso al trattamento dei dati." }),
+  submissionId: z.uuid("Identificativo richiesta non valido."),
 });
 
 export type Lead = z.infer<typeof leadFields>;
@@ -73,12 +55,6 @@ function isFilledHoneypot(value: unknown): boolean {
   return typeof value === "string" && value.trim().length > 0;
 }
 
-function isTooFast(startedAt: unknown, now: number): boolean {
-  if (typeof startedAt !== "number" || !Number.isFinite(startedAt)) return true;
-  if (startedAt > now) return true;
-  return now - startedAt < MIN_SUBMIT_MS;
-}
-
 function emptyToUndefined(value: unknown): unknown {
   if (typeof value !== "string") return value;
   const trimmed = value.trim();
@@ -93,10 +69,10 @@ function normalizeOptionalWebsite(value: unknown): unknown {
   return `https://${trimmed}`;
 }
 
-export function parseLead(payload: unknown, now = Date.now()): LeadParseResult {
+export function parseLead(payload: unknown): LeadParseResult {
   const record = asRecord(payload);
 
-  if (isFilledHoneypot(record.company_fax) || isFilledHoneypot(record.website) || isTooFast(record.startedAt, now)) {
+  if (isFilledHoneypot(record.company_fax) || isFilledHoneypot(record.website)) {
     return { status: "discarded" };
   }
 
@@ -111,6 +87,7 @@ export function parseLead(payload: unknown, now = Date.now()): LeadParseResult {
     budget: record.budget,
     message: record.message,
     consent: record.consent === true || record.consent === "true" || record.consent === "on",
+    submissionId: record.submissionId,
   });
 
   if (!parsed.success) {
@@ -149,25 +126,26 @@ export function formatLeadEmail(lead: Lead, receivedAt: Date): string {
 }
 
 export function leadEmailSubject(lead: Lead): string {
-  return `Richiesta consulenza: ${lead.organization}`;
+  const organization = lead.organization
+    .replace(/[\u0000-\u001f\u007f]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return `Richiesta consulenza: ${organization}`;
 }
 
-const RESEND_DEFAULT_FROM = "Consulenza <consulenza@dovevannoinostrisoldi.com>";
-const BLOCKED_FROM_DOMAINS = /@(gmail|googlemail|yahoo|outlook|hotmail|icloud|example)\./i;
+const mailbox = z.email();
+const namedMailbox = /^[^<>\r\n]+<([^<>\r\n]+)>$/;
 
-export function leadInbox(): string {
-  return process.env.LEAD_INBOX_EMAIL?.trim() || CONTACT_EMAIL;
+export function leadInbox(): string | null {
+  const configured = process.env.LEAD_INBOX_EMAIL?.trim();
+  return configured && mailbox.safeParse(configured).success ? configured : null;
 }
 
-export function leadFromAddress(): string {
+export function leadFromAddress(): string | null {
   const configured = process.env.RESEND_FROM_EMAIL?.trim();
-  if (!configured) return RESEND_DEFAULT_FROM;
-
-  const address = configured.includes("<")
-    ? configured.slice(configured.indexOf("<") + 1, configured.lastIndexOf(">")).trim()
-    : configured;
-  if (!address || BLOCKED_FROM_DOMAINS.test(address)) return RESEND_DEFAULT_FROM;
-  return configured;
+  if (!configured) return null;
+  const address = namedMailbox.exec(configured)?.[1]?.trim() ?? configured;
+  return mailbox.safeParse(address).success ? configured : null;
 }
 
 export const RESEND_EMAILS_URL = "https://api.resend.com/emails";
@@ -178,24 +156,31 @@ export async function sendLeadEmail(
   fetchImpl: typeof fetch = fetch,
 ): Promise<{ ok: true } | { ok: false; status: number; detail: string }> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
-  if (!apiKey) return { ok: false, status: 503, detail: "missing-key" };
+  const from = leadFromAddress();
+  const inbox = leadInbox();
+  if (!apiKey || !from || !inbox) {
+    return { ok: false, status: 503, detail: "missing-or-invalid-email-config" };
+  }
 
   const response = await fetchImpl(RESEND_EMAILS_URL, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
+      "Idempotency-Key": `consulting/${lead.submissionId}`,
     },
     body: JSON.stringify({
-      from: leadFromAddress(),
-      to: [leadInbox()],
+      from,
+      to: [inbox],
+      reply_to: lead.email,
       subject: leadEmailSubject(lead),
       text: formatLeadEmail(lead, receivedAt),
     }),
+    signal: AbortSignal.timeout(RESEND_TIMEOUT_MS),
   });
 
   if (response.ok) return { ok: true };
 
-  const detail = await response.text();
-  return { ok: false, status: response.status, detail };
+  await response.body?.cancel().catch(() => undefined);
+  return { ok: false, status: response.status, detail: "provider-rejected" };
 }

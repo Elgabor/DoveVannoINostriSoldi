@@ -1,8 +1,11 @@
-.endpointPanel { margin-bottom: var(--space-4); }
+.endpointPanel,
+.promptPanel { margin-bottom: var(--space-4); }
 
 .endpointPanel h2,
+.promptPanel h2,
 .columns h2 { margin: 0 0 var(--space-3); font-size: 18px; }
 .endpointPanel p,
+.promptPanel p,
 .columns p { margin: var(--space-3) 0 0; max-width: 80ch; color: var(--color-neutral-700); }
 
 .endpointRow {
@@ -27,6 +30,20 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+.promptBlock { margin-top: var(--space-3); }
+.agentPrompt {
+  max-height: 340px;
+  margin: 0;
+  padding: 14px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--color-neutral-300);
+  background: var(--color-neutral-100);
+}
+.agentPrompt code { white-space: inherit; }
+.promptBlock button { margin-top: var(--space-3); }
 
 .columns {
   display: grid;
@@ -109,6 +126,7 @@
   .columns { grid-template-columns: 1fr; }
   .endpointRow { align-items: stretch; flex-direction: column; }
   .endpointRow button { width: 100%; }
+  .promptBlock button { width: 100%; }
   .serviceFacts { grid-template-columns: minmax(0, 1fr); }
   .serviceFacts > div:nth-child(odd),
   .serviceFacts > div:nth-child(even) { padding-inline: 0; border-left: 0; }

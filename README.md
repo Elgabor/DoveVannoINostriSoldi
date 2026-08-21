@@ -54,7 +54,8 @@ In locale è `http://localhost:3000/api/mcp`. La pagina `/mcp` mostra l'indirizz
 Il server espone:
 
 - `list_datasets`, per elencare dataset, filtri, freschezza e cautele interpretative;
-- `query_dataset`, per interrogare snapshot verificati e fonti ufficiali live con filtri e paginazione;
+- `query_dataset`, per interrogare snapshot verificati e fonti ufficiali live; filtri e paginazione
+  sono disponibili soltanto quando dichiarati dal dataset;
 - la risorsa `dvns://datasets`, che contiene il catalogo machine-readable.
 - la risorsa `dvns://related-mcp-services`, che segnala servizi pubblici complementari senza
   confonderli con gli adapter gestiti dal portale.
@@ -97,13 +98,22 @@ curl -X POST http://localhost:3000/api/mcp \
   --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
-L'accesso anonimo è intenzionale perché il server espone esclusivamente dati pubblici e operazioni read-only. Le richieste hanno input limitati, paginazione massima e controlli sugli header `Origin` e `Host`; eventuali origini browser aggiuntive si configurano con `MCP_ALLOWED_ORIGINS`, mentre i domini pubblici ammessi si dichiarano in `MCP_ALLOWED_HOSTS`. I filtri estranei al dataset vengono rifiutati esplicitamente, senza produrre risultati che sembrino filtrati ma non lo siano. Non vengono esposte credenziali di ingestione.
+L'accesso senza account o autenticazione è intenzionale perché il server espone esclusivamente dati pubblici e operazioni read-only. Le richieste hanno input limitati, paginazione massima dove prevista e controlli sugli header `Origin` e `Host`; eventuali origini browser aggiuntive si configurano con `MCP_ALLOWED_ORIGINS`, mentre i domini pubblici ammessi si dichiarano in `MCP_ALLOWED_HOSTS`. I filtri estranei al dataset vengono rifiutati esplicitamente, senza produrre risultati che sembrino filtrati ma non lo siano. Non vengono esposte credenziali di ingestione.
 
 Il repository non simula un rate limit distribuito con memoria locale: sul deployment la regola edge
 per `/api/mcp` va attivata e verificata separatamente. Finché non è attiva, questa protezione non va
 considerata presente; la configurazione proposta è documentata in [docs/MCP.md](docs/MCP.md).
 
 Per aggiungere una fonte all'MCP si registra la descrizione in `src/lib/mcp/catalog.ts` e l'adapter in `src/lib/mcp/datasets.ts`. Gli strumenti restano gli stessi, quindi i client non devono essere riconfigurati quando il catalogo cresce. Dettagli e checklist sono in [docs/MCP.md](docs/MCP.md).
+
+Per Manufact, ChatGPT e Claude si collega lo stesso endpoint pubblico: non si effettua un secondo
+deploy del server. Challenge di dominio, pagine pubbliche, starter prompt e test di submission sono
+documentati in [docs/MCP_DISTRIBUTION.md](docs/MCP_DISTRIBUTION.md).
+
+Il form di consulenza usa configurazione email fail-closed, richieste same-origin limitate e invii
+idempotenti. Honeypot e validazione non vengono presentati come rate limit: la regola WAF e la
+procedura di cancellazione restano controlli operativi del deployment, descritti in
+[docs/CONSULTING.md](docs/CONSULTING.md).
 
 Per OpenCivitas, la differenza tra spesa storica e spesa standard non viene chiamata spreco. L'API restituisce anche i valori per abitante, il confronto sui servizi e i limiti territoriali della fonte.
 

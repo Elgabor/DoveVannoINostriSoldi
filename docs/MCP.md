@@ -6,10 +6,15 @@ Il server MCP espone i dati pubblici già disponibili nel portale attraverso un 
 
 L'endpoint Streamable HTTP è `/api/mcp`. L'implementazione usa l'SDK TypeScript ufficiale e mantiene compatibilità stateless con i client MCP della generazione precedente.
 
+Le procedure per collegare l'endpoint esistente a Manufact, ChatGPT e Claude, insieme a starter
+prompt e casi di review, sono in [MCP_DISTRIBUTION.md](MCP_DISTRIBUTION.md). L'endpoint canonico non
+va duplicato su un secondo runtime.
+
 ## Superficie pubblica
 
 - Tool `list_datasets`: catalogo completo con identificativo stabile, filtri, freschezza e caveat.
-- Tool `query_dataset`: query tipizzata con limite massimo di 100 record per pagina.
+- Tool `query_dataset`: query tipizzata; `limit` e `offset` sono accettati soltanto dagli adapter
+  che li dichiarano nel catalogo, con limite massimo di 100 record per pagina.
 - Resource `dvns://datasets`: copia JSON del catalogo.
 - Resource `dvns://related-mcp-services`: endpoint pubblici complementari, separati dagli adapter
   DVNS e mai inoltrati automaticamente.

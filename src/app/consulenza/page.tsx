@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CONSULTING_TOPICS } from "@/lib/leads";
+import { CONSULTING_TOPICS } from "@/lib/consulting-contract";
 import styles from "./consulenza.module.css";
 import { LeadForm } from "./lead-form";
 

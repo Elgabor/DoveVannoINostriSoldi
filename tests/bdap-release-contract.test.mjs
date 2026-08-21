@@ -96,6 +96,7 @@ test("annual OpenBDAP queries prefer consuntivo and monthly queries stay monthly
   const originalFetch = globalThis.fetch;
   const calls = [];
   const packages = new Map();
+  let monthlyRowLabel = "DICEMBRE";
   const dimensions = [
     ["MISS", "mission", "Pagamenti Bilancio dello Stato per Missione"],
     ["MISAM", "missionAdministration", "Pagamenti Bilancio dello Stato per Missione Amministrazione"],
@@ -141,7 +142,7 @@ test("annual OpenBDAP queries prefer consuntivo and monthly queries stay monthly
           : "Esercizio finanziario;Mese contabile;Codice Missione;Missione;OP Erario;OP Tesoreria;OP Esterno;OA Tesoreria;OA Spesa Funz Deleg;RSF Stipendi;RSF Altro;Note Imputazione;Totale Pagato",
         annual
           ? ["2025", "001", "Missione", "100", "0", "0", "0", "0", "0", "0", "0", "100"].join(";")
-          : ["2025", "DICEMBRE", "001", "Missione", "100", "0", "0", "0", "0", "0", "0", "0", "100"].join(";"),
+          : ["2025", monthlyRowLabel, "001", "Missione", "100", "0", "0", "0", "0", "0", "0", "0", "100"].join(";"),
       ].join("\n");
     }
     if (dimension === "missionAdministration") {
@@ -151,7 +152,7 @@ test("annual OpenBDAP queries prefer consuntivo and monthly queries stay monthly
           : "Esercizio finanziario;Mese contabile;Codice Missione;Missione;Codice STP;Amministrazione;OP Erario;OP Tesoreria;OP Esterno;OA Tesoreria;OA Spesa Funz Deleg;RSF Stipendi;RSF Altro;Note Imputazione;Totale Pagato",
         annual
           ? ["2025", "02", "MINISTERO TEST", "001", "Missione", "100", "0", "0", "0", "0", "0", "0", "0", "100"].join(";")
-          : ["2025", "DICEMBRE", "001", "Missione", "02", "MINISTERO TEST", "100", "0", "0", "0", "0", "0", "0", "0", "100"].join(";"),
+          : ["2025", monthlyRowLabel, "001", "Missione", "02", "MINISTERO TEST", "100", "0", "0", "0", "0", "0", "0", "0", "100"].join(";"),
       ].join("\n");
     }
     return [
@@ -160,7 +161,7 @@ test("annual OpenBDAP queries prefer consuntivo and monthly queries stay monthly
         : "Esercizio finanziario;Mese contabile;Codice STP;Amministrazione;Codice Categoria;Categoria;Codice CE2;CE2;OP Erario;OP Tesoreria;OP Esterno;OA Tesoreria;OA Spesa Funz Deleg;RSF Stipendi;RSF Altro;Note Imputazione;Totale Pagato",
       annual
         ? ["2025", "02", "MINISTERO TEST", "01", "REDDITI DA LAVORO DIPENDENTE", "0101", "PERSONALE", "100", "0", "0", "0", "0", "0", "0", "0", "100"].join(";")
-        : ["2025", "DICEMBRE", "02", "MINISTERO TEST", "01", "REDDITI DA LAVORO DIPENDENTE", "0101", "PERSONALE", "100", "0", "0", "0", "0", "0", "0", "0", "100"].join(";"),
+        : ["2025", monthlyRowLabel, "02", "MINISTERO TEST", "01", "REDDITI DA LAVORO DIPENDENTE", "0101", "PERSONALE", "100", "0", "0", "0", "0", "0", "0", "0", "100"].join(";"),
     ].join("\n");
   };
 
@@ -212,6 +213,12 @@ test("annual OpenBDAP queries prefer consuntivo and monthly queries stay monthly
     assert.equal(monthly.sources.missionAdministration?.releaseKind, "monthly");
     assert.equal(monthly.sources.administrationEconomic?.releaseKind, "monthly");
     assert.ok(calls.every((code) => code.startsWith("PBS_SPE_M12_")));
+
+    monthlyRowLabel = "NOVEMBRE";
+    await assert.rejects(
+      () => getStateSpendingSnapshot({ year: 2025, month: 12 }),
+      /mese della riga NOVEMBRE non coincide con il rilascio DICEMBRE/,
+    );
   } finally {
     globalThis.fetch = originalFetch;
   }

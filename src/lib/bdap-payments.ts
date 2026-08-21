@@ -572,7 +572,15 @@ function rowYear(record: DelimitedRecord, dataset: BdapDataset): number {
 }
 
 function rowMonth(record: DelimitedRecord, dataset: BdapDataset): string | null {
-  return dataset.releaseKind === "monthly" ? required(record, "Mese contabile") : null;
+  if (dataset.releaseKind === "consuntivo") return null;
+  const observed = required(record, "Mese contabile");
+  const expected = monthName(dataset.referenceMonth);
+  if (observed.toLocaleUpperCase("it-IT") !== expected) {
+    throw new Error(
+      `OpenBDAP: il mese della riga ${observed} non coincide con il rilascio ${expected}`,
+    );
+  }
+  return observed;
 }
 
 function components(record: DelimitedRecord, dataset: BdapDataset): PaymentComponents {

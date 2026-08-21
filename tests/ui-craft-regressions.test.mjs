@@ -148,9 +148,12 @@ test("reported chart styles stay within the registry design tokens", async () =>
 });
 
 test("the fiscal layout uses only defined spacing tokens", async () => {
-  const css = await source("../src/app/territori/fisco/fisco.module.css");
-  assert.doesNotMatch(css, /var\(--space-5\)/);
-  assert.match(css, /margin-bottom: var\(--space-6\)/);
+  const [fiscalCss, spendingCss] = await Promise.all([
+    source("../src/app/territori/fisco/fisco.module.css"),
+    source("../src/app/spese/spese.module.css"),
+  ]);
+  assert.doesNotMatch(`${fiscalCss}\n${spendingCss}`, /var\(--space-5\)/);
+  assert.match(fiscalCss, /margin-bottom: var\(--space-6\)/);
 });
 
 test("municipality rankings expose province and region as visible context", async () => {
@@ -162,4 +165,17 @@ test("municipality rankings expose province and region as visible context", asyn
   assert.match(contract, /province: string;/);
   assert.match(page, /data-municipality-ranking="per-capita"/);
   assert.match(page, /\{municipality\.province\} · \{municipality\.region\}/);
+});
+
+test("the narrow mobile header never collapses the wordmark into a text column", async () => {
+  const [globalsCss, navigation] = await Promise.all([
+    source("../src/app/globals.css"),
+    source("../src/components/navigation.tsx"),
+  ]);
+
+  assert.match(
+    globalsCss,
+    /@media \(max-width: 460px\) \{[\s\S]*?\.brand-text \{ display: none; \}[\s\S]*?\}/,
+  );
+  assert.match(navigation, /className="brand" aria-label="Dove vanno i nostri soldi, home"/);
 });

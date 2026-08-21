@@ -18,6 +18,13 @@ I dataset live interrogano soltanto adapter ufficiali già usati dalle API del s
 
 `anac_cig_snapshot` espone la replica aggregata e verificata dei dodici file CIG 2025: copertura, hash, conteggi, procedure, fasce di importo e limiti interpretativi. Non simula una ricerca live per CIG o fornitore. `inps_invalidita_civile` espone spesa nazionale, stock e nuove pensioni regionali mantenendo distinti perimetro, unità e copertura. Non espone dati comunali o individuali. `cpt_finanza_regionale` espone entrate, spese e saldo contabile territorializzato della PA consolidata, includendo formula, semantica del segno, popolazione, metodologia e hash delle distribuzioni. Non lo denomina residuo fiscale. `mef_irpef_comunale` restituisce Regioni, Province o Comuni paginati del rilascio 2024, mantiene espliciti segreto statistico e riga non attribuita e chiama la misura soltanto “imposta netta dichiarata”. Non la combina con CPT e non espone il file comunale completo. `opencoesione_progetti` espone anche indicatori derivati ricostruibili per tema, natura e stato; media per progetto e rapporto pagamenti/costo conservano sempre le relative cautele.
 
+`siope_comuni` espone gli aggregati regionali completi, le liste nazionali limitate ai primi 100
+Comuni per totale o pro capite e, dopo un refresh raw verificato, `distribution`: un riepilogo
+senza righe comunali con quota nazionale, fasce dimensionali, regioni e quantili nearest-rank
+pesati per Comune o residenti. Una query con filtro `region` non restituisce la distribuzione
+nazionale: usa l'aggregato regionale in `regions` e dichiara il limite delle liste parziali. I
+quantili non vanno ricostruiti dai primi 100 e non sono classifiche di efficienza o spreco.
+
 ## Federazione senza proxy
 
 Il servizio MCP di [Cruscotto Italia](https://cruscotto-italia.dati.gov.it/about.html#accesso-mcp),

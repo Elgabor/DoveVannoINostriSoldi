@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import "./helpers/register-ts-alias.mjs";
 
 const snapshotUrl = new URL("../src/data/generated/siope-municipal.json", import.meta.url);
 const historicalSnapshotUrls = [
@@ -125,4 +126,87 @@ test("the period selector is backed by three reconciled SIOPE years", async () =
     assertMoneyClose(sum(data.monthly.map((point) => point.flow)), data.totalPaid);
     assertMoneyClose(sum(data.regions.map((region) => region.value)), data.totalPaid);
   }
+});
+
+test("full-population distribution artifacts are bounded and reconcile", async () => {
+  const snapshots = await Promise.all(
+    historicalSnapshotUrls.map(async (url) => JSON.parse(await readFile(url, "utf8"))),
+  );
+
+  for (const data of snapshots) {
+    const distribution = data.distribution;
+    assert.equal(distribution.schemaVersion, 1);
+    assert.equal(distribution.period.year, data.year);
+    assert.equal(distribution.period.endMonth, data.latestMonth);
+    assert.equal(distribution.coverage.municipalitiesWithMovements, data.coverage.withMovements);
+    assert.equal(distribution.coverage.municipalitiesWithValidPopulation, data.coverage.withPopulation);
+    assert.equal(distribution.coverage.populationCovered, data.populationCovered);
+    assert.equal(
+      distribution.coverage.municipalitiesWithoutPopulation,
+      data.coverage.withoutPopulation,
+    );
+    assert.match(data.source.siopeMovementsSha256, /^[a-f0-9]{64}$/);
+    assert.match(data.source.siopeRegistrySha256, /^[a-f0-9]{64}$/);
+    assert.match(data.source.ipaSha256, /^[a-f0-9]{64}$/);
+    assert.ok(distribution.nationalShareAll >= 0 && distribution.nationalShareAll <= 1);
+    assert.ok(
+      distribution.nationalShareCovered >= 0 && distribution.nationalShareCovered <= 1,
+    );
+    assert.equal(distribution.populationBands.length, 8);
+    assert.equal(distribution.regions.length, 20);
+    assert.equal(
+      sum(distribution.populationBands.map((group) => group.municipalities)),
+      distribution.coverage.municipalitiesWithValidPopulation,
+    );
+    assert.equal(
+      sum(distribution.regions.map((group) => group.municipalities)),
+      distribution.coverage.municipalitiesWithValidPopulation,
+    );
+    assert.equal(
+      sum(distribution.populationBands.map((group) => group.population)),
+      distribution.coverage.populationCovered,
+    );
+    assert.equal(
+      sum(distribution.regions.map((group) => group.population)),
+      distribution.coverage.populationCovered,
+    );
+
+    for (const group of [
+      distribution.perCapita,
+      ...distribution.populationBands.map((item) => item.perCapita),
+      ...distribution.regions.map((item) => item.perCapita),
+    ]) {
+      for (const weighted of [group.municipalityWeighted, group.residentWeighted]) {
+        const values = [weighted.p10, weighted.p25, weighted.p50, weighted.p75, weighted.p90]
+          .filter((value) => value !== null);
+        assert.deepEqual(values, [...values].sort((left, right) => left - right));
+      }
+    }
+  }
+});
+
+test("runtime validation rejects missing or divergent distribution metadata", async () => {
+  const { assertSiopeDistributionIntegrity } = await import("../src/lib/siope-snapshot.ts");
+  const source = await loadSnapshot();
+
+  const missingDistribution = structuredClone(source);
+  delete missingDistribution.distribution;
+  assert.throws(
+    () => assertSiopeDistributionIntegrity(missingDistribution, source.year),
+    /distribution/i,
+  );
+
+  const invalidHash = structuredClone(source);
+  invalidHash.source.siopeMovementsSha256 = "not-a-sha256";
+  assert.throws(
+    () => assertSiopeDistributionIntegrity(invalidHash, source.year),
+    /SHA-256/i,
+  );
+
+  const divergentShare = structuredClone(source);
+  divergentShare.distribution.nationalShareAll += 0.01;
+  assert.throws(
+    () => assertSiopeDistributionIntegrity(divergentShare, source.year),
+    /quota nazionale/i,
+  );
 });

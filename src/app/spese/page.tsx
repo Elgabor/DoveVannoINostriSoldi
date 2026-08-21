@@ -8,6 +8,7 @@ import {
   completedMonths,
   getSiopeMunicipalSnapshot,
   partialMonth,
+  siopeTitleShare,
 } from "@/lib/siope-snapshot";
 import styles from "./spese.module.css";
 
@@ -55,6 +56,21 @@ export default async function MoneyPage({
     copy: siopeTitleCopy(title.code),
     share: data.totalPaid > 0 ? (title.value / data.totalPaid) * 100 : 0,
   }));
+  const titleOneShare = siopeTitleShare(data, "1");
+  const titleOneShareLabel =
+    titleOneShare === null ? "non disponibile" : percent(titleOneShare * 100);
+  const comparison = [...availableSiopeYears].sort((left, right) => left - right).map((comparisonYear) => {
+    const comparisonData = getSiopeMunicipalSnapshot(comparisonYear);
+    const share = siopeTitleShare(comparisonData, "1");
+    return {
+      year: comparisonYear,
+      share: share === null ? "n.d." : percent(share * 100),
+      period:
+        partialMonth(comparisonData) === null
+          ? "anno chiuso"
+          : `gennaio-${comparisonData.latestMonthLabel.toLocaleLowerCase("it-IT")} · parziale`,
+    };
+  });
 
   return (
     <main className="shell page">
@@ -94,32 +110,141 @@ export default async function MoneyPage({
         </div>
       </div>
 
-      <div className="notice">
-        <strong>Quali spese vuoi vedere?</strong>
+      <section
+        className="notice scope-notice"
+        aria-labelledby="spese-scope-title"
+      >
+        <h2 id="spese-scope-title">Quali spese vuoi vedere?</h2>
         <p>
-          Questa pagina mostra uscite di cassa dei Comuni, non le tasse pagate dai residenti. Per
-          il dettaglio geografico apri i <Link href={`/territori?anno=${year}`}>pagamenti per
-          regione e le classifiche comunali pubblicate</Link>. Il dataset attuale non contiene una
-          ripartizione provinciale né ogni voce di spesa per singolo Comune. Per gli altri livelli
-          puoi aprire le{" "}
-          <Link href="/stato">spese delle amministrazioni centrali</Link> oppure le{" "}
-          <Link href="/parlamento">spese del Parlamento</Link>. I totali restano separati perché
-          arrivano da contabilità diverse.
+          Questa pagina mostra uscite di cassa dei Comuni, non le tasse pagate dai residenti. Le
+          contabilità degli altri enti restano separate.
         </p>
-      </div>
-
-      <div className="notice">
-        <strong>Quanto spende l’INPS per l’invalidità civile?</strong>
-        <p>
-          È una contabilità diversa da SIOPE e resta separata. Abbiamo verificato spesa nazionale,
-          prestazioni vigenti e nuove pensioni per regione nei documenti ufficiali INPS.{" "}
-          <Link href="/spese/invalidita">Apri i dati sull’invalidità civile →</Link>
-        </p>
-      </div>
+        <div className="scope-notice__section">
+          <h3>Comuni · dettaglio territoriale</h3>
+          <p>
+            Apri i <Link href={`/territori?anno=${year}`}>pagamenti per regione e le classifiche
+            comunali pubblicate</Link>. Il dataset attuale non contiene una ripartizione
+            provinciale né ogni voce di spesa per singolo Comune.
+          </p>
+        </div>
+        <div className="scope-notice__section">
+          <h3>Invalidità civile INPS · contabilità separata</h3>
+          <p>
+            È una contabilità diversa da SIOPE e resta separata. Abbiamo verificato spesa
+            nazionale, prestazioni vigenti e nuove pensioni per regione nei documenti ufficiali
+            INPS. <Link href="/spese/invalidita">Apri i dati sull&apos;invalidità civile →</Link>
+          </p>
+        </div>
+        <div className="scope-notice__section">
+          <h3>Altri livelli della spesa pubblica</h3>
+          <p>
+            Per gli altri livelli apri le <Link href="/stato">spese delle amministrazioni
+            centrali</Link> oppure le <Link href="/parlamento">spese del Parlamento</Link>.
+          </p>
+        </div>
+      </section>
 
       <div className={styles.split}>
         <section className="panel">
           <h2 className="panel-title">Le {data.titles.length} voci di uscita</h2>
+
+          <section className={styles.analysis} aria-labelledby="spese-analysis-title">
+            <h3 id="spese-analysis-title">Il {titleOneShareLabel} è tanto o poco?</h3>
+            <p className={styles.analysisLead}>
+              È la quota dei pagamenti registrati nel <strong>Titolo 1 · spese correnti</strong>
+              sul totale delle uscite SIOPE dei Comuni nel periodo selezionato. È una misura di
+              cassa e di classificazione contabile: da sola non dice se una spesa sia utile,
+              efficiente o di buona qualità.
+            </p>
+
+            <div className={styles.analysisComparison}>
+              <h4>Confronto descrittivo</h4>
+              <div
+                className="table-scroll"
+                role="region"
+                aria-label="Quota delle spese correnti per periodo"
+                tabIndex={0}
+              >
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Periodo</th>
+                      <th scope="col" className="num">Quota Titolo 1</th>
+                      <th scope="col">Copertura</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {comparison.map((row) => (
+                      <tr key={row.year}>
+                        <th scope="row">{row.year}</th>
+                        <td className="num">{row.share}</td>
+                        <td>{row.period}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className={styles.note}>
+                Il confronto non è un trend: il 2026 è ancora parziale e gli snapshot non
+                contengono una serie mensile per Titolo 1. Per un confronto omogeneo servono gli
+                stessi mesi e lo stesso denominatore per ogni anno.
+              </p>
+            </div>
+
+            <div className={styles.analysisDistribution}>
+              <h4>Quanto cambia tra i Comuni</h4>
+              <p>
+                La distribuzione completa usa tutti i Comuni con popolazione valida. Nel periodo
+                selezionato, almeno metà dei residenti vive in Comuni che registrano non più di <strong>
+                  {data.distribution.perCapita.residentWeighted.p50 === null
+                    ? "un valore non disponibile"
+                    : exactEuro(data.distribution.perCapita.residentWeighted.p50)}
+                </strong> per abitante nel Titolo 1, e almeno metà vive in Comuni che registrano
+                quel valore o più.
+              </p>
+              <dl className={styles.quantiles}>
+                <div>
+                  <dt>Soglia al 25% dei residenti</dt>
+                  <dd>
+                    {data.distribution.perCapita.residentWeighted.p25 === null
+                      ? "n.d."
+                      : exactEuro(data.distribution.perCapita.residentWeighted.p25)}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Mediana residenti</dt>
+                  <dd>
+                    {data.distribution.perCapita.residentWeighted.p50 === null
+                      ? "n.d."
+                      : exactEuro(data.distribution.perCapita.residentWeighted.p50)}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Soglia al 75% dei residenti</dt>
+                  <dd>
+                    {data.distribution.perCapita.residentWeighted.p75 === null
+                      ? "n.d."
+                      : exactEuro(data.distribution.perCapita.residentWeighted.p75)}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Mediana dei Comuni</dt>
+                  <dd>
+                    {data.distribution.perCapita.municipalityWeighted.p50 === null
+                      ? "n.d."
+                      : exactEuro(data.distribution.perCapita.municipalityWeighted.p50)}
+                  </dd>
+                </div>
+              </dl>
+              <p className={styles.note}>
+                {integer(data.distribution.coverage.municipalitiesWithValidPopulation)} Comuni ·{" "}
+                {integer(data.distribution.coverage.populationCovered)} residenti · periodo{" "}
+                {data.distribution.period.completeness === "partial" ? "parziale" : "chiuso"}.
+                La fonte non dichiara l&apos;anno di riferimento della popolazione SIOPE.
+              </p>
+            </div>
+          </section>
+
           <ol className={styles.titleList}>
             {titles.map((title) => (
               <li key={title.code}>
@@ -201,14 +326,6 @@ export default async function MoneyPage({
             </div>
           </section>
         </div>
-      </div>
-
-      <div className="notice warning-notice">
-        <strong>Attenzione</strong>
-        <p>
-          Queste voci arrivano dalla contabilità dei Comuni. Non dicono se una spesa è utile o
-          sprecata: dicono soltanto in quale categoria è stata registrata.
-        </p>
       </div>
 
       <details className={styles.method}>

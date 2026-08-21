@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import io
 import json
 import os
@@ -42,6 +43,24 @@ DEFAULT_OUTPUT = Path("src/data/generated/siope-municipal.json")
 USER_AGENT = "DoveVannoINostriSoldi-ETL/1.0 (+https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi)"
 CHUNK_SIZE = 1 << 20
 MAX_ATTEMPTS = 3
+DISTRIBUTION_SCHEMA_VERSION = 1
+QUANTILE_PROBABILITIES = {
+    "p10": 0.10,
+    "p25": 0.25,
+    "p50": 0.50,
+    "p75": 0.75,
+    "p90": 0.90,
+}
+POPULATION_BANDS = (
+    ("under-1000", "Meno di 1.000", None, 1_000),
+    ("1000-4999", "1.000–4.999", 1_000, 5_000),
+    ("5000-19999", "5.000–19.999", 5_000, 20_000),
+    ("20000-49999", "20.000–49.999", 20_000, 50_000),
+    ("50000-99999", "50.000–99.999", 50_000, 100_000),
+    ("100000-249999", "100.000–249.999", 100_000, 250_000),
+    ("250000-499999", "250.000–499.999", 250_000, 500_000),
+    ("500000-plus", "500.000 o più", 500_000, None),
+)
 
 TITLE_LABELS = {
     "0": "Pagamenti da regolarizzare",
@@ -110,16 +129,19 @@ def remote_metadata(url: str) -> dict[str, str | None]:
 def download(url: str, destination: Path, *, timeout: int = 600) -> dict[str, str | None]:
     tmp = destination.with_suffix(destination.suffix + ".part")
     received = 0
+    digest = hashlib.sha256()
     with open_with_retry(url, timeout=timeout) as response, tmp.open("wb") as handle:
         while True:
             chunk = response.read(CHUNK_SIZE)
             if not chunk:
                 break
             handle.write(chunk)
+            digest.update(chunk)
             received += len(chunk)
         metadata = {
             "lastModified": response.headers.get("Last-Modified"),
             "etag": response.headers.get("ETag"),
+            "sha256": digest.hexdigest(),
         }
 
     if received == 0:
@@ -306,6 +328,180 @@ def municipality_rankings(
     return by_value, by_per_capita
 
 
+def _nearest_rank(values: list[tuple[float, int]], probability: float) -> float | None:
+    """Return a deterministic weighted nearest-rank quantile.
+
+    The input value is expressed in cents per resident and the second tuple
+    member is a strictly positive integer weight. Using the first observation
+    whose cumulative weight reaches ``p * total_weight`` avoids interpolating
+    between two municipalities, which would create a value no municipality
+    actually reports. The same rule with weight 1 is used for municipality-
+    weighted quantiles, so the two distributions differ only in their weights.
+    """
+    if not values:
+        return None
+    ordered = sorted(values, key=lambda item: item[0])
+    total_weight = sum(weight for _, weight in ordered)
+    if total_weight <= 0:
+        return None
+    if probability <= 0:
+        return ordered[0][0]
+    target = probability * total_weight
+    cumulative = 0
+    for value, weight in ordered:
+        cumulative += weight
+        if cumulative >= target:
+            return value
+    return ordered[-1][0]
+
+
+def _quantiles(points: list[tuple[float, int]]) -> dict[str, float | None]:
+    """Summarize cents-per-resident points with explicit quantile semantics."""
+    summary: dict[str, float | None] = {}
+    for name, probability in QUANTILE_PROBABILITIES.items():
+        value = _nearest_rank(points, probability)
+        summary[name] = None if value is None else round(value / 100.0, 2)
+    return summary
+
+
+def _distribution_group(rows: list[dict]) -> dict:
+    """Build a compact aggregate; never return municipality-level records."""
+    for row in rows:
+        if int(row["titleCents"]) > int(row["totalCents"]):
+            raise RuntimeError("SIOPE distribution: Titolo 1 supera il totale del Comune")
+    valid = [row for row in rows if row.get("population") is not None and row["population"] > 0]
+    title_cents = sum(int(row["titleCents"]) for row in valid)
+    total_cents = sum(int(row["totalCents"]) for row in valid)
+    population = sum(int(row["population"]) for row in valid)
+    points = [
+        (row["titleCents"] / row["population"], 1)
+        for row in valid
+    ]
+    resident_points = [
+        (row["titleCents"] / row["population"], row["population"])
+        for row in valid
+    ]
+    return {
+        "municipalities": len(valid),
+        "population": population,
+        "titleAmount": euro(title_cents),
+        "totalAmount": euro(total_cents),
+        "share": round(title_cents / total_cents, 8) if total_cents else None,
+        "perCapita": {
+            "municipalityWeighted": _quantiles(points),
+            "residentWeighted": _quantiles(resident_points),
+        },
+    }
+
+
+def build_distribution(
+    *,
+    rows: list[dict],
+    year: int,
+    latest_month: int,
+    observed_at: str,
+    validators: dict[str, dict[str, str | None]],
+) -> dict:
+    """Create the full-population analysis without publishing raw municipality rows.
+
+    ``rows`` is an ETL-only list assembled from every municipality with a
+    movement. The generated result contains only national, regional and fixed
+    population-band aggregates, so the web bundle never needs the full source
+    movement table or a hidden top-100 proxy for the distribution.
+    """
+    for source_key in ("movements", "registry", "ipa"):
+        source_hash = validators.get(source_key, {}).get("sha256")
+        if not isinstance(source_hash, str) or not re.fullmatch(r"[0-9a-f]{64}", source_hash):
+            raise RuntimeError(
+                f"SIOPE distribution: SHA-256 {source_key} mancante o non valido"
+            )
+    for row in rows:
+        if int(row["titleCents"]) > int(row["totalCents"]):
+            raise RuntimeError("SIOPE distribution: Titolo 1 supera il totale del Comune")
+    valid_rows = [row for row in rows if row.get("population") is not None and row["population"] > 0]
+    all_title_cents = sum(int(row["titleCents"]) for row in rows)
+    all_total_cents = sum(int(row["totalCents"]) for row in rows)
+    covered_title_cents = sum(int(row["titleCents"]) for row in valid_rows)
+    covered_total_cents = sum(int(row["totalCents"]) for row in valid_rows)
+    if all_title_cents > all_total_cents or covered_title_cents > covered_total_cents:
+        raise RuntimeError("SIOPE distribution: Titolo 1 supera un totale aggregato")
+    excluded_rows = [
+        row
+        for row in rows
+        if row.get("population") is None or row["population"] <= 0
+    ]
+    observed_year = datetime.fromisoformat(observed_at.replace("Z", "+00:00")).year
+
+    bands: list[dict] = []
+    for band_id, label, lower, upper in POPULATION_BANDS:
+        band_rows = [
+            row
+            for row in valid_rows
+            if (lower is None or row["population"] >= lower)
+            and (upper is None or row["population"] < upper)
+        ]
+        bands.append({"id": band_id, "label": label, **_distribution_group(band_rows)})
+
+    regions: list[dict] = []
+    for region in sorted({row["region"] for row in valid_rows}, key=lambda value: value.casefold()):
+        region_rows = [row for row in valid_rows if row["region"] == region]
+        regions.append({"region": region, **_distribution_group(region_rows)})
+
+    return {
+        "schemaVersion": DISTRIBUTION_SCHEMA_VERSION,
+        "measure": {
+            "titleCode": "1",
+            "titleLabel": "Spese correnti",
+            "metric": "pagamenti del Titolo 1 per abitante del Comune",
+            "shareDenominator": "tutti i pagamenti SIOPE dei Comuni",
+            "quantileMethod": (
+                "nearest-rank pesato: prima osservazione la cui cumulata raggiunge p·peso totale"
+            ),
+        },
+        "period": {
+            "year": year,
+            "startMonth": 1,
+            "endMonth": latest_month,
+            "completeness": "partial" if observed_year == year else "complete",
+        },
+        "coverage": {
+            "municipalitiesWithMovements": len(rows),
+            "municipalitiesWithValidPopulation": len(valid_rows),
+            "populationCovered": sum(int(row["population"]) for row in valid_rows),
+            "municipalitiesWithoutPopulation": len(excluded_rows),
+            "paymentsWithoutPopulation": euro(
+                all_total_cents - covered_total_cents
+            ),
+            "titlePaymentsWithoutPopulation": euro(
+                all_title_cents - covered_title_cents
+            ),
+        },
+        "nationalShareAll": (
+            round(all_title_cents / all_total_cents, 8) if all_total_cents else None
+        ),
+        "nationalShareCovered": (
+            round(covered_title_cents / covered_total_cents, 8)
+            if covered_total_cents
+            else None
+        ),
+        "perCapita": _distribution_group(valid_rows)["perCapita"],
+        "populationBands": bands,
+        "regions": regions,
+        "provenance": {
+            "siopeMovementsUrl": f"{SIOPE_BASE}/SIOPE_USCITE.{year}.zip",
+            "siopeRegistryUrl": f"{SIOPE_BASE}/{SIOPE_REGISTRY_FILE}",
+            "ipaUrl": IPA_ADMINISTRATIONS_URL,
+            "siopeMovementsLastModified": validators["movements"].get("lastModified"),
+            "siopeRegistryLastModified": validators["registry"].get("lastModified"),
+            "ipaLastModified": validators["ipa"].get("lastModified"),
+            "siopeMovementsSha256": validators["movements"].get("sha256"),
+            "siopeRegistrySha256": validators["registry"].get("sha256"),
+            "ipaSha256": validators["ipa"].get("sha256"),
+            "observedAt": observed_at,
+        },
+    }
+
+
 def build_snapshot(
     *,
     year: int,
@@ -321,6 +517,9 @@ def build_snapshot(
     )
 
     municipality_cents: dict[str, int] = defaultdict(int)
+    municipality_title_cents: dict[str, dict[str, int]] = defaultdict(
+        lambda: defaultdict(int)
+    )
     region_cents: dict[str, int] = defaultdict(int)
     title_cents: dict[str, int] = defaultdict(int)
     national_monthly = [0] * 12
@@ -358,6 +557,7 @@ def build_snapshot(
         region = municipality["region"]
         digit = title_digit(management_code)
         municipality_cents[key] += cents
+        municipality_title_cents[key][digit] += cents
         region_cents[region] += cents
         title_cents[digit] += cents
         national_monthly[month - 1] += cents
@@ -395,10 +595,19 @@ def build_snapshot(
         )
     regions.sort(key=lambda item: item["value"], reverse=True)
 
+    analysis_rows: list[dict] = []
     municipalities_with_movements: list[dict] = []
     for key, cents in municipality_cents.items():
         municipality = municipalities[key]
         population = municipality["population"]
+        analysis_rows.append(
+            {
+                "region": municipality["region"],
+                "population": population,
+                "totalCents": cents,
+                "titleCents": municipality_title_cents[key].get("1", 0),
+            }
+        )
         municipalities_with_movements.append(
             {
                 "name": municipality["name"],
@@ -453,10 +662,18 @@ def build_snapshot(
         municipalities[key]["population"] is not None for key in observed_keys
     )
     latest_total_cents = sum(national_monthly)
+    observed_at = utc_now()
+    distribution = build_distribution(
+        rows=analysis_rows,
+        year=year,
+        latest_month=latest_month,
+        observed_at=observed_at,
+        validators=validators,
+    )
 
     return {
         "schemaVersion": 3,
-        "generatedAt": utc_now(),
+        "generatedAt": observed_at,
         "scope": "municipalities",
         "year": year,
         "latestMonth": latest_month,
@@ -486,6 +703,7 @@ def build_snapshot(
         "topMunicipalities": top_municipalities_by_value,
         "topMunicipalitiesByValue": top_municipalities_by_value,
         "topMunicipalitiesByPerCapita": top_municipalities_by_per_capita,
+        "distribution": distribution,
         "source": {
             "siopeOwner": "Ragioneria Generale dello Stato · banca dati gestita da Banca d'Italia",
             "siopeMovementsUrl": f"{SIOPE_BASE}/SIOPE_USCITE.{year}.zip",
@@ -494,7 +712,10 @@ def build_snapshot(
             "siopeMovementsLastModified": validators["movements"].get("lastModified"),
             "siopeRegistryLastModified": validators["registry"].get("lastModified"),
             "ipaLastModified": validators["ipa"].get("lastModified"),
-            "observedAt": utc_now(),
+            "siopeMovementsSha256": validators["movements"].get("sha256"),
+            "siopeRegistrySha256": validators["registry"].get("sha256"),
+            "ipaSha256": validators["ipa"].get("sha256"),
+            "observedAt": observed_at,
         },
         "methodology": {
             "measure": "pagamenti di cassa SIOPE dei Comuni",
@@ -544,6 +765,15 @@ def is_unchanged(output: Path, year: int, validators: dict) -> bool:
         == validators["registry"].get("lastModified")
         and source.get("ipaLastModified") == validators["ipa"].get("lastModified")
         and validators["movements"].get("lastModified") is not None
+        and isinstance(current.get("distribution"), dict)
+        and all(
+            re.fullmatch(r"[0-9a-f]{64}", str(source.get(field, "")))
+            for field in (
+                "siopeMovementsSha256",
+                "siopeRegistrySha256",
+                "ipaSha256",
+            )
+        )
     )
 
 
@@ -590,6 +820,7 @@ def main() -> int:
                 or validators[key].get("lastModified")
             )
             validators[key]["etag"] = response_meta.get("etag") or validators[key].get("etag")
+            validators[key]["sha256"] = response_meta.get("sha256")
 
         snapshot = build_snapshot(
             year=args.year,

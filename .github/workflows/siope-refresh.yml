@@ -63,6 +63,7 @@ jobs:
         shell: python
         run: |
           import json
+          import re
           from pathlib import Path
 
           path = Path("src/data/generated/siope-municipal.json")
@@ -114,10 +115,54 @@ jobs:
           )
           assert data["source"]["siopeMovementsLastModified"]
           assert data["source"]["siopeRegistryLastModified"]
+          for field in ("siopeMovementsSha256", "siopeRegistrySha256", "ipaSha256"):
+              assert re.fullmatch(r"[0-9a-f]{64}", data["source"][field]), field
           assert (
               data["methodology"]["populationSourceLastModified"]
               == data["source"]["siopeRegistryLastModified"]
           )
+
+          distribution = data.get("distribution")
+          assert isinstance(distribution, dict), "Full-population distribution is missing"
+          assert distribution["schemaVersion"] == 1
+          assert distribution["measure"]["titleCode"] == "1"
+          assert distribution["measure"]["shareDenominator"] == "tutti i pagamenti SIOPE dei Comuni"
+          assert distribution["period"]["year"] == data["year"]
+          assert distribution["period"]["startMonth"] == 1
+          assert distribution["period"]["endMonth"] == data["latestMonth"]
+          assert distribution["period"]["completeness"] in ("complete", "partial")
+
+          coverage = distribution["coverage"]
+          assert coverage["municipalitiesWithMovements"] == data["coverage"]["withMovements"]
+          assert coverage["municipalitiesWithValidPopulation"] == data["coverage"]["withPopulation"]
+          assert coverage["municipalitiesWithoutPopulation"] == data["coverage"]["withoutPopulation"]
+          assert coverage["populationCovered"] == data["populationCovered"]
+          assert abs(
+              coverage["paymentsWithoutPopulation"]
+              + data["paymentsWithPopulation"]
+              - data["totalPaid"]
+          ) < 0.05
+          assert 0 <= distribution["nationalShareAll"] <= 1
+          assert 0 <= distribution["nationalShareCovered"] <= 1
+
+          def check_quantiles(quantiles):
+              values = [quantiles[key] for key in ("p10", "p25", "p50", "p75", "p90")]
+              assert all(value is None or isinstance(value, (int, float)) for value in values)
+              present = [value for value in values if value is not None]
+              assert present == sorted(present)
+
+          for group in [
+              distribution["perCapita"],
+              *(item["perCapita"] for item in distribution["populationBands"]),
+              *(item["perCapita"] for item in distribution["regions"]),
+          ]:
+              check_quantiles(group["municipalityWeighted"])
+              check_quantiles(group["residentWeighted"])
+          assert sum(item["municipalities"] for item in distribution["populationBands"]) == coverage["municipalitiesWithValidPopulation"]
+          assert sum(item["municipalities"] for item in distribution["regions"]) == coverage["municipalitiesWithValidPopulation"]
+          assert sum(item["population"] for item in distribution["populationBands"]) == coverage["populationCovered"]
+          assert sum(item["population"] for item in distribution["regions"]) == coverage["populationCovered"]
+          assert all("municipalities" not in item or item["municipalities"] >= 0 for item in distribution["regions"])
           print(json.dumps({
               "year": data["year"],
               "latestMonth": data["latestMonthLabel"],

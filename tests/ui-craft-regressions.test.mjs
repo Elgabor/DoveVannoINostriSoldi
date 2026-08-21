@@ -69,11 +69,26 @@ test("the regional map has a deterministic fallback and roving keyboard focus", 
 
   assert.doesNotMatch(map, /randomRegionCode|scelta casualmente/);
   assert.match(map, /useState\("03"\)/);
-  assert.match(map, /tabIndex=\{active \? 0 : -1\}/);
+  assert.match(map, /useState<string \| null>\(null\)/);
+  assert.match(map, /const displayedCode = selectionLocked \? selectedCode : hoveredCode \?\? selectedCode/);
+  assert.match(map, /onPointerEnter=\{\(\) => previewRegion\(geometry\.code\)\}/);
+  assert.match(map, /onClick=\{\(\) => selectRegion\(geometry\.code\)\}/);
+  assert.match(map, /styles\.outline/);
+  assert.match(map, /pointerEvents="none"/);
+  assert.match(map, /tabIndex=\{focusable \? 0 : -1\}/);
   assert.match(map, /"ArrowRight"|"ArrowDown"/);
   assert.match(map, /"ArrowLeft"|"ArrowUp"/);
   assert.match(map, /regionPathRefs\.current\.get\(nextCode\)\?\.focus\(\)/);
   assert.match(map, /<select value=\{selectedCode\}/);
+});
+
+test("the regional map redraws selected and hovered borders above all region fills", async () => {
+  const css = await source("../src/components/italy-regions-map.module.css");
+
+  assert.match(css, /\.outline \{[\s\S]*?fill: none;[\s\S]*?pointer-events: none;/);
+  assert.match(css, /\.hoverOutline \{ stroke-width: 2; \}/);
+  assert.match(css, /\.selectedOutline \{ stroke-width: 2\.5; \}/);
+  assert.match(css, /\.selectedOutline\.hoverOutline \{ stroke-width: 3; \}/);
 });
 
 test("reported chart styles stay within the registry design tokens", async () => {

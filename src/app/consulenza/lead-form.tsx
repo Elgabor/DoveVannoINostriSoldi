@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { CONSULTING_TOPICS, ORGANIZATION_TYPES } from "@/lib/leads";
+import { CONTACT_EMAIL } from "@/lib/site";
 import styles from "./consulenza.module.css";
 
 type FormStatus = "idle" | "sending" | "success" | "error";
@@ -45,7 +46,7 @@ export function LeadForm() {
       topic: String(data.get("topic") ?? ""),
       message: String(data.get("message") ?? ""),
       consent: data.get("consent") === "on",
-      company_fax: String(data.get("company_fax") ?? ""),
+      website: String(data.get("website") ?? ""),
       startedAt,
     };
 
@@ -57,6 +58,14 @@ export function LeadForm() {
       });
       const payload = (await response.json()) as { ok?: boolean; error?: string };
 
+      if (response.status === 503) {
+        setStatus("error");
+        setError(
+          `Il form non è ancora collegato alla posta. Scrivi a ${CONTACT_EMAIL} con gli stessi dati.`,
+        );
+        return;
+      }
+
       if (!response.ok || payload.ok === false) {
         setStatus("error");
         setError(payload.error ?? "Non siamo riusciti a inviare la richiesta. Riprova.");
@@ -66,7 +75,7 @@ export function LeadForm() {
       setStatus("success");
     } catch {
       setStatus("error");
-      setError("Invio non riuscito. Riprova tra un minuto.");
+      setError(`Invio non riuscito. Scrivi a ${CONTACT_EMAIL} se il problema continua.`);
     }
   }
 
@@ -143,8 +152,8 @@ export function LeadForm() {
       </label>
 
       <label className={styles.honeypot} aria-hidden="true">
-        <span>Fax</span>
-        <input name="company_fax" type="text" tabIndex={-1} autoComplete="off" />
+        <span>Sito web</span>
+        <input name="website" type="text" tabIndex={-1} autoComplete="off" />
       </label>
 
       <label className={styles.consent}>

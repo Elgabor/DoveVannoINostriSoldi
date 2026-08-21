@@ -5,7 +5,6 @@ import "./helpers/register-ts-alias.mjs";
 const {
   formatLeadEmail,
   leadEmailSubject,
-  leadFromAddress,
   parseLead,
 } = await import("../src/lib/leads.ts");
 const { POST } = await import("../src/app/api/consulenza/route.ts");
@@ -55,7 +54,7 @@ test("parseLead rejects a missing consent and a short message", () => {
 });
 
 test("parseLead discards honeypot and too-fast submissions", () => {
-  assert.equal(parseLead({ ...validLead, company_fax: "https://spam.test" }, startedAt + 10_000).status, "discarded");
+  assert.equal(parseLead({ ...validLead, website: "https://spam.test" }, startedAt + 10_000).status, "discarded");
   assert.equal(parseLead({ ...validLead, startedAt: Date.now() }, Date.now()).status, "discarded");
 });
 
@@ -75,7 +74,7 @@ test("consulting API rejects invalid JSON and incomplete leads", async () => {
 });
 
 test("consulting API pretends success on spam and needs Resend for real leads", async () => {
-  const spam = await POST(request({ ...validLead, company_fax: "http://bot.test" }));
+  const spam = await POST(request({ ...validLead, website: "http://bot.test" }));
   assert.equal(spam.status, 200);
   assert.deepEqual(await spam.json(), { ok: true });
 
@@ -112,7 +111,6 @@ test("consulting API sends a plain-text email to the configured inbox", async ()
     assert.match(calls[0].init.headers.Authorization, /Bearer re_test/);
     const sent = JSON.parse(calls[0].init.body);
     assert.deepEqual(sent.to, [CONTACT_EMAIL]);
-    assert.equal(sent.from, "Consulenza <beth.t@example.com>");
     assert.equal(sent.reply_to, validLead.email);
     assert.match(sent.subject, /Comune di Esempio/);
     assert.match(sent.text, /Dirigente finanziario/);
@@ -123,16 +121,5 @@ test("consulting API sends a plain-text email to the configured inbox", async ()
     else process.env.RESEND_API_KEY = previousKey;
     if (previousInbox === undefined) delete process.env.LEAD_INBOX_EMAIL;
     else process.env.LEAD_INBOX_EMAIL = previousInbox;
-  }
-});
-
-test("leadFromAddress ignores consumer mailboxes that Resend cannot send from", () => {
-  const previous = process.env.RESEND_FROM_EMAIL;
-  process.env.RESEND_FROM_EMAIL = "gagliardidomenico46@gmail.com";
-  try {
-    assert.equal(leadFromAddress(), "Consulenza <beth.t@example.com>");
-  } finally {
-    if (previous === undefined) delete process.env.RESEND_FROM_EMAIL;
-    else process.env.RESEND_FROM_EMAIL = previous;
   }
 });

@@ -1,4 +1,11 @@
-import { parseLead, sendLeadEmail } from "@/lib/leads";
+import {
+  formatLeadEmail,
+  leadEmailSubject,
+  leadFromAddress,
+  leadInbox,
+  parseLead,
+  RESEND_EMAILS_URL,
+} from "@/lib/leads";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,17 +32,31 @@ export async function POST(request: Request) {
     return json({ ok: false, error: parsed.error }, 400);
   }
 
-  try {
-    const sent = await sendLeadEmail(parsed.lead, new Date());
-    if (sent.ok) return json({ ok: true });
-    if (sent.status === 503) {
-      return json({ ok: false, error: "Invio non configurato sul deployment" }, 503);
-    }
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  if (!apiKey) {
+    return json({ ok: false, error: "Invio non configurato sul deployment" }, 503);
+  }
 
-    console.error("Resend ha rifiutato la lead", sent.status, sent.detail);
-    return json({ ok: false, error: "Non siamo riusciti a inviare la richiesta" }, 502);
-  } catch (error) {
-    console.error("Invio lead non riuscito", error);
+  const receivedAt = new Date();
+  const response = await fetch(RESEND_EMAILS_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: leadFromAddress(),
+      to: [leadInbox()],
+      reply_to: parsed.lead.email,
+      subject: leadEmailSubject(parsed.lead),
+      text: formatLeadEmail(parsed.lead, receivedAt),
+    }),
+  });
+
+  if (!response.ok) {
     return json({ ok: false, error: "Non siamo riusciti a inviare la richiesta" }, 502);
   }
+
+  return json({ ok: true });
 }
+

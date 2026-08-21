@@ -68,7 +68,7 @@ function isTooFast(startedAt: unknown, now: number): boolean {
 export function parseLead(payload: unknown, now = Date.now()): LeadParseResult {
   const record = asRecord(payload);
 
-  if (isFilledHoneypot(record.company_fax) || isFilledHoneypot(record.website) || isTooFast(record.startedAt, now)) {
+  if (isFilledHoneypot(record.website) || isTooFast(record.startedAt, now)) {
     return { status: "discarded" };
   }
 
@@ -119,51 +119,12 @@ export function leadEmailSubject(lead: Lead): string {
   return `Richiesta consulenza: ${lead.organization}`;
 }
 
-const RESEND_TEST_FROM = "Consulenza <beth.t@example.com>";
-const CONSUMER_INBOX = /@(gmail|googlemail|yahoo|outlook|hotmail|icloud)\./i;
-
 export function leadInbox(): string {
   return process.env.LEAD_INBOX_EMAIL?.trim() || CONTACT_EMAIL;
 }
 
 export function leadFromAddress(): string {
-  const configured = process.env.RESEND_FROM_EMAIL?.trim();
-  if (!configured) return RESEND_TEST_FROM;
-
-  const address = configured.includes("<")
-    ? configured.slice(configured.indexOf("<") + 1, configured.lastIndexOf(">")).trim()
-    : configured;
-  if (!address || CONSUMER_INBOX.test(address)) return RESEND_TEST_FROM;
-  return configured;
+  return process.env.RESEND_FROM_EMAIL?.trim() || "DoveVannoINostriSoldi <beth.t@example.com>";
 }
 
 export const RESEND_EMAILS_URL = "https://api.resend.com/emails";
-
-export async function sendLeadEmail(
-  lead: Lead,
-  receivedAt: Date,
-  fetchImpl: typeof fetch = fetch,
-): Promise<{ ok: true } | { ok: false; status: number; detail: string }> {
-  const apiKey = process.env.RESEND_API_KEY?.trim();
-  if (!apiKey) return { ok: false, status: 503, detail: "missing-key" };
-
-  const response = await fetchImpl(RESEND_EMAILS_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: leadFromAddress(),
-      to: [leadInbox()],
-      reply_to: lead.email,
-      subject: leadEmailSubject(lead),
-      text: formatLeadEmail(lead, receivedAt),
-    }),
-  });
-
-  if (response.ok) return { ok: true };
-
-  const detail = await response.text();
-  return { ok: false, status: response.status, detail };
-}

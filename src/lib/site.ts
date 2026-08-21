@@ -5,6 +5,3 @@
  */
 
 export const REPO_URL = "https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi";
-
-/** Inbox for consulting leads. Override in production with LEAD_INBOX_EMAIL. */
-export const CONTACT_EMAIL = "gagliardidomenico46@gmail.com";

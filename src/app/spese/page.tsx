@@ -62,15 +62,19 @@ export default async function MoneyPage({
   const comparison = [...availableSiopeYears].sort((left, right) => left - right).map((comparisonYear) => {
     const comparisonData = getSiopeMunicipalSnapshot(comparisonYear);
     const share = siopeTitleShare(comparisonData, "1");
+    const isPartial = partialMonth(comparisonData) !== null;
     return {
       year: comparisonYear,
       share: share === null ? "n.d." : percent(share * 100),
-      period:
-        partialMonth(comparisonData) === null
-          ? "anno chiuso"
-          : `gennaio-${comparisonData.latestMonthLabel.toLocaleLowerCase("it-IT")} · parziale`,
+      isPartial,
+      period: isPartial
+        ? `gennaio-${comparisonData.latestMonthLabel.toLocaleLowerCase("it-IT")} · parziale`
+        : "anno chiuso",
     };
   });
+  const partialComparisonYears = comparison
+    .filter((row) => row.isPartial)
+    .map((row) => row.year);
 
   return (
     <main className="shell page">
@@ -185,9 +189,19 @@ export default async function MoneyPage({
                 </table>
               </div>
               <p className={styles.note}>
-                Il confronto non è un trend: il 2026 è ancora parziale e gli snapshot non
-                contengono una serie mensile per Titolo 1. Per un confronto omogeneo servono gli
-                stessi mesi e lo stesso denominatore per ogni anno.
+                {partialComparisonYears.length > 0 ? (
+                  <>
+                    Il confronto non è un trend: {partialComparisonYears.join(", ")}{" "}
+                    {partialComparisonYears.length === 1 ? "è ancora parziale" : "sono ancora parziali"}
+                    {" "}e gli snapshot non contengono una serie mensile per Titolo 1. Per un
+                    confronto omogeneo servono gli stessi mesi e lo stesso denominatore per ogni anno.
+                  </>
+                ) : (
+                  <>
+                    Il confronto è descrittivo: gli snapshot annuali non misurano qualità o
+                    efficienza e il denominatore demografico deve restare omogeneo tra gli anni.
+                  </>
+                )}
               </p>
             </div>
 

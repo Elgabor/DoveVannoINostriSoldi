@@ -26,6 +26,7 @@ EXPECTED_REVENUE_SHA256 = "dd28b44c5f4ba0ea0454ce33e1b87ed3dbb14c70bb7f6e38f54c0
 EXPECTED_EXPENDITURE_SHA256 = "a57b6271204045903b7d1a579c5734253e8df81419b1d42e7be451cf4bc64d32"
 POPULATION_SHA256 = "c0aec6bec63a449dc9bca454f8e0af5a63c4dbe10ef24155d42eb8fbbdfd919f"
 POPULATION_BYTES = 1_504_172
+EXPECTED_POPULATION_MAPPING_SHA256 = "bb7260ff76743a42a3881bd57969e9dba6e70dda1e9e1740852c16d656874d61"
 
 REVENUE_URL = "https://politichecoesione.governo.it/media/yhqdfy5d/en_pa_cemacro.csv"
 EXPENDITURE_URL = "https://politichecoesione.governo.it/media/e31aeyon/sp_pa_cemacro.csv"
@@ -44,9 +45,11 @@ class Region:
     population_2023: int
 
 
-# ISTAT resident population at 31 December 2023. CPT publishes the two
-# autonomous provinces separately, so the aggregate Trentino-Alto Adige is not
-# duplicated here.
+# Manual normalization of the official ISTAT table for resident population at
+# 31 December 2023. The reviewed mapping has its own immutable fingerprint
+# below; the source PDF is also required and hash-pinned at generation time.
+# CPT publishes the two autonomous provinces separately, so the aggregate
+# Trentino-Alto Adige is not duplicated here.
 REGIONS = {
     "01": Region("01", "Piemonte", 4_251_623),
     "02": Region("02", "Valle d'Aosta/Vallée d'Aoste", 122_877),
@@ -82,6 +85,13 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def population_mapping_sha256() -> str:
+    payload = "\n".join(
+        f"{code};{region.population_2023}" for code, region in REGIONS.items()
+    )
+    return hashlib.sha256(payload.encode("ascii")).hexdigest()
 
 
 SOURCE_AMOUNT = re.compile(r"^\d+(?:,\d+)?$")
@@ -149,6 +159,9 @@ def build_snapshot(
     population_hash = sha256(population_path)
     if population_hash != POPULATION_SHA256 or population_path.stat().st_size != POPULATION_BYTES:
         raise SnapshotError("Documento popolazione ISTAT inatteso")
+    population_mapping_hash = population_mapping_sha256()
+    if population_mapping_hash != EXPECTED_POPULATION_MAPPING_SHA256:
+        raise SnapshotError("Normalizzazione della popolazione ISTAT divergente")
 
     revenues = read_flow(revenue_path, "Categoria Entrate", REVENUE_TOTAL, "E - Consolidato PA")
     expenditures = read_flow(expenditure_path, "Categoria Spese", EXPENDITURE_TOTAL, "S - Consolidato PA")
@@ -226,6 +239,8 @@ def build_snapshot(
                     "resourceUrl": POPULATION_URL,
                     "rightsNote": "Consultare le condizioni di riutilizzo ISTAT applicabili al documento.",
                     "referenceDate": "2023-12-31",
+                    "locator": "Tavola regionale: popolazione censita al 31 dicembre 2023; Province autonome riportate separatamente.",
+                    "normalizedValuesSha256": population_mapping_hash,
                     "bytes": population_path.stat().st_size,
                     "sha256": population_hash,
                 },

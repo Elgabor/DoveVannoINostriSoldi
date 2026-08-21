@@ -1,32 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { shortDate } from "@/lib/format";
-import { mefParticipationsSnapshot } from "@/lib/mef-participations-snapshot";
-import { openCoesioneSnapshot } from "@/lib/opencoesione-snapshot";
-import { openCivitasSnapshot } from "@/lib/opencivitas-snapshot";
-import { consulentiSnapshot } from "@/lib/consulenti-snapshot";
-import { parliamentSnapshot } from "@/lib/parliament-snapshot";
-import { siopeMunicipalSnapshot } from "@/lib/siope-snapshot";
-import { inpsCivilInvaliditySnapshot } from "@/lib/inps-invalidity-snapshot";
+import { latestDataBySlug } from "@/lib/source-latest-data";
 import { publicSources, sourceCounts } from "@/lib/sources";
 import styles from "./fonti.module.css";
 
 export const metadata: Metadata = {
   title: "Fonti",
   description: "Da dove arrivano i dati, quanto spesso cambiano e quali fonti sono già collegate.",
-};
-
-/* A missing date means that the adapter discovers the latest release at request
-   time. It never means that the source is waiting to be connected. */
-const latestDataBySlug: Record<string, string | null> = {
-  siope: siopeMunicipalSnapshot.source.siopeMovementsLastModified,
-  ipa: siopeMunicipalSnapshot.source.ipaLastModified,
-  opencoesione: openCoesioneSnapshot.referenceDate,
-  opencivitas: openCivitasSnapshot.publishedAt,
-  "partecipazioni-pubbliche": mefParticipationsSnapshot.publishedAt,
-  consulenti: consulentiSnapshot.source.observedAt,
-  camera: parliamentSnapshot.observedAt,
-  inps: inpsCivilInvaliditySnapshot.sources.map((source) => source.documentDate).sort().at(-1) ?? null,
 };
 
 export default function SourcesPage() {
@@ -80,7 +61,11 @@ export default function SourcesPage() {
                     <td>{source.owner}</td>
                     <td>{source.cadence}</td>
                     <td className={styles.latest}>
-                      {latest ? shortDate(latest) : "scoperta automatica"}
+                      {latest?.kind === "date"
+                        ? shortDate(latest.value)
+                        : latest?.kind === "period"
+                          ? latest.label
+                          : "scoperta automatica"}
                     </td>
                   </tr>
                 );
@@ -94,9 +79,9 @@ export default function SourcesPage() {
         <section className="panel">
           <h2 className="panel-title">Come lavoriamo</h2>
           <p>
-            Scarichiamo i file ufficiali, li ricontiamo e mostriamo sempre la data della fonte e la
-            data in cui l&apos;abbiamo controllata. Non cambiamo mai il significato di un dato e non
-            inventiamo numeri che la fonte non pubblica.
+            Scarichiamo i file ufficiali, li ricontiamo e mostriamo sempre il periodo o la data
+            dichiarata dalla fonte, separandoli dal momento in cui li abbiamo controllati. Non
+            cambiamo mai il significato di un dato e non inventiamo numeri che la fonte non pubblica.
           </p>
         </section>
         <section className="panel">

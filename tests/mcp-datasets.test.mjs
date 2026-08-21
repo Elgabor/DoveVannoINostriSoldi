@@ -116,6 +116,17 @@ test("every snapshot-backed MCP adapter returns real structured data", async () 
   assert.equal(anac.inputs.length, 12);
   assert.ok(participations.totals.participationRecords > 0);
   assert.deepEqual(inps.regionalNewPensions.regions, [{ region: "Calabria", values: [8789] }]);
+  assert.equal(inps.spending.geographicScope.level, "country");
+  assert.equal(inps.regionalNewPensions.geographicScopes.rows.level, "region");
+  assert.equal(inps.regionalNewPensions.geographicScopes.nationalTotals.level, "covered-regions");
+  assert.deepEqual(inps.spending.change, {
+    fromYear: 2022,
+    toYear: 2023,
+    amountCents: 108_400_000_000,
+    percent: 5.3,
+  });
+  assert.equal(inps.benefitsStock, null);
+  assert.deepEqual(inps.regionalNewPensions.provisionalYears, []);
   assert.match(inps.methodology.interpretation, /non provano frode/i);
   assert.equal(cpt.rows.length, 1);
   assert.equal(cpt.rows[0].region, "Calabria");

@@ -50,13 +50,50 @@ test("INPS query filters only supported years and regions without fabricating co
   assert.deepEqual(calabria.regionalNewPensions.regions, [
     { region: "Calabria", values: [8789] },
   ]);
+  assert.deepEqual(calabria.query, { year: 2023, region: "Calabria" });
+  assert.deepEqual(calabria.spending.geographicScope, {
+    level: "country",
+    code: "IT",
+    name: "Italia",
+  });
+  assert.deepEqual(calabria.regionalNewPensions.geographicScopes.rows, {
+    level: "region",
+    name: "Calabria",
+  });
+  assert.deepEqual(calabria.regionalNewPensions.geographicScopes.nationalTotals, {
+    level: "covered-regions",
+    name: "18 regioni coperte",
+  });
+  assert.equal(calabria.regionalNewPensions.nationalTotals[0], 134_309);
+  assert.equal(calabria.regionalNewPensions.regions[0].values[0], 8_789);
   assert.equal(calabria.spending.series.length, 1);
   assert.equal(calabria.spending.series[0].amountCents, 2_161_900_000_000);
+  assert.deepEqual(calabria.spending.change, {
+    fromYear: 2022,
+    toYear: 2023,
+    amountCents: 108_400_000_000,
+    percent: 5.3,
+  });
+  assert.equal(calabria.benefitsStock, null);
+  assert.deepEqual(calabria.regionalNewPensions.provisionalYears, []);
 
   const onlyNational = queryInpsCivilInvalidity({ year: 2025 });
   assert.equal(onlyNational.spending.series.length, 1);
   assert.deepEqual(onlyNational.regionalNewPensions.years, []);
   assert.deepEqual(onlyNational.regionalNewPensions.regions, []);
+  assert.deepEqual(onlyNational.spending.change, {
+    fromYear: 2024,
+    toYear: 2025,
+    amountCents: 76_000_000_000,
+    percent: 3.3,
+  });
+  assert.equal(onlyNational.benefitsStock, null);
+
+  const stockYear = queryInpsCivilInvalidity({ year: 2024 });
+  assert.equal(stockYear.benefitsStock?.asOf, "2024-12-31");
+  assert.equal(stockYear.benefitsStock?.geographicScope.level, "country");
+  assert.deepEqual(stockYear.regionalNewPensions.provisionalYears, [2024]);
+  assert.equal(stockYear.regionalNewPensions.geographicScopes.rows.level, "covered-regions");
   assert.throws(
     () => queryInpsCivilInvalidity({ year: 2025, region: "Calabria" }),
     /dettaglio regionale INPS non è disponibile/,

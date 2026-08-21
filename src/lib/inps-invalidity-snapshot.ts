@@ -29,6 +29,11 @@ export type InpsCivilInvalidityQuery = {
   region?: string;
 };
 
+function roundedPercent(changeCents: number, previousCents: number): number {
+  if (previousCents === 0) return 0;
+  return Math.round((changeCents / previousCents) * 1_000) / 10;
+}
+
 export function queryInpsCivilInvalidity(query: InpsCivilInvalidityQuery = {}) {
   const validYears = new Set([...availableInpsSpendingYears, ...availableInpsRegionalYears]);
   if (query.year !== undefined && !validYears.has(query.year)) {
@@ -66,23 +71,69 @@ export function queryInpsCivilInvalidity(query: InpsCivilInvalidityQuery = {}) {
   const selectedYearIndexes = inpsCivilInvaliditySnapshot.regionalNewPensions.years
     .map((year, index) => ({ year, index }))
     .filter(({ year }) => query.year === undefined || year === query.year);
+  const spendingSeries = inpsCivilInvaliditySnapshot.spending.series.filter(
+    (point) => query.year === undefined || point.year === query.year,
+  );
+  const comparisonIndex = query.year === undefined
+    ? inpsCivilInvaliditySnapshot.spending.series.length - 1
+    : inpsCivilInvaliditySnapshot.spending.series.findIndex((point) => point.year === query.year);
+  const comparisonCurrent = inpsCivilInvaliditySnapshot.spending.series[comparisonIndex];
+  const comparisonPrevious = comparisonIndex > 0
+    ? inpsCivilInvaliditySnapshot.spending.series[comparisonIndex - 1]
+    : undefined;
+  const changeCents = comparisonCurrent && comparisonPrevious
+    ? comparisonCurrent.amountCents - comparisonPrevious.amountCents
+    : null;
+  const stockYear = new Date(inpsCivilInvaliditySnapshot.benefitsStock.asOf).getUTCFullYear();
 
   return {
+    query: {
+      year: query.year ?? null,
+      region: requestedRegion ? regions[0]?.region ?? query.region?.trim() ?? null : null,
+    },
     scope: inpsCivilInvaliditySnapshot.scope,
     spending: {
-      ...inpsCivilInvaliditySnapshot.spending,
-      series: inpsCivilInvaliditySnapshot.spending.series.filter(
-        (point) => query.year === undefined || point.year === query.year,
-      ),
+      unit: inpsCivilInvaliditySnapshot.spending.unit,
+      measure: inpsCivilInvaliditySnapshot.spending.measure,
+      sourceId: inpsCivilInvaliditySnapshot.spending.sourceId,
+      geographicScope: { level: "country", code: "IT", name: "Italia" },
+      series: spendingSeries,
+      change:
+        comparisonCurrent && comparisonPrevious && changeCents !== null
+          ? {
+              fromYear: comparisonPrevious.year,
+              toYear: comparisonCurrent.year,
+              amountCents: changeCents,
+              percent: roundedPercent(changeCents, comparisonPrevious.amountCents),
+            }
+          : null,
     },
     managementDetail2024:
       query.year === undefined || query.year === 2024
-        ? inpsCivilInvaliditySnapshot.managementDetail2024
+        ? {
+            ...inpsCivilInvaliditySnapshot.managementDetail2024,
+            geographicScope: { level: "country", code: "IT", name: "Italia" },
+          }
         : null,
-    benefitsStock: inpsCivilInvaliditySnapshot.benefitsStock,
+    benefitsStock:
+      query.year === undefined || query.year === stockYear
+        ? {
+            ...inpsCivilInvaliditySnapshot.benefitsStock,
+            geographicScope: { level: "country", code: "IT", name: "Italia" },
+          }
+        : null,
     regionalNewPensions: {
       ...inpsCivilInvaliditySnapshot.regionalNewPensions,
+      geographicScopes: {
+        rows: requestedRegion
+          ? { level: "region", name: regions[0].region }
+          : { level: "covered-regions", name: "18 regioni coperte" },
+        nationalTotals: { level: "covered-regions", name: "18 regioni coperte" },
+      },
       years: selectedYearIndexes.map(({ year }) => year),
+      provisionalYears: inpsCivilInvaliditySnapshot.regionalNewPensions.provisionalYears.filter(
+        (year) => query.year === undefined || year === query.year,
+      ),
       nationalTotals: selectedYearIndexes.map(
         ({ index }) => inpsCivilInvaliditySnapshot.regionalNewPensions.nationalTotals[index],
       ),

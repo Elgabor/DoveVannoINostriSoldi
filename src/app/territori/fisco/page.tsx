@@ -59,12 +59,17 @@ export default function RegionalFiscalPage() {
         </p>
       </div>
 
-      <div className={styles.formula} aria-label="Formula del saldo contabile">
-        <span>Entrate territorializzate</span>
-        <b aria-hidden="true">−</b>
-        <span>Spese territorializzate</span>
-        <b aria-hidden="true">=</b>
-        <strong>Saldo contabile territoriale</strong>
+      <div className={styles.formula}>
+        <span className={styles.visuallyHidden}>
+          Il saldo contabile territoriale è uguale alle entrate territorializzate meno le spese territorializzate.
+        </span>
+        <div className={styles.formulaVisual} aria-hidden="true">
+          <span>Entrate territorializzate</span>
+          <b>−</b>
+          <span>Spese territorializzate</span>
+          <b>=</b>
+          <strong>Saldo contabile territoriale</strong>
+        </div>
       </div>
 
       <section className="panel" aria-labelledby="fiscal-chart-title">

@@ -6115,6 +6115,8 @@
         "resourceUrl": "https://www.istat.it/wp-content/uploads/2024/12/CENSIMENTO-E-DINAMICA-DELLA-POPOLAZIONE-2023.pdf",
         "rightsNote": "Consultare le condizioni di riutilizzo ISTAT applicabili al documento.",
         "referenceDate": "2023-12-31",
+        "locator": "Tavola regionale: popolazione censita al 31 dicembre 2023; Province autonome riportate separatamente.",
+        "normalizedValuesSha256": "bb7260ff76743a42a3881bd57969e9dba6e70dda1e9e1740852c16d656874d61",
         "bytes": 1504172,
         "sha256": "c0aec6bec63a449dc9bca454f8e0af5a63c4dbe10ef24155d42eb8fbbdfd919f"
       }

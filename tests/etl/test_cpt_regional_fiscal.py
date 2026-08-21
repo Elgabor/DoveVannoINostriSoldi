@@ -27,6 +27,10 @@ class CptRegionalFiscalTests(unittest.TestCase):
         self.assertEqual(len(MODULE.REGIONS), 21)
         self.assertEqual(sum(region.population_2023 for region in MODULE.REGIONS.values()), 58_971_230)
         self.assertEqual(MODULE.REGIONS["18"].population_2023, 1_838_568)
+        self.assertEqual(
+            MODULE.population_mapping_sha256(),
+            "bb7260ff76743a42a3881bd57969e9dba6e70dda1e9e1740852c16d656874d61",
+        )
 
     def test_reader_fails_on_duplicate_total_rows(self):
         with tempfile.TemporaryDirectory() as directory:

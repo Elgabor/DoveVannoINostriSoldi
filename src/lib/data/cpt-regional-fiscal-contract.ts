@@ -41,6 +41,8 @@ export type CptRegionalFiscalSnapshot = {
       bytes: number;
       sha256: string;
       referenceDate?: string;
+      locator?: string;
+      normalizedValuesSha256?: string;
     }>;
   };
 };
@@ -140,6 +142,14 @@ export function validateCptRegionalFiscalSnapshot(
     text(input.rightsNote, `condizioni di riuso ${input.kind}`);
     invariant(Number.isSafeInteger(input.bytes) && input.bytes > 0, `dimensione non valida: ${input.kind}`);
     invariant(/^[a-f0-9]{64}$/.test(input.sha256), `hash non valido: ${input.kind}`);
+    if (input.kind === "population") {
+      invariant(input.referenceDate === "2023-12-31", "data di riferimento popolazione inattesa");
+      text(input.locator, "localizzatore popolazione");
+      invariant(
+        /^[a-f0-9]{64}$/.test(input.normalizedValuesSha256 ?? ""),
+        "fingerprint normalizzazione popolazione non valido",
+      );
+    }
   }
   return snapshot;
 }

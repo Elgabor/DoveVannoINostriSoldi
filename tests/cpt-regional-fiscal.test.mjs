@@ -53,6 +53,8 @@ test("CPT provenance also pins the official ISTAT population document", () => {
   assert.equal(population.referenceDate, "2023-12-31");
   assert.match(population.resourceUrl, /^https:\/\/www\.istat\.it\//);
   assert.match(population.sha256, /^[a-f0-9]{64}$/);
+  assert.match(population.normalizedValuesSha256, /^[a-f0-9]{64}$/);
+  assert.match(population.locator, /31 dicembre 2023/);
   assert.equal(population.bytes, 1_504_172);
 });
 

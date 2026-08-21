@@ -38,7 +38,7 @@ export default function CivilInvalidityPage() {
         </p>
       </header>
 
-      <div className="stat-strip">
+      <div className={`stat-strip ${styles.stats}`}>
         <div>
           <span className="stat-label">Prestazioni di invalidità civile · {latest.year}</span>
           <span className="stat-value">{compactEuro(euroFromCents(latest.amountCents))}</span>

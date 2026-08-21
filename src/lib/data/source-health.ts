@@ -331,12 +331,16 @@ function snapshotManagedOpenCoesione(): SourceHealth {
 }
 
 function snapshotManagedAnac(): SourceHealth {
+  const latestSourceModified = anacCigSnapshot.inputs
+    .map((input) => input.sourceLastModified)
+    .sort()
+    .at(-1) ?? null;
   return {
     ...baseHealth("anac"),
     reachability: "not-probed",
-    freshness: freshnessFor("anac", anacCigSnapshot.observedAt),
+    freshness: freshnessFor("anac", latestSourceModified),
     latencyMs: null,
-    detail: `Snapshot verificato · CIG ${anacCigSnapshot.referenceYear} · 12 distribuzioni mensili`,
+    detail: `Snapshot verificato il ${anacCigSnapshot.observedAt} · CIG ${anacCigSnapshot.referenceYear} · 12 distribuzioni mensili`,
     recordCount: anacCigSnapshot.population.records,
   };
 }
@@ -364,9 +368,9 @@ function snapshotManagedCpt(): SourceHealth {
   return {
     ...baseHealth("cpt"),
     reachability: "not-probed",
-    freshness: freshnessFor("cpt", cptRegionalFiscalSnapshot.provenance.observedAt),
+    freshness: freshnessFor("cpt", null),
     latencyMs: null,
-    detail: `Snapshot verificato · serie ${cptRegionalFiscalSnapshot.referenceYears.at(0)}-${cptRegionalFiscalSnapshot.referenceYears.at(-1)} · 21 territori`,
+    detail: `Snapshot verificato il ${cptRegionalFiscalSnapshot.provenance.observedAt.slice(0, 10)} · dati ${cptRegionalFiscalSnapshot.referenceYears.at(0)}-${cptRegionalFiscalSnapshot.referenceYears.at(-1)} · 21 territori`,
     recordCount: cptRegionalFiscalSnapshot.rows.length,
   };
 }
@@ -387,9 +391,9 @@ function snapshotManagedConsulenti(): SourceHealth {
   return {
     ...baseHealth("consulenti"),
     reachability: "not-probed",
-    freshness: freshnessFor("consulenti", consulentiSnapshot.source.observedAt),
+    freshness: freshnessFor("consulenti", null),
     latencyMs: null,
-    detail: `Snapshot ETL attivo · ultimo anno disponibile ${consulentiSnapshot.latestYear}`,
+    detail: `Snapshot estratto il ${consulentiSnapshot.source.observedAt.slice(0, 10)} · ultimo anno disponibile ${consulentiSnapshot.latestYear}, parziale`,
     recordCount: latest?.assignments ?? null,
   };
 }
@@ -410,9 +414,9 @@ function snapshotManagedCamera(): SourceHealth {
   return {
     ...baseHealth("camera"),
     reachability: "not-probed",
-    freshness: freshnessFor("camera", parliamentSnapshot.observedAt),
+    freshness: freshnessFor("camera", null),
     latencyMs: null,
-    detail: "Consuntivo e bilancio collegati ai documenti ufficiali della Camera.",
+    detail: `Snapshot verificato il ${parliamentSnapshot.observedAt.slice(0, 10)} · consuntivo e bilancio collegati ai documenti ufficiali della Camera.`,
     recordCount: camera?.statements.length ?? null,
   };
 }

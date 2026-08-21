@@ -103,7 +103,16 @@ test("the regional map has a deterministic fallback and roving keyboard focus", 
   assert.match(map, /"ArrowRight"|"ArrowDown"/);
   assert.match(map, /"ArrowLeft"|"ArrowUp"/);
   assert.match(map, /regionPathRefs\.current\.get\(nextCode\)\?\.focus\(\)/);
-  assert.match(map, /<select value=\{selectedCode\}/);
+  assert.match(map, /<select[\s\S]*?value=\{selectedCode\}/);
+});
+
+test("the mobile region selector is sorted once with Italian collation", async () => {
+  const map = await source("../src/components/italy-regions-map.tsx");
+
+  assert.match(map, /const italianRegionCollator = new Intl\.Collator\("it"\);/);
+  assert.match(map, /const regionOptions = Object\.entries\(REGION_NAME_BY_ISTAT_CODE\)\.sort/);
+  assert.match(map, /\{regionOptions\.map\(\(\[code, name\]\) => \(/);
+  assert.match(map, /data-region-selector="true"/);
 });
 
 test("the regional map redraws selected and hovered borders above all region fills", async () => {

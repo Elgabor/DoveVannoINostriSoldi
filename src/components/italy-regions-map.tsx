@@ -13,6 +13,11 @@ import {
 import { compactEuro, exactEuro, integer } from "@/lib/format";
 import styles from "./italy-regions-map.module.css";
 
+const italianRegionCollator = new Intl.Collator("it");
+const regionOptions = Object.entries(REGION_NAME_BY_ISTAT_CODE).sort(([, left], [, right]) =>
+  italianRegionCollator.compare(left, right),
+);
+
 function quantile(values: number[], fraction: number): number {
   const index = Math.min(values.length - 1, Math.floor(values.length * fraction));
   return values[index] ?? 0;
@@ -208,8 +213,12 @@ export function ItalyRegionsMap({
 
         <label className={styles.mobileSelector}>
           <span>Scegli una regione</span>
-          <select value={selectedCode} onChange={(event) => selectRegion(event.target.value)}>
-            {Object.entries(REGION_NAME_BY_ISTAT_CODE).map(([code, name]) => (
+          <select
+            data-region-selector="true"
+            value={selectedCode}
+            onChange={(event) => selectRegion(event.target.value)}
+          >
+            {regionOptions.map(([code, name]) => (
               <option value={code} key={code}>{name}</option>
             ))}
           </select>

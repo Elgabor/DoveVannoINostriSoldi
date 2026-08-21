@@ -319,6 +319,13 @@ async function assertInfoTooltips(page, label) {
 async function assertRegionalMapSelection(page, label) {
   const mapSelector = '[data-region-map="true"]';
   const detailSelector = '[data-region-detail="true"] b';
+  const regionLabels = await page.$$eval(
+    'select[data-region-selector="true"] option',
+    (options) => options.map((option) => option.textContent?.trim() ?? ""),
+  );
+  const sortedRegionLabels = [...regionLabels].sort(new Intl.Collator("it").compare);
+  assert.deepEqual(regionLabels, sortedRegionLabels, `${label}: regioni non in ordine alfabetico`);
+
   await page.waitForSelector(mapSelector, { visible: true });
   const regionPaths = await page.$$(
     `${mapSelector} path[role="button"][aria-label]`,

@@ -169,7 +169,7 @@ export default async function MoneyPage({
                   <thead>
                     <tr>
                       <th scope="col">Periodo</th>
-                      <th scope="col" className="num">Quota Titolo 1</th>
+                      <th scope="col" className="num">Quota</th>
                       <th scope="col">Copertura</th>
                     </tr>
                   </thead>

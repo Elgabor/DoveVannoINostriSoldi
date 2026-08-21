@@ -243,6 +243,7 @@ async function runScenario(browser, { label, pathname, validate, width }) {
   try {
     page.setDefaultTimeout(10_000);
     page.setDefaultNavigationTimeout(NAVIGATION_TIMEOUT_MS);
+    await page.setCacheEnabled(false);
     await page.setViewport({
       width,
       height: width <= 460 ? 844 : 900,

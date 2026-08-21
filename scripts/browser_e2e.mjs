@@ -646,6 +646,58 @@ try {
     completed.push(label);
   }
 
+  for (const [pathname, heading] of [
+    ["/supporto", /Supporto/i],
+    ["/termini", /Termini di utilizzo/i],
+  ]) {
+    for (const width of [320, 390, 1280]) {
+      const label = `${pathname.slice(1)} ${width}px`;
+      await runScenario(browser, {
+        label,
+        pathname,
+        width,
+        validate: async (page) => {
+          assertTextMatches(await bodyText(page), heading, label);
+        },
+      });
+      completed.push(label);
+    }
+  }
+
+  for (const width of [320, 1280]) {
+    const label = `Prompt MCP ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/mcp",
+      width,
+      validate: async (page) => {
+        const text = await bodyText(page);
+        assertTextMatches(text, /Prompt pronto per un agente AI/i, label);
+        assertTextMatches(text, /Copia prompt per agenti/i, label);
+        assertTextMatches(text, /list_datasets/i, label);
+        await page.evaluate(() => {
+          Object.defineProperty(navigator, "clipboard", {
+            configurable: true,
+            value: {
+              writeText: async (value) => {
+                globalThis.__dvnsCopiedPrompt = value;
+              },
+            },
+          });
+          const button = [...document.querySelectorAll("button")].find(
+            (candidate) => candidate.textContent?.trim() === "Copia prompt per agenti",
+          );
+          button?.click();
+        });
+        await page.waitForFunction(() => document.body.innerText.includes("Prompt copiato"));
+        const copiedPrompt = await page.evaluate(() => globalThis.__dvnsCopiedPrompt ?? "");
+        assertTextMatches(copiedPrompt, /https:\/\/www\.dovevannoinostrisoldi\.com\/api\/mcp/, label);
+        assertTextMatches(copiedPrompt, /list_datasets/, label);
+      },
+    });
+    completed.push(label);
+  }
+
   for (const width of [390, 1280]) {
     const label = `Macro-aree territori ${width}px`;
     await runScenario(browser, {
@@ -817,6 +869,46 @@ try {
       validate: async (page) => {
         assertTextMatches(await bodyText(page), /A che punto sono i progetti/i, label);
         await assertCohesionStatusLayout(page, label);
+      },
+    });
+    completed.push(label);
+  }
+
+  for (const width of [320, 390, 768, 1024, 1280]) {
+    const label = `Consulenza ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/consulenza",
+      width,
+      validate: async (page) => {
+        assertTextMatches(
+          await bodyText(page),
+          /Intelligenza artificiale per aziende e PA/i,
+          label,
+        );
+        const form = await page.$eval("main form", (element) => ({
+          hasPrivacyLink: Boolean(element.querySelector('a[href="/privacy"]')),
+          invalidBeforeSubmit: !element.checkValidity(),
+          requiredFields: element.querySelectorAll("[required]").length,
+        }));
+        assert.equal(form.hasPrivacyLink, true, `${label}: informativa privacy non collegata`);
+        assert.equal(form.invalidBeforeSubmit, true, `${label}: form vuoto considerato valido`);
+        assert.ok(form.requiredFields >= 7, `${label}: campi obbligatori inattesi`);
+      },
+    });
+    completed.push(label);
+  }
+
+  for (const width of [390, 1280]) {
+    const label = `Privacy consulenza ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/privacy",
+      width,
+      validate: async (page) => {
+        const text = await bodyText(page);
+        assertTextMatches(text, /Resend/i, label);
+        assertTextMatches(text, /Stati Uniti/i, label);
       },
     });
     completed.push(label);

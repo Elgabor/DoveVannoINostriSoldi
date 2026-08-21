@@ -69,6 +69,9 @@ export default function RootLayout({
             <a href="https://x.com/fragiannicola" target="_blank" rel="noreferrer">@fragiannicola</a>
             <span aria-hidden="true">·</span>
             <a href="https://x.com/dom_gag_96" target="_blank" rel="noreferrer">@dom_gag_96</a>
+            <span className="footer-spacer" />
+            <a href="/supporto">Supporto</a>
+            <a href="/termini">Termini</a>
           </div>
         </footer>
       </body>

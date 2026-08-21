@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { McpEndpoint } from "@/components/mcp-endpoint";
+import { AgentMcpPrompt, McpEndpoint } from "@/components/mcp-endpoint";
 import { datasetCatalog } from "@/lib/mcp/catalog";
 import { relatedMcpServices } from "@/lib/mcp/related-services";
 import styles from "./mcp.module.css";
@@ -44,6 +44,29 @@ export default function McpPage() {
             qualità, spreco o responsabilità. Ogni risposta conserva provenienza e metodologia.
           </p>
         </article>
+      </section>
+
+      <section className="panel" aria-labelledby="clients-title">
+        <h2 id="clients-title">Collegalo ai client compatibili</h2>
+        <p>
+          Usa sempre l&apos;endpoint canonico qui sopra: Claude può aggiungerlo come connettore MCP
+          remoto e Manufact può collegarlo come server esistente. L&apos;inclusione nelle directory
+          pubbliche di ChatGPT o Claude richiede una candidatura e una review separate; non è
+          implicita nel collegamento tecnico.
+        </p>
+        <p>
+          Prima di inviare contesto tramite un servizio esterno, consulta <a href="/privacy">privacy</a>,{" "}
+          <a href="/termini">termini</a> e <a href="/supporto">supporto</a>.
+        </p>
+      </section>
+
+      <section className={`panel ${styles.promptPanel}`} aria-labelledby="agent-prompt-title">
+        <h2 id="agent-prompt-title">Prompt pronto per un agente AI</h2>
+        <p>
+          Copialo in un agente che supporta server MCP remoti. Include la sequenza di discovery e
+          i limiti necessari per non confondere fonti o significato dei dati.
+        </p>
+        <AgentMcpPrompt />
       </section>
 
       <section className="panel" aria-labelledby="datasets-title">

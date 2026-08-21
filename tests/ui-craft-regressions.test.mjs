@@ -89,6 +89,21 @@ test("Lighthouse budgets use a three-run median instead of a single noisy sample
   assert.match(lighthouse, /irpef-lighthouse-summary\.json/);
 });
 
+test("consulting keeps client contracts separate from server email delivery", async () => {
+  const [form, page, leads] = await Promise.all([
+    source("../src/app/consulenza/lead-form.tsx"),
+    source("../src/app/consulenza/page.tsx"),
+    source("../src/lib/leads.ts"),
+  ]);
+
+  assert.match(form, /@\/lib\/consulting-contract/);
+  assert.doesNotMatch(form, /@\/lib\/leads/);
+  assert.match(page, /@\/lib\/consulting-contract/);
+  assert.match(leads, /Idempotency-Key/);
+  assert.match(form, /aria-describedby=\{error \? "consulting-form-error" : undefined\}/);
+  assert.doesNotMatch(form, /noValidate|startedAt/);
+});
+
 test("the regional map has a deterministic fallback and roving keyboard focus", async () => {
   const map = await source("../src/components/italy-regions-map.tsx");
 

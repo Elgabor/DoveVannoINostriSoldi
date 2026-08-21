@@ -435,3 +435,21 @@ test("MCP tool input schema rejects out-of-range pagination", async () => {
   assert.match(body, /Invalid arguments/);
   assert.match(body, /Too big/);
 });
+
+test("MCP tool responses stay below the wire-size budget", async () => {
+  const response = await POST(request({}, JSON.stringify({
+    jsonrpc: "2.0",
+    id: 13,
+    method: "tools/call",
+    params: {
+      name: "query_dataset",
+      arguments: { dataset: "pnrr_asili", region: "Lazio", limit: 100 },
+    },
+  })));
+  const body = await response.text();
+  assert.equal(response.status, 200);
+  assert.ok(new TextEncoder().encode(body).byteLength <= 750_000);
+  const rpcEvent = parseRpcEvent(body);
+  assert.equal(rpcEvent.result.isError, true);
+  assert.match(rpcEvent.result.structuredContent.error, /response_too_large/);
+});

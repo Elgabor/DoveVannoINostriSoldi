@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Form from "next/form";
 import Link from "next/link";
-import { compactEuro, integer, longDate } from "@/lib/format";
+import { compactEuro, integer } from "@/lib/format";
 import {
   PnrrChildcareQueryError,
   pnrrChildcareData,
@@ -67,24 +67,17 @@ export default async function PnrrChildcareCatalog({ searchParams }: { searchPar
     <main className="shell page">
       <div className={styles.hero}>
         <div>
-          <span className={styles.kicker}>Traccia PNRR · M4C1I1.1</span>
           <h1>Da miliardi nazionali a un CUP verificabile</h1>
           <p>
             Cerca un asilo, una scuola dell’infanzia o un servizio educativo. Ogni risultato separa
             finanziamento, gara e aggiudicazione, con il collegamento esatto alla fonte.
           </p>
         </div>
-        <div className={styles.heroMetric}>
-          <strong>{integer(pnrrChildcareMeta.coverage.uniqueProjects)}</strong>
-          <span>progetti tracciati</span>
-          <small>dati estratti il {longDate(`${pnrrChildcareMeta.referenceDate}T00:00:00Z`)}</small>
-        </div>
       </div>
 
       <section className={styles.searchPanel} aria-labelledby="search-title">
         <div className={styles.searchHeading}>
           <div>
-            <span className={styles.step}>01 · trova</span>
             <h2 id="search-title">Parti da un luogo, un ente o un CUP</h2>
           </div>
           <a href="/api/pnrr/asili" className="btn btn-secondary">API aperta</a>
@@ -120,7 +113,6 @@ export default async function PnrrChildcareCatalog({ searchParams }: { searchPar
       <section aria-labelledby="results-title">
         <div className={styles.resultsHeading}>
           <div>
-            <span className={styles.step}>02 · apri la traccia</span>
             <h2 id="results-title">{integer(result.pagination.total)} progetti trovati</h2>
           </div>
           <p>Ogni scheda è una pista documentale, non un giudizio di merito.</p>
@@ -154,7 +146,7 @@ export default async function PnrrChildcareCatalog({ searchParams }: { searchPar
         {result.data.length === 0 ? <div className="notice"><strong>Nessun progetto in questo perimetro</strong><p>Prova a rimuovere un filtro o cerca direttamente il CUP.</p></div> : null}
         <nav className={styles.pagination} aria-label="Pagine dei risultati">
           {result.pagination.offset > 0 ? <Link className="btn btn-secondary" href={paginationHref(params, previous)}>← Precedenti</Link> : <span />}
-          <span>{integer(result.pagination.offset + (result.data.length ? 1 : 0))} a {integer(result.pagination.offset + result.data.length)} di {integer(result.pagination.total)}</span>
+          <span>{result.data.length ? `${integer(result.pagination.offset + 1)} a ${integer(result.pagination.offset + result.data.length)} di ${integer(result.pagination.total)}` : "Nessun progetto in questa pagina"}</span>
           {next < result.pagination.total ? <Link className="btn btn-secondary" href={paginationHref(params, next)}>Successivi →</Link> : <span />}
         </nav>
       </section>

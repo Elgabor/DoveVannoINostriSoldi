@@ -6,7 +6,9 @@ La pagina `/coesione/asili`, le schede `/progetti/[cup]`, l'API `/api/pnrr/asili
 
 L'integrazione seleziona soltanto il codice ufficiale `M4C1I1.01.00`, “Piano per asili nido e scuole dell'infanzia e servizi di educazione e cura per la prima infanzia”. Non rappresenta l'intero PNRR.
 
-La release estratta il 13 giugno 2026 contiene:
+La release estratta il 13 giugno 2026 contiene. Il campo `referenceDate` è la data di estrazione dichiarata nei CSV; `observedAt` (`2026-08-21T12:15:00Z`) indica quando lo snapshot locale è stato verificato e generato. Non sono la data di pubblicazione di una nuova release upstream.
+
+La release contiene:
 
 - 3.841 progetti e 3.841 CUP unici;
 - 3.842 localizzazioni, con almeno una localizzazione per ogni CUP;

@@ -6,6 +6,24 @@ import {
 } from "@/lib/pnrr-childcare-snapshot";
 
 const ALLOWED_PARAMS = new Set(["cup", "q", "region", "province", "limit", "offset"]);
+export const MAX_PNRR_RESPONSE_BYTES = 750_000;
+
+function jsonResponse(value: unknown, init: ResponseInit = {}): NextResponse {
+  const body = JSON.stringify(value);
+  if (new TextEncoder().encode(body).byteLength > MAX_PNRR_RESPONSE_BYTES) {
+    return NextResponse.json(
+      { error: "La risposta richiesta supera il limite di dimensione.", code: "response_too_large" },
+      { status: 413 },
+    );
+  }
+  return new NextResponse(body, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      ...init.headers,
+    },
+  });
+}
 
 function singleValue(params: URLSearchParams, key: string): string | undefined {
   const values = params.getAll(key);
@@ -38,17 +56,17 @@ function parseQuery(params: URLSearchParams): PnrrChildcareQuery {
 export async function GET(request: NextRequest) {
   try {
     const result = queryPnrrChildcare(parseQuery(request.nextUrl.searchParams));
-    return NextResponse.json(result, {
+    return jsonResponse(result, {
       headers: { "Cache-Control": "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400" },
     });
   } catch (error) {
     if (error instanceof PnrrChildcareQueryError) {
-      return NextResponse.json(
+      return jsonResponse(
         { error: error.message, code: error.code },
         { status: error.code === "not_found" ? 404 : 400 },
       );
     }
     console.error("PNRR childcare API failed", error);
-    return NextResponse.json({ error: "Snapshot PNRR temporaneamente non disponibile." }, { status: 500 });
+    return jsonResponse({ error: "Snapshot PNRR temporaneamente non disponibile." }, { status: 500 });
   }
 }

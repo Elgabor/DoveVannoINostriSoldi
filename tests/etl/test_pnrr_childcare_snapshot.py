@@ -4,6 +4,7 @@ import importlib.util
 import json
 import tempfile
 import unittest
+from copy import deepcopy
 from unittest import mock
 from pathlib import Path
 
@@ -12,6 +13,11 @@ SPEC = importlib.util.spec_from_file_location("pnrr_childcare_snapshot", MODULE_
 assert SPEC and SPEC.loader
 etl = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(etl)
+HEADER_FIXTURE = json.loads(
+    (Path(__file__).parents[1] / "fixtures/pnrr-childcare/official-headers.json").read_text(
+        encoding="utf-8"
+    )
+)
 
 
 class PnrrChildcareSnapshotTests(unittest.TestCase):
@@ -76,22 +82,32 @@ class PnrrChildcareSnapshotTests(unittest.TestCase):
             "Denominazione Aggiudicatario": "Impresa prova",
             "Data di Estrazione": "13/06/2026",
         })
-        for key, headers, row in (
-            ("projects", etl.PROJECT_HEADERS, project),
-            ("locations", etl.LOCATION_HEADERS, location),
-            ("tenders", etl.TENDER_HEADERS, tender),
-            ("awardees", etl.AWARDEE_HEADERS, awardee),
+        for key, row in (
+            ("projects", project),
+            ("locations", location),
+            ("tenders", tender),
+            ("awardees", awardee),
         ):
             with self.paths[key].open("w", encoding="utf-8-sig", newline="") as stream:
-                writer = csv.DictWriter(stream, fieldnames=sorted(headers), delimiter=";")
+                writer = csv.DictWriter(
+                    stream,
+                    fieldnames=list(etl.OFFICIAL_CSV_HEADERS[key]),
+                    delimiter=";",
+                )
                 writer.writeheader()
                 writer.writerow(row)
 
         assets = {}
+        official_file_names = {
+            "projects": "PNRR_Progetti.csv",
+            "locations": "PNRR_Localizzazione.csv",
+            "tenders": "PNRR_Gare.csv",
+            "awardees": "PNRR_Aggiudicatari_Gare.csv",
+        }
         for key, path in self.paths.items():
             payload = path.read_bytes()
             assets[key] = {
-                "fileName": path.name,
+                "fileName": official_file_names[key],
                 "url": f"https://www.italiadomani.gov.it/{path.name}",
                 "bytes": len(payload),
                 "sha256": hashlib.sha256(payload).hexdigest(),
@@ -108,6 +124,13 @@ class PnrrChildcareSnapshotTests(unittest.TestCase):
                 "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
                 "attribution": "Italia Domani",
                 "assets": assets,
+            },
+            "csv": {
+                "encoding": "utf-8-sig",
+                "delimiter": ";",
+                "submeasureHeader": "Codice Univoco Submisura",
+                "extractionDateHeader": "Data di Estrazione",
+                "headers": HEADER_FIXTURE,
             },
             "expected": {
                 "referenceDate": "2026-06-13",
@@ -178,6 +201,88 @@ class PnrrChildcareSnapshotTests(unittest.TestCase):
                 etl.write_artifacts_atomically(data_path, meta_path, b"new-data", b"new-meta")
         self.assertEqual(data_path.read_bytes(), b"old-data")
         self.assertEqual(meta_path.read_bytes(), b"old-meta")
+
+    def test_numeric_parsers_accept_decimal_dot_and_reject_malformed_values(self):
+        self.assertEqual(etl.money_cents("1000.50", "amount"), 100_050)
+        self.assertEqual(etl.share_basis_points("100.00", "share"), 10_000)
+        with self.assertRaises(etl.StructuralError):
+            etl.money_cents("1,2,3", "amount")
+
+    def test_complete_official_headers_are_locked_as_a_strict_contract(self):
+        self.assertEqual(
+            {key: list(value) for key, value in etl.OFFICIAL_CSV_HEADERS.items()},
+            HEADER_FIXTURE,
+        )
+        self.assertEqual(self.spec["csv"]["headers"], HEADER_FIXTURE)
+        self.assertEqual(len(HEADER_FIXTURE["projects"]), 63)
+        self.assertEqual(len(HEADER_FIXTURE["locations"]), 14)
+        self.assertEqual(len(HEADER_FIXTURE["tenders"]), 19)
+        self.assertEqual(len(HEADER_FIXTURE["awardees"]), 15)
+
+    def test_source_spec_rejects_a_renamed_official_column(self):
+        drifted = deepcopy(self.spec)
+        drifted["csv"]["headers"]["projects"][-1] = "Stato Fase Iter Progetto"
+        with self.assertRaisesRegex(etl.StructuralError, "contratto CSV inatteso"):
+            etl.build_snapshot(drifted, self.paths, drifted["observedAt"])
+
+    def test_source_spec_rejects_an_unexpected_asset_filename(self):
+        drifted = deepcopy(self.spec)
+        drifted["source"]["assets"]["projects"]["fileName"] = "renamed.csv"
+        with self.assertRaisesRegex(etl.StructuralError, "fileName inatteso"):
+            etl.build_snapshot(drifted, self.paths, drifted["observedAt"])
+
+    def test_source_rejects_reordered_official_columns(self):
+        original = self.paths["projects"].read_bytes()
+        lines = original.splitlines(keepends=True)
+        header = lines[0].decode("utf-8-sig").rstrip("\r\n").split(";")
+        header[0], header[1] = header[1], header[0]
+        lines[0] = (";".join(header) + "\r\n").encode("utf-8-sig")
+        self.paths["projects"].write_bytes(b"".join(lines))
+        asset = self.spec["source"]["assets"]["projects"]
+        payload = self.paths["projects"].read_bytes()
+        asset["bytes"] = len(payload)
+        asset["sha256"] = hashlib.sha256(payload).hexdigest()
+        with self.assertRaisesRegex(etl.StructuralError, "ordine o nomi"):
+            etl.build_snapshot(self.spec, self.paths, self.spec["observedAt"])
+
+    def test_source_rejects_invalid_framework_cig(self):
+        original = self.paths["tenders"].read_bytes()
+        text = original.decode("utf-8-sig").replace("123456789A", "INVALID", 1)
+        self.paths["tenders"].write_text(text, encoding="utf-8-sig", newline="")
+        asset = self.spec["source"]["assets"]["tenders"]
+        payload = self.paths["tenders"].read_bytes()
+        asset["bytes"] = len(payload)
+        asset["sha256"] = hashlib.sha256(payload).hexdigest()
+        # The fixture has an empty framework-CIG column. Put the malformed
+        # value in that specific column without changing the header contract.
+        with self.paths["tenders"].open(encoding="utf-8-sig", newline="") as stream:
+            rows = list(csv.DictReader(stream, delimiter=";"))
+        rows[0]["CIG"] = "123456789A"
+        rows[0]["CIG Accordo Quadro"] = "INVALID"
+        with self.paths["tenders"].open("w", encoding="utf-8-sig", newline="") as stream:
+            writer = csv.DictWriter(stream, fieldnames=list(etl.OFFICIAL_CSV_HEADERS["tenders"]), delimiter=";")
+            writer.writeheader()
+            writer.writerows(rows)
+        payload = self.paths["tenders"].read_bytes()
+        asset["bytes"] = len(payload)
+        asset["sha256"] = hashlib.sha256(payload).hexdigest()
+        with self.assertRaisesRegex(etl.StructuralError, "CIG Accordo Quadro.*codice non valido"):
+            etl.build_snapshot(self.spec, self.paths, self.spec["observedAt"])
+
+    def test_source_lock_rejects_schema_additions_and_invalid_observation_time(self):
+        original = self.paths["projects"].read_bytes()
+        self.paths["projects"].write_bytes(original.replace(b"\r\n", b";Unexpected\r\n", 1))
+        asset = self.spec["source"]["assets"]["projects"]
+        payload = self.paths["projects"].read_bytes()
+        asset["bytes"] = len(payload)
+        asset["sha256"] = hashlib.sha256(payload).hexdigest()
+        with self.assertRaisesRegex(etl.StructuralError, "ordine o nomi"):
+            etl.build_snapshot(self.spec, self.paths, self.spec["observedAt"])
+
+        invalid = deepcopy(self.spec)
+        invalid["observedAt"] = "21/08/2026 12:00"
+        with self.assertRaisesRegex(etl.StructuralError, "timestamp UTC"):
+            etl.build_snapshot(invalid, self.paths, invalid["observedAt"])
 
 
 if __name__ == "__main__":

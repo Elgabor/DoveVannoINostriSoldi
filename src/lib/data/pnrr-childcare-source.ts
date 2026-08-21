@@ -34,7 +34,7 @@ export const PNRR_CHILDCARE_SOURCE = Object.freeze({
   health: {
     publishedAt: pnrrChildcareSourceMeta.referenceDate,
     recordCount: pnrrChildcareSourceMeta.coverage.uniqueProjects,
-    detail: `Snapshot verificato · ${pnrrChildcareSourceMeta.coverage.uniqueProjects.toLocaleString("it-IT")} CUP, ${pnrrChildcareSourceMeta.coverage.locationRows.toLocaleString("it-IT")} localizzazioni, ${pnrrChildcareSourceMeta.coverage.tenderRows.toLocaleString("it-IT")} gare`,
+    detail: `Dati estratti ${pnrrChildcareSourceMeta.referenceDate} · snapshot verificato ${pnrrChildcareSourceMeta.observedAt.slice(0, 10)} · ${pnrrChildcareSourceMeta.coverage.uniqueProjects.toLocaleString("it-IT")} CUP, ${pnrrChildcareSourceMeta.coverage.locationRows.toLocaleString("it-IT")} localizzazioni, ${pnrrChildcareSourceMeta.coverage.tenderRows.toLocaleString("it-IT")} gare`,
   },
   mcp: {
     title: "PNRR asili e prima infanzia",

@@ -15,6 +15,7 @@ va duplicato su un secondo runtime.
 - Tool `list_datasets`: catalogo completo con identificativo stabile, filtri, freschezza e caveat.
 - Tool `query_dataset`: query tipizzata; `limit` e `offset` sono accettati soltanto dagli adapter
   che li dichiarano nel catalogo, con limite massimo di 100 record per pagina.
+- Le risposte dei tool sono limitate a 750.000 byte UTF-8; una query che supera il budget restituisce `response_too_large` invece di produrre un payload non delimitato.
 - Resource `dvns://datasets`: copia JSON del catalogo.
 - Resource `dvns://related-mcp-services`: endpoint pubblici complementari, separati dagli adapter
   DVNS e mai inoltrati automaticamente.

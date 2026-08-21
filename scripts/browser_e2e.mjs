@@ -951,7 +951,7 @@ try {
     completed.push(label);
   }
 
-  for (const width of [390, 768, 1280]) {
+  for (const width of [320, 390, 768, 1280]) {
     const label = `PNRR asili catalogo ${width}px`;
     await runScenario(browser, {
       label,
@@ -969,7 +969,7 @@ try {
     completed.push(label);
   }
 
-  for (const width of [390, 768, 1280]) {
+  for (const width of [320, 390, 768, 1280]) {
     const label = `PNRR traccia CUP ${width}px`;
     await runScenario(browser, {
       label,

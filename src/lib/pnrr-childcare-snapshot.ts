@@ -1,6 +1,9 @@
+import "server-only";
+
 import rawData from "@/data/generated/pnrr-childcare.data.json";
 import rawMeta from "@/data/generated/pnrr-childcare.meta.json";
 import {
+  assertPnrrChildcareReconciliation,
   assertPnrrChildcareData,
   assertPnrrChildcareMeta,
   type PnrrChildcareProject,
@@ -15,6 +18,7 @@ if (pnrrChildcareData.referenceDate !== pnrrChildcareMeta.referenceDate) {
 if (pnrrChildcareData.projects.length !== pnrrChildcareMeta.coverage.uniqueProjects) {
   throw new Error("Snapshot PNRR asili: conteggio progetti non riconciliato");
 }
+assertPnrrChildcareReconciliation(pnrrChildcareData, pnrrChildcareMeta);
 
 const projectsByCup = new Map(pnrrChildcareData.projects.map((project) => [project.cup, project]));
 
@@ -45,9 +49,22 @@ function normalizedSearch(value: string): string {
 }
 
 function normalizedCup(value: string): string {
+  if (typeof value !== "string") throw new PnrrChildcareQueryError("CUP non valido: testo atteso.");
   const cup = value.trim().toUpperCase();
   if (!/^[A-Z0-9]{15}$/.test(cup)) throw new PnrrChildcareQueryError("CUP non valido: sono richiesti 15 caratteri alfanumerici.");
   return cup;
+}
+
+function boundedFilter(value: string | undefined, field: string): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string") throw new PnrrChildcareQueryError(`${field} deve essere testo.`);
+  const normalized = value.trim();
+  if (normalized.length > 200) throw new PnrrChildcareQueryError(`${field} supera il limite di 200 caratteri.`);
+  return normalized || undefined;
+}
+
+function matchesTerritory(name: string | null, code: string | null, query: string): boolean {
+  return [name, code].some((value) => value !== null && normalizedSearch(value) === query);
 }
 
 function boundedInteger(value: number | undefined, fallback: number, minimum: number, maximum: number, field: string): number {
@@ -64,7 +81,14 @@ function searchable(project: PnrrChildcareProject): string {
     project.title,
     project.summary,
     project.implementer.name,
-    ...project.locations.flatMap((location) => [location.region, location.province, location.municipality]),
+    ...project.locations.flatMap((location) => [
+      location.region,
+      location.regionCode,
+      location.province,
+      location.provinceCode,
+      location.municipality,
+      location.municipalityCode,
+    ]),
   ].filter(Boolean).join(" "));
 }
 
@@ -73,7 +97,9 @@ export function getPnrrChildcareProject(rawCup: string): PnrrChildcareProject | 
 }
 
 export function awardeesForTender(project: PnrrChildcareProject, tender: PnrrChildcareProject["tenders"][number]) {
+  const tenderKey = [tender.cig, tender.internalProcedureCode, tender.userProcedureCode];
   return project.awardees.filter((awardee) =>
+    tenderKey.some((value) => value !== null) &&
     awardee.cig === tender.cig &&
     awardee.internalProcedureCode === tender.internalProcedureCode &&
     awardee.userProcedureCode === tender.userProcedureCode);
@@ -92,13 +118,16 @@ export function queryPnrrChildcare(query: PnrrChildcareQuery = {}) {
     if (!project) throw new PnrrChildcareQueryError(`Nessun progetto trovato per il CUP ${cup}.`, "not_found");
     matches = [project];
   } else {
-    const term = query.query ? normalizedSearch(query.query) : null;
-    const region = query.region ? normalizedSearch(query.region) : null;
-    const province = query.province ? normalizedSearch(query.province) : null;
+    const term = boundedFilter(query.query, "q");
+    const region = boundedFilter(query.region, "region");
+    const province = boundedFilter(query.province, "province");
+    const normalizedTerm = term ? normalizedSearch(term) : null;
+    const normalizedRegion = region ? normalizedSearch(region) : null;
+    const normalizedProvince = province ? normalizedSearch(province) : null;
     matches = pnrrChildcareData.projects.filter((project) =>
-      (!term || searchable(project).includes(term)) &&
-      (!region || project.locations.some((location) => normalizedSearch(location.region) === region)) &&
-      (!province || project.locations.some((location) => location.province && normalizedSearch(location.province) === province)));
+      (!normalizedTerm || searchable(project).includes(normalizedTerm)) &&
+      (!normalizedRegion || project.locations.some((location) => matchesTerritory(location.region, location.regionCode, normalizedRegion))) &&
+      (!normalizedProvince || project.locations.some((location) => matchesTerritory(location.province, location.provinceCode, normalizedProvince))));
   }
   const page = matches.slice(offset, offset + limit);
   return {

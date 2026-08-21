@@ -13,13 +13,14 @@
   },
   "dataset": "pnrr_asili",
   "generatedAt": "2026-08-21T12:15:00Z",
+  "observedAt": "2026-08-21T12:15:00Z",
   "integrity": {
     "algorithm": "sha256",
     "dataArtifact": {
       "bytes": 18591740,
       "sha256": "5693cfe012b8de38c065852f0d040e54fda982ca98704e7faaf3a2566c3e0da2"
     },
-    "sourceLockSha256": "bf7b6f8e1159a576313d824ad1d2d8c9efe0ed047b6feff2fc1036b45d8bbbf1"
+    "sourceLockSha256": "d2aa2bbf3fa42f11c2bacb310e902c1d667244b87c4a59cd9601190d3a6dca90"
   },
   "methodology": {
     "fundingWarning": "Il finanziamento PNRR non è un pagamento osservato e l'importo di gara non è necessariamente spesa erogata.",

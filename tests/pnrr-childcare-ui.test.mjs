@@ -13,6 +13,7 @@ test("PNRR catalog is server-rendered, searchable, and semantically cautious", a
   assert.match(page, /non contiene i pagamenti ReGiS/i);
   assert.equal(page.match(/<h1\b/g)?.length, 1);
   assert.match(page, /aria-label="Pagine dei risultati"/);
+  assert.doesNotMatch(page, /heroMetric|kicker|01 ·|02 ·/);
 });
 
 test("project trace labels observed, linked, derived and missing evidence", async () => {
@@ -32,7 +33,19 @@ test("PNRR layouts collapse every major grid on narrow screens", async () => {
     source("../src/app/coesione/asili/pnrr-asili.module.css"),
     source("../src/app/progetti/[cup]/project.module.css"),
   ]);
-  assert.match(catalogCss, /@media\(max-width:650px\)[\s\S]*?\.grid\{grid-template-columns:1fr\}/);
-  assert.match(projectCss, /@media\(max-width:620px\)[\s\S]*?\.flowGrid\{grid-template-columns:1fr\}/);
-  assert.match(projectCss, /overflow-wrap:anywhere/);
+  assert.match(catalogCss, /@media \(max-width: 650px\)[\s\S]*?grid-template-columns: 1fr;/);
+  assert.match(projectCss, /@media \(max-width: 620px\)[\s\S]*?\.flowGrid \{[\s\S]*?grid-template-columns: 1fr;/);
+  assert.match(projectCss, /overflow-wrap:\s+anywhere/);
+});
+
+test("PNRR snapshot stays server-only and the new UI uses design tokens", async () => {
+  const [snapshot, catalogCss, projectCss] = await Promise.all([
+    source("../src/lib/pnrr-childcare-snapshot.ts"),
+    source("../src/app/coesione/asili/pnrr-asili.module.css"),
+    source("../src/app/progetti/[cup]/project.module.css"),
+  ]);
+  assert.match(snapshot, /^import "server-only";/m);
+  assert.doesNotMatch(`${catalogCss}\n${projectCss}`, /#[0-9a-f]{3,8}/i);
+  assert.doesNotMatch(`${catalogCss}\n${projectCss}`, /color-neutral-0/);
+  assert.match(projectCss, /border-radius: var\(--radius-sm\)/);
 });

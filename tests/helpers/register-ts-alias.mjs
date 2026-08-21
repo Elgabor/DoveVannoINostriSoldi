@@ -7,6 +7,9 @@ const sourceRoot = resolve(fileURLToPath(new URL("../../src/", import.meta.url))
 
 registerHooks({
   resolve(specifier, context, nextResolve) {
+    if (specifier === "server-only") {
+      return { url: "data:text/javascript,export default undefined", shortCircuit: true };
+    }
     if (!specifier.startsWith("@/")) return nextResolve(specifier, context);
     const base = resolve(sourceRoot, specifier.slice(2));
     const target = [base, `${base}.ts`, `${base}.tsx`, `${base}.json`, resolve(base, "index.ts")]

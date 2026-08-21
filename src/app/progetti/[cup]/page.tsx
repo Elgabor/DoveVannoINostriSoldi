@@ -102,11 +102,6 @@ export default async function ProjectPage({ params }: { params: RouteParams }) {
           <h1>{project.title}</h1>
           <p>{[primaryPlace?.municipality, primaryPlace?.province, primaryPlace?.region].filter(Boolean).join(" · ")}</p>
         </div>
-        <div className={styles.heroAmount}>
-          <span>Finanziamento PNRR registrato</span>
-          <strong>{project.funding.pnrrCents === null ? "n.d." : compactEuro(project.funding.pnrrCents / 100)}</strong>
-          <small>Non equivale a pagamenti erogati.</small>
-        </div>
       </header>
 
       <div className={styles.legend} aria-label="Legenda delle evidenze">
@@ -118,9 +113,9 @@ export default async function ProjectPage({ params }: { params: RouteParams }) {
       </div>
 
       <section className={styles.flow} aria-labelledby="flow-title">
-        <div className={styles.sectionHeading}><span>01 · flusso del denaro</span><h2 id="flow-title">Quattro livelli, senza scorciatoie</h2></div>
+        <div className={styles.sectionHeading}><h2 id="flow-title">Quattro livelli, senza scorciatoie</h2></div>
         <div className={styles.flowGrid}>
-          <div><span>Finanziamento PNRR</span><strong>{money(project.funding.pnrrCents)}</strong><Evidence kind="osservato" /></div>
+          <div><span>Finanziamento PNRR registrato</span><strong>{money(project.funding.pnrrCents)}</strong><Evidence kind="osservato" /></div>
           <div><span>Importi di gara</span><strong>{exactEuro(tenderTotal / 100)}</strong><Evidence kind="derivato" /></div>
           <div><span>Importi di aggiudicazione</span><strong>{exactEuro(awardTotal / 100)}</strong><Evidence kind="derivato" /></div>
           <div><span>Pagamenti ReGiS</span><strong>non disponibili</strong><Evidence kind="mancante" /></div>
@@ -130,7 +125,7 @@ export default async function ProjectPage({ params }: { params: RouteParams }) {
 
       <div className={styles.twoColumns}>
         <section className="panel">
-          <div className={styles.sectionHeading}><span>02 · chi e dove</span><h2>Soggetto attuatore</h2></div>
+          <div className={styles.sectionHeading}><h2>Soggetto attuatore</h2></div>
           <dl className={styles.definitionGrid}>
             <div><dt>Amministrazione</dt><dd>{project.implementer.name ?? "non disponibile"}</dd></div>
             <div><dt>Codice fiscale</dt><dd>{project.implementer.taxCode ?? "non disponibile"}</dd></div>
@@ -150,7 +145,7 @@ export default async function ProjectPage({ params }: { params: RouteParams }) {
         </section>
 
         <section className="panel">
-          <div className={styles.sectionHeading}><span>03 · stato</span><h2>Tempi e validazione</h2></div>
+          <div className={styles.sectionHeading}><h2>Tempi e validazione</h2></div>
           <dl className={styles.timeline}>
             {timelineRows(project).map(([label, value, evidence]) => (
               <div key={label}><dt>{label}</dt><dd>{shortDate(value)}</dd><Evidence kind={evidence} /></div>
@@ -168,7 +163,7 @@ export default async function ProjectPage({ params }: { params: RouteParams }) {
       </div>
 
       <section className={styles.procurement} aria-labelledby="procurement-title">
-        <div className={styles.sectionHeading}><span>04 · contratti</span><h2 id="procurement-title">{integer(project.tenders.length)} gare, {integer(project.awardees.length)} aggiudicatari</h2></div>
+        <div className={styles.sectionHeading}><h2 id="procurement-title">{integer(project.tenders.length)} gare, {integer(project.awardees.length)} aggiudicatari</h2></div>
         {project.tenders.length === 0 ? <div className="notice"><strong>Nessuna gara collegata nello snapshot</strong><p>Questo non dimostra che non esista una procedura: indica soltanto che il CSV Italia Domani non la collega a questo CUP.</p></div> : null}
         <div className={styles.tenderList}>
           {project.tenders.map((tender, index) => {
@@ -201,14 +196,14 @@ export default async function ProjectPage({ params }: { params: RouteParams }) {
 
       <div className={styles.twoColumns}>
         <section className="panel">
-          <div className={styles.sectionHeading}><span>05 · controllo incrociato</span><h2>OpenBDAP MOP</h2></div>
+          <div className={styles.sectionHeading}><h2>OpenBDAP MOP</h2></div>
           <Suspense fallback={<p>Controllo CUP in corso su OpenBDAP…</p>}>
             <MopEvidence cup={project.cup} />
           </Suspense>
           <a className="btn btn-secondary" href={`/api/opere?cup=${project.cup}`}>Apri il dato OpenBDAP</a>
         </section>
         <section className="panel">
-          <div className={styles.sectionHeading}><span>06 · passaporto</span><h2>Fonte e limiti</h2></div>
+          <div className={styles.sectionHeading}><h2>Fonte e limiti</h2></div>
           <dl className={styles.definitionGrid}>
             <div><dt>Fonte primaria</dt><dd>{pnrrChildcareMeta.source.owner}</dd></div>
             <div><dt>Data di estrazione</dt><dd>{longDate(`${pnrrChildcareMeta.referenceDate}T00:00:00Z`)}</dd></div>

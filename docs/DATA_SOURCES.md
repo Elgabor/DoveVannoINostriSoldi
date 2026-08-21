@@ -10,6 +10,8 @@ Questa è la mappa iniziale delle fonti. Il criterio è semplice: prima fonti is
 **Join:** ente, periodo, codifica gestionale/contabile.  
 **Nota:** SIOPE contiene dati per oltre 10.000 enti. SIOPE+ è l'infrastruttura degli ordinativi di pagamento e incasso; non va confusa la frequenza del flusso operativo con la frequenza del dato pubblico esposto dalla dashboard.
 
+Nelle graduatorie comunali, la Provincia viene dall'associazione tra `ANAG_ENTI_SIOPE` e `ANAG_REG_PROV` del registro ufficiale SIOPE. La Regione è quella della sede legale ottenuta tramite codice fiscale da IPA: non indica necessariamente il luogo fisico in cui ogni pagamento produce effetti.
+
 ### OpenBDAP
 **Titolare:** Ragioneria Generale dello Stato.  
 **Uso:** bilancio dello Stato, spesa, SIOPE, opere pubbliche, PNRR e altri domini.  

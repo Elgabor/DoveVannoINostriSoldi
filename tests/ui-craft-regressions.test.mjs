@@ -103,3 +103,14 @@ test("the fiscal layout uses only defined spacing tokens", async () => {
   assert.doesNotMatch(css, /var\(--space-5\)/);
   assert.match(css, /margin-bottom: var\(--space-6\)/);
 });
+
+test("municipality rankings expose province and region as visible context", async () => {
+  const [page, contract] = await Promise.all([
+    source("../src/app/territori/page.tsx"),
+    source("../src/lib/siope-snapshot.ts"),
+  ]);
+
+  assert.match(contract, /province: string;/);
+  assert.match(page, /data-municipality-ranking="per-capita"/);
+  assert.match(page, /\{municipality\.province\} · \{municipality\.region\}/);
+});

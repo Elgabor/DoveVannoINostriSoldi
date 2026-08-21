@@ -478,6 +478,33 @@ try {
   completed.push("Recovery offset");
 
   for (const width of [390, 1280]) {
+    const label = `Geografia Comuni ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/territori?anno=2025",
+      width,
+      validate: async (page) => {
+        const text = await bodyText(page);
+        assertTextMatches(text, /I 20 Comuni con più pagamenti per abitante/i, label);
+        const firstMunicipality = await page.$eval(
+          '[data-municipality-ranking="per-capita"] tbody tr:first-child th',
+          (heading) => ({
+            name: [...heading.childNodes]
+              .find((node) => node.nodeType === Node.TEXT_NODE)
+              ?.textContent?.trim(),
+            context: [...heading.querySelectorAll("small")].map((item) => item.textContent?.trim()),
+          }),
+        );
+        assert.match(firstMunicipality.name ?? "", /\S/);
+        assert.match(firstMunicipality.context[0] ?? "", /^\S.* · \S.*$/);
+        assert.match(firstMunicipality.context[1] ?? "", /abitanti$/);
+        await assertResponsiveShell(page, label, width);
+      },
+    });
+    completed.push(label);
+  }
+
+  for (const width of [390, 1280]) {
     const label = `Parlamento previdenza ${width}px`;
     await runScenario(browser, {
       label,

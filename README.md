@@ -128,7 +128,7 @@ La home e le pagine Soldi e Territori permettono di scegliere il 2024, 2025 o 20
 
 I dati SIOPE, OpenBDAP e la serie annuale OpenCoesione cambiano con l'anno scelto. Per OpenBDAP una query annuale senza mese preferisce il consuntivo ufficiale `PBS_SPE_RND_*`; una query con mese e lo storico usano esclusivamente i rilasci mensili `PBS_SPE_Mxx_*`. Se un indicatore non esiste per quel periodo, viene mostrato come non disponibile. Non riutilizziamo un dato di un altro anno o di un'altra serie contabile.
 
-Le classifiche territoriali usano il valore per abitante come default e conservano il totale come confronto. Le due graduatorie comunali sono calcolate separatamente sull'intero insieme osservato, non riordinando una lista già tagliata per volume.
+Le classifiche territoriali usano il valore per abitante come default e conservano il totale come confronto. Le due graduatorie comunali sono calcolate separatamente sull'intero insieme osservato, non riordinando una lista già tagliata per volume. Provincia e Regione mostrate accanto al Comune provengono rispettivamente dall'anagrafica SIOPE e dalla sede legale pubblicata in IPA.
 
 ## Regole del progetto
 

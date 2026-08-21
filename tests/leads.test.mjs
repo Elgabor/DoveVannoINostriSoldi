@@ -52,6 +52,14 @@ test("parseLead rejects a missing consent and a short message", () => {
 
   const short = parseLead({ ...validLead, message: "Ciao" }, startedAt + 10_000);
   assert.equal(short.status, "invalid");
+  if (short.status === "invalid") {
+    assert.match(short.error, /30 caratteri/);
+  }
+
+  const almost = parseLead({ ...validLead, message: "a".repeat(29) }, startedAt + 10_000);
+  assert.equal(almost.status, "invalid");
+  const enough = parseLead({ ...validLead, message: "a".repeat(30) }, startedAt + 10_000);
+  assert.equal(enough.status, "valid");
 });
 
 test("parseLead discards honeypot and too-fast submissions", () => {

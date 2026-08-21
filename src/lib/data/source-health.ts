@@ -20,6 +20,7 @@ import { inpsCivilInvaliditySnapshot } from "@/lib/inps-invalidity-snapshot";
 import { cptRegionalFiscalSnapshot } from "@/lib/cpt-regional-fiscal-snapshot";
 import { MEF_IRPEF_SOURCE } from "@/lib/data/mef-irpef-source";
 import { PNRR_CHILDCARE_SOURCE } from "@/lib/data/pnrr-childcare-source";
+import { getSsnCceSourceHealth, type SsnCceSourceHealth } from "@/lib/ssn-cce-snapshot";
 
 export type SourceIntegrationState = "active";
 export type SourceReachability = "up" | "down" | "not-probed";
@@ -35,6 +36,11 @@ export type SourceHealth = {
   latencyMs: number | null;
   detail: string | null;
   recordCount: number | null;
+  /**
+   * Version-pinned artifact checks attached to a source adapter. These are
+   * descriptive runtime results; they never trigger a source refresh.
+   */
+  snapshot?: SsnCceSourceHealth;
   policy: Pick<
     SourcePolicy,
     | "cadence"
@@ -245,6 +251,7 @@ async function probeIpaStructure(): Promise<SourceHealth> {
 async function probeOpenBdap(): Promise<SourceHealth> {
   const base = baseHealth("openbdap");
   const startedAt = performance.now();
+  const ssnCce = getSsnCceSourceHealth();
 
   try {
     const [latest, mop] = await Promise.all([
@@ -262,8 +269,9 @@ async function probeOpenBdap(): Promise<SourceHealth> {
       reachability: "up",
       freshness: freshnessFor("openbdap", timestamps.at(0)?.value ?? null),
       latencyMs: Math.round(performance.now() - startedAt),
-      detail: `Pagamenti: ${latest.title} · MOP aggiornato al ${mop.metadata.referenceDate} · ${mop.schema.cupCardinality.toLocaleString("it-IT")} CUP distinti`,
+      detail: `Pagamenti: ${latest.title} · MOP aggiornato al ${mop.metadata.referenceDate} · ${mop.schema.cupCardinality.toLocaleString("it-IT")} CUP distinti · SSN 2024: artifact e 3 input verificati`,
       recordCount: mop.schema.localProjectCardinality,
+      snapshot: ssnCce,
     };
   } catch (error) {
     return {
@@ -271,8 +279,9 @@ async function probeOpenBdap(): Promise<SourceHealth> {
       reachability: "down",
       freshness: freshnessFor("openbdap", null),
       latencyMs: Math.round(performance.now() - startedAt),
-      detail: error instanceof Error ? error.message : "Errore sconosciuto",
+      detail: `${error instanceof Error ? error.message : "Errore sconosciuto"} · SSN 2024: artifact e 3 input verificati`,
       recordCount: null,
+      snapshot: ssnCce,
     };
   }
 }

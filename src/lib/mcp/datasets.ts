@@ -104,6 +104,16 @@ export async function queryPublicDataset(
       const { getPublicWorksByCup } = await import("@/lib/bdap-public-works");
       return jsonSafe(await getPublicWorksByCup(cup));
     }
+    case "openbdap_ssn_conto_economico": {
+      const { querySsnCce } = await import("@/lib/ssn-cce-snapshot");
+      return jsonSafe(querySsnCce({
+        year: query.year,
+        region: query.region,
+        code: query.code,
+        limit: query.limit,
+        offset: query.offset,
+      }));
+    }
     case "opencivitas_fabbisogni": {
       const { openCivitasSnapshot } = await import("@/lib/opencivitas-snapshot");
       if (query.year && query.year !== openCivitasSnapshot.referenceYear) {

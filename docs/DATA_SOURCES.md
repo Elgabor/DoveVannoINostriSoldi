@@ -34,6 +34,46 @@ Per ogni opera manteniamo distinti:
 
 Gli avvisi su tempi, costi o copertura finanziaria hanno uso di screening. Indicano cosa verificare e includono spiegazioni alternative plausibili. Non classificano automaticamente un'opera come spreco, irregolarità o illecito.
 
+### Conto Economico degli enti del SSN 2024
+
+**Dataset:** `spd_ssn_cce_elb_voccn_01_2024`, Modello di rilevazione del Conto Economico degli enti del SSN.
+**Titolare:** Ragioneria Generale dello Stato · Data Warehouse RGS.
+**Periodo:** consuntivo 2024; i dati sono osservati al 10 febbraio 2026. Il catalogo package è stato creato/modificato l'11 febbraio 2026; le tre pagine di landing risultano aggiornate il 16 febbraio 2026.
+**Licenza catalogata:** Creative Commons Attribution (`cc-by`); la pagina metadati collega alla [CC BY 3.0 Unported](https://creativecommons.org/licenses/by/3.0/). Non viene attribuita una versione diversa da quella indicata dalla fonte.
+**Formato:** CSV UTF-8, separatore `;`, virgolette doppie, terminatori CRLF; 76.124 righe dati e 11 colonne. La risorsa CSV e l'identificativo OData sono registrati nel source lock `scripts/etl/specs/ssn-cce-2024.source.json` insieme a dimensione e SHA-256.
+
+**Landing ufficiali:** [enti](https://bdap-opendata.rgs.mef.gov.it/content/2024-modello-di-rilevazione-del-conto-economico-degli-enti-del-ssn), [nazionale](https://bdap-opendata.rgs.mef.gov.it/content/2024-modello-di-rilevazione-del-conto-economico-degli-enti-del-ssn-livello-nazionale), [regionale](https://bdap-opendata.rgs.mef.gov.it/content/2024-modello-di-rilevazione-del-conto-economico-degli-enti-del-ssn-livello-regionale). Il [package_show OpenBDAP](https://bdap-opendata.rgs.mef.gov.it/SpodCkanApi/api/3/action/package_show?id=94083af2-a542-482d-8ad6-5877d04cd1ca) fornisce licenza e metadati del pacchetto. La risorsa collegata per le definizioni del modello è il [report ufficiale PDF](https://bdap-opendata.rgs.mef.gov.it/sites/default/files/metadata_updfile/report/5424_Modello%20di%20rilevazione%20del%20Conto%20Economico.pdf); CSV e OData restano le risorse machine-readable usate dall'ETL.
+
+Il dato è un **Conto Economico consuntivo** e quindi una contabilità economica: non è una serie di pagamenti di cassa SIOPE. La pagina e l'API mantengono le voci contabili pubblicate dalla fonte:
+
+- `BA2080` · `Totale Costo del personale`;
+- `BA1350` · `B.2.A.15) Consulenze, Collaborazioni, Interinale e altre prestazioni di lavoro sanitarie e sociosanitarie`;
+- `BA1750` · `B.2.B.2) Consulenze, Collaborazioni, Interinale e altre prestazioni di lavoro non sanitarie`;
+- `BA0390` · `B.2) Acquisti di servizi`;
+- `BZ9999` · `Totale costi della produzione (B)`.
+
+La fonte non pubblica una categoria chiamata “gettonisti” o “cooperative”: non usiamo queste parole come sinonimi e non deduciamo il tipo di contratto dal nome della voce. Il totale nazionale proviene esclusivamente da `SSN_CCE_NAZ_VOCCN_001`; gli aggregati regionali esclusivamente da `SSN_CCE_REG_VOCCN_001`. Il CSV enti (`SSN_CCE_ELB_VOCCN_001`) alimenta soltanto il dettaglio: le 21 righe `Codice Ente SSN = 999` sono escluse dall'elenco e usate per controllare gli aggregati regionali, evitando il doppio conteggio. I codici 041 e 042 sono mantenuti separati perché la fonte distingue le due Province autonome. Non sono classifiche di efficienza, qualità sanitaria, fabbisogno o frode.
+
+La rigenerazione offline è fail-closed:
+
+```bash
+python3 scripts/etl/ssn_cce_snapshot.py \
+  --input /percorso/94083af2-a542-482d-8ad6-5877d04cd1ca.csv \
+  --national-input /percorso/SSN_CCE_NAZ_VOCCN_001.json \
+  --regional-input /percorso/SSN_CCE_REG_VOCCN_001.json \
+  --output src/data/generated/ssn-cce-2024.json \
+  --generated-at 2026-08-22T00:00:00Z
+python3 scripts/etl/ssn_cce_snapshot.py --check
+```
+
+Il refresh interrompe l'operazione se cambiano URL, hash, dimensione, colonne, tipo di rilevazione, codici delle voci, righe duplicate o riconciliazioni nazionale/Regione/ente.
+
+Il monitor delle fonti non scarica questi input durante una richiesta del sito: l'health endpoint
+riporta per ciascuno dei tre dataset lo stato dell'ultimo source lock verificato, dimensione, SHA-256,
+righe attese e landing ufficiale. L'artifact JSON viene inoltre vincolato a bytes e SHA-256 in fase
+di import. Se il lock, lo schema, l'hash o l'artifact non coincidono, l'import e la pubblicazione
+falliscono chiusi; nessun refresh silenzioso sostituisce lo snapshot.
+
 ### BDNCP / ANAC
 **Titolare:** ANAC.  
 **Uso:** contratti pubblici, CIG, stazioni appaltanti, aggiudicazioni e ciclo di vita.  

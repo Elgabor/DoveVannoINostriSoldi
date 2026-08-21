@@ -38,7 +38,7 @@
 - [ ] indice compatto ANAC CIG↔CUP con link di provenienza, senza replicare la BDNCP
 - [ ] arricchimento OpenCUP mensile indicizzato offline per CUP
 - [x] primo verticale PNRR Italia Domani per asili e prima infanzia: CUP, soggetto attuatore, localizzazioni, finanziamenti, gare e aggiudicatari, senza chiamare i finanziamenti “spesa realizzata”
-- [ ] conto economico SSN 2024: personale sanitario e prestazioni esterne come voci contabili distinte, senza stimare gettonisti o cooperative
+- [x] conto economico SSN 2024: personale e prestazioni di lavoro come voci contabili distinte, senza stimare gettonisti o cooperative
 - [ ] spesa statale regionalizzata RGS e bilanci regionali Istat in dataset separati, con fasi contabili esplicite
 - [ ] eventuale contesto Istat sulla soddisfazione soltanto alla geografia pubblicata; nessuna imputazione ai singoli Comuni
 

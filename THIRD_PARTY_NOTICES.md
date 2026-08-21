@@ -74,6 +74,16 @@ Attribution: `Autorità Nazionale Anticorruzione, CIG 2025, CC BY-SA 4.0. Aggreg
 
 Attribution: `INPS institutional documents. Selected aggregate figures normalized by DoveVannoINostriSoldi; document-specific reuse terms apply.`
 
+## OpenBDAP SSN Conto Economico 2024
+
+- **Work:** `spd_ssn_cce_elb_voccn_01_2024`, `2024 - Modello di rilevazione del Conto Economico degli enti del SSN`;
+- **Publisher:** Ragioneria Generale dello Stato, Data Warehouse RGS;
+- **Source:** [entity landing](https://bdap-opendata.rgs.mef.gov.it/content/2024-modello-di-rilevazione-del-conto-economico-degli-enti-del-ssn), [national landing](https://bdap-opendata.rgs.mef.gov.it/content/2024-modello-di-rilevazione-del-conto-economico-degli-enti-del-ssn-livello-nazionale), [regional landing](https://bdap-opendata.rgs.mef.gov.it/content/2024-modello-di-rilevazione-del-conto-economico-degli-enti-del-ssn-livello-regionale), and [package metadata](https://bdap-opendata.rgs.mef.gov.it/SpodCkanApi/api/3/action/package_show?id=94083af2-a542-482d-8ad6-5877d04cd1ca);
+- **License:** Creative Commons Attribution, catalog license identifier `cc-by`; the official metadata page links to [CC BY 3.0 Unported](https://creativecommons.org/licenses/by/3.0/);
+- **Changes:** the three official inputs are validated against the source lock, amounts are converted from decimal euros to integer cents, and the national and regional aggregates remain separate from the 232-entity detail. The 21 entity rows with `codeSsn=999` are used only for anti-double-count reconciliation. The source nomenclature is preserved; “gettonisti” and “cooperative” are not inferred categories.
+
+Attribution: `Ragioneria Generale dello Stato, Data Warehouse RGS. Conto Economico degli enti del SSN 2024, catalog license cc-by. Adapted by DoveVannoINostriSoldi.`
+
 ## Conti Pubblici Territoriali regional accounts
 
 - **Works:** `EN_PA_CEMACRO` and `SP_PA_CEMACRO`, consolidated Public Administration revenue and expenditure series for 2000-2023;

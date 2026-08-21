@@ -13,6 +13,7 @@ L'AI serve a confrontare dati omogenei, trovare scostamenti e ordinare i casi da
 | Home | Pagamenti dei Comuni, mappa regionale, andamento mensile e dati OpenCoesione | SIOPE, IPA, OpenCoesione |
 | Soldi | Pagamenti effettuati dai Comuni: voci di uscita e flusso mese per mese, distinti dalle tasse dei residenti | SIOPE |
 | Invalidità civile | Spesa nazionale, prestazioni vigenti e nuove pensioni per regione | INPS |
+| Sanità | Conto Economico consuntivo 2024 degli enti SSN: personale, servizi e voci di prestazioni di lavoro | OpenBDAP |
 | Territori | Pagamenti comunali, conti territoriali e redditi/IRPEF dichiarati, con perimetri separati | SIOPE, IPA, CPT, MEF |
 | Fondi e progetti | Costo previsto e pagamenti OpenCoesione; traccia PNRR per asili con CUP, gare e aggiudicatari | OpenCoesione, Italia Domani |
 | Enti e società | Ministeri, enti pubblici, uffici, contatti e società partecipate | IPA, AgID, MEF |
@@ -37,6 +38,7 @@ Il backend espone inoltre:
 - `GET /api/controlli`, con indicatori classificati, scenari separati e regole per il loro uso.
 - `GET /api/controlli/spesa-comuni?anno=2022`, con screening derivato OpenCivitas paginato per la differenza di spesa per abitante; formula e limiti sono in [docs/CONTROLLI_SPESE_COMUNI.md](docs/CONTROLLI_SPESE_COMUNI.md).
 - `GET /api/spese/invalidita?anno=2024&regione=Calabria`, con spesa nazionale e nuove pensioni di invalidità civile per la granularità pubblica verificata.
+- `GET /api/spese/sanita?anno=2024&regione=Calabria`, con aggregati del Conto Economico consuntivo OpenBDAP SSN e dettaglio paginato per ente; le voci contabili restano distinte dai pagamenti SIOPE.
 - `GET /api/spese/comuni/distribuzione?anno=2026`, con quote e quantili compatti soltanto dopo un refresh raw SIOPE completo verificato; non restituisce righe comunali.
 - `GET /api/territori/fisco?anno=2023&regione=Calabria`, con entrate, spese e saldo contabile CPT nello stesso perimetro PA consolidato.
 - `GET /api/territori/irpef?anno=2024&livello=regione`, con contribuenti, redditi, imposta netta dichiarata e addizionali MEF; Province e Comuni sono filtrati e paginati.
@@ -135,6 +137,14 @@ Non confrontiamo come prezzi unitari gli importi totali di contratti con lo stes
 La replica sui microdati CIG 2025, con formula, filtri e limiti, è documentata in [docs/research/ANAC_2025_REPLICATION.md](docs/research/ANAC_2025_REPLICATION.md). Quando il risultato ricalcolato non coincide con l'aggregato della relazione ANAC, mostriamo la differenza invece di correggere il dato a mano.
 
 Per l'invalidità civile, fonti, riconciliazioni e limiti territoriali sono documentati in [docs/INPS_INVALIDITA.md](docs/INPS_INVALIDITA.md). La voce ufficiale più recente è 23,616 miliardi di euro nel 2025 per l'insieme delle prestazioni di invalidità civile, non per le sole pensioni.
+
+Per la sanità, `openbdap_ssn_conto_economico` espone il consuntivo 2024 del Conto Economico
+degli enti SSN. Il nazionale e le Regioni sono letti dai rispettivi dataset ufficiali; il dettaglio
+espone 232 enti e non le 21 righe aggregate `codeSsn=999`, usate solo per una verifica
+anti-doppio-conteggio. `BA2080` è `Totale Costo del personale`; `BA1350` e `BA1750` mantengono
+le descrizioni ufficiali di consulenze, collaborazioni, interinale e altre prestazioni di lavoro,
+rispettivamente sanitarie/sociosanitarie e non sanitarie. Non sono sinonimi di “gettonisti” o
+“cooperative”, non misurano organico o qualità e non sono pagamenti di cassa.
 
 ## Scegliere l'anno
 

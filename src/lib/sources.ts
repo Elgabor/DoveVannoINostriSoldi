@@ -32,10 +32,10 @@ export const publicSources: PublicSource[] = [
     owner: "Ragioneria Generale dello Stato",
     area: "Bilancio, spesa, SIOPE, opere, PNRR",
     cadence: "Variabile per dataset; pagamenti Stato mensili e consuntivi annuali",
-    coverage: "Pagamenti dello Stato e ricerca opere pubbliche per CUP",
+    coverage: "Pagamenti dello Stato, opere pubbliche per CUP e Conto Economico SSN 2024",
     format: "CKAN API · OData · CSV · open data",
     url: "https://bdap-opendata.rgs.mef.gov.it/content/api",
-    note: "Connettore attivo: pagamenti dello Stato e dataset nazionale MOP con stato, date, costi e finanziamenti delle opere ricercabili per CUP.",
+    note: "Connettore attivo: pagamenti dello Stato, dataset MOP e snapshot del Conto Economico consuntivo 2024 degli enti SSN con voci contabili, costi del personale e servizi.",
     joinKeys: ["CUP", "codice fiscale titolare", "codice ente RGS"],
   },
   {

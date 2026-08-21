@@ -50,6 +50,22 @@ jobs:
 
           const active = payload.sources.filter((source) => source.integration === 'active');
           const down = active.filter((source) => source.reachability === 'down');
+          const openbdap = payload.sources.find((source) => source.sourceId === 'openbdap');
+          const ssn = openbdap?.snapshot;
+          if (!ssn || ssn.status !== 'verified' || ssn.runtimeFetch !== false || ssn.check !== 'offline-source-lock-and-snapshot-contract') {
+            throw new Error('SSN Conto Economico snapshot health is not verified');
+          }
+          const datasets = ssn.datasets ?? {};
+          const expectedRows = { entities: 76124, national: 5, regional: 105 };
+          for (const [name, expected] of Object.entries(expectedRows)) {
+            const dataset = datasets[name];
+            if (!dataset || dataset.status !== 'verified' || dataset.expectedRows !== expected || !/^[a-f0-9]{64}$/.test(dataset.sourceSha256)) {
+              throw new Error(`SSN source lock check failed for ${name}`);
+            }
+          }
+          if (!ssn.artifact || ssn.artifact.bytes !== 126487 || !/^[a-f0-9]{64}$/.test(ssn.artifact.sha256) || !/^[a-f0-9]{64}$/.test(ssn.artifact.lockSha256)) {
+            throw new Error('SSN snapshot artifact integrity check failed');
+          }
 
           console.log(JSON.stringify({
             observedAt: payload.observedAt,
@@ -59,6 +75,15 @@ jobs:
               latencyMs: source.latencyMs,
               detail: source.detail,
             })),
+            ssnSnapshot: {
+              status: ssn.status,
+              artifact: ssn.artifact,
+              datasets: Object.fromEntries(Object.entries(datasets).map(([name, dataset]) => [name, {
+                datasetId: dataset.datasetId,
+                expectedRows: dataset.expectedRows,
+                sourceSha256: dataset.sourceSha256,
+              }])),
+            },
           }, null, 2));
 
           if (down.length > 0) {

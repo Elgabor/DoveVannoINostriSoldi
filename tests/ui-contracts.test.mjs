@@ -23,6 +23,14 @@ const spendingCss = await readFile(
   new URL("../src/app/spese/spese.module.css", import.meta.url),
   "utf8",
 );
+const healthPage = await readFile(
+  new URL("../src/app/spese/sanita/page.tsx", import.meta.url),
+  "utf8",
+);
+const healthCss = await readFile(
+  new URL("../src/app/spese/sanita/sanita.module.css", import.meta.url),
+  "utf8",
+);
 const controlsPage = await readFile(
   new URL("../src/app/controlli/page.tsx", import.meta.url),
   "utf8",
@@ -74,12 +82,35 @@ test("scope guidance is consolidated without losing its source boundaries", () =
   assert.match(spendingPage, /href="\/spese\/invalidita"/);
   assert.match(spendingPage, /href="\/stato"/);
   assert.match(spendingPage, /href="\/parlamento"/);
+  assert.match(spendingPage, /href="\/spese\/sanita"/);
   assert.match(controlsPage, /href="\/fonti"/);
   assert.match(controlsPage, /href="\/metodologia"/);
   assert.match(controlsPage, /href="\/mcp"/);
   assert.match(controlsPage, /dati\.anticorruzione\.it\/opendata\/dataset/);
   assert.match(controlsPage, /non dimostra una colpa/);
   assert.match(controlsPage, /non sostituisce Guardia di finanza, ANAC, Corte dei conti/);
+});
+
+test("the SSN view labels accounting scope and remains responsive", () => {
+  assert.match(healthPage, /competenza economica, non pagamenti di cassa/);
+  assert.match(healthPage, /non pubblica una voce chiamata “gettonisti” o “cooperative”/);
+  assert.match(healthPage, /Non è una graduatoria/);
+  assert.match(healthPage, /codici 041[\s\S]*042/);
+  assert.match(healthPage, /datasets\.entities\.sourceSha256/);
+  assert.match(healthPage, /Aggregato nazionale ufficiale/);
+  assert.match(healthPage, /integer\(data\.detailCoverage\.entityCount\)/);
+  assert.match(healthPage, /Enti di dettaglio esposti/i);
+  assert.match(
+    healthPage,
+    /aria-label="Non applicabile: il totale nazionale non è un conteggio di enti"/,
+  );
+  assert.doesNotMatch(
+    healthPage,
+    /<span className=\{styles\.visuallyHidden\}>\s*Non applicabile:/,
+  );
+  assert.match(healthCss, /grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(healthCss, /@media \(max-width: 620px\)[\s\S]*?grid-template-columns: 1fr/);
+  assert.doesNotMatch(healthCss, /border-radius\s*:/);
 });
 
 test("the spending analysis explains the share without turning it into a merit ranking", () => {

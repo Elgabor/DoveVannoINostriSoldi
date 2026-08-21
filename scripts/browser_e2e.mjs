@@ -673,6 +673,46 @@ try {
     completed.push(label);
   }
 
+  for (const width of [320, 390, 768, 1024, 1280]) {
+    const label = `Consulenza ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/consulenza",
+      width,
+      validate: async (page) => {
+        assertTextMatches(
+          await bodyText(page),
+          /Intelligenza artificiale per aziende e PA/i,
+          label,
+        );
+        const form = await page.$eval("main form", (element) => ({
+          hasPrivacyLink: Boolean(element.querySelector('a[href="/privacy"]')),
+          invalidBeforeSubmit: !element.checkValidity(),
+          requiredFields: element.querySelectorAll("[required]").length,
+        }));
+        assert.equal(form.hasPrivacyLink, true, `${label}: informativa privacy non collegata`);
+        assert.equal(form.invalidBeforeSubmit, true, `${label}: form vuoto considerato valido`);
+        assert.ok(form.requiredFields >= 7, `${label}: campi obbligatori inattesi`);
+      },
+    });
+    completed.push(label);
+  }
+
+  for (const width of [390, 1280]) {
+    const label = `Privacy consulenza ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/privacy",
+      width,
+      validate: async (page) => {
+        const text = await bodyText(page);
+        assertTextMatches(text, /Resend/i, label);
+        assertTextMatches(text, /Stati Uniti/i, label);
+      },
+    });
+    completed.push(label);
+  }
+
   for (const width of [320, 390, 768, 901, 1024, 1280]) {
     const label = `Tooltip home ${width}px`;
     await runScenario(browser, {

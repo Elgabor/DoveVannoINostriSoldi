@@ -1,8 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
-import { CONSULTING_TOPICS, ORGANIZATION_TYPES, PROJECT_BUDGETS } from "@/lib/leads";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  CONSULTING_TOPICS,
+  ORGANIZATION_TYPES,
+  PROJECT_BUDGETS,
+} from "@/lib/consulting-contract";
 import styles from "./consulenza.module.css";
 
 type FormStatus = "idle" | "sending" | "success" | "error";
@@ -12,14 +16,21 @@ const TYPE_KEYS = Object.keys(ORGANIZATION_TYPES) as Array<keyof typeof ORGANIZA
 const BUDGET_KEYS = Object.keys(PROJECT_BUDGETS) as Array<keyof typeof PROJECT_BUDGETS>;
 
 export function LeadForm() {
-  const [startedAt] = useState(() => Date.now());
   const [status, setStatus] = useState<FormStatus>("idle");
   const [error, setError] = useState<string | null>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  const successRef = useRef<HTMLDivElement>(null);
+  const submissionRef = useRef<{ fingerprint: string; id: string } | null>(null);
   const sending = status === "sending";
+
+  useEffect(() => {
+    if (status === "success") successRef.current?.focus();
+    else if (error) errorRef.current?.focus();
+  }, [error, status]);
 
   if (status === "success") {
     return (
-      <div className="notice" role="status">
+      <div className="notice" role="status" tabIndex={-1} ref={successRef}>
         <strong>Richiesta inviata</strong>
         <p>
           Grazie. Rispondiamo di solito entro due giorni lavorativi, sullo stesso indirizzo
@@ -37,7 +48,7 @@ export function LeadForm() {
     setStatus("sending");
     setError(null);
 
-    const body = {
+    const draft = {
       name: String(data.get("name") ?? ""),
       email: String(data.get("email") ?? ""),
       organization: String(data.get("organization") ?? ""),
@@ -49,8 +60,12 @@ export function LeadForm() {
       message: String(data.get("message") ?? ""),
       consent: data.get("consent") === "on",
       company_fax: String(data.get("company_fax") ?? ""),
-      startedAt,
     };
+    const fingerprint = JSON.stringify(draft);
+    if (submissionRef.current?.fingerprint !== fingerprint) {
+      submissionRef.current = { fingerprint, id: crypto.randomUUID() };
+    }
+    const body = { ...draft, submissionId: submissionRef.current.id };
 
     try {
       const response = await fetch("/api/consulenza", {
@@ -74,7 +89,12 @@ export function LeadForm() {
   }
 
   return (
-    <form className={styles.form} onSubmit={onSubmit} noValidate aria-busy={sending}>
+    <form
+      className={styles.form}
+      onSubmit={onSubmit}
+      aria-busy={sending}
+      aria-describedby={error ? "consulting-form-error" : undefined}
+    >
       <p className={styles.requiredNote}>I campi con * sono obbligatori.</p>
 
       <label>
@@ -104,7 +124,7 @@ export function LeadForm() {
         <input
           className="input"
           name="organizationWebsite"
-          type="url"
+          type="text"
           inputMode="url"
           autoComplete="url"
           maxLength={300}
@@ -187,7 +207,13 @@ export function LeadForm() {
       </label>
 
       {error ? (
-        <p className={styles.error} role="alert">
+        <p
+          className={styles.error}
+          id="consulting-form-error"
+          role="alert"
+          tabIndex={-1}
+          ref={errorRef}
+        >
           {error}
         </p>
       ) : null}

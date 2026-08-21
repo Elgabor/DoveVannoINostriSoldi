@@ -16,9 +16,31 @@ const JSON_REPORT_PATH = resolve(REPORT_DIR, "irpef-lighthouse.json");
 const HTML_REPORT_PATH = resolve(REPORT_DIR, "irpef-lighthouse.html");
 const SUMMARY_REPORT_PATH = resolve(REPORT_DIR, "irpef-lighthouse-summary.json");
 const LIGHTHOUSE_RUN_COUNT = 3;
+const BROWSER_CLOSE_TIMEOUT_MS = 5_000;
 
 const sleep = (milliseconds) =>
   new Promise((resolvePromise) => setTimeout(resolvePromise, milliseconds));
+
+async function closeBrowser(browser) {
+  let timeout;
+  try {
+    await Promise.race([
+      browser.close(),
+      new Promise((_, reject) => {
+        timeout = setTimeout(
+          () => reject(new Error("Timeout durante la chiusura di Chromium.")),
+          BROWSER_CLOSE_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } catch (error) {
+    const browserProcess = browser.process();
+    if (browserProcess && !browserProcess.killed) browserProcess.kill("SIGKILL");
+    console.warn(error instanceof Error ? error.message : String(error));
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
 
 function auditUrl() {
   const baseUrl = new URL(process.env.DVNS_BASE_URL ?? DEFAULT_BASE_URL);
@@ -290,7 +312,7 @@ async function main() {
 
     if (errors.length > 0) process.exitCode = 1;
   } finally {
-    await browser.close();
+    await closeBrowser(browser);
   }
 }
 

@@ -67,6 +67,19 @@ Le UO non hanno un campo semantico che certifichi “dipartimento”, “direzio
 
 Lo snapshot unisce soltanto `EN_PA_CEMACRO` e `SP_PA_CEMACRO`, appartenenti alla stessa release e base di cassa. Gli input sono bloccati con SHA-256; una modifica della fonte interrompe l'ETL finché schema e risultati non vengono ricontrollati. Il valore derivato è `entrate meno spese`. È chiamato saldo contabile territoriale e non residuo fiscale: non misura pressione fiscale, qualità dei servizi, merito politico o trasferimenti netti tra territori. Il pro capite 2023 usa la popolazione residente ISTAT al 31 dicembre 2023; per gli altri anni resta `null` finché non viene integrata una serie demografica annuale verificata. Le condizioni di riuso sono registrate come nota per ciascun input e vanno controllate sulla relativa scheda ufficiale: le note legali generali del sito non sostituiscono eventuali indicazioni specifiche della risorsa.
 
+La rigenerazione è intenzionalmente fail-closed: scaricare le tre distribuzioni dagli URL registrati nel manifest corrente, quindi eseguire:
+
+```bash
+python3 scripts/etl/cpt_regional_fiscal_snapshot.py \
+  --revenue /percorso/en_pa_cemacro.csv \
+  --expenditure /percorso/sp_pa_cemacro.csv \
+  --population /percorso/CENSIMENTO-E-DINAMICA-DELLA-POPOLAZIONE-2023.pdf \
+  --output src/data/generated/cpt-regional-fiscal.json \
+  --observed-at 2026-08-20T22:46:15Z
+```
+
+`--observed-at` indica quando gli input sono stati verificati, non l'anno di aggiornamento dei dati. Se URL, hash, dimensione, schema o copertura cambiano, l'ETL deve fallire: prima di aggiornare le costanti occorre ricontrollare la nuova release e rieseguire l'intera suite.
+
 ### Dati sui pagamenti art. 4-bis
 Nel 2026 ANAC ha pubblicato uno schema di riferimento per i dati sui pagamenti nella sezione “Amministrazione Trasparente”.
 

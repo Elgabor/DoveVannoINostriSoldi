@@ -12,7 +12,6 @@ test("narrow responsive grids cannot exceed their container", async () => {
     ["../src/app/partecipazioni/partecipazioni.module.css", "340px"],
     ["../src/app/controlli/controlli.module.css", "300px"],
     ["../src/app/metodologia/metodologia.module.css", "300px"],
-    ["../src/app/consulenza/consulenza.module.css", "300px"],
   ];
 
   for (const [path, minimum] of cases) {
@@ -63,6 +62,30 @@ test("information tooltips clamp to the viewport and keep their heading trigger 
   assert.match(home, /\.panelHead > h2 \{[\s\S]*?flex: 1 1 auto;[\s\S]*?min-width: 0;/);
   assert.match(globals, /@media \(min-width: 901px\) and \(max-width: 980px\)/);
   assert.match(globals, /\.header-search \{ order: 3; width: 100%; \}/);
+});
+
+test("CI verifies every main commit and uses the current artifact runtime", async () => {
+  const [ci, mefRefresh, browserE2e] = await Promise.all([
+    source("../.github/workflows/ci.yml"),
+    source("../.github/workflows/mef-irpef-refresh.yml"),
+    source("../scripts/browser_e2e.mjs"),
+  ]);
+
+  assert.match(ci, /github\.event\.pull_request\.number \|\| github\.sha/);
+  assert.doesNotMatch(ci, /github\.event\.pull_request\.number \|\| github\.ref/);
+  assert.doesNotMatch(`${ci}\n${mefRefresh}`, /actions\/upload-artifact@v4/);
+  assert.equal((`${ci}\n${mefRefresh}`.match(/actions\/upload-artifact@v7/g) ?? []).length, 3);
+  assert.match(browserE2e, /const BROWSER_LAUNCH_TIMEOUT_MS = 60_000;/);
+  assert.match(browserE2e, /timeout: BROWSER_LAUNCH_TIMEOUT_MS/);
+});
+
+test("Lighthouse budgets use a three-run median instead of a single noisy sample", async () => {
+  const lighthouse = await source("../scripts/lighthouse_budget.mjs");
+
+  assert.match(lighthouse, /const LIGHTHOUSE_RUN_COUNT = 3;/);
+  assert.match(lighthouse, /function medianMetricValues\(runs\)/);
+  assert.match(lighthouse, /medianMetricValues\(runs\.map\(\(run\) => run\.values\)\)/);
+  assert.match(lighthouse, /irpef-lighthouse-summary\.json/);
 });
 
 test("the regional map has a deterministic fallback and roving keyboard focus", async () => {

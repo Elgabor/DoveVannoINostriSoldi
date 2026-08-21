@@ -206,7 +206,19 @@ Gli importi vengono convertiti in centesimi interi. Per gli incarichi ai dipende
 ### Camera dei deputati
 Camera Trasparente pubblica informazioni su bilancio, amministrazione e procedure di gara. L'API parlamentare espone il conto consuntivo 2025 e il bilancio 2026 come documenti distinti.
 
-Per il consuntivo sono disponibili pagamenti e categorie arrotondati come nel documento ufficiale. Il totale degli impegni comprende anche le partite di giro, mentre le categorie pubblicate riguardano la spesa effettiva. Per il bilancio 2026 gli importi sono previsioni, non pagamenti già effettuati.
+Per il consuntivo conserviamo gli importi effettivi estratti e li arrotondiamo
+soltanto nella presentazione. Il PDF è bloccato nel manifesto con dimensione,
+SHA-256 e riferimenti alle pagine usate. Il totale degli impegni comprende anche
+le partite di giro, mentre le categorie pubblicate riguardano la spesa
+effettiva. Per il bilancio 2026 gli importi sono previsioni, non pagamenti già
+effettuati.
+
+Il Titolo III “Spese previdenziali” del consuntivo 2025 è composto dalla
+Categoria XII “Deputati cessati dal mandato” e dalla Categoria XIII “Personale
+in quiescenza”. Non equivale ai soli vitalizi: il documento include anche
+pensioni dirette e di reversibilità, rimborsi, accantonamenti e oneri del
+personale in quiescenza. Le sottovoci non espongono una colonna separata di
+pagamenti effettivi, quindi non ne stimiamo l'importo.
 
 ### Senato della Repubblica
 La sezione Spese e trasparenza pubblica bilancio, conto consuntivo e informazioni sul trattamento economico dei senatori. Il monitor interno controlla i metadati dei nuovi documenti ufficiali e li registra nel manifesto della pipeline.

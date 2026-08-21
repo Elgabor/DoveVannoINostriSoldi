@@ -382,6 +382,24 @@ try {
   });
   completed.push("Recovery offset");
 
+  for (const width of [390, 1280]) {
+    const label = `Parlamento previdenza ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/parlamento",
+      width,
+      validate: async (page) => {
+        const text = await bodyText(page);
+        assertTextMatches(text, /Spese previdenziali/, label);
+        assertTextMatches(text, /Deputati cessati dal mandato/, label);
+        assertTextMatches(text, /Personale in quiescenza/, label);
+        assertTextMatches(text, /non equivale ai soli vitalizi/i, label);
+        await assertResponsiveShell(page, label, width);
+      },
+    });
+    completed.push(label);
+  }
+
   for (const pathname of ["/", "/enti", "/partecipazioni", "/controlli", "/metodologia"]) {
     const label = `Shell 320px ${pathname}`;
     await runScenario(browser, {

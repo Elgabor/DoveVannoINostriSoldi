@@ -84,7 +84,7 @@ const exampleQueries = {
   mef_partecipazioni: { dataset: "mef_partecipazioni" },
   consulenti_incarichi: { dataset: "consulenti_incarichi", year: 2024 },
   parlamento_bilanci: { dataset: "parlamento_bilanci", chamber: "camera", year: 2024 },
-  controlli_segnali: { dataset: "controlli_segnali", area: "appalti", year: 2025 },
+  controlli_segnali: { dataset: "controlli_segnali", area: "spesa-comuni", year: 2022, limit: 20 },
   registro_fonti: { dataset: "registro_fonti", query: "SIOPE" },
 } as const satisfies Record<DatasetId, DatasetQuery>;
 
@@ -104,7 +104,7 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
   { id: "mef_partecipazioni", title: "Partecipazioni pubbliche", summary: "Aggregati della rilevazione annuale MEF sulle partecipazioni pubbliche.", sourceIds: ["partecipazioni-pubbliche"], freshness: "snapshot", filters: [] },
   { id: "consulenti_incarichi", title: "Incarichi e consulenze", summary: "Statistiche nazionali ufficiali su incarichi esterni e a dipendenti pubblici.", sourceIds: ["consulenti"], freshness: "snapshot", filters: ["year"] },
   { id: "parlamento_bilanci", title: "Bilanci del Parlamento", summary: "Documenti e valori strutturati verificati per Camera e Senato quando disponibili.", sourceIds: ["camera"], freshness: "snapshot", filters: ["chamber", "year"] },
-  { id: "controlli_segnali", title: "Segnali da controllare", summary: "Indicatori, classificazioni e confronti che orientano verifiche ulteriori.", sourceIds: [], freshness: "snapshot", filters: ["area", "year"], caveat: "Un segnale non attribuisce responsabilità e non dimostra da solo spreco o illecito." },
+  { id: "controlli_segnali", title: "Segnali da controllare", summary: "Indicatori, classificazioni e screening derivati che orientano verifiche ulteriori.", sourceIds: [], freshness: "snapshot", filters: ["area", "year", "region", "limit", "offset"], caveat: "Un segnale, compreso lo screening OpenCivitas, non attribuisce responsabilità e non dimostra da solo spreco o illecito." },
   { id: "registro_fonti", title: "Registro delle fonti", summary: "Proprietari, copertura, formati, cadenza e stato di integrazione delle fonti censite.", sourceIds: [], freshness: "snapshot", filters: ["query"] },
 ];
 

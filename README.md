@@ -20,7 +20,7 @@ L'AI serve a confrontare dati omogenei, trovare scostamenti e ordinare i casi da
 | Fabbisogni comunali | Spesa storica, spesa standard e servizi dei Comuni nel 2022 | OpenCivitas |
 | Partecipazioni | Società e organizzazioni partecipate dichiarate dalle amministrazioni | MEF |
 | Parlamento | Consuntivo e bilancio della Camera | Camera dei deputati |
-| Controlli | Dati che meritano verifiche più approfondite, con spiegazioni e fonti | ANAC, MEF, Corte dei conti e altre fonti ufficiali |
+| Controlli | Dati che meritano verifiche più approfondite, con spiegazioni e fonti | ANAC, MEF, OpenCivitas, Corte dei conti e altre fonti ufficiali |
 | Fonti | Stato dei collegamenti e date di aggiornamento | Registro interno delle fonti |
 
 Per ANAC è disponibile uno snapshot verificato sui dodici file mensili CIG 2025; non è ancora una ricerca live per singolo CIG o fornitore. Il PNRR ReGiS e altre fonti già censite non sono ancora presentati come dati correnti. Il sito dichiara questi limiti e non usa numeri dimostrativi per riempire gli spazi mancanti.
@@ -36,6 +36,7 @@ Il backend espone inoltre:
 - `GET /api/controlli`, con indicatori classificati, scenari separati e regole per il loro uso.
 - `GET /api/spese/invalidita?anno=2024&regione=Calabria`, con spesa nazionale e nuove pensioni di invalidità civile per la granularità pubblica verificata.
 - `GET /api/territori/fisco?anno=2023&regione=Calabria`, con entrate, spese e saldo contabile CPT nello stesso perimetro PA consolidato.
+- `GET /api/controlli/spesa-comuni?regione=Calabria&limit=20`, con i Comuni OpenCivitas fuori dall'intervallo tipico della propria Regione (metodo Tukey sulla differenza spesa storica/fabbisogno standard pro capite), esclusioni per qualità del dato e avvertenze di metodo.
 
 ## MCP per assistenti AI
 

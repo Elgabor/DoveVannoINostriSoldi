@@ -16,8 +16,20 @@ import {
   procurementServicesAndSupplies2025,
   type AuditSignal,
 } from "@/lib/audit-data";
-import { integer, longDate, percent } from "@/lib/format";
+import { computeSpendingOutliers } from "@/lib/anomaly-indicators";
+import { integer, exactEuro, longDate, percent } from "@/lib/format";
+import { municipalityName } from "@/lib/municipality-name";
+import { openCivitasSnapshot } from "@/lib/opencivitas-snapshot";
 import styles from "./controlli.module.css";
+
+const OUTLIER_TABLE_SIZE = 15;
+
+function signedEuroFromCents(cents: number): string {
+  const value = exactEuro(Math.abs(cents) / 100);
+  if (cents > 0) return `+${value}`;
+  if (cents < 0) return `−${value}`;
+  return value;
+}
 
 export const metadata: Metadata = {
   title: "Cosa controllare",
@@ -104,6 +116,8 @@ export default async function ControlsPage({ searchParams }: PageProps) {
     ? (comparison.totalValueBillion * comparison.byValue) / 100
     : null;
   const classificationEntries = Object.entries(auditClassifications);
+  const spendingOutliers = computeSpendingOutliers(openCivitasSnapshot.municipalities);
+  const topSpendingOutliers = spendingOutliers.outliers.slice(0, OUTLIER_TABLE_SIZE);
 
   return (
     <main className="shell page">
@@ -281,6 +295,89 @@ export default async function ControlsPage({ searchParams }: PageProps) {
         <p className={styles.note}>
           Una quota alta sul numero delle procedure non equivale alla stessa quota sul valore. Il
           dato indica dove approfondire concorrenza e motivazioni, non dimostra uno spreco.
+        </p>
+      </section>
+
+      <section className="panel">
+        <h2 className="panel-title">
+          Comuni fuori dal range della loro Regione · spesa storica vs fabbisogno standard
+        </h2>
+        <p>
+          Partiamo dal confronto ufficiale OpenCivitas tra spesa storica e fabbisogno standard per
+          abitante, già corretto per popolazione e caratteristiche del territorio, e segnaliamo i
+          Comuni che restano fuori dall&apos;intervallo tipico della propria Regione (metodo
+          statistico Tukey, 1,5 volte lo scarto interquartile).
+        </p>
+
+        <div className="stat-strip">
+          <div>
+            <span className="stat-label">Comuni valutati</span>
+            <span className="stat-value">{integer(spendingOutliers.evaluatedMunicipalities)}</span>
+            <span className="stat-note">
+              {spendingOutliers.excludedForDataQuality > 0
+                ? `${integer(spendingOutliers.excludedForDataQuality)} esclusi: dato segnalato dalla fonte`
+                : "Nessuna esclusione per qualità del dato"}
+            </span>
+          </div>
+          <div>
+            <span className="stat-label">Fuori dal range</span>
+            <span className="stat-value">{integer(spendingOutliers.outliers.length)}</span>
+            <span className="stat-note">su {integer(spendingOutliers.evaluatedMunicipalities)} valutati</span>
+          </div>
+        </div>
+
+        {topSpendingOutliers.length > 0 ? (
+          <div
+            className="table-scroll"
+            role="region"
+            aria-label="Comuni con la differenza per abitante più estrema rispetto alla propria Regione; scorri orizzontalmente per vedere tutte le colonne"
+            tabIndex={0}
+          >
+            <table className="table">
+              <caption>
+                I {topSpendingOutliers.length} Comuni più fuori scala rispetto ai Comuni della
+                stessa Regione, OpenCivitas {openCivitasSnapshot.referenceYear}
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Comune</th>
+                  <th scope="col" className="num">Differenza per abitante</th>
+                  <th scope="col">Direzione</th>
+                  <th scope="col" className="num">Distanza dal range</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topSpendingOutliers.map((outlier) => (
+                  <tr key={outlier.istatCode}>
+                    <th scope="row">
+                      {municipalityName(outlier.name)}
+                      <small>
+                        {municipalityName(outlier.province)} · {municipalityName(outlier.region)}
+                      </small>
+                    </th>
+                    <td className="num">{signedEuroFromCents(outlier.differencePerCapitaCents)}</td>
+                    <td>
+                      {outlier.direction === "sopra" ? "spesa oltre il range" : "spesa sotto il range"}
+                    </td>
+                    <td className="num">×{outlier.excessMultiple.toFixed(1)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className={styles.note}>Nessun Comune risulta fuori dal range con i dati attuali.</p>
+        )}
+
+        <div className="notice">
+          <strong>Un fuori scala non è una condanna</strong>
+          <p>{spendingOutliers.methodologyWarning}</p>
+        </div>
+
+        <p className={styles.note}>
+          Guarda il Comune nel dettaglio storico e servizi nel{" "}
+          <Link href="/territori/confronto">confronto spesa e fabbisogno standard →</Link>. Dato{" "}
+          {openCivitasSnapshot.referenceYear}, {openCivitasSnapshot.coverage.territorialScope}.
         </p>
       </section>
 

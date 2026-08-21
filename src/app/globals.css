@@ -442,7 +442,6 @@ main { display: block; }
   .site-header { position: static; }
   .brand-mark { width: 38px; height: 38px; }
   .brand-text strong { font-size: 17px; }
-  .header-actions .header-action:first-child { display: none; }
   .header-action { padding-inline: 14px; }
   .primary-nav a { padding: 12px 12px; font-size: 13px; }
   .primary-nav { scrollbar-width: thin; }

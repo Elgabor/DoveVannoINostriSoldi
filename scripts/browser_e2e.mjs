@@ -1021,7 +1021,8 @@ try {
         assertTextMatches(text, /Risposta verificata/i, label);
         assertTextMatches(text, /Fonte/i, label);
         assertTextMatches(text, /Da leggere con attenzione/i, label);
-        assert.doesNotMatch(text, /Quanto hanno speso i Comuni nel 2025\?[\s\S]*Quanto hanno speso i Comuni nel 2025\?/u, `${label}: prompt duplicato nella risposta`);
+        const responseText = await page.$eval('[aria-live="polite"]', (element) => element.textContent ?? "");
+        assert.doesNotMatch(responseText, /Quanto hanno speso i Comuni nel 2025\?/u, `${label}: prompt riversato nella risposta`);
         assert.equal(
           await page.$eval('[aria-live="polite"]', (element) => element.getAttribute("aria-busy")),
           "false",

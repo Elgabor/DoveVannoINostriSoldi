@@ -83,7 +83,8 @@ async function inspect(page, route, viewport) {
       assert.ok(evidence.labels <= 12, `${route}: troppe micro-label nel treemap mobile`);
     }
   } else if (route === "/ministeri") {
-    assert.equal(shell.stats, 3, `${route}: la prima vista deve avere tre fatti`);
+    assert.equal(shell.stats, 3, `${route}: Totale CP, Pagato CP e Rimasto CP devono restare verificabili`);
+    await page.waitForSelector('figure [role="img"] svg');
     const evidence = await page.evaluate(() => {
       const tableRegion = document.querySelector(
         '[role="region"][aria-label="Valori esatti dei Ministeri nel rendiconto RGS 2025"]',
@@ -93,7 +94,10 @@ async function inspect(page, route, viewport) {
       if (tableRegion) tableRegion.scrollLeft = tableRegion.scrollWidth;
       const result = {
         activeTable: document.activeElement === tableRegion,
-        detailLinks: tableRegion?.querySelectorAll('a[href^="/stato/amministrazioni/"]').length ?? 0,
+        rectangles: document.querySelectorAll('figure [role="img"] svg rect').length,
+        sections: document.querySelectorAll("[data-institutional-section]").length,
+        totalCpHeaders: [...(tableRegion?.querySelectorAll("th") ?? [])]
+          .filter((node) => node.textContent?.trim() === "Totale CP").length,
         rows: tableRegion?.querySelectorAll("tbody tr").length ?? 0,
         scrollable: Boolean(
           tableRegion &&
@@ -107,8 +111,10 @@ async function inspect(page, route, viewport) {
     });
     assert.equal(evidence.activeTable, true, `${route}: tabella non focalizzabile`);
     assert.equal(evidence.rows, 15, `${route}: copertura dei Ministeri incompleta`);
-    assert.equal(evidence.detailLinks, 15, `${route}: collegamenti ai dettagli incompleti`);
-    assert.match(evidence.total ?? "", /Totale dei 15 Ministeri.+100,0\s?%/);
+    assert.equal(evidence.totalCpHeaders, 1, `${route}: fallback esatto Totale CP assente`);
+    assert.ok(evidence.rectangles >= 15, `${route}: treemap Ministeri incompleto`);
+    assert.equal(evidence.sections, 4, `${route}: devono esserci quattro sezioni verticali`);
+    assert.match(evidence.total ?? "", /Totale dei 15 Ministeri/);
     if (viewport.width <= 620) {
       assert.equal(evidence.scrollable, true, `${route}: tabella mobile non scorre`);
     }

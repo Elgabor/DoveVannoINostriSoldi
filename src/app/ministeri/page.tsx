@@ -1,25 +1,20 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getStateAdministrationIdentity } from "@/lib/data/state-administration-identities";
 import { compactEuro, exactEuro, longDate } from "@/lib/format";
 import { rgsMinistriesMetadata, rgsMinistriesSnapshot } from "@/lib/rgs-ministries-snapshot";
+import { MinistryCommitmentTreemap } from "./ministry-commitment-treemap";
 import styles from "./ministeri.module.css";
 
 export const metadata: Metadata = {
   title: "Spese dei Ministeri, rendiconto 2025",
   description:
-    "Impegni, pagamenti e residui dei 15 Ministeri nel rendiconto ufficiale RGS 2025, tenuti separati e mostrati con valori esatti.",
+    "Pagato CP e Rimasto CP dei 15 Ministeri nel rendiconto ufficiale RGS 2025, con composizione del Totale CP e valori esatti.",
 };
 
-const percentage = new Intl.NumberFormat("it-IT", {
-  style: "percent",
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
 const euro = (cents: number) => cents / 100;
 
 export default function MinistriesPage() {
-  const { ministries, totals, coverage, referenceYear } = rgsMinistriesSnapshot;
+  const { ministries, totals, coverage } = rgsMinistriesSnapshot;
   const source = rgsMinistriesMetadata.source;
 
   return (
@@ -27,46 +22,63 @@ export default function MinistriesPage() {
       <div className="page-intro">
         <h1>Spese dei Ministeri</h1>
         <p>
-          Il rendiconto dello Stato 2025 copre 15 Ministeri. Mostriamo tre fasi contabili
-          separate: impegni di competenza, pagamenti di cassa e residui a fine anno. Non
-          includiamo Palazzo Chigi, Camera, Senato o Regioni.
+          Il rendiconto dello Stato 2025 copre 15 Ministeri. Qui seguiamo un solo quadro:
+          la competenza dell&apos;anno, divisa tra quanto è già pagato e quanto rimane da pagare.
+          Non includiamo Palazzo Chigi, Camera, Senato o Regioni.
         </p>
       </div>
 
-      <dl className="stat-strip">
-        <div>
-          <dt>Impegni di competenza</dt>
-          <dd>{compactEuro(euro(totals.commitmentsCpCents))}</dd>
-          <span className="stat-note">{exactEuro(euro(totals.commitmentsCpCents))} · CP</span>
+      <section className={styles.frameSection} aria-labelledby="quadro-cp" data-institutional-section>
+        <div className={styles.sectionHeader}>
+          <div>
+            <h2 id="quadro-cp">Due parti dello stesso impegno</h2>
+            <p>
+              Restiamo nel quadro di competenza 2025: Pagato CP è già pagato, Rimasto CP è
+              ancora da pagare. Non introduciamo qui cassa o residui di anni precedenti.
+            </p>
+          </div>
+          <span>Consuntivo · EUR</span>
         </div>
-        <div>
-          <dt>Pagamenti di cassa</dt>
-          <dd>{compactEuro(euro(totals.paymentsCashCsCents))}</dd>
-          <span className="stat-note">{exactEuro(euro(totals.paymentsCashCsCents))} · CS</span>
-        </div>
-        <div>
-          <dt>Residui al 31 dicembre</dt>
-          <dd>{compactEuro(euro(totals.residualsEndCents))}</dd>
-          <span className="stat-note">{exactEuro(euro(totals.residualsEndCents))} · CP + RS</span>
-        </div>
-      </dl>
+        <dl className="stat-strip">
+          <div>
+            <dt>Totale CP</dt>
+            <dd>{compactEuro(euro(totals.commitmentsCpCents))}</dd>
+            <span className="stat-note">{exactEuro(euro(totals.commitmentsCpCents))} esatti</span>
+          </div>
+          <div>
+            <dt>Pagato CP</dt>
+            <dd>{compactEuro(euro(totals.paymentsCompetenceCpCents))}</dd>
+            <span className="stat-note">{exactEuro(euro(totals.paymentsCompetenceCpCents))} esatti</span>
+          </div>
+          <div>
+            <dt>Rimasto CP</dt>
+            <dd>{compactEuro(euro(totals.remainingCpCents))}</dd>
+            <span className="stat-note">{exactEuro(euro(totals.remainingCpCents))} esatti</span>
+          </div>
+        </dl>
+      </section>
 
-      <div className="notice">
-        <strong>Questi tre numeri non formano un totale</strong>
-        <p>
-          CP indica la competenza dell&apos;anno, RS i residui degli anni precedenti e CS la cassa.
-          Un pagamento di cassa può riguardare sia la competenza 2025 sia residui precedenti.
-          Per questo non sommiamo impegni, pagamenti e residui e non li usiamo come giudizio di efficienza.
-        </p>
-      </div>
+      <section className="panel" aria-labelledby="composizione-cp" data-institutional-section>
+        <div className={styles.sectionHeader}>
+          <div>
+            <h2 id="composizione-cp">Come si distribuisce il Totale CP</h2>
+            <p>
+              La superficie di ogni riquadro mostra il peso di un Ministero nello stesso
+              rendiconto e nello stesso quadro di competenza.
+            </p>
+          </div>
+          <span>15 Ministeri</span>
+        </div>
+        <MinistryCommitmentTreemap ministries={ministries} />
+      </section>
 
-      <section className="panel" aria-labelledby="elenco-ministeri">
+      <section className="panel" aria-labelledby="elenco-ministeri" data-institutional-section>
         <div className={styles.sectionHeader}>
           <div>
             <h2 id="elenco-ministeri">Valori esatti per Ministero</h2>
             <p>
-              La quota usa come denominatore gli impegni CP dei 15 Ministeri nello stesso
-              rendiconto. Le altre colonne restano fasi distinte.
+              Totale CP è mostrato accanto alle sue due parti: Pagato CP e Rimasto CP. Gli
+              importi sono in euro e derivano da centesimi interi.
             </p>
           </div>
           <span>5.395 righe riconciliate</span>
@@ -83,11 +95,9 @@ export default function MinistriesPage() {
             <thead>
               <tr>
                 <th scope="col">Ministero</th>
-                <th scope="col">Impegni CP</th>
-                <th scope="col">Quota impegni CP</th>
-                <th scope="col">Pagamenti CS</th>
-                <th scope="col">Residui al 31/12</th>
-                <th scope="col">Dettaglio</th>
+                <th scope="col">Totale CP</th>
+                <th scope="col">Pagato CP</th>
+                <th scope="col">Rimasto CP</th>
               </tr>
             </thead>
             <tbody>
@@ -100,14 +110,8 @@ export default function MinistriesPage() {
                       <small>Codice RGS {ministry.code} · IPA {identity?.ipaCode ?? "non collegato"}</small>
                     </th>
                     <td>{exactEuro(euro(ministry.commitmentsCpCents))}</td>
-                    <td>{percentage.format(ministry.commitmentsCpCents / totals.commitmentsCpCents)}</td>
-                    <td>{exactEuro(euro(ministry.paymentsCashCsCents))}</td>
-                    <td>{exactEuro(euro(ministry.residualsEndCents))}</td>
-                    <td>
-                      <Link href={`/stato/amministrazioni/${ministry.code}?anno=${referenceYear}`}>
-                        Pagamenti per missione →
-                      </Link>
-                    </td>
+                    <td>{exactEuro(euro(ministry.paymentsCompetenceCpCents))}</td>
+                    <td>{exactEuro(euro(ministry.remainingCpCents))}</td>
                   </tr>
                 );
               })}
@@ -116,17 +120,15 @@ export default function MinistriesPage() {
               <tr>
                 <th scope="row">Totale dei 15 Ministeri</th>
                 <td>{exactEuro(euro(totals.commitmentsCpCents))}</td>
-                <td>{percentage.format(1)}</td>
-                <td>{exactEuro(euro(totals.paymentsCashCsCents))}</td>
-                <td>{exactEuro(euro(totals.residualsEndCents))}</td>
-                <td />
+                <td>{exactEuro(euro(totals.paymentsCompetenceCpCents))}</td>
+                <td>{exactEuro(euro(totals.remainingCpCents))}</td>
               </tr>
             </tfoot>
           </table>
         </div>
       </section>
 
-      <section className="panel" aria-labelledby="fonte-ministeri">
+      <section className="panel" aria-labelledby="fonte-ministeri" data-institutional-section>
         <h2 className="panel-title" id="fonte-ministeri">Fonte, perimetro e controlli</h2>
         <div className={styles.provenance}>
           <div><span>Titolare</span><strong>{source.owner}</strong></div>
@@ -138,15 +140,15 @@ export default function MinistriesPage() {
           </div>
         </div>
         <p className={styles.sourceNote}>
-          Abbiamo verificato le 41 colonne e le identità contabili riga per riga. Pagato CS
-          coincide con pagato CP più pagato RS; gli impegni CP coincidono con pagato CP più
-          rimasto CP. Fonte {source.sourceRecordId}, licenza {source.licenseName} dichiarata
-          sulla scheda di questo rilascio.
+          Abbiamo verificato le 41 colonne e tutte le identità contabili prima di aggregare.
+          Ogni importo è convertito in centesimi interi senza arrotondamenti intermedi; tutte
+          le {coverage.sourceRows.toLocaleString("it-IT")} righe sorgente sono incluse. Nel quadro
+          mostrato, Totale CP coincide esattamente con Pagato CP più Rimasto CP. Fonte {source.sourceRecordId},
+          licenza {source.licenseName} dichiarata sulla scheda di questo rilascio.
         </p>
         <div className={styles.sourceLinks}>
           <a href={source.landingUrl} target="_blank" rel="noreferrer">Apri la scheda RGS ↗</a>
           <a href={source.resourceUrl} target="_blank" rel="noreferrer">Scarica il CSV ufficiale ↗</a>
-          <Link href={`/stato?anno=${referenceYear}`}>Apri i pagamenti per missione →</Link>
         </div>
       </section>
     </main>

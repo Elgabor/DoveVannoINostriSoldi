@@ -1,0 +1,643 @@
+{
+  "coverage": {
+    "headers": 41,
+    "ministries": 15,
+    "rowsReconciled": 5395,
+    "sourceRows": 5395
+  },
+  "definitions": {
+    "commitmentsCp": "Impegni di competenza: pagato CP più rimasto da pagare CP.",
+    "notAdditive": "Impegni, pagamenti e residui descrivono fasi diverse e non vanno sommati.",
+    "paymentsCashCs": "Pagamenti di cassa: pagato CP più pagato su residui RS.",
+    "residualsEnd": "Residui al 31 dicembre: rimasto CP più rimasto RS."
+  },
+  "ministries": [
+    {
+      "code": "02",
+      "commitmentsCpCents": 79490192742507,
+      "label": "MINISTERO DELL'ECONOMIA E DELLE FINANZE",
+      "missions": [
+        {
+          "code": "034",
+          "commitmentsCpCents": 35779530486529,
+          "label": "Debito pubblico",
+          "paymentsCashCsCents": 35957243461998
+        },
+        {
+          "code": "003",
+          "commitmentsCpCents": 13756426837394,
+          "label": "Relazioni finanziarie con le autonomie territoriali",
+          "paymentsCashCsCents": 13109502151147
+        },
+        {
+          "code": "029",
+          "commitmentsCpCents": 12963526370414,
+          "label": "Politiche economico-finanziarie e di bilancio e tutela della finanza pubblica",
+          "paymentsCashCsCents": 12998543035632
+        },
+        {
+          "code": "011",
+          "commitmentsCpCents": 7025971705642,
+          "label": "Competitivita' e sviluppo delle imprese",
+          "paymentsCashCsCents": 7092602272581
+        },
+        {
+          "code": "004",
+          "commitmentsCpCents": 3346633496082,
+          "label": "L'Italia in Europa e nel mondo",
+          "paymentsCashCsCents": 3346205508688
+        },
+        {
+          "code": "028",
+          "commitmentsCpCents": 1520003484022,
+          "label": "Sviluppo e riequilibrio territoriale",
+          "paymentsCashCsCents": 1332317584022
+        },
+        {
+          "code": "025",
+          "commitmentsCpCents": 1133738808299,
+          "label": "Politiche previdenziali",
+          "paymentsCashCsCents": 1133738808299
+        },
+        {
+          "code": "033",
+          "commitmentsCpCents": 1057352657300,
+          "label": "Fondi da ripartire",
+          "paymentsCashCsCents": 541582087100
+        },
+        {
+          "code": "013",
+          "commitmentsCpCents": 865525138994,
+          "label": "Diritto alla mobilita' e sviluppo dei sistemi di trasporto",
+          "paymentsCashCsCents": 807304611609
+        },
+        {
+          "code": "007",
+          "commitmentsCpCents": 395530283782,
+          "label": "Ordine pubblico e sicurezza",
+          "paymentsCashCsCents": 398252486461
+        },
+        {
+          "code": "001",
+          "commitmentsCpCents": 379320820361,
+          "label": "Organi costituzionali, a rilevanza costituzionale e Presidenza del Consiglio dei ministri",
+          "paymentsCashCsCents": 376731659761
+        },
+        {
+          "code": "008",
+          "commitmentsCpCents": 336156181777,
+          "label": "Soccorso civile",
+          "paymentsCashCsCents": 383529316279
+        },
+        {
+          "code": "030",
+          "commitmentsCpCents": 157995512441,
+          "label": "Giovani e sport",
+          "paymentsCashCsCents": 160204380127
+        },
+        {
+          "code": "017",
+          "commitmentsCpCents": 152147402500,
+          "label": "Ricerca e innovazione",
+          "paymentsCashCsCents": 154047402500
+        },
+        {
+          "code": "032",
+          "commitmentsCpCents": 137437721149,
+          "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
+          "paymentsCashCsCents": 138158897644
+        },
+        {
+          "code": "024",
+          "commitmentsCpCents": 124630145327,
+          "label": "Diritti sociali, politiche sociali e famiglia",
+          "paymentsCashCsCents": 124832336730
+        },
+        {
+          "code": "014",
+          "commitmentsCpCents": 114640000000,
+          "label": "Infrastrutture pubbliche e logistica",
+          "paymentsCashCsCents": 27191033298
+        },
+        {
+          "code": "027",
+          "commitmentsCpCents": 110328823574,
+          "label": "Immigrazione, accoglienza e garanzia dei diritti",
+          "paymentsCashCsCents": 110251817833
+        },
+        {
+          "code": "006",
+          "commitmentsCpCents": 49473772409,
+          "label": "Giustizia",
+          "paymentsCashCsCents": 48288205099
+        },
+        {
+          "code": "015",
+          "commitmentsCpCents": 47639413500,
+          "label": "Comunicazioni",
+          "paymentsCashCsCents": 47678979991
+        },
+        {
+          "code": "019",
+          "commitmentsCpCents": 32535000000,
+          "label": "Casa e assetto urbanistico",
+          "paymentsCashCsCents": 16475000000
+        },
+        {
+          "code": "018",
+          "commitmentsCpCents": 3648681011,
+          "label": "Sviluppo sostenibile e tutela del territorio e dell'ambiente",
+          "paymentsCashCsCents": 748681011
+        },
+        {
+          "code": "005",
+          "commitmentsCpCents": 0,
+          "label": "Difesa e sicurezza del territorio",
+          "paymentsCashCsCents": 0
+        }
+      ],
+      "paymentsCashCsCents": 78305429717810,
+      "paymentsCompetenceCpCents": 76188290643046,
+      "paymentsResidualRsCents": 2117139074764,
+      "remainingCpCents": 3301902099461,
+      "remainingRsCents": 9562728483022,
+      "residualsEndCents": 12864630582483
+    },
+    {
+      "code": "04",
+      "commitmentsCpCents": 17476811906638,
+      "label": "MINISTERO DEL LAVORO E DELLE POLITICHE SOCIALI",
+      "missions": [
+        {
+          "code": "025",
+          "commitmentsCpCents": 9719360160941,
+          "label": "Politiche previdenziali",
+          "paymentsCashCsCents": 9721670059341
+        },
+        {
+          "code": "024",
+          "commitmentsCpCents": 6533929217090,
+          "label": "Diritti sociali, politiche sociali e famiglia",
+          "paymentsCashCsCents": 6365728901967
+        },
+        {
+          "code": "026",
+          "commitmentsCpCents": 1218480658992,
+          "label": "Politiche per il lavoro",
+          "paymentsCashCsCents": 1147685312202
+        },
+        {
+          "code": "032",
+          "commitmentsCpCents": 3797775096,
+          "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
+          "paymentsCashCsCents": 3742410480
+        },
+        {
+          "code": "027",
+          "commitmentsCpCents": 1244094519,
+          "label": "Immigrazione, accoglienza e garanzia dei diritti",
+          "paymentsCashCsCents": 876278974
+        }
+      ],
+      "paymentsCashCsCents": 17239702962964,
+      "paymentsCompetenceCpCents": 16937838761669,
+      "paymentsResidualRsCents": 301864201295,
+      "remainingCpCents": 538973144969,
+      "remainingRsCents": 966706666575,
+      "residualsEndCents": 1505679811544
+    },
+    {
+      "code": "07",
+      "commitmentsCpCents": 5767427771393,
+      "label": "MINISTERO DELL'ISTRUZIONE E DEL MERITO",
+      "missions": [
+        {
+          "code": "022",
+          "commitmentsCpCents": 5753193061613,
+          "label": "Istruzione scolastica",
+          "paymentsCashCsCents": 5747656611860
+        },
+        {
+          "code": "032",
+          "commitmentsCpCents": 14234709780,
+          "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
+          "paymentsCashCsCents": 15119565265
+        }
+      ],
+      "paymentsCashCsCents": 5762776177125,
+      "paymentsCompetenceCpCents": 5641114432838,
+      "paymentsResidualRsCents": 121661744287,
+      "remainingCpCents": 126313338555,
+      "remainingRsCents": 306298946644,
+      "residualsEndCents": 432612285199
+    },
+    {
+      "code": "12",
+      "commitmentsCpCents": 3424763548647,
+      "label": "MINISTERO DELLA DIFESA",
+      "missions": [
+        {
+          "code": "005",
+          "commitmentsCpCents": 3240834908136,
+          "label": "Difesa e sicurezza del territorio",
+          "paymentsCashCsCents": 3247130880674
+        },
+        {
+          "code": "032",
+          "commitmentsCpCents": 127966417508,
+          "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
+          "paymentsCashCsCents": 130627326896
+        },
+        {
+          "code": "018",
+          "commitmentsCpCents": 55962223003,
+          "label": "Sviluppo sostenibile e tutela del territorio e dell'ambiente",
+          "paymentsCashCsCents": 56265260105
+        }
+      ],
+      "paymentsCashCsCents": 3434023467675,
+      "paymentsCompetenceCpCents": 3224916857734,
+      "paymentsResidualRsCents": 209106609941,
+      "remainingCpCents": 199846690913,
+      "remainingRsCents": 50416615195,
+      "residualsEndCents": 250263306108
+    },
+    {
+      "code": "08",
+      "commitmentsCpCents": 3383572872891,
+      "label": "MINISTERO DELL'INTERNO",
+      "missions": [
+        {
+          "code": "003",
+          "commitmentsCpCents": 1714914647837,
+          "label": "Relazioni finanziarie con le autonomie territoriali",
+          "paymentsCashCsCents": 1722122455307
+        },
+        {
+          "code": "007",
+          "commitmentsCpCents": 944470283891,
+          "label": "Ordine pubblico e sicurezza",
+          "paymentsCashCsCents": 940164015783
+        },
+        {
+          "code": "008",
+          "commitmentsCpCents": 341696828021,
+          "label": "Soccorso civile",
+          "paymentsCashCsCents": 336066908628
+        },
+        {
+          "code": "027",
+          "commitmentsCpCents": 257371516238,
+          "label": "Immigrazione, accoglienza e garanzia dei diritti",
+          "paymentsCashCsCents": 239668998100
+        },
+        {
+          "code": "002",
+          "commitmentsCpCents": 95722768597,
+          "label": "Amministrazione generale e supporto alla rappresentanza generale di Governo e dello Stato sul territorio",
+          "paymentsCashCsCents": 93193655007
+        },
+        {
+          "code": "032",
+          "commitmentsCpCents": 29396828307,
+          "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
+          "paymentsCashCsCents": 24339053645
+        }
+      ],
+      "paymentsCashCsCents": 3355555086470,
+      "paymentsCompetenceCpCents": 2884098609201,
+      "paymentsResidualRsCents": 471456477269,
+      "remainingCpCents": 499474263690,
+      "remainingRsCents": 474699528405,
+      "residualsEndCents": 974173792095
+    },
+    {
+      "code": "10",
+      "commitmentsCpCents": 1797073015110,
+      "label": "MINISTERO DELLE INFRASTRUTTURE E DEI TRASPORTI",
+      "missions": [
+        {
+          "code": "013",
+          "commitmentsCpCents": 1071769337009,
+          "label": "Diritto alla mobilita' e sviluppo dei sistemi di trasporto",
+          "paymentsCashCsCents": 870604452880
+        },
+        {
+          "code": "014",
+          "commitmentsCpCents": 545502678991,
+          "label": "Infrastrutture pubbliche e logistica",
+          "paymentsCashCsCents": 577268058562
+        },
+        {
+          "code": "007",
+          "commitmentsCpCents": 103567461020,
+          "label": "Ordine pubblico e sicurezza",
+          "paymentsCashCsCents": 102760651405
+        },
+        {
+          "code": "019",
+          "commitmentsCpCents": 61634701584,
+          "label": "Casa e assetto urbanistico",
+          "paymentsCashCsCents": 62059520944
+        },
+        {
+          "code": "032",
+          "commitmentsCpCents": 14598836506,
+          "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
+          "paymentsCashCsCents": 43144048664
+        }
+      ],
+      "paymentsCashCsCents": 1655836732455,
+      "paymentsCompetenceCpCents": 1097964364624,
+      "paymentsResidualRsCents": 557872367831,
+      "remainingCpCents": 699108650486,
+      "remainingRsCents": 1410007166368,
+      "residualsEndCents": 2109115816854
+    },
+    {
+      "code": "03",
+      "commitmentsCpCents": 1545445585034,
+      "label": "MINISTERO DELLE IMPRESE E DEL MADE IN ITALY",
+      "missions": [
+        {
+          "code": "011",
+          "commitmentsCpCents": 1476019347622,
+          "label": "Competitivita' e sviluppo delle imprese",
+          "paymentsCashCsCents": 1430174367262
+        },
+        {
+          "code": "015",
+          "commitmentsCpCents": 54566113486,
+          "label": "Comunicazioni",
+          "paymentsCashCsCents": 36837028798
+        },
+        {
+          "code": "032",
+          "commitmentsCpCents": 10408316789,
+          "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
+          "paymentsCashCsCents": 13645309348
+        },
+        {
+          "code": "012",
+          "commitmentsCpCents": 3447226167,
+          "label": "Regolazione dei mercati",
+          "paymentsCashCsCents": 4276266323
+        },
+        {
+          "code": "017",
+          "commitmentsCpCents": 1004580970,
+          "label": "Ricerca e innovazione",
+          "paymentsCashCsCents": 982296264
+        }
+      ],
+      "paymentsCashCsCents": 1485915267995,
+      "paymentsCompetenceCpCents": 1316345466975,
+      "paymentsResidualRsCents": 169569801020,
+      "remainingCpCents": 229100118059,
+      "remainingRsCents": 163907490679,
+      "residualsEndCents": 393007608738
+    },
+    {
+      "code": "11",
+      "commitmentsCpCents": 1417722370912,
+      "label": "MINISTERO DELL'UNIVERSITA' E DELLA RICERCA",
+      "missions": [
+        {
+          "code": "023",
+          "commitmentsCpCents": 1161551777470,
+          "label": "Istruzione universitaria e formazione post-universitaria",
+          "paymentsCashCsCents": 1217962016275
+        },
+        {
+          "code": "017",
+          "commitmentsCpCents": 250141292629,
+          "label": "Ricerca e innovazione",
+          "paymentsCashCsCents": 259829492995
+        },
+        {
+          "code": "032",
+          "commitmentsCpCents": 6029300813,
+          "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
+          "paymentsCashCsCents": 5891141201
+        }
+      ],
+      "paymentsCashCsCents": 1483682650471,
+      "paymentsCompetenceCpCents": 1310608222781,
+      "paymentsResidualRsCents": 173074427690,
+      "remainingCpCents": 107114148131,
+      "remainingRsCents": 114003284447,
+      "residualsEndCents": 221117432578
+    },
+    {
+      "code": "05",
+      "commitmentsCpCents": 1151284171534,
+      "label": "MINISTERO DELLA GIUSTIZIA",
+      "missions": [
+        {
+          "code": "006",
+          "commitmentsCpCents": 1108391653694,
+          "label": "Giustizia",
+          "paymentsCashCsCents": 1111592332498
+        },
+        {
+          "code": "032",
+          "commitmentsCpCents": 42892517840,
+          "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
+          "paymentsCashCsCents": 35212683651
+        }
+      ],
+      "paymentsCashCsCents": 1146805016149,
+      "paymentsCompetenceCpCents": 1102132303291,
+      "paymentsResidualRsCents": 44672712858,
+      "remainingCpCents": 49151868243,
+      "remainingRsCents": 20578432597,
+      "residualsEndCents": 69730300840
+    },
+    {
+      "code": "09",
+      "commitmentsCpCents": 431447673578,
+      "label": "MINISTERO DELL'AMBIENTE E DELLA SICUREZZA ENERGETICA",
+      "missions": [
+        {
+          "code": "018",
+          "commitmentsCpCents": 256588401051,
+          "label": "Sviluppo sostenibile e tutela del territorio e dell'ambiente",
+          "paymentsCashCsCents": 255234988059
+        },
+        {
+          "code": "010",
+          "commitmentsCpCents": 168109325176,
+          "label": "Energia e diversificazione delle fonti energetiche",
+          "paymentsCashCsCents": 139916774233
+        },
+        {
+          "code": "032",
+          "commitmentsCpCents": 6749947351,
+          "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
+          "paymentsCashCsCents": 8600703355
+        }
+      ],
+      "paymentsCashCsCents": 403752465647,
+      "paymentsCompetenceCpCents": 310996103041,
+      "paymentsResidualRsCents": 92756362606,
+      "remainingCpCents": 120451570537,
+      "remainingRsCents": 147254132048,
+      "residualsEndCents": 267705702585
+    },
+    {
+      "code": "06",
+      "commitmentsCpCents": 358390551210,
+      "label": "MINISTERO DEGLI AFFARI ESTERI E DELLA COOPERAZIONE INTERNAZIONALE",
+      "missions": [
+        {
+          "code": "004",
+          "commitmentsCpCents": 310277619548,
+          "label": "L'Italia in Europa e nel mondo",
+          "paymentsCashCsCents": 316927739240
+        },
+        {
+          "code": "016",
+          "commitmentsCpCents": 36837528515,
+          "label": "Commercio internazionale ed internazionalizzazione del sistema produttivo",
+          "paymentsCashCsCents": 40785815734
+        },
+        {
+          "code": "032",
+          "commitmentsCpCents": 11275403147,
+          "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
+          "paymentsCashCsCents": 10961218552
+        }
+      ],
+      "paymentsCashCsCents": 368674773526,
+      "paymentsCompetenceCpCents": 346880858506,
+      "paymentsResidualRsCents": 21793915020,
+      "remainingCpCents": 11509692704,
+      "remainingRsCents": 1947873841,
+      "residualsEndCents": 13457566545
+    },
+    {
+      "code": "14",
+      "commitmentsCpCents": 302106565809,
+      "label": "MINISTERO DELLA CULTURA",
+      "missions": [
+        {
+          "code": "021",
+          "commitmentsCpCents": 288195836732,
+          "label": "Tutela e valorizzazione dei beni e attivita' culturali e paesaggistici",
+          "paymentsCashCsCents": 293500303289
+        },
+        {
+          "code": "032",
+          "commitmentsCpCents": 13910729077,
+          "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
+          "paymentsCashCsCents": 10679783116
+        }
+      ],
+      "paymentsCashCsCents": 304180086405,
+      "paymentsCompetenceCpCents": 241417853072,
+      "paymentsResidualRsCents": 62762233333,
+      "remainingCpCents": 60688712737,
+      "remainingRsCents": 120899402544,
+      "residualsEndCents": 181588115281
+    },
+    {
+      "code": "15",
+      "commitmentsCpCents": 295590099216,
+      "label": "MINISTERO DELLA SALUTE",
+      "missions": [
+        {
+          "code": "020",
+          "commitmentsCpCents": 235310622408,
+          "label": "Tutela della salute",
+          "paymentsCashCsCents": 171886997625
+        },
+        {
+          "code": "017",
+          "commitmentsCpCents": 48359909997,
+          "label": "Ricerca e innovazione",
+          "paymentsCashCsCents": 43344462875
+        },
+        {
+          "code": "032",
+          "commitmentsCpCents": 11919566811,
+          "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
+          "paymentsCashCsCents": 11877414320
+        }
+      ],
+      "paymentsCashCsCents": 227108874820,
+      "paymentsCompetenceCpCents": 209618786569,
+      "paymentsResidualRsCents": 17490088251,
+      "remainingCpCents": 85971312647,
+      "remainingRsCents": 147057283889,
+      "residualsEndCents": 233028596536
+    },
+    {
+      "code": "13",
+      "commitmentsCpCents": 207505985323,
+      "label": "MINISTERO DELL'AGRICOLTURA, DELLA SOVRANITA' ALIMENTARE E DELLE FORESTE",
+      "missions": [
+        {
+          "code": "009",
+          "commitmentsCpCents": 198570830126,
+          "label": "Agricoltura, politiche agroalimentari e pesca",
+          "paymentsCashCsCents": 209848069908
+        },
+        {
+          "code": "018",
+          "commitmentsCpCents": 5537331322,
+          "label": "Sviluppo sostenibile e tutela del territorio e dell'ambiente",
+          "paymentsCashCsCents": 5037496326
+        },
+        {
+          "code": "032",
+          "commitmentsCpCents": 3397823875,
+          "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
+          "paymentsCashCsCents": 3218133939
+        }
+      ],
+      "paymentsCashCsCents": 218103700173,
+      "paymentsCompetenceCpCents": 167529202629,
+      "paymentsResidualRsCents": 50574497544,
+      "remainingCpCents": 39976782694,
+      "remainingRsCents": 104579601745,
+      "residualsEndCents": 144556384439
+    },
+    {
+      "code": "16",
+      "commitmentsCpCents": 43488646498,
+      "label": "MINISTERO DEL TURISMO",
+      "missions": [
+        {
+          "code": "031",
+          "commitmentsCpCents": 42400693407,
+          "label": "Turismo",
+          "paymentsCashCsCents": 24226797604
+        },
+        {
+          "code": "032",
+          "commitmentsCpCents": 1087953091,
+          "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
+          "paymentsCashCsCents": 772211095
+        }
+      ],
+      "paymentsCashCsCents": 24999008699,
+      "paymentsCompetenceCpCents": 12531306961,
+      "paymentsResidualRsCents": 12467701738,
+      "remainingCpCents": 30957339537,
+      "remainingRsCents": 28233778057,
+      "residualsEndCents": 59191117594
+    }
+  ],
+  "referenceYear": 2025,
+  "schemaVersion": 1,
+  "totals": {
+    "commitmentsCpCents": 117092823506300,
+    "paymentsCashCsCents": 115416545988384,
+    "paymentsCompetenceCpCents": 110992283772937,
+    "paymentsResidualRsCents": 4424262215447,
+    "remainingCpCents": 6100539733363,
+    "remainingRsCents": 13619318686056,
+    "residualsEndCents": 19719858419419
+  },
+  "unit": "euro_cents"
+}

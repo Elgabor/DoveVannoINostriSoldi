@@ -30,7 +30,7 @@ test("the national appointments route keeps the two populations separate", () =>
   assert.match(page, /scopedSnapshot\.employeeAppointments/);
   assert.match(page, /le serie non si sommano/);
   assert.match(page, /non include gli incarichi ai\s+dipendenti/);
-  assert.match(page, /non è la stessa popolazione degli\s+incarichi esterni/);
+  assert.match(page, /resta distinta dagli incarichi\s+esterni/);
   assert.doesNotMatch(page, /paidCents\s*\+[^\n]*paidCents/);
 });
 
@@ -39,7 +39,7 @@ test("the route labels partial coverage, amount meaning, and valid denominators"
   assert.deepEqual(INCARICHI_OVERVIEW_YEARS, [2023, 2024, 2025, 2026]);
   assert.match(page, /2026 è un anno parziale/);
   assert.match(page, /Quanto risulta pagato/);
-  assert.match(page, /non compensi lordi\s+previsti/);
+  assert.match(page, /quanto risulta pagato alla fonte/);
   assert.match(page, /denominatore esplicito/);
   assert.match(page, /destinatari individuali \+ organizzazioni/);
   assert.match(page, /totale incarichi ai dipendenti/);

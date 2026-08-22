@@ -20,8 +20,7 @@ test("Ministries page keeps the competence frame exact and separate", () => {
   assert.match(page, /Totale CP/);
   assert.match(page, /Pagato CP/);
   assert.match(page, /Rimasto da pagare CP/);
-  assert.match(page, /Non è il totale di cassa/);
-  assert.match(page, /non misura un\s*\n?\s*debito da pagare/);
+  assert.match(page, /somma di già\s*\n?\s*pagato e ancora da pagare/);
   assert.match(page, /senza arrotondamenti intermedi/);
   assert.match(page, /Scorri la tabella verso destra/);
   assert.match(page, /sourceRecordId/);
@@ -35,7 +34,7 @@ test("Ministries page keeps the competence frame exact and separate", () => {
 test("Totale impegnato has a treemap and an exact accessible table fallback", () => {
   assert.match(treemap, /dataKey="totalCpCents"/);
   assert.match(treemap, /Come si spezza il totale impegnato 2025/);
-  assert.match(treemap, /treemapTile/);
+  assert.match(treemap, /institutionalCategoryColor/);
   assert.match(treemap, /aria-describedby="ministeri-totale-cp-caption"/);
   assert.match(treemap, /figcaption id="ministeri-totale-cp-caption"/);
   assert.match(treemap, /isAnimationActive={false}/);

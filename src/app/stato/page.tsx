@@ -184,8 +184,8 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
           </span>
           {isConsuntivo ? (
             <p>
-              Questo è il consuntivo annuale RGS dell&apos;esercizio {snapshot.period.year}. Non viene
-              sommato né sottratto alla serie mensile: i due rilasci hanno significato distinto.
+              Consuntivo annuale RGS dell&apos;esercizio {snapshot.period.year}. Serie
+              annuale e serie mensile restano separate perché hanno significato distinto.
             </p>
           ) : (
             <p>

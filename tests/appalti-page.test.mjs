@@ -19,7 +19,7 @@ test("appalti page keeps the verified 2025 denominators and scope visible", () =
   assert.equal(anacCigSnapshot.procedureChoice.directAward.records, 1_192_083);
   assert.equal(anacCigSnapshot.servicesAndSuppliesBelow140000.records, 1_159_940);
   assert.equal(anacCigSnapshot.thresholdBand135000To140000.strictContractRecords, 13_393);
-  assert.match(pageSource, /non è quota di euro o pagamenti/);
+  assert.match(pageSource, /quota sul numero di CIG/);
   assert.match(controlsPageSource, /href="\/appalti"/);
 });
 
@@ -39,9 +39,9 @@ test("appalti page makes the chart/table equivalence and denominator explicit", 
 });
 
 test("appalti page treats threshold concentrations as screening signals, not findings", () => {
-  assert.match(pageSource, /non dimostrano da soli spreco, illecito, corruzione/);
-  assert.match(pageSource, /non dimostra da sola un frazionamento/);
-  assert.match(pageSource, /non è un prezzo unitario/);
+  assert.match(pageSource, /indicano dove guardare\s*\n?\s*meglio negli atti/);
+  assert.match(pageSource, /serve a scegliere cosa verificare negli atti/);
+  assert.match(pageSource, /valore dichiarato del lotto nella banca dati/);
   assert.match(pageSource, /Definizione stretta/);
   assert.match(pageSource, /thresholdBand\.strictContractDefinition/);
   assert.match(pageSource, /135\.000 €/);
@@ -60,6 +60,6 @@ test("appalti page keeps sources and methodology after the data sections", () =>
 });
 
 test("appalti page avoids supplier attribution", () => {
-  assert.match(pageSource, /non mostra nomi di fornitori/);
-  assert.match(pageSource, /non consente di collegare il valore a un soggetto/);
+  assert.match(pageSource, /senza nomi di fornitori/);
+  assert.match(pageSource, /né concentrazione\s*\n?\s*per soggetto/);
 });

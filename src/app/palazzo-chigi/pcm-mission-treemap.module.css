@@ -10,32 +10,18 @@
 }
 
 .tileLabel,
-.tileShare,
-.tileAmount {
-  pointer-events: none;
-}
-
-.tileInkLight {
+.tileShare {
   fill: var(--color-raised);
-}
-
-.tileInkDark {
-  fill: var(--color-text);
+  font-weight: 800;
+  pointer-events: none;
 }
 
 .tileLabel {
   font-size: 13px;
-  font-weight: 800;
 }
 
 .tileShare {
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.tileAmount {
   font-size: 11px;
-  font-weight: 650;
 }
 
 .tooltip {
@@ -72,9 +58,5 @@
 @media (max-width: 620px) {
   .chart {
     height: 360px;
-  }
-
-  .tileAmount {
-    display: none;
   }
 }

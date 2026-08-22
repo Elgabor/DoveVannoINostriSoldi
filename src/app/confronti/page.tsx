@@ -146,7 +146,7 @@ export default function ConfrontiPage() {
         </ol>
         <p className={styles.legend}>
           La tacca verticale indica la mediana di {exactEuro(euros(medianCents))}. Il colore e la
-          posizione mostrano una differenza, non un giudizio sulla qualità del restauro.
+          posizione mostrano la differenza rispetto a quella mediana.
         </p>
       </section>
 
@@ -228,10 +228,10 @@ export default function ConfrontiPage() {
       <section className="panel" aria-labelledby="method-title">
         <h2 id="method-title" className="panel-title">Metodo e limiti</h2>
         <ul className={styles.methodList}>
-          <li>Mediana e percentili calcolati su tre soli affidamenti: è un confronto descrittivo, non un prezzo equo.</li>
+          <li>Mediana e percentili calcolati su tre soli affidamenti: confronto descrittivo su una coorte piccola.</li>
           <li>Dentro la coorte restano fissi ente, mostra, categoria, periodo, procedura, unità e base IVA.</li>
           <li>Un atto di trasporto per la stessa mostra è escluso perché misura un servizio diverso.</li>
-          <li>I nomi dei contraenti non sono ripubblicati; atto e CIG permettono la verifica alla fonte.</li>
+          <li>Atto e CIG permettono la verifica alla fonte; i nomi dei contraenti restano pubblicati lì.</li>
         </ul>
       </section>
 

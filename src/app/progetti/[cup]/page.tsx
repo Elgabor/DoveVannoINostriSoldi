@@ -164,7 +164,7 @@ export default async function ProjectPage({ params }: { params: RouteParams }) {
 
       <section className={styles.procurement} aria-labelledby="procurement-title">
         <div className={styles.sectionHeading}><h2 id="procurement-title">{integer(project.tenders.length)} gare, {integer(project.awardees.length)} aggiudicatari</h2></div>
-        {project.tenders.length === 0 ? <div className="notice"><strong>Nessuna gara collegata nello snapshot</strong><p>Questo non dimostra che non esista una procedura: indica soltanto che il CSV Italia Domani non la collega a questo CUP.</p></div> : null}
+        {project.tenders.length === 0 ? <div className="notice"><strong>Nessuna gara collegata nello snapshot</strong><p>Il CSV Italia Domani non collega una procedura a questo CUP nello snapshot attuale.</p></div> : null}
         <div className={styles.tenderList}>
           {project.tenders.map((tender, index) => {
             const awardees = awardeesForTender(project, tender);

@@ -52,7 +52,9 @@ La palette è grigio-carta caldo con un unico rosso di segnalazione. Evitare ner
 
 ### Token per le visualizzazioni
 
-`--chart-primary` è l'accento; `--chart-secondary…quinary` scendono lungo la rampa neutra. Una serie accentata su contesto neutro, mai un arcobaleno.
+`--chart-primary` è l'accento; `--chart-secondary…quinary` scendono lungo la rampa neutra. Una serie accentata su contesto neutro, mai un arcobaleno generico.
+
+Per le sole composizioni additive istituzionali (treemap Ministeri / Palazzo Chigi / Regioni) esistono `--chart-category-blue|teal|purple|amber|green|slate`: famiglie leggibili con testo bianco, senza usare il rosso come colore di categoria. Il rosso resta per CTA, evidenza e warning.
 
 La coropleta regionale usa cinque passi sequenziali — `accent-200, accent-300, accent-400, accent-600, accent-800` — con contorno `--color-neutral-500` da 1px. Due vincoli, entrambi verificati a schermo:
 

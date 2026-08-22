@@ -53,9 +53,8 @@ export default function RegionalFiscalPage() {
         <p>
           Confronto {data.year} della Pubblica Amministrazione consolidata nei Conti Pubblici
           Territoriali. La vista è ordinata per saldo pro capite; i totali assoluti restano nella
-          tabella. Entrate e spese sono flussi di cassa attribuiti al territorio, non il bilancio
-          della sola Regione. Le entrate territorializzate non equivalgono alle tasse versate dai
-          residenti: includono le componenti definite dal perimetro CPT.
+          tabella. Entrate e spese sono flussi di cassa attribuiti al territorio nel perimetro CPT.
+          Le entrate territorializzate includono le componenti definite da quel perimetro.
         </p>
       </div>
 
@@ -147,7 +146,7 @@ export default function RegionalFiscalPage() {
       </section>
 
       <div className="notice">
-        <strong>Questo non è un voto alle regioni</strong>
+        <strong>Come leggere il saldo</strong>
         <p>{data.methodology.warning} {data.methodology.notFiscalResidual}</p>
       </div>
 

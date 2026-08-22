@@ -55,7 +55,7 @@ export default function HealthSpendingPage() {
         <h1>Sanità: personale e servizi nel Conto Economico</h1>
         <p>
           Un confronto tra voci contabili del consuntivo 2024 degli enti del Servizio Sanitario
-          Nazionale. Il dataset misura costi di competenza economica, non pagamenti di cassa.
+          Nazionale. Il dataset misura costi di competenza economica.
         </p>
       </header>
 
@@ -94,8 +94,8 @@ export default function HealthSpendingPage() {
               Le voci contabili a confronto
             </h2>
             <p>
-              Aggregato nazionale ufficiale del dataset SSN_CCE_NAZ_VOCCN_001. Non è la somma del
-              dettaglio per ente.
+              Aggregato nazionale ufficiale del dataset SSN_CCE_NAZ_VOCCN_001. Il dettaglio per ente
+              resta in una tabella separata.
             </p>
           </div>
           <span className="tag tag-neutral">2024 · consuntivo</span>
@@ -138,8 +138,8 @@ export default function HealthSpendingPage() {
           </table>
         </div>
         <p className={styles.note}>
-          “Acquisti di servizi” comprende più servizi sanitari e non sanitari; non è la stessa cosa
-          delle sole prestazioni di lavoro. Gli importi nella tabella sono arrotondati solo nella
+          “Acquisti di servizi” comprende più servizi sanitari e non sanitari, oltre alle sole
+          prestazioni di lavoro. Gli importi nella tabella sono arrotondati solo nella
           visualizzazione; l&apos;artefatto conserva centesimi interi.
         </p>
       </section>
@@ -187,7 +187,7 @@ export default function HealthSpendingPage() {
                 <td className="num">{compactEuro(euro(national.healthcareWorkServices))}</td>
                 <td
                   className="num"
-                  aria-label="Non applicabile: il totale nazionale non è un conteggio di enti"
+                  aria-label="Non applicabile: il totale nazionale è un aggregato, senza conteggio enti"
                 >
                   <span aria-hidden="true">n.a.</span>
                 </td>
@@ -205,7 +205,7 @@ export default function HealthSpendingPage() {
             </h2>
             <p>
               Elenco completo server-side dei {integer(data.detailCoverage.entityCount)} enti di
-              dettaglio, alfabetico per codice geografico e Codice Ente SSN. Non è una graduatoria.
+              dettaglio, alfabetico per codice geografico e Codice Ente SSN.
             </p>
           </div>
         </div>

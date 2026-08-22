@@ -51,7 +51,7 @@ function plainCategoryLabel(id: string, fallback: string): string {
 function plainCaveat(id: string, caveat: string | undefined): string | undefined {
   if (!caveat) return undefined;
   if (id === "pensions") {
-    return "Questa voce non sono solo i vitalizi. Il consuntivo non separa i pagamenti delle sottovoci interne.";
+    return "Questa voce raccoglie più tipi di pagamento pensionistico. Il consuntivo non separa i pagamenti delle sottovoci interne.";
   }
   return caveat;
 }
@@ -83,9 +83,8 @@ export default function ParliamentPage() {
       <div className="page-intro">
         <h1>Spese del Parlamento</h1>
         <p>
-          Camera e Senato hanno bilanci autonomi. Per la Camera mostriamo i dati che abbiamo già
-          estratto e controllato; per i documenti 2024 dei due rami, per ora solo i riferimenti
-          ufficiali. Non li sommiamo e non inventiamo i numeri che mancano.
+          Camera e Senato hanno bilanci autonomi. Per la Camera mostriamo i dati già estratti e
+          controllati; per i documenti 2024 dei due rami, per ora i riferimenti ufficiali.
         </p>
       </div>
 
@@ -116,7 +115,7 @@ export default function ParliamentPage() {
         <strong>Come leggere questi numeri</strong>
         <p>
           Un bilancio dice quanto si prevede di spendere. Un consuntivo dice quanto è stato
-          impegnato o pagato. Non sommiamo i due valori e non inventiamo i dati che mancano.
+          impegnato o pagato. Ogni documento resta sul suo perimetro.
         </p>
       </div>
 

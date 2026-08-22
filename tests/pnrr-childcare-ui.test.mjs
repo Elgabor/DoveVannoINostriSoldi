@@ -9,7 +9,7 @@ test("PNRR catalog is server-rendered, searchable, and semantically cautious", a
   assert.doesNotMatch(page, /^["']use client["'];/m);
   assert.match(page, /queryPnrrChildcare/);
   assert.match(page, /finanziamento PNRR registrato/i);
-  assert.match(page, /non un giudizio di merito/i);
+  assert.match(page, /pista documentale su CUP, finanziamenti, gare e aggiudicatari/i);
   assert.match(page, /non contiene i pagamenti ReGiS/i);
   assert.equal(page.match(/<h1\b/g)?.length, 1);
   assert.match(page, /aria-label="Pagine dei risultati"/);

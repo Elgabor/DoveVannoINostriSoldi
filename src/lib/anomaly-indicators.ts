@@ -7,13 +7,12 @@ import type { OpenCivitasMunicipality } from "@/lib/data/opencivitas-contract";
  * value worth reading in context.
  */
 export const METHODOLOGY_WARNING =
-  "Questo è uno screening derivato dai dati OpenCivitas, non una classifica di Comuni migliori o peggiori: " +
-  "un valore oltre la soglia non dimostra sprechi, meriti, corruzione o illeciti. " +
-  "Differenze di servizi, costi locali, eventi eccezionali e qualità del dato richiedono una verifica separata.";
+  "Screening derivato dai dati OpenCivitas: confronta la differenza per abitante tra spesa storica e spesa standard con una soglia regionale. " +
+  "Un valore oltre la soglia indica dove approfondire con contesto locale, servizi e qualità del dato.";
 
 export const POPULATION_METHOD_WARNING =
-  "La popolazione mostrata per gli outlier è una stima implicita: la media arrotondata dei valori ottenuti dividendo spesa totale e spesa per abitante per le due misure disponibili; " +
-  "non sostituisce un denominatore demografico ISTAT e non viene usata per attribuire responsabilità.";
+  "La popolazione mostrata per gli outlier è una stima implicita: la media arrotondata dei valori ottenuti dividendo spesa totale e spesa per abitante per le due misure disponibili. " +
+  "Resta una ricostruzione contabile, distinta da un denominatore demografico ISTAT.";
 
 export type OutlierDirection = "sopra" | "sotto";
 

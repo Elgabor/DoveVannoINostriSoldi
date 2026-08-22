@@ -1,19 +1,25 @@
 /**
- * Plain-language names for the SIOPE expenditure titles.
+ * Plain-language names for public expenditure titles.
  *
- * SIOPE labels its titles in accounting Italian ("Uscite per conto terzi e
- * partite di giro"). The site's job is to say the same thing in words people
- * actually use, without changing what the number means — so every entry keeps
- * the official label alongside the plain one.
+ * Official files use accounting Italian. The UI shows what the money is for,
+ * in everyday words, without changing what the number means.
  */
+
+export type SpendingScope = "comune" | "regione";
 
 export type SiopeTitleCopy = {
   /** Plain-language name shown as the heading. */
   name: string;
-  /** The accounting term, kept visible next to the plain name. */
+  /** The accounting term, kept nearby when useful. */
   official: string;
-  /** One sentence on what actually sits inside this title. */
+  /** One sentence on where the money goes. */
   explanation: string;
+};
+
+type TitleEntry = {
+  name: string;
+  official: string;
+  explanation: Record<SpendingScope, string>;
 };
 
 const fallback: SiopeTitleCopy = {
@@ -22,85 +28,111 @@ const fallback: SiopeTitleCopy = {
   explanation: "Voce presente nella fonte ma non ancora descritta in parole semplici.",
 };
 
-const byCode: Record<string, SiopeTitleCopy> = {
+const byCode: Record<string, TitleEntry> = {
   "1": {
     name: "Servizi di ogni giorno",
     official: "spese correnti",
-    explanation:
-      "Stipendi, scuole, rifiuti, luce, manutenzione: quello che tiene aperto un Comune.",
+    explanation: {
+      comune:
+        "Stipendi, scuole, rifiuti, luce, manutenzione: quello che tiene aperto il Comune.",
+      regione:
+        "Stipendi, servizi, scuole e tutto quello che la Regione tiene in piedi ogni giorno.",
+    },
   },
   "2": {
     name: "Opere e lavori",
     official: "conto capitale",
-    explanation: "Strade, edifici, impianti: soldi che restano nel tempo.",
+    explanation: {
+      comune: "Strade, edifici, impianti: cose che restano nel tempo.",
+      regione: "Strade, edifici, impianti: opere che restano nel territorio.",
+    },
+  },
+  "3": {
+    name: "Soldi messi in società",
+    official: "attività finanziarie",
+    explanation: {
+      comune: "Quote in società e altri investimenti finanziari.",
+      regione: "Quote in società e altri investimenti finanziari.",
+    },
+  },
+  "4": {
+    name: "Rate dei prestiti",
+    official: "rimborso prestiti",
+    explanation: {
+      comune: "Rate di mutui presi negli anni scorsi.",
+      regione: "Rate di mutui e prestiti presi negli anni scorsi.",
+    },
+  },
+  "5": {
+    name: "Anticipi restituiti",
+    official: "chiusura anticipazioni",
+    explanation: {
+      comune: "Soldi presi in anticipo dal cassiere e poi restituiti.",
+      regione: "Soldi presi in anticipo dal cassiere e poi restituiti.",
+    },
   },
   "7": {
-    name: "Partite di giro",
+    name: "Soldi di passaggio",
     official: "uscite per conto terzi",
-    explanation:
-      "Soldi che il Comune incassa e riversa per conto di altri, come alcune ritenute. Non rappresentano acquisti o servizi del Comune.",
+    explanation: {
+      comune: "Soldi che il Comune riceve e passa ad altri enti o soggetti.",
+      regione: "Soldi che la Regione riceve e passa ad altri enti o soggetti.",
+    },
   },
   "0": {
     name: "Ancora da classificare",
     official: "da regolarizzare",
-    explanation: "Pagamenti registrati ma non ancora assegnati a una voce.",
-  },
-  "5": {
-    name: "Anticipi di cassa restituiti",
-    official: "chiusura anticipazioni",
-    explanation: "Denaro chiesto in prestito al tesoriere del Comune e poi restituito.",
-  },
-  "4": {
-    name: "Rimborso di prestiti",
-    official: "rimborso prestiti",
-    explanation: "Rate di mutui accesi negli anni passati.",
-  },
-  "3": {
-    name: "Investimenti finanziari",
-    official: "attività finanziarie",
-    explanation: "Quote in società e altri strumenti finanziari.",
+    explanation: {
+      comune: "Pagamenti registrati ma non ancora assegnati a una voce.",
+      regione: "Importi registrati ma non ancora assegnati a una voce.",
+    },
   },
 };
 
-/** SIOPE title 7 is money passing through, not spending the Comune decided on. */
+/** Title 7 is money passing through, not spending decided for own services. */
 export const PASS_THROUGH_TITLE_CODE = "7";
 
-export function siopeTitleCopy(code: string): SiopeTitleCopy {
-  return byCode[code] ?? fallback;
+export function siopeTitleCopy(
+  code: string,
+  scope: SpendingScope = "comune",
+): SiopeTitleCopy {
+  const entry = byCode[code];
+  if (!entry) return fallback;
+  return {
+    name: entry.name,
+    official: entry.official,
+    explanation: entry.explanation[scope],
+  };
 }
 
 /**
  * Seven slices is more than a thumbnail chart can carry, so the home page
- * groups the tail into five buckets. The two smallest titles share a bucket
- * named for what they have in common — neither is day-to-day spending nor a
- * public work — rather than being folded into an unrelated label.
+ * groups the tail into five buckets.
  */
 export const HOME_SPENDING_BUCKETS: { name: string; explanation: string; codes: string[] }[] = [
   {
     name: "Servizi quotidiani",
-    explanation: "Spese correnti: stipendi, scuole, rifiuti, luce.",
+    explanation: "Stipendi, scuole, rifiuti, luce.",
     codes: ["1"],
   },
   {
     name: "Opere e lavori",
-    explanation: "Conto capitale: strade, edifici, impianti.",
+    explanation: "Strade, edifici, impianti.",
     codes: ["2"],
   },
   {
-    name: "Partite di giro",
-    explanation:
-      "Soldi che il Comune incassa e riversa per conto dello Stato o di altri soggetti. Non rappresentano acquisti o servizi del Comune.",
+    name: "Soldi di passaggio",
+    explanation: "Soldi che il Comune riceve e passa ad altri.",
     codes: ["7"],
   },
   {
     name: "Prestiti e anticipi",
-    explanation: "Rate di mutui e anticipi di cassa restituiti.",
+    explanation: "Rate di mutui e anticipi restituiti.",
     codes: ["5", "4"],
   },
   {
     name: "Altre uscite",
-    explanation:
-      "Pagamenti non ancora assegnati a una voce e investimenti finanziari come le quote in società.",
+    explanation: "Voci ancora da classificare e soldi messi in società.",
     codes: ["0", "3"],
   },
 ];

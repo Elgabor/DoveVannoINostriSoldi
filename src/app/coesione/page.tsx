@@ -151,7 +151,7 @@ export default function CohesionPage() {
         <div>
           <span className="stat-label">Pagato sul costo previsto</span>
           <span className="stat-value">{percent(ratio)}</span>
-          <span className="stat-note">rapporto finanziario, non fisico</span>
+          <span className="stat-note">rapporto tra importi</span>
         </div>
         <div>
           <span className="stat-label">Progetti seguiti</span>
@@ -164,8 +164,8 @@ export default function CohesionPage() {
         <strong>Come leggere questi numeri</strong>
         <p>
           La quota confronta ogni categoria con il costo pubblico nazionale. “Pagato sul costo”
-          è un rapporto tra soldi: non dice se un progetto è finito bene, se è utile o se ci sono
-          irregolarità. La media per progetto mescola record molto diversi.
+          è un rapporto tra soldi usciti e costo previsto. La media per progetto mescola record
+          molto diversi.
         </p>
       </div>
 
@@ -255,7 +255,8 @@ export default function CohesionPage() {
             </table>
           </div>
           <p className={styles.note}>
-            La serie cresce nel tempo perché è cumulata dal 1990: non è la spesa del singolo anno.
+            La serie cresce nel tempo perché è cumulata dal 1990: ogni punto somma i totali fino a
+            quell&apos;anno.
           </p>
         </section>
 
@@ -279,10 +280,9 @@ export default function CohesionPage() {
       </div>
 
       <div className="notice">
-        <strong>Cosa non dice questo dato</strong>
+        <strong>Come leggere «pagato»</strong>
         <p>
-          “Pagato” vuol dire che i soldi sono usciti, non che l&apos;opera è finita.{" "}
-          Le categorie contengono progetti eterogenei e non sono classifiche di efficienza.{" "}
+          “Pagato” indica che i soldi sono usciti. Le categorie raccolgono progetti eterogenei.{" "}
           {snapshot.methodology.territorialWarning}
         </p>
       </div>

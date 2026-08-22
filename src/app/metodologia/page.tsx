@@ -8,9 +8,9 @@ export const metadata: Metadata = {
 
 const rules = [
   ["Mostriamo sempre la fonte", "Ogni numero porta al documento o ai dati ufficiali da cui arriva."],
-  ["Non sommiamo cose diverse", "Pagamenti, costi previsti, debiti e ipotesi hanno significati diversi e restano separati."],
+  ["Teniamo separate le grandezze diverse", "Pagamenti, costi previsti, debiti e ipotesi hanno significati diversi e restano separati."],
   ["Diciamo quanto è recente", "Mostriamo la data del dato, quando lo abbiamo controllato e quanto spesso cambia la fonte."],
-  ["Un segnale non è una colpa", "Un valore insolito indica dove guardare meglio. Da solo non prova errori, sprechi o illeciti."],
+  ["Un segnale indica dove guardare", "Un valore insolito serve a scegliere cosa approfondire con contesto e fonti ufficiali."],
   ["Confrontiamo casi simili", "Mettiamo a confronto enti e servizi solo quando i numeri misurano la stessa cosa."],
   ["Le correzioni restano visibili", "Se un dato cambia, conserviamo la versione precedente e spieghiamo che cosa è stato corretto."],
 ];
@@ -21,8 +21,8 @@ export default function MethodPage() {
       <div className="page-intro">
         <h1>Come leggere i dati</h1>
         <p>
-          Un numero senza contesto può confondere. Per questo mostriamo sempre la fonte, la data,
-          il significato e ciò che quel numero non può dimostrare.
+          Un numero senza contesto può confondere. Per questo mostriamo sempre la fonte, la data
+          e il significato di ogni cifra.
         </p>
       </div>
 
@@ -37,11 +37,11 @@ export default function MethodPage() {
       </div>
 
       <div className="notice warning-notice">
-        <strong>Un controllo non è una condanna</strong>
+        <strong>Controlli e approfondimenti</strong>
         <p>
-          DoveVannoINostriSoldi aiuta a trovare dati e segnali da approfondire. Non sostituisce
-          ANAC, Corte dei conti, magistratura o verifiche dell&apos;amministrazione. Nessun algoritmo
-          attribuisce automaticamente illeciti o responsabilità personali.
+          DoveVannoINostriSoldi aiuta a trovare dati e segnali da approfondire. Il lavoro di ANAC,
+          Corte dei conti, magistratura e verifiche dell&apos;amministrazione resta quello ufficiale.
+          Nessun algoritmo attribuisce automaticamente illeciti o responsabilità personali.
         </p>
       </div>
     </main>

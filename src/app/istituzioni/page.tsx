@@ -46,7 +46,7 @@ export default function InstitutionsPage() {
         <h1>Spese delle istituzioni</h1>
         <p>
           Parlamento, Palazzo Chigi, Ministeri e Regioni hanno conti diversi.
-          Scegli il percorso: non li sommiamo in un totale unico.
+          Ogni percorso resta separato.
         </p>
       </div>
 
@@ -70,10 +70,10 @@ export default function InstitutionsPage() {
       </section>
 
       <div className="notice">
-        <strong>Perché non c&apos;è un totale delle istituzioni</strong>
+        <strong>Quattro conti distinti</strong>
         <p>
-          Anni, confini e regole contabili non coincidono. Sommarli produrrebbe un numero
-          fuorviante. I confronti restano dentro ogni fonte e solo tra grandezze compatibili.
+          Anni, confini e regole contabili restano diversi. I confronti restano dentro ogni fonte
+          e solo tra grandezze compatibili.
         </p>
       </div>
     </main>

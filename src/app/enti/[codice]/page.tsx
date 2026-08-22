@@ -243,9 +243,9 @@ export default async function EntityPage({ params }: PageProps) {
             )}
 
             <p className={styles.note}>
-              Le UO non sono automaticamente “dipartimenti”: IPA descrive uffici e relazioni
-              dichiarate dall&apos;ente. Per direzioni generali e strutture giuridiche fanno fede anche
-              regolamenti e pagine di Amministrazione trasparente.
+              IPA descrive unità organizzative, uffici e relazioni dichiarate dall&apos;ente. Per
+              direzioni generali e strutture giuridiche fanno fede anche regolamenti e pagine di
+              Amministrazione trasparente.
             </p>
           </section>
 

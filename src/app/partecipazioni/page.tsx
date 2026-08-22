@@ -75,12 +75,12 @@ export default function ParticipationsPage() {
             </li>
           </ul>
           <p className={styles.note}>
-            Composizione delle relazioni nella rilevazione, non quote di capitale aggregate.
+            Composizione delle relazioni nella rilevazione.
           </p>
         </section>
 
         <section className="panel">
-          <h2 className="panel-title">Indicazioni dichiarate, non sentenze</h2>
+          <h2 className="panel-title">Indicazioni dichiarate nella rilevazione</h2>
           <dl className={styles.evidence}>
             <div>
               <dt>Controllo analogo dichiarato</dt>
@@ -126,8 +126,7 @@ export default function ParticipationsPage() {
           </table>
         </div>
         <p className={styles.note}>
-          Conteggio delle amministrazioni con una relazione nel CSV MEF {snapshot.referenceYear};
-          non misura valore, qualità o controllo.
+          Conteggio delle amministrazioni con una relazione nel CSV MEF {snapshot.referenceYear}.
         </p>
       </section>
 

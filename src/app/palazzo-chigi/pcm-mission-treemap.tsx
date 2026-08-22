@@ -3,7 +3,7 @@
 import { ResponsiveContainer, Tooltip, Treemap } from "recharts";
 import type { TreemapNode } from "recharts";
 import type { PcmFinancialMission } from "@/lib/data/pcm-financial-contract";
-import { treemapTile } from "@/lib/treemap-palette";
+import { institutionalCategoryColor } from "@/lib/chart-category-colors";
 import styles from "./pcm-mission-treemap.module.css";
 
 const compactEuro = new Intl.NumberFormat("it-IT", {
@@ -36,9 +36,7 @@ type MissionNode = TreemapNode & {
 function tile(props: TreemapNode) {
   const node = props as MissionNode;
   const showLabel = node.width >= 128 && node.height >= 62;
-  const showAmount = node.width >= 150 && node.height >= 92;
-  const { fill, ink } = treemapTile(node.index);
-  const inkClass = ink === "light" ? styles.tileInkLight : styles.tileInkDark;
+  const showShare = node.width >= 150 && node.height >= 88;
 
   return (
     <g>
@@ -47,21 +45,18 @@ function tile(props: TreemapNode) {
         y={node.y}
         width={node.width}
         height={node.height}
-        fill={fill}
+        fill={institutionalCategoryColor(node.index)}
         stroke="var(--color-raised)"
         strokeWidth={2}
       />
       {showLabel ? (
         <>
-          <text x={node.x + 12} y={node.y + 25} className={`${styles.tileLabel} ${inkClass}`}>
+          <text x={node.x + 12} y={node.y + 25} className={styles.tileLabel}>
             {node.shortLabel}
           </text>
-          <text x={node.x + 12} y={node.y + 45} className={`${styles.tileShare} ${inkClass}`}>
-            {percentage.format(node.share ?? 0)}
-          </text>
-          {showAmount ? (
-            <text x={node.x + 12} y={node.y + 66} className={`${styles.tileAmount} ${inkClass}`}>
-              {compactEuro.format((node.paymentsCents ?? 0) / 100)}
+          {showShare ? (
+            <text x={node.x + 12} y={node.y + 45} className={styles.tileShare}>
+              {compactEuro.format((node.paymentsCents ?? 0) / 100)} · {percentage.format(node.share ?? 0)}
             </text>
           ) : null}
         </>

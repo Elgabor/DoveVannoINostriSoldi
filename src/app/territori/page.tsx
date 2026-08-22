@@ -55,7 +55,7 @@ export default async function TerritoriesPage({
               ? "non disponibile"
               : `${exactEuro(data.nationalPerCapita)} per abitante`}
             .
-            {" "}Sono uscite di cassa dei Comuni, non tasse pagate dai residenti.
+            {" "}Uscite di cassa dei Comuni con sede nella regione.
           </p>
         </div>
         <PeriodSelector activeYear={year} years={availableSiopeYears} pathname="/territori" />
@@ -202,16 +202,16 @@ export default async function TerritoriesPage({
               </table>
             </div>
             <p className={styles.note}>
-              La vista assoluta resta disponibile come confronto, ma non è il default.
+              La vista assoluta resta disponibile come confronto; il default resta il pro capite.
             </p>
           </section>
 
           <div className="notice">
-            <strong>Perché non è una classifica di merito</strong>
+            <strong>Come leggere i totali assoluti</strong>
             <p>
               Un Comune turistico serve molte più persone dei suoi residenti, e un Comune che
-              ricostruisce dopo un terremoto spende per opere che dureranno decenni. Il numero alto
-              non è una colpa e quello basso non è un merito.
+              ricostruisce dopo un terremoto spende per opere che dureranno decenni. I totali
+              vanno letti con popolazione, servizi e contesto locale.
             </p>
           </div>
         </div>
@@ -230,7 +230,7 @@ export default async function TerritoriesPage({
         <strong>Redditi e imposta netta dichiarata</strong>
         <p>
           Il MEF pubblica contribuenti, redditi, imposta netta dichiarata e addizionali per Comune.
-          Sono dati dichiarativi, non gettito totale, e restano separati dal saldo CPT.{" "}
+          Sono dati dichiarativi di imposta netta e restano separati dal saldo CPT.{" "}
           <Link href="/territori/irpef">Apri i dati IRPEF per Regione, Provincia e Comune →</Link>
         </p>
       </div>

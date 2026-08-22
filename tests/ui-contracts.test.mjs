@@ -60,12 +60,12 @@ test("the three INPS headline statistics use a complete responsive grid", () => 
 
 test("municipal screening is marked derived, bounded and dimension-aware", () => {
   assert.match(controlsPage, /Screening derivato sui Comuni/);
-  assert.match(controlsPage, /non è una classifica di/);
+  assert.match(controlsPage, /modo compatto per scegliere cosa leggere meglio/);
   assert.match(controlsPage, /Popolazione implicita/);
   assert.match(controlsPage, /sensitivityByPopulationBand/);
   assert.match(controlsPage, /OpenCivitas/);
   assert.match(controlsPage, /selectedYear !== null/);
-  assert.match(controlsPage, /non\s+sono una graduatoria di Comuni/);
+  assert.match(controlsPage, /ordinati per distanza dalla soglia solo per facilitare la lettura/);
   assert.match(controlsCss, /\.outlierTable table \{[\s\S]*?min-width: 900px;/);
 });
 
@@ -87,14 +87,14 @@ test("scope guidance is consolidated without losing its source boundaries", () =
   assert.match(controlsPage, /href="\/metodologia"/);
   assert.match(controlsPage, /href="\/mcp"/);
   assert.match(controlsPage, /dati\.anticorruzione\.it\/opendata\/dataset/);
-  assert.match(controlsPage, /non dimostra una colpa/);
+  assert.match(controlsPage, /Un segnale\s*\n?\s*indica cosa approfondire/);
   assert.match(controlsPage, /non sostituisce Guardia di finanza, ANAC, Corte dei conti/);
 });
 
 test("the SSN view labels accounting scope and remains responsive", () => {
-  assert.match(healthPage, /competenza economica, non pagamenti di cassa/);
+  assert.match(healthPage, /misura costi di competenza economica/);
   assert.match(healthPage, /non pubblica una voce chiamata “gettonisti” o “cooperative”/);
-  assert.match(healthPage, /Non è una graduatoria/);
+  assert.match(healthPage, /alfabetico per codice geografico e Codice Ente SSN/);
   assert.match(healthPage, /codici 041[\s\S]*042/);
   assert.match(healthPage, /datasets\.entities\.sourceSha256/);
   assert.match(healthPage, /Aggregato nazionale ufficiale/);
@@ -102,7 +102,7 @@ test("the SSN view labels accounting scope and remains responsive", () => {
   assert.match(healthPage, /Enti di dettaglio esposti/i);
   assert.match(
     healthPage,
-    /aria-label="Non applicabile: il totale nazionale non è un conteggio di enti"/,
+    /aria-label="Non applicabile: il totale nazionale è un aggregato, senza conteggio enti"/,
   );
   assert.doesNotMatch(
     healthPage,
@@ -115,9 +115,10 @@ test("the SSN view labels accounting scope and remains responsive", () => {
 
 test("the spending analysis explains the share without turning it into a merit ranking", () => {
   assert.equal(spendingPage.match(/className=\{styles\.analysis\}/g)?.length, 1);
-  assert.match(spendingPage, /Titolo 1 · spese correnti/);
-  assert.match(spendingPage, /non dice se una spesa sia utile/);
-  assert.match(spendingPage, /Il confronto non è un trend/);
+  assert.match(spendingPage, /servizi di ogni giorno/);
+  assert.match(spendingPage, /Titolo 1, spese correnti/);
+  assert.match(spendingPage, /Conta i soldi usciti in quel periodo/);
+  assert.match(spendingPage, /Confronto tra snapshot/);
   assert.match(spendingPage, /partialComparisonYears/);
   assert.doesNotMatch(spendingPage, /il 2026 è ancora parziale/);
   assert.match(spendingPage, /<th scope="col" className="num">Quota<\/th>/);

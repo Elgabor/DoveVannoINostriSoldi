@@ -55,12 +55,12 @@ export default function CivilInvalidityPage() {
         <div>
           <span className="stat-label">Prestazioni vigenti al 31 dicembre 2024</span>
           <span className="stat-value">{integer(data.benefitsStock.totalBenefits)}</span>
-          <span className="stat-note">prestazioni, non necessariamente persone uniche</span>
+          <span className="stat-note">conteggio di prestazioni vigenti</span>
         </div>
       </div>
 
       <div className="notice">
-        <strong>Non sono 23,6 miliardi di sole pensioni</strong>
+        <strong>La voce comprende tutte le prestazioni di invalidità civile</strong>
         <p>
           La voce INPS comprende l’insieme delle prestazioni di invalidità civile. Nel dettaglio
           contabile 2024 della Gestione n. 25 l’accompagnamento è la componente maggiore. Quel
@@ -244,12 +244,12 @@ export default function CivilInvalidityPage() {
           </dl>
         </section>
         <section className="panel">
-          <h2 className="panel-title">Perché non è una classifica di frode</h2>
+          <h2 className="panel-title">Come leggere questi aggregati</h2>
           <p className={styles.bodyCopy}>{data.methodology.interpretation}</p>
           <p className={styles.bodyCopy}>
             I dati sanitari individuali richiedono una base giuridica e tutele specifiche. Per
             accertare responsabilità servono verifiche amministrative o giudiziarie sui singoli
-            casi, non aggregati territoriali.
+            casi.
           </p>
         </section>
       </div>

@@ -276,11 +276,10 @@ export default async function MefIrpefPage({
       </div>
 
       <div className="notice">
-        <strong>Che cosa non misura</strong>
+        <strong>Che cosa misura l&apos;imposta netta dichiarata</strong>
         <p>
-          L’imposta netta dichiarata non è il gettito fiscale totale né un incasso di cassa. Non
-          viene sottratta alla spesa o al saldo CPT e non dimostra evasione, frode, responsabilità
-          individuali o qualità amministrativa.
+          L&apos;imposta netta dichiarata è la cifra presente nelle statistiche MEF sulle
+          dichiarazioni. Resta separata da spesa e saldo CPT.
         </p>
       </div>
 
@@ -513,8 +512,8 @@ export default async function MefIrpefPage({
             <div><dt>Hash ZIP</dt><dd><code className={styles.hash}>{source.zip.sha256}</code></dd></div>
           </dl>
           <p className={styles.sourceFooter}>
-            Snapshot osservato il {longDate(result.period.observedAt)}. L’hash è un’impronta calcolata
-            dal progetto, non una firma del MEF. <Link href="/fonti/stato">Controlla lo stato delle fonti →</Link>
+            Snapshot osservato il {longDate(result.period.observedAt)}. L’hash è un’impronta
+            calcolata dal progetto sul file osservato. <Link href="/fonti/stato">Controlla lo stato delle fonti →</Link>
           </p>
         </div>
       </section>

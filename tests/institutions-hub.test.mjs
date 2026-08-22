@@ -12,9 +12,11 @@ test("Institutions hub indexes four separate routes without a combined total", (
     assert.match(navigation, new RegExp(`"${route}"`));
   }
   assert.match(navigation, /href: "\/istituzioni",\s*\n\s*label: "Istituzioni"/);
-  assert.match(page, /non li sommiamo in un totale unico/);
-  assert.match(page, /Sommarli produrrebbe un numero\s*\n?\s*fuorviante/);
+  assert.match(page, /Ogni percorso resta separato/);
+  assert.match(page, /Quattro conti distinti/);
+  assert.match(page, /I confronti restano dentro ogni fonte/);
   assert.doesNotMatch(page, /compactEuro|exactEuro|treemap/i);
+  assert.doesNotMatch(page, /non li sommiamo|Sommarli produrrebbe/i);
 });
 
 test("Institutions hub keeps cards readable on narrow screens", () => {

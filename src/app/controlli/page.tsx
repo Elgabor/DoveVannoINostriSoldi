@@ -172,8 +172,8 @@ export default async function ControlsPage({ searchParams }: PageProps) {
       >
         <h2 id="controlli-reading-title">Come leggere questi dati</h2>
         <p>
-          Pagamenti, debiti, costi e ipotesi misurano cose diverse e non vanno sommati. Un segnale
-          indica cosa approfondire, non dimostra una colpa. Consulta le <Link href="/fonti">fonti
+          Pagamenti, debiti, costi e ipotesi misurano cose diverse e restano separati. Un segnale
+          indica cosa approfondire. Consulta le <Link href="/fonti">fonti
           ufficiali</Link> e il <Link href="/metodologia">metodo usato per leggere i dati</Link>.
         </p>
         <div className="scope-notice__section">
@@ -200,7 +200,7 @@ export default async function ControlsPage({ searchParams }: PageProps) {
       <details className={`panel ${styles.readingGuide}`}>
         <summary>Come distinguere questi numeri</summary>
         <p>
-          Le parole qui sotto non sono intercambiabili. Servono a capire quanto è forte il dato e
+          Le parole qui sotto hanno significati diversi. Servono a capire quanto è forte il dato e
           che cosa possiamo concludere.
         </p>
         <dl>
@@ -221,8 +221,7 @@ export default async function ControlsPage({ searchParams }: PageProps) {
           <p>
             Partiamo dalla differenza per abitante tra spesa storica e spesa standard pubblicata da
             OpenCivitas e calcoliamo, per ogni Regione a statuto ordinario, la soglia di Tukey (1,5 ×
-            IQR). È un modo compatto per scegliere cosa leggere meglio: non è una classifica di
-            Comuni migliori o peggiori e non dimostra sprechi o illeciti.
+            IQR). È un modo compatto per scegliere cosa leggere meglio.
           </p>
 
           <div className="stat-strip">
@@ -310,7 +309,8 @@ export default async function ControlsPage({ searchParams }: PageProps) {
               La soglia principale resta regionale. Come controllo di sensibilità, ripetiamo il
               calcolo dentro fasce di popolazione implicita; i gruppi con meno di 4 Comuni non
               producono una soglia. La popolazione in tabella è la media arrotondata delle due
-              ricostruzioni totale ÷ per abitante, non è un dato demografico ISTAT.
+              ricostruzioni totale ÷ per abitante. Resta una stima implicita, distinta da un
+              dato demografico ISTAT.
             </p>
             <div className={"table-scroll " + styles.outlierTable} role="region" aria-label="Controllo di sensibilità per fascia di popolazione" tabIndex={0}>
               <table className="table">
@@ -351,8 +351,7 @@ export default async function ControlsPage({ searchParams }: PageProps) {
             </p>
           </div>
           <p className={styles.note}>
-            I risultati sono ordinati per distanza dalla soglia solo per facilitare la lettura: non
-            sono una graduatoria di Comuni.
+            I risultati sono ordinati per distanza dalla soglia solo per facilitare la lettura.
           </p>
           <p className={styles.note}>
             Per il dettaglio di spesa storica, spesa standard e servizi consulta il{" "}
@@ -466,8 +465,8 @@ export default async function ControlsPage({ searchParams }: PageProps) {
           </table>
         </div>
         <p className={styles.note}>
-          Una quota alta sul numero delle procedure non equivale alla stessa quota sul valore. Il
-          dato indica dove approfondire concorrenza e motivazioni, non dimostra uno spreco.
+          Una quota alta sul numero delle procedure può differire dalla quota sul valore. Il dato
+          indica dove approfondire concorrenza e motivazioni.
         </p>
       </section>
 
@@ -506,9 +505,8 @@ export default async function ControlsPage({ searchParams }: PageProps) {
           <p className={styles.note}>
             Il {percent(procurementComparisons[2025].byNumber)} considera tutte le procedure da
             40.000 euro in su. Il quasi {percent(procurementServicesAndSupplies2025.directAwardShare)}
-            viene da uno studio diverso di ANAC su servizi e forniture. Non è il 95% di tutti gli
-            appalti. La concentrazione vicino alla soglia indica casi da approfondire, ma non prova
-            da sola un&apos;irregolarità.{" "}
+            viene da uno studio diverso di ANAC su servizi e forniture, con un perimetro più stretto.
+            La concentrazione vicino alla soglia indica casi da approfondire.{" "}
             <a href={procurementServicesAndSupplies2025.sourceUrl} target="_blank" rel="noreferrer">
               Leggi la fonte ANAC ↗
             </a>
@@ -567,7 +565,7 @@ export default async function ControlsPage({ searchParams }: PageProps) {
               ))}
             </div>
             <p className={styles.note}>
-              Sono scenari di politica pubblica, non dati osservati in un singolo anno.
+              Sono scenari di politica pubblica costruiti su ipotesi dichiarate.
             </p>
             <details className={styles.scenarioMethod}>
               <summary>Vedi formula e ipotesi</summary>
@@ -623,8 +621,8 @@ export default async function ControlsPage({ searchParams }: PageProps) {
               ))}
             </ul>
             <p className={styles.note}>
-              Sono stime costruite su ipotesi dichiarate, non soldi già disponibili e non previsioni.
-              Le basi del modello sono quelle del dossier rivisto il {longDate(auditScenarioBasis.reviewedAt)}:
+              Sono stime costruite su ipotesi dichiarate. Le basi del modello sono quelle del dossier
+              rivisto il {longDate(auditScenarioBasis.reviewedAt)}:
               {" "}{number.format(auditScenarioBasis.taxExpendituresBillion)} miliardi di agevolazioni fiscali,
               {" "}{number.format(auditScenarioBasis.reducedCompetitionBillion)} miliardi di appalti con confronto ridotto,
               {" "}{number.format(auditScenarioBasis.externalHealthcareStaffBillion * 1_000)} milioni di personale sanitario esterno

@@ -122,8 +122,8 @@ export default function McpPage() {
       <section className="panel" aria-labelledby="related-mcp-title">
         <h2 id="related-mcp-title">MCP pubblici complementari</h2>
         <p className={styles.sectionIntro}>
-          Questi servizi non sono adapter del portale e non vengono inoltrati dal nostro endpoint.
-          Li segnaliamo separatamente per mantenere chiari proprietario, disponibilità e provenienza.
+          Servizi esterni segnalati a parte: restano fuori dal nostro endpoint e hanno proprietario,
+          disponibilità e provenienza propri.
         </p>
         {relatedMcpServices.map((service) => (
           <article className={styles.relatedService} key={service.id}>

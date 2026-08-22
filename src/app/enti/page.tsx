@@ -298,8 +298,7 @@ export default async function EntiPage({ searchParams }: PageProps) {
             {stats ? integer(stats.total) : "Non disponibile"}
           </strong>
           <p className={styles.note}>
-            Enti presenti nel registro IPA. Non indica il numero dei soli ministeri e non misura la
-            spesa pubblica. Controllato il{" "}
+            Enti presenti nel registro IPA. Controllato il{" "}
             {observedAtLabel(stats?.observedAt ?? distributionObservedAt)}.
           </p>
           <RegistryTypeChart data={distribution} />

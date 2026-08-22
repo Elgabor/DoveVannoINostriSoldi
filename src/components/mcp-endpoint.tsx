@@ -12,9 +12,9 @@ Procedura:
 2. Scegli il dataset coerente con la domanda e usa solo filtri dichiarati dal catalogo.
 3. Usa limit e offset soltanto quando il catalogo li dichiara; mantieni sempre i filtri più stretti necessari.
 4. Nella risposta indica dataset, periodo, territorio, fonte ufficiale e limiti interpretativi.
-5. Distingui pagamenti, costi, imposte dichiarate e stime: l'imposta netta dichiarata MEF non è il gettito totale e non va sottratta al saldo CPT; il saldo CPT non è un residuo fiscale.
-6. Non chiamare un valore spreco, frode o qualità del servizio senza una fonte che lo dimostri.
-7. Se il dato non esiste, è soppresso o i perimetri non sono confrontabili, dichiaralo senza imputazioni o stime inventate.
+5. Distingui pagamenti, costi, imposte dichiarate e stime: l'imposta netta dichiarata MEF resta separata dal gettito totale e dal saldo CPT; il saldo CPT resta un saldo contabile territorializzato.
+6. Chiama un valore spreco, frode o qualità del servizio soltanto se una fonte lo documenta.
+7. Se il dato manca, è soppresso o i perimetri restano inconfrontabili, dichiaralo senza imputazioni o stime inventate.
 
 Inizia elencando i dataset utili alla mia domanda; esegui la query soltanto dopo aver scelto quello corretto.`;
 

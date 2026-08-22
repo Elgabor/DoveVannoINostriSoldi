@@ -3,8 +3,8 @@
 import { ResponsiveContainer, Tooltip, Treemap } from "recharts";
 import type { TreemapNode } from "recharts";
 import type { IstatRegionalAdministration } from "@/lib/data/istat-regions-contract";
+import { institutionalCategoryColor } from "@/lib/chart-category-colors";
 import { siopeTitleCopy } from "@/lib/siope-titles";
-import { treemapTile } from "@/lib/treemap-palette";
 import styles from "./region-title-treemap.module.css";
 
 const compactEuro = new Intl.NumberFormat("it-IT", {
@@ -27,7 +27,7 @@ const percentage = new Intl.NumberFormat("it-IT", {
 
 type TitleNode = TreemapNode & {
   shortLabel?: string;
-  fullLabel?: string;
+  explanation?: string;
   commitmentsCents?: number;
   share?: number;
 };
@@ -35,9 +35,7 @@ type TitleNode = TreemapNode & {
 function tile(props: TreemapNode) {
   const node = props as TitleNode;
   const showLabel = node.width >= 118 && node.height >= 58;
-  const showAmount = node.width >= 145 && node.height >= 88;
-  const { fill, ink } = treemapTile(node.index);
-  const inkClass = ink === "light" ? styles.tileInkLight : styles.tileInkDark;
+  const showShare = node.width >= 145 && node.height >= 88;
   return (
     <g>
       <rect
@@ -45,21 +43,18 @@ function tile(props: TreemapNode) {
         y={node.y}
         width={node.width}
         height={node.height}
-        fill={fill}
+        fill={institutionalCategoryColor(node.index)}
         stroke="var(--color-raised)"
         strokeWidth={2}
       />
       {showLabel ? (
         <>
-          <text x={node.x + 12} y={node.y + 25} className={`${styles.tileLabel} ${inkClass}`}>
+          <text x={node.x + 12} y={node.y + 25} className={styles.tileLabel}>
             {node.shortLabel}
           </text>
-          <text x={node.x + 12} y={node.y + 45} className={`${styles.tileShare} ${inkClass}`}>
-            {percentage.format(node.share ?? 0)}
-          </text>
-          {showAmount ? (
-            <text x={node.x + 12} y={node.y + 66} className={`${styles.tileAmount} ${inkClass}`}>
-              {compactEuro.format((node.commitmentsCents ?? 0) / 100)}
+          {showShare ? (
+            <text x={node.x + 12} y={node.y + 45} className={styles.tileShare}>
+              {compactEuro.format((node.commitmentsCents ?? 0) / 100)} · {percentage.format(node.share ?? 0)}
             </text>
           ) : null}
         </>
@@ -72,11 +67,11 @@ export function RegionTitleTreemap({ entity }: { entity: IstatRegionalAdministra
   const data = entity.titles
     .filter((title) => title.commitmentsCents > 0)
     .map((title) => {
-      const copy = siopeTitleCopy(title.code);
+      const copy = siopeTitleCopy(title.code, "regione");
       return {
         name: title.code,
         shortLabel: copy.name,
-        fullLabel: `${copy.name} (${title.label})`,
+        explanation: copy.explanation,
         commitmentsCents: title.commitmentsCents,
         share: title.commitmentsCents / entity.commitmentsCents,
       };
@@ -94,7 +89,7 @@ export function RegionTitleTreemap({ entity }: { entity: IstatRegionalAdministra
           <Treemap
             data={data}
             dataKey="commitmentsCents"
-            nameKey="fullLabel"
+            nameKey="shortLabel"
             nodeGap={1}
             content={tile}
             isAnimationActive={false}
@@ -105,7 +100,8 @@ export function RegionTitleTreemap({ entity }: { entity: IstatRegionalAdministra
                 if (!active || !point) return null;
                 return (
                   <div className={styles.tooltip}>
-                    <span>{point.fullLabel}</span>
+                    <span>{point.shortLabel}</span>
+                    <small className={styles.tooltipExplain}>{point.explanation}</small>
                     <strong>{exactEuro.format((point.commitmentsCents ?? 0) / 100)}</strong>
                     <small>{percentage.format(point.share ?? 0)} del totale impegnato</small>
                   </div>
@@ -116,8 +112,8 @@ export function RegionTitleTreemap({ entity }: { entity: IstatRegionalAdministra
         </ResponsiveContainer>
       </div>
       <figcaption id="regioni-treemap-caption">
-        Un solo consuntivo, una sola amministrazione, soldi impegnati nel 2024. La voce a zero
-        resta nella tabella ma non occupa spazio nel grafico.
+        Ogni riquadro è una voce del bilancio di {entity.label}. Passaci sopra per leggere a che
+        cosa serve. La voce a zero resta nella tabella ma non occupa spazio nel grafico.
       </figcaption>
     </figure>
   );

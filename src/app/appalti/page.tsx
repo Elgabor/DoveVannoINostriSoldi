@@ -67,7 +67,7 @@ export default function AppaltiPage() {
         <div>
           <span className="stat-label">Affidamento diretto · CIG osservati</span>
           <span className="stat-value">{share(directAward.records, totalCigs)}</span>
-          <span className="stat-note">{integer(directAward.records)} su {integer(totalCigs)} CIG · non è quota di euro o pagamenti</span>
+          <span className="stat-note">{integer(directAward.records)} su {integer(totalCigs)} CIG · quota sul numero di CIG</span>
         </div>
         <div>
           <span className="stat-label">Servizi e forniture</span>
@@ -84,14 +84,13 @@ export default function AppaltiPage() {
       <section className={`notice scope-notice ${styles.readingNotice}`} aria-labelledby="appalti-reading-title">
         <h2 id="appalti-reading-title">La lettura corretta in una frase</h2>
         <p>
-          Questi conteggi mostrano come sono classificati i CIG pubblicati. Indicano dove guardare
-          meglio, ma non dimostrano da soli spreco, illecito, corruzione, frazionamento o qualità
-          del contratto.
+          Questi conteggi mostrano come sono classificati i CIG pubblicati e indicano dove guardare
+          meglio negli atti.
         </p>
         <div className="scope-notice__section">
           <h3>Che cosa misura il valore</h3>
           <p>
-            <strong>importo_lotto</strong> è il valore dichiarato del lotto nella banca dati: non è un prezzo unitario e non è necessariamente quanto è stato pagato alla fine.
+            <strong>importo_lotto</strong> è il valore dichiarato del lotto nella banca dati.
           </p>
         </div>
       </section>
@@ -101,10 +100,9 @@ export default function AppaltiPage() {
           <h2 id="procedure-title" className="panel-title">Le procedure che ricorrono di più</h2>
           <p>
             La voce <strong>AFFIDAMENTO DIRETTO</strong> è l&apos;etichetta più frequente: rappresenta
-            {" "}{share(directAward.records, totalCigs)} dei {integer(totalCigs)} CIG unici osservati
-            (non degli euro o dei pagamenti). La
-            famiglia più ampia delle etichette che iniziano con “AFFIDAMENTO DIRETTO” arriva a
-            {" "}{share(directAwardFamily.records, totalCigs)}: non sono tutte la stessa procedura.
+            {" "}{share(directAward.records, totalCigs)} dei {integer(totalCigs)} CIG unici osservati.
+            La famiglia più ampia delle etichette che iniziano con “AFFIDAMENTO DIRETTO” arriva a
+            {" "}{share(directAwardFamily.records, totalCigs)} e raccoglie etichette diverse.
           </p>
         </div>
         <div className={styles.leadMeasure}>
@@ -239,7 +237,7 @@ export default function AppaltiPage() {
             <p>
               Nella fascia <strong>[135.000 €, 140.000 €)</strong> ci sono {integer(thresholdBand.servicesAndSuppliesRecords)}
               {" "}CIG di servizi e forniture. La fascia serve a scegliere cosa verificare negli atti
-              originali: non dimostra da sola un frazionamento o un comportamento scorretto.
+              originali.
             </p>
           </div>
           <span className="tag tag-neutral">Intervallo dichiarato da ANAC</span>
@@ -289,8 +287,7 @@ export default function AppaltiPage() {
           <h3>Valori del lotto che ricorrono spesso</h3>
           <p>
             Sono conteggi di CIG con lo stesso valore dichiarato. Li mostriamo come indizio
-            descrittivo, non come prova: il valore non dice da solo come è stata scelta la procedura
-            né quanto è stato pagato.
+            descrittivo su quanto ricorre quel valore dichiarato.
           </p>
           <ScrollRegion className="table-scroll" role="region" aria-label="Valori esatti del lotto più ricorrenti" tabIndex={0}>
             <p className={styles.tableHint}>Scorri la tabella verso destra →</p>
@@ -405,17 +402,17 @@ export default function AppaltiPage() {
             </li>
             <li>
               “Affidamento diretto” è l&apos;etichetta esatta; la famiglia più ampia comprende tutte le
-              etichette che iniziano con quella dicitura e non va letta come una procedura unica.
+              etichette che iniziano con quella dicitura e resta distinta dalla procedura unica.
             </li>
             <li>{data.methodology.screeningOnly}</li>
             <li>
-              Il dato non consente di collegare il valore a un soggetto: non mostra nomi di fornitori
-              e non misura la concentrazione per fornitore.
+              Il dato collega i CIG al valore dichiarato senza nomi di fornitori né concentrazione
+              per soggetto.
             </li>
             <li>
-              L&apos;importo del lotto non è un pagamento finale. Per verificare un caso servono l&apos;atto
-              originale, la procedura completa e le informazioni collegate pubblicate dalle fonti
-              ufficiali.
+              L&apos;importo del lotto è il valore dichiarato nella banca dati. Per verificare un caso
+              servono l&apos;atto originale, la procedura completa e le informazioni collegate
+              pubblicate dalle fonti ufficiali.
             </li>
           </ul>
         </details>

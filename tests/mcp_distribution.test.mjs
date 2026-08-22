@@ -44,8 +44,8 @@ test("distribution pages and docs keep one canonical MCP endpoint", async () => 
   assert.match(combined, /soltanto dati pubblici|dati pubblici/i);
   assert.match(combined, /Copia prompt per agenti/);
   assert.match(combined, /list_datasets/);
-  assert.match(combined, /imposta netta dichiarata MEF non è il gettito totale/i);
-  assert.match(combined, /saldo CPT non è un residuo fiscale/i);
+  assert.match(combined, /imposta netta dichiarata MEF resta separata dal gettito totale/i);
+  assert.match(combined, /saldo CPT resta un saldo contabile territorializzato/i);
   assert.match(combined, /spreco, frode o qualità del servizio/i);
   assert.doesNotMatch(combined, /già (?:pubblicat[oa]|disponibile) (?:su|in) (?:ChatGPT|Claude|Manufact)/i);
 });

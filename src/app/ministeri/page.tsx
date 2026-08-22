@@ -13,6 +13,12 @@ export const metadata: Metadata = {
 
 const euro = (cents: number) => cents / 100;
 
+const percentage = new Intl.NumberFormat("it-IT", {
+  style: "percent",
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
 export default function MinistriesPage() {
   const { ministries, totals, coverage } = rgsMinistriesSnapshot;
   const source = rgsMinistriesMetadata.source;
@@ -34,9 +40,9 @@ export default function MinistriesPage() {
             <h2 id="quadro-cp">Già pagato e ancora da pagare</h2>
             <p>
               <strong>Già pagato</strong> è uscito nel 2025. <strong>Ancora da pagare</strong> è
-              impegnato ma non ancora uscito. Insieme formano il totale impegnato (nella fonte:
-              Totale CP = Pagato CP + Rimasto da pagare CP). Non è il totale di cassa e, da solo,
-              non misura un debito da pagare.
+              impegnato ma non ancora uscito. Insieme formano il totale impegnato: somma di già
+              pagato e ancora da pagare nell&apos;anno (nella fonte: Totale CP = Pagato CP + Rimasto
+              da pagare CP).
             </p>
           </div>
           <span>Consuntivo · EUR</span>
@@ -112,6 +118,7 @@ export default function MinistriesPage() {
                   Totale impegnato
                   <small>Totale CP</small>
                 </th>
+                <th scope="col">Quota</th>
                 <th scope="col">
                   Già pagato
                   <small>Pagato CP</small>
@@ -132,6 +139,7 @@ export default function MinistriesPage() {
                       <small>Codice RGS {ministry.code} · IPA {identity?.ipaCode ?? "non collegato"}</small>
                     </th>
                     <td>{exactEuro(euro(ministry.commitmentsCpCents))}</td>
+                    <td>{percentage.format(ministry.commitmentsCpCents / totals.commitmentsCpCents)}</td>
                     <td>{exactEuro(euro(ministry.paymentsCompetenceCpCents))}</td>
                     <td>{exactEuro(euro(ministry.remainingCpCents))}</td>
                   </tr>
@@ -142,6 +150,7 @@ export default function MinistriesPage() {
               <tr>
                 <th scope="row">Totale dei 15 ministeri</th>
                 <td>{exactEuro(euro(totals.commitmentsCpCents))}</td>
+                <td>{percentage.format(1)}</td>
                 <td>{exactEuro(euro(totals.paymentsCompetenceCpCents))}</td>
                 <td>{exactEuro(euro(totals.remainingCpCents))}</td>
               </tr>

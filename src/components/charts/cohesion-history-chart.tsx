@@ -103,7 +103,7 @@ export function CohesionHistoryChart({ data }: { data: OpenCoesioneAnnualPoint[]
         <span><i className={styles.payments} /> Pagamenti fino all&apos;anno</span>
       </div>
       <figcaption>
-        Ogni punto contiene il totale registrato fino a quell&apos;anno, non il valore del solo anno indicato.
+        Ogni punto contiene il totale registrato fino a quell&apos;anno.
       </figcaption>
       <div className={styles.tableWrap} role="region" aria-label="Totali annuali OpenCoesione" tabIndex={0}>
         <table>

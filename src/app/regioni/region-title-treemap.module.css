@@ -10,28 +10,18 @@
 }
 
 .tileLabel,
-.tileShare,
-.tileAmount {
+.tileShare {
+  fill: var(--color-raised);
+  font-weight: 800;
   pointer-events: none;
 }
 
-.tileInkLight {
-  fill: var(--color-raised);
-}
-
-.tileInkDark {
-  fill: var(--color-text);
-}
-
-.tileLabel,
-.tileShare {
+.tileLabel {
   font-size: 13px;
-  font-weight: 800;
 }
 
-.tileAmount {
+.tileShare {
   font-size: 11px;
-  font-weight: 650;
 }
 
 .tooltip {
@@ -53,8 +43,15 @@
   color: var(--color-neutral-300);
 }
 
+.tooltipExplain {
+  margin-block: var(--space-1) 0;
+  color: var(--color-neutral-200) !important;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
 .tooltip strong {
-  margin-block: var(--space-1);
+  margin-block: var(--space-2) var(--space-1);
   font-variant-numeric: tabular-nums;
 }
 
@@ -68,9 +65,5 @@
 @media (max-width: 620px) {
   .chart {
     height: 340px;
-  }
-
-  .tileAmount {
-    display: none;
   }
 }

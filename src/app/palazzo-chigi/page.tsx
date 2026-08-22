@@ -72,7 +72,7 @@ export default function PalazzoChigiPage() {
           <strong>Disponibile</strong>: quanto c&apos;era in bilancio.
           <strong> Impegnato</strong>: quanto si è deciso di spendere.
           <strong> Pagato</strong>: quanto è davvero uscito nel 2024.
-          Non li sommiamo: sono passaggi dello stesso percorso, non spese in più.
+          Tre passaggi dello stesso percorso contabile, letti uno per uno.
         </p>
       </div>
 
@@ -98,7 +98,7 @@ export default function PalazzoChigiPage() {
           <div>
             <dt>Disponibile in bilancio</dt>
             <dd>{exactEuro(euro(data.totals.finalCompetenceAppropriationCents))}</dd>
-            <span>Quanto restava a disposizione: non è denaro già pagato.</span>
+            <span>Quanto restava a disposizione in bilancio.</span>
           </div>
         </dl>
       </section>

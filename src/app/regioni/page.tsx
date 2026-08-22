@@ -9,7 +9,7 @@ import styles from "./regioni.module.css";
 export const metadata: Metadata = {
   title: "Spese delle Regioni, consuntivi 2024",
   description:
-    "Soldi impegnati nel 2024 nei bilanci Istat di 22 Regioni e Province autonome, con voci semplici e importi esatti.",
+    "Come si spezzano i soldi impegnati nel 2024 da Regioni e Province autonome, con voci semplici e importi esatti.",
 };
 
 const percentage = new Intl.NumberFormat("it-IT", {
@@ -40,22 +40,22 @@ export default async function RegionsPage({
       <div className="page-intro">
         <h1>Spese delle Regioni</h1>
         <p>
-          Leggiamo i consuntivi 2024 di 22 amministrazioni: 15 Regioni ordinarie, 5 speciali e
-          2 Province autonome. Qui mostriamo i soldi impegnati, non i pagamenti, e non li
-          mescoliamo con Comuni, sanità o altri conti.
+          Qui vedi come {selected.label} ha impegnato i soldi nel 2024: per cosa, quanto, e quanto
+          pesa sul totale. Parte di questi impegni è ancora da pagare. La contabilità è quella
+          regionale.
         </p>
       </div>
 
       <form className={styles.selector} action="/regioni" method="get">
         <label htmlFor="ente-regionale">
-          Scegli un&apos;amministrazione
+          Scegli un territorio
           <select id="ente-regionale" name="ente" defaultValue={selected.id}>
             {istatRegionsSnapshot.entities.map((entity) => (
               <option key={entity.id} value={entity.id}>{entity.label}</option>
             ))}
           </select>
         </label>
-        <button type="submit">Mostra il consuntivo</button>
+        <button type="submit">Mostra i numeri</button>
       </form>
 
       <dl className="stat-strip">
@@ -77,21 +77,20 @@ export default async function RegionsPage({
       </dl>
 
       <div className="notice">
-        <strong>Non è una classifica tra territori</strong>
+        <strong>Importi assoluti di {selected.label}</strong>
         <p>
-          Gli importi sono i valori assoluti del bilancio di {selected.label}. Senza una popolazione
-          Istat bloccata sullo stesso periodo non calcoliamo valori pro capite. Le 22 amministrazioni
-          non coincidono con le 20 geometrie regionali, quindi in questa vista non usiamo la mappa.
+          Qui leggi i soldi impegnati da {selected.label}. Manca una popolazione Istat bloccata
+          sullo stesso anno, quindi non calcoliamo la spesa per abitante e non mostriamo la mappa.
         </p>
       </div>
 
       <section className="panel" aria-labelledby="composizione-regionale">
         <div className={styles.sectionHeader}>
           <div>
-            <h2 id="composizione-regionale">In che cosa sono finiti i soldi</h2>
+            <h2 id="composizione-regionale">Su che cosa vanno i soldi</h2>
             <p>
-              Composizione del bilancio di {selected.label}. Il totale è quello ufficiale degli
-              impegni 2024 della stessa amministrazione.
+              Ogni voce dice a che cosa serve. Il totale è quello ufficiale del 2024 per{" "}
+              {selected.label}.
             </p>
           </div>
           <span>Consuntivo definitivo</span>
@@ -107,19 +106,19 @@ export default async function RegionsPage({
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">Voce</th>
+                <th scope="col">A che cosa serve</th>
                 <th scope="col">Impegnato 2024</th>
                 <th scope="col">Quota</th>
               </tr>
             </thead>
             <tbody>
               {selected.titles.map((title) => {
-                const copy = siopeTitleCopy(title.code);
+                const copy = siopeTitleCopy(title.code, "regione");
                 return (
                   <tr key={title.code}>
                     <th scope="row">
                       {copy.name}
-                      <small>{title.label}</small>
+                      <small>{copy.explanation}</small>
                     </th>
                     <td>{exactEuro(euro(title.commitmentsCents))}</td>
                     <td>{percentage.format(title.commitmentsCents / selected.commitmentsCents)}</td>
@@ -141,21 +140,21 @@ export default async function RegionsPage({
       <section className="panel" aria-labelledby="copertura-regioni">
         <div className={styles.sectionHeader}>
           <div>
-            <h2 id="copertura-regioni">Tutte le amministrazioni nel file</h2>
-            <p>Valori esatti per consultazione. L&apos;ordine non è una graduatoria.</p>
+            <h2 id="copertura-regioni">Tutti i territori nel file</h2>
+            <p>Stessi numeri, senza fare una graduatoria.</p>
           </div>
           <span>22 su 22</span>
         </div>
         <p className={styles.statusNote}>
-          Statuto ordinario, statuto speciale e Province autonome restano visibili perché competenze
-          e assetti non sono equivalenti. Non calcoliamo una media comune.
+          Regioni ordinarie, speciali e Province autonome restano separate: non hanno gli stessi
+          poteri. Non facciamo una media unica.
         </p>
         <p className={styles.scrollHint}>Scorri la tabella verso destra per vedere gli importi.</p>
         <div className={`table-scroll ${styles.allEntitiesTable}`} role="region" aria-label="Soldi impegnati esatti delle 22 amministrazioni regionali" tabIndex={0}>
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">Amministrazione</th>
+                <th scope="col">Territorio</th>
                 <th scope="col">Tipo</th>
                 <th scope="col">Impegnato 2024</th>
               </tr>
@@ -174,18 +173,18 @@ export default async function RegionsPage({
       </section>
 
       <section className="panel" aria-labelledby="fonte-regioni">
-        <h2 className="panel-title" id="fonte-regioni">Fonte, periodo e controlli</h2>
+        <h2 className="panel-title" id="fonte-regioni">Fonte e controlli</h2>
         <div className={styles.provenance}>
           <div><span>Titolare</span><strong>{source.owner}</strong></div>
           <div><span>Pubblicato</span><strong>{longDate(source.publishedAt)}</strong></div>
           <div><span>Controllato da noi</span><strong>{longDate(source.acquiredAt)}</strong></div>
-          <div><span>Copertura</span><strong>22 amministrazioni · 22 totali riconciliati</strong></div>
+          <div><span>Copertura</span><strong>22 territori · 22 totali riconciliati</strong></div>
         </div>
         <p className={styles.statusNote}>
           Fonte {source.sourceRecordId}, foglio “{selected.sourceSheet}”. Abbiamo escluso i tre
-          fogli aggregati Italia, Regioni ordinarie e Regioni speciali; per ogni amministrazione
-          la somma delle sei voci coincide con il totale ufficiale. La pagina Istat non dichiara
-          una licenza per l&apos;archivio: non ne attribuiamo una.
+          fogli aggregati Italia, Regioni ordinarie e Regioni speciali. Per ogni territorio la
+          somma delle voci coincide con il totale ufficiale. La pagina Istat non dichiara una
+          licenza: non ne inventiamo una.
         </p>
         <div className={styles.sourceLinks}>
           <a href={source.landingUrl} target="_blank" rel="noreferrer">Apri la pagina Istat ↗</a>

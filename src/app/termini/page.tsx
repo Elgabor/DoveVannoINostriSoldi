@@ -31,7 +31,7 @@ export default function TermsPage() {
           <li>Non tentare di aggirare limiti, compromettere il servizio o sovraccaricare gli endpoint.</li>
           <li>Non presentare segnali, costi o scostamenti come prova automatica di illecito, spreco o responsabilità individuale.</li>
           <li>Verifica sulla fonte ufficiale qualsiasi decisione importante o dato che può essere cambiato.</li>
-          <li>Non inviare dati personali o riservati ai tool MCP: non sono necessari per interrogarli.</li>
+          <li>Non inviare dati personali o riservati ai tool MCP: bastano i dati pubblici già esposti.</li>
         </ul>
       </section>
 

@@ -11,16 +11,9 @@
 
 .tileLabel,
 .tileShare {
+  fill: var(--color-raised);
   font-weight: 800;
   pointer-events: none;
-}
-
-.tileInkLight {
-  fill: var(--color-raised);
-}
-
-.tileInkDark {
-  fill: var(--color-text);
 }
 
 .tileLabel {
@@ -28,7 +21,7 @@
 }
 
 .tileShare {
-  font-size: 13px;
+  font-size: 11px;
 }
 
 .tooltip {

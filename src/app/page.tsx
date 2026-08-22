@@ -112,8 +112,8 @@ export default async function HomePage({
           <div className={styles.panelHead}>
             <h2 className="panel-title">Pagamenti effettuati dai Comuni</h2>
             <InfoTooltip id="cash-payments-tip" label="Che cosa sono i pagamenti di cassa?">
-              Sono uscite di cassa registrate dai Comuni, mese per mese. Non sono le tasse pagate
-              dai residenti e non includono Stato centrale, Regioni e sanità.
+              Uscite di cassa registrate dai Comuni, mese per mese. Il totale riguarda i Comuni;
+              restano fuori Stato centrale, Regioni e sanità.
             </InfoTooltip>
           </div>
 
@@ -441,12 +441,12 @@ export default async function HomePage({
                 </div>
               </dl>
               <p className={styles.note}>
-                Relazione ANAC sul {procurement.year}. È un segnale da approfondire, non una prova di spreco.
+                Relazione ANAC sul {procurement.year}. Segnale da approfondire con le fonti ufficiali.
               </p>
             </>
           ) : (
             <p className={styles.note}>
-              La relazione ANAC completa sul {year} non è ancora disponibile. Non sostituiamo il dato con quello di un altro anno.
+              La relazione ANAC completa sul {year} arriverà quando sarà pubblicata.
             </p>
           )}
           <Link className="btn btn-block" href="/controlli">
@@ -457,9 +457,8 @@ export default async function HomePage({
         <section className="panel panel-accent">
           <h2 className="panel-title">Come leggere questi numeri</h2>
           <p className={styles.readingNote}>
-            Qui vedi solo i pagamenti dei Comuni, non tutta la spesa pubblica italiana. Una cifra
-            alta non vuol dire spreco: dipende da quante persone vivono lì e da cosa fa quel
-            Comune.
+            Qui vedi i pagamenti dei Comuni. Una cifra alta va letta con abitanti e con i servizi
+            che quel Comune gestisce.
           </p>
           <Link href="/metodologia">Come leggiamo i dati →</Link>
         </section>

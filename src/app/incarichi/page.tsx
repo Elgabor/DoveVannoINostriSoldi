@@ -52,8 +52,7 @@ export default function IncarichiPage() {
         <h1>Incarichi pubblici</h1>
         <p>
           Quadro nazionale annuale degli incarichi comunicati dalle amministrazioni. La serie copre
-          il periodo {yearRange}; gli importi mostrano quanto risulta pagato, non compensi lordi
-          previsti.
+          il periodo {yearRange}; gli importi mostrano quanto risulta pagato alla fonte.
         </p>
       </div>
 
@@ -139,8 +138,8 @@ export default function IncarichiPage() {
             </div>
           </dl>
           <p className={styles.note}>
-            La serie riguarda incarichi a personale dipendente; non è la stessa popolazione degli
-            incarichi esterni.
+            La serie riguarda incarichi a personale dipendente e resta distinta dagli incarichi
+            esterni.
           </p>
         </article>
       </section>
@@ -229,7 +228,7 @@ export default function IncarichiPage() {
             </div>
           </div>
           <p className={styles.note}>
-            Il denominatore non è il numero totale degli incarichi: le due grandezze rispondono a
+            Il denominatore usato qui è il numero di destinatari; le due grandezze rispondono a
             domande diverse.
           </p>
         </section>
@@ -317,8 +316,8 @@ export default function IncarichiPage() {
           </table>
         </div>
         <p className={styles.note}>
-          L&apos;importo è quanto risulta pagato alla fonte, non il compenso lordo previsto. I
-          destinatari non sono usati come denominatore degli incarichi.
+          L&apos;importo è quanto risulta pagato alla fonte. I destinatari restano una misura a
+          parte rispetto al numero di incarichi.
         </p>
       </section>
 
@@ -431,8 +430,7 @@ export default function IncarichiPage() {
         </div>
         <p className={styles.note}>
           {scopedSnapshot.methodology.currentYearWarning} Le due serie restano separate perché hanno
-          significati e popolazioni diverse; questo quadro non è una valutazione di legittimità,
-          qualità o opportunità degli incarichi.
+          significati e popolazioni diverse.
         </p>
       </section>
 

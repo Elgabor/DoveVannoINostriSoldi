@@ -16,8 +16,9 @@ test("the IRPEF page is server-rendered, bounded, and semantically explicit", as
   assert.match(page, /queryMefMunicipalIrpef/);
   assert.doesNotMatch(page, /mef-irpef-2024\.data\.json/);
   assert.equal(page.match(/<h1\b/g)?.length, 1);
-  assert.match(page, /L’imposta netta dichiarata non è[\s\S]*?gettito fiscale totale/);
-  assert.match(page, /non dimostra evasione, frode, responsabilità/);
+  assert.match(page, /Che cosa misura l&apos;imposta netta dichiarata/);
+  assert.match(page, /cifra presente nelle statistiche MEF/);
+  assert.match(page, /Resta separata da spesa e saldo CPT/);
   assert.match(page, /HorizontalScrollRegion/);
   assert.match(scrollRegion, /role="region"/);
   assert.match(scrollRegion, /event\.key === "ArrowLeft" \|\| event\.key === "ArrowRight"/);

@@ -115,7 +115,7 @@ export default async function PnrrChildcareCatalog({ searchParams }: { searchPar
           <div>
             <h2 id="results-title">{integer(result.pagination.total)} progetti trovati</h2>
           </div>
-          <p>Ogni scheda è una pista documentale, non un giudizio di merito.</p>
+          <p>Ogni scheda è una pista documentale su CUP, finanziamenti, gare e aggiudicatari.</p>
         </div>
         <div className={styles.grid}>
           {result.data.map((project) => {

@@ -36,7 +36,7 @@ export default function ConsultingPage() {
         <p>
           Il sito resta gratuito. Qui si parla di incarichi: progetti di intelligenza
           artificiale per un&apos;azienda o un&apos;amministrazione. Si può lavorare sui dati
-          pubblici, sui dati interni, o su entrambi. Non è obbligatorio usare le fonti
+          pubblici, sui dati interni, o su entrambi. Puoi anche lavorare senza le fonti
           del sito.
         </p>
       </div>
@@ -44,11 +44,10 @@ export default function ConsultingPage() {
       <div className="notice">
         <strong>Due cose distinte</strong>
         <p>
-          I dati pubblici restano pubblici. Un incarico di consulenza non compra accesso
-          privilegiato, non cambia i numeri sul sito e non è un parere legale, contabile o
-          un accertamento. I dati dell&apos;organizzazione restano dell&apos;organizzazione: non
-          finiscono sul sito. Per le amministrazioni questa è una richiesta di contatto: un
-          eventuale incarico segue le regole di affidamento previste.
+          I dati pubblici restano pubblici. Un incarico di consulenza lascia invariati i numeri
+          sul sito e riguarda un progetto operativo. I dati dell&apos;organizzazione restano
+          dell&apos;organizzazione: non finiscono sul sito. Per le amministrazioni questa è una
+          richiesta di contatto: un eventuale incarico segue le regole di affidamento previste.
         </p>
       </div>
 

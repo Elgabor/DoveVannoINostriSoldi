@@ -10,24 +10,25 @@ const titles = fs.readFileSync(new URL("../src/lib/siope-titles.ts", import.meta
 test("Regions page uses only the verified Istat regional account", () => {
   assert.match(page, /istatRegionsSnapshot/);
   assert.match(page, /22/);
-  assert.match(page, /contabilità è quella\s*\n?\s*regionale/);
+  assert.match(page, /consuntivo Istat delle amministrazioni regionali/);
   assert.doesNotMatch(page, /getRegionalFiscal|OpenCivitas/);
 });
 
-test("Regions page explains spending destinations in plain language", () => {
+test("Regions page explains spending destinations in clear professional language", () => {
   assert.match(page, /searchParams: Promise/);
   assert.match(page, /name="ente"/);
-  assert.match(page, /Importi assoluti di/);
-  assert.match(page, /Su che cosa vanno i soldi/);
+  assert.match(page, /Composizione degli impegni/);
   assert.match(page, /siopeTitleCopy\(title\.code, "regione"\)/);
   assert.match(page, /copy\.explanation/);
-  assert.match(page, /A che cosa serve/);
+  assert.match(page, /<th scope="col">Voce<\/th>/);
   assert.match(treemap, /siopeTitleCopy\(title\.code, "regione"\)/);
   assert.match(treemap, /point\.explanation/);
-  assert.match(treemap, /tooltipExplain/);
-  assert.doesNotMatch(treemap, /title\.label\)|Titolo 7/);
-  assert.match(titles, /Soldi di passaggio/);
-  assert.match(titles, /la Regione riceve e passa ad altri enti o soggetti/);
+  assert.match(treemap, /Al passaggio del cursore/);
+  assert.doesNotMatch(treemap, /Passaci sopra|cassiere e poi restituiti|Soldi messi|Soldi di passaggio|tiene in piedi/);
+  assert.match(titles, /Partite di giro/);
+  assert.match(titles, /anticipazioni di tesoreria/);
+  assert.match(titles, /Investimenti in opere/);
+  assert.doesNotMatch(titles, /Soldi presi in anticipo dal cassiere|tiene in piedi|Soldi messi in società|Soldi di passaggio/);
   assert.doesNotMatch(page, /spreco|corruzione|illecito/i);
   assert.doesNotMatch(`${page}\n${treemap}`, /—|–/);
 });
@@ -36,7 +37,6 @@ test("Regional treemap is additive and exact tables remain internally scrollable
   assert.match(treemap, /commitmentsCents \/ entity\.commitmentsCents/);
   assert.match(treemap, /aria-describedby="regioni-treemap-caption"/);
   assert.match(treemap, /institutionalCategoryColor/);
-  assert.match(treemap, /Passaci sopra per leggere a che/);
   assert.match(css, /min-width: 680px/);
   assert.match(css, /min-width: 760px/);
   assert.match(css, /@media \(max-width: 620px\)/);

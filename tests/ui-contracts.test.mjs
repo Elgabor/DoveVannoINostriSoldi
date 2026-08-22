@@ -115,9 +115,9 @@ test("the SSN view labels accounting scope and remains responsive", () => {
 
 test("the spending analysis explains the share without turning it into a merit ranking", () => {
   assert.equal(spendingPage.match(/className=\{styles\.analysis\}/g)?.length, 1);
-  assert.match(spendingPage, /servizi di ogni giorno/);
-  assert.match(spendingPage, /Titolo 1, spese correnti/);
-  assert.match(spendingPage, /Conta i soldi usciti in quel periodo/);
+  assert.match(spendingPage, /spese correnti/);
+  assert.match(spendingPage, /Titolo 1 nella fonte\s*\n?\s*SIOPE/);
+  assert.match(spendingPage, /Misura di cassa e\s*\n?\s*classificazione contabile/);
   assert.match(spendingPage, /Confronto tra snapshot/);
   assert.match(spendingPage, /partialComparisonYears/);
   assert.doesNotMatch(spendingPage, /il 2026 è ancora parziale/);

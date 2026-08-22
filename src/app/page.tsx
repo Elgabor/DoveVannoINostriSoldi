@@ -137,7 +137,7 @@ export default async function HomePage({
               </dd>
             </div>
             <div>
-              <dt>Pagamenti senza soldi di passaggio</dt>
+              <dt>Pagamenti al netto delle partite di giro</dt>
               <dd>{compactEuro(netPayments)}</dd>
             </div>
             <div>
@@ -396,16 +396,16 @@ export default async function HomePage({
             <>
               <dl className={styles.factRows}>
                 <div>
-                  <dt>Soldi messi sul piatto entro il {year}</dt>
+                  <dt>Impegni registrati entro il {year}</dt>
                   <dd>{compactEuro(cohesionCommitted)}</dd>
                 </div>
                 <div>
-                  <dt>Soldi già pagati entro il {year}</dt>
+                  <dt>Pagamenti registrati entro il {year}</dt>
                   <dd>{compactEuro(cohesionPaid)}</dd>
                 </div>
               </dl>
               <div className={styles.ratioHead}>
-                <span>Quota già pagata</span>
+                <span>Pagamenti sugli impegni</span>
                 <b>{percent(cohesionRatio)}</b>
               </div>
               <div className={styles.ratioTrack} aria-hidden="true">

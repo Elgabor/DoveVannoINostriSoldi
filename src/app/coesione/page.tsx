@@ -134,7 +134,7 @@ export default function CohesionPage() {
 
       <div className="stat-strip">
         <div>
-          <span className="stat-label">Soldi messi sul piatto</span>
+          <span className="stat-label">Impegni registrati</span>
           <span className="stat-value">{compactEuro(euros(snapshot.totals.publicCostCents))}</span>
           <span className="stat-note">
             di cui {compactEuro(euros(snapshot.totals.cohesionPublicCostCents))} da fondi di
@@ -142,7 +142,7 @@ export default function CohesionPage() {
           </span>
         </div>
         <div>
-          <span className="stat-label">Soldi già pagati</span>
+          <span className="stat-label">Pagamenti registrati</span>
           <span className="stat-value">{compactEuro(euros(snapshot.totals.paymentsCents))}</span>
           <span className="stat-note">
             di cui {compactEuro(euros(snapshot.totals.cohesionPaymentsCents))} da fondi di coesione

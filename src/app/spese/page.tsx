@@ -96,9 +96,9 @@ export default async function MoneyPage({
           <span className="stat-note">{exactEuro(data.totalPaid)} esatti</span>
         </div>
         <div>
-          <span className="stat-label">Pagamenti senza soldi di passaggio</span>
+          <span className="stat-label">Pagamenti al netto delle partite di giro</span>
           <span className="stat-value">{compactEuro(netPayments)}</span>
-          <span className="stat-note">totale meno i soldi di passaggio</span>
+          <span className="stat-note">totale meno le uscite per conto terzi</span>
         </div>
         <div>
           <span className="stat-label">Media dei mesi completi</span>
@@ -163,9 +163,9 @@ export default async function MoneyPage({
           <section className={styles.analysis} aria-labelledby="spese-analysis-title">
             <h3 id="spese-analysis-title">Il {titleOneShareLabel} è tanto o poco?</h3>
             <p className={styles.analysisLead}>
-              È la quota dei pagamenti per <strong>servizi di ogni giorno</strong> (nella fonte:
-              Titolo 1, spese correnti) sul totale delle uscite SIOPE dei Comuni nel periodo
-              selezionato. Conta i soldi usciti in quel periodo.
+              È la quota dei pagamenti per <strong>spese correnti</strong> (Titolo 1 nella fonte
+              SIOPE) sul totale delle uscite comunali nel periodo selezionato. Misura di cassa e
+              classificazione contabile.
             </p>
 
             <div className={styles.analysisComparison}>
@@ -200,8 +200,8 @@ export default async function MoneyPage({
                   <>
                     Confronto tra snapshot: {partialComparisonYears.join(", ")}{" "}
                     {partialComparisonYears.length === 1 ? "è ancora parziale" : "sono ancora parziali"}
-                    {" "}e gli snapshot non hanno una serie mese per mese per i servizi di ogni giorno.
-                    Per confrontare bene servono gli stessi mesi e la stessa base per ogni anno.
+                    {" "}e gli snapshot non hanno una serie mensile delle spese correnti.
+                    Per un confronto omogeneo servono gli stessi mesi e la stessa base per ogni anno.
                   </>
                 ) : (
                   <>
@@ -220,7 +220,7 @@ export default async function MoneyPage({
                   {data.distribution.perCapita.residentWeighted.p50 === null
                     ? "un valore non disponibile"
                     : exactEuro(data.distribution.perCapita.residentWeighted.p50)}
-                </strong> per abitante nei servizi di ogni giorno, e almeno metà vive in Comuni che
+                </strong> per abitante nelle spese correnti, e almeno metà vive in Comuni che
                 registrano
                 quel valore o più.
               </p>

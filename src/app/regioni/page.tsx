@@ -9,7 +9,7 @@ import styles from "./regioni.module.css";
 export const metadata: Metadata = {
   title: "Spese delle Regioni, consuntivi 2024",
   description:
-    "Come si spezzano i soldi impegnati nel 2024 da Regioni e Province autonome, con voci semplici e importi esatti.",
+    "Composizione degli impegni 2024 di Regioni e Province autonome, con voci leggibili e importi esatti.",
 };
 
 const percentage = new Intl.NumberFormat("it-IT", {
@@ -40,27 +40,26 @@ export default async function RegionsPage({
       <div className="page-intro">
         <h1>Spese delle Regioni</h1>
         <p>
-          Qui vedi come {selected.label} ha impegnato i soldi nel 2024: per cosa, quanto, e quanto
-          pesa sul totale. Parte di questi impegni è ancora da pagare. La contabilità è quella
-          regionale.
+          Composizione degli impegni 2024 di {selected.label}: voci di bilancio, importi e quote
+          sul totale ufficiale. La fonte è il consuntivo Istat delle amministrazioni regionali.
         </p>
       </div>
 
       <form className={styles.selector} action="/regioni" method="get">
         <label htmlFor="ente-regionale">
-          Scegli un territorio
+          Scegli un&apos;amministrazione
           <select id="ente-regionale" name="ente" defaultValue={selected.id}>
             {istatRegionsSnapshot.entities.map((entity) => (
               <option key={entity.id} value={entity.id}>{entity.label}</option>
             ))}
           </select>
         </label>
-        <button type="submit">Mostra i numeri</button>
+        <button type="submit">Mostra il consuntivo</button>
       </form>
 
       <dl className="stat-strip">
         <div>
-          <dt>Soldi impegnati nel 2024</dt>
+          <dt>Impegni 2024</dt>
           <dd>{compactEuro(euro(selected.commitmentsCents))}</dd>
           <span className="stat-note">{exactEuro(euro(selected.commitmentsCents))} esatti</span>
         </div>
@@ -77,20 +76,20 @@ export default async function RegionsPage({
       </dl>
 
       <div className="notice">
-        <strong>Importi assoluti di {selected.label}</strong>
+        <strong>Perimetro di lettura</strong>
         <p>
-          Qui leggi i soldi impegnati da {selected.label}. Manca una popolazione Istat bloccata
-          sullo stesso anno, quindi non calcoliamo la spesa per abitante e non mostriamo la mappa.
+          Gli importi sono gli impegni assoluti di {selected.label}. Senza una popolazione Istat
+          allineata allo stesso anno non calcoliamo valori pro capite e non usiamo la mappa.
         </p>
       </div>
 
       <section className="panel" aria-labelledby="composizione-regionale">
         <div className={styles.sectionHeader}>
           <div>
-            <h2 id="composizione-regionale">Su che cosa vanno i soldi</h2>
+            <h2 id="composizione-regionale">Composizione degli impegni</h2>
             <p>
-              Ogni voce dice a che cosa serve. Il totale è quello ufficiale del 2024 per{" "}
-              {selected.label}.
+              Voci del bilancio di {selected.label}. Il totale coincide con il consuntivo ufficiale
+              2024.
             </p>
           </div>
           <span>Consuntivo definitivo</span>
@@ -106,7 +105,7 @@ export default async function RegionsPage({
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">A che cosa serve</th>
+                <th scope="col">Voce</th>
                 <th scope="col">Impegnato 2024</th>
                 <th scope="col">Quota</th>
               </tr>
@@ -140,17 +139,17 @@ export default async function RegionsPage({
       <section className="panel" aria-labelledby="copertura-regioni">
         <div className={styles.sectionHeader}>
           <div>
-            <h2 id="copertura-regioni">Tutti i territori nel file</h2>
-            <p>Stessi numeri, senza fare una graduatoria.</p>
+            <h2 id="copertura-regioni">Amministrazioni nel file</h2>
+            <p>Importi ufficiali in ordine di consultazione.</p>
           </div>
           <span>22 su 22</span>
         </div>
         <p className={styles.statusNote}>
-          Regioni ordinarie, speciali e Province autonome restano separate: non hanno gli stessi
-          poteri. Non facciamo una media unica.
+          Regioni a statuto ordinario, speciali e Province autonome restano distinte: hanno
+          assetti e competenze diversi.
         </p>
         <p className={styles.scrollHint}>Scorri la tabella verso destra per vedere gli importi.</p>
-        <div className={`table-scroll ${styles.allEntitiesTable}`} role="region" aria-label="Soldi impegnati esatti delle 22 amministrazioni regionali" tabIndex={0}>
+        <div className={`table-scroll ${styles.allEntitiesTable}`} role="region" aria-label="Impegni esatti delle 22 amministrazioni regionali" tabIndex={0}>
           <table className="table">
             <thead>
               <tr>

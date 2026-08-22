@@ -1,18 +1,18 @@
 /**
- * Plain-language names for public expenditure titles.
+ * Clear names for public expenditure titles.
  *
- * Official files use accounting Italian. The UI shows what the money is for,
- * in everyday words, without changing what the number means.
+ * Official files use accounting Italian. The UI keeps the meaning intact and
+ * explains each title in plain, professional language.
  */
 
 export type SpendingScope = "comune" | "regione";
 
 export type SiopeTitleCopy = {
-  /** Plain-language name shown as the heading. */
+  /** Clear name shown as the heading. */
   name: string;
-  /** The accounting term, kept nearby when useful. */
+  /** Official accounting term. */
   official: string;
-  /** One sentence on where the money goes. */
+  /** One sentence on what the title covers. */
   explanation: string;
 };
 
@@ -25,71 +25,73 @@ type TitleEntry = {
 const fallback: SiopeTitleCopy = {
   name: "Altra uscita",
   official: "titolo non mappato",
-  explanation: "Voce presente nella fonte ma non ancora descritta in parole semplici.",
+  explanation: "Voce presente nella fonte, ancora senza descrizione operativa.",
 };
 
 const byCode: Record<string, TitleEntry> = {
   "1": {
-    name: "Servizi di ogni giorno",
+    name: "Spese correnti",
     official: "spese correnti",
     explanation: {
       comune:
-        "Stipendi, scuole, rifiuti, luce, manutenzione: quello che tiene aperto il Comune.",
+        "Funzionamento ordinario: personale, servizi e attività che tengono aperto il Comune.",
       regione:
-        "Stipendi, servizi, scuole e tutto quello che la Regione tiene in piedi ogni giorno.",
+        "Funzionamento ordinario: personale, servizi e attività correnti della Regione.",
     },
   },
   "2": {
-    name: "Opere e lavori",
+    name: "Investimenti in opere",
     official: "conto capitale",
     explanation: {
-      comune: "Strade, edifici, impianti: cose che restano nel tempo.",
-      regione: "Strade, edifici, impianti: opere che restano nel territorio.",
+      comune: "Spese in conto capitale: infrastrutture, edifici e impianti.",
+      regione: "Spese in conto capitale: infrastrutture, edifici e impianti sul territorio.",
     },
   },
   "3": {
-    name: "Soldi messi in società",
+    name: "Investimenti finanziari",
     official: "attività finanziarie",
     explanation: {
-      comune: "Quote in società e altri investimenti finanziari.",
-      regione: "Quote in società e altri investimenti finanziari.",
+      comune: "Acquisizione di partecipazioni e altre attività finanziarie.",
+      regione: "Acquisizione di partecipazioni e altre attività finanziarie.",
     },
   },
   "4": {
-    name: "Rate dei prestiti",
+    name: "Rimborso di prestiti",
     official: "rimborso prestiti",
     explanation: {
-      comune: "Rate di mutui presi negli anni scorsi.",
-      regione: "Rate di mutui e prestiti presi negli anni scorsi.",
+      comune: "Rimborso di mutui e altri finanziamenti già contratti.",
+      regione: "Rimborso di mutui e altri finanziamenti già contratti.",
     },
   },
   "5": {
-    name: "Anticipi restituiti",
+    name: "Chiusura anticipazioni",
     official: "chiusura anticipazioni",
     explanation: {
-      comune: "Soldi presi in anticipo dal cassiere e poi restituiti.",
-      regione: "Soldi presi in anticipo dal cassiere e poi restituiti.",
+      comune: "Restituzione di anticipazioni di tesoreria ricevute dall'istituto cassiere.",
+      regione: "Restituzione di anticipazioni di tesoreria ricevute dall'istituto cassiere.",
     },
   },
   "7": {
-    name: "Soldi di passaggio",
+    name: "Partite di giro",
     official: "uscite per conto terzi",
     explanation: {
-      comune: "Soldi che il Comune riceve e passa ad altri enti o soggetti.",
-      regione: "Soldi che la Regione riceve e passa ad altri enti o soggetti.",
+      comune:
+        "Uscite per conto terzi: importi gestiti e riversati ad altri soggetti.",
+      regione:
+        "Uscite per conto terzi: importi gestiti e riversati ad altri soggetti.",
     },
   },
   "0": {
-    name: "Ancora da classificare",
+    name: "Da classificare",
     official: "da regolarizzare",
     explanation: {
-      comune: "Pagamenti registrati ma non ancora assegnati a una voce.",
-      regione: "Importi registrati ma non ancora assegnati a una voce.",
+      comune: "Pagamenti registrati e non ancora assegnati a un titolo.",
+      regione: "Importi registrati e non ancora assegnati a un titolo.",
     },
   },
 };
 
-/** Title 7 is money passing through, not spending decided for own services. */
+/** Title 7 is money managed for third parties, not own-service spending. */
 export const PASS_THROUGH_TITLE_CODE = "7";
 
 export function siopeTitleCopy(
@@ -111,28 +113,28 @@ export function siopeTitleCopy(
  */
 export const HOME_SPENDING_BUCKETS: { name: string; explanation: string; codes: string[] }[] = [
   {
-    name: "Servizi quotidiani",
-    explanation: "Stipendi, scuole, rifiuti, luce.",
+    name: "Spese correnti",
+    explanation: "Funzionamento ordinario: personale, servizi, attività quotidiane.",
     codes: ["1"],
   },
   {
-    name: "Opere e lavori",
-    explanation: "Strade, edifici, impianti.",
+    name: "Investimenti in opere",
+    explanation: "Conto capitale: infrastrutture, edifici, impianti.",
     codes: ["2"],
   },
   {
-    name: "Soldi di passaggio",
-    explanation: "Soldi che il Comune riceve e passa ad altri.",
+    name: "Partite di giro",
+    explanation: "Uscite per conto terzi, riversate ad altri soggetti.",
     codes: ["7"],
   },
   {
-    name: "Prestiti e anticipi",
-    explanation: "Rate di mutui e anticipi restituiti.",
+    name: "Prestiti e anticipazioni",
+    explanation: "Rimborso di mutui e chiusura di anticipazioni di tesoreria.",
     codes: ["5", "4"],
   },
   {
     name: "Altre uscite",
-    explanation: "Voci ancora da classificare e soldi messi in società.",
+    explanation: "Voci da classificare e investimenti finanziari.",
     codes: ["0", "3"],
   },
 ];

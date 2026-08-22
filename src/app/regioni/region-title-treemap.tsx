@@ -112,8 +112,8 @@ export function RegionTitleTreemap({ entity }: { entity: IstatRegionalAdministra
         </ResponsiveContainer>
       </div>
       <figcaption id="regioni-treemap-caption">
-        Ogni riquadro è una voce del bilancio di {entity.label}. Passaci sopra per leggere a che
-        cosa serve. La voce a zero resta nella tabella ma non occupa spazio nel grafico.
+        Ogni area rappresenta una voce del bilancio di {entity.label}. Al passaggio del cursore
+        compaiono descrizione, importo e quota. Le voci a zero restano nella tabella.
       </figcaption>
     </figure>
   );

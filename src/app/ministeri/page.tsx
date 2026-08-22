@@ -105,7 +105,7 @@ export default function MinistriesPage() {
                     <td>{exactEuro(euro(ministry.residualsEndCents))}</td>
                     <td>
                       <Link href={`/stato/amministrazioni/${ministry.code}?anno=${referenceYear}`}>
-                        Missioni e categorie →
+                        Pagamenti per missione →
                       </Link>
                     </td>
                   </tr>

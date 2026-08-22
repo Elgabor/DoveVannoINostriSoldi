@@ -8,7 +8,7 @@ import styles from "./ministeri.module.css";
 export const metadata: Metadata = {
   title: "Spese dei Ministeri, rendiconto 2025",
   description:
-    "Pagato CP e quota non pagata nel 2025 dei 15 Ministeri, nel rendiconto ufficiale RGS con composizione del Totale CP e valori esatti.",
+    "Totale CP, Pagato CP e Rimasto da pagare CP dei 15 Ministeri nel rendiconto ufficiale RGS 2025, con valori esatti.",
 };
 
 const euro = (cents: number) => cents / 100;
@@ -22,25 +22,29 @@ export default function MinistriesPage() {
       <div className="page-intro">
         <h1>Spese dei Ministeri</h1>
         <p>
-          Il rendiconto dello Stato 2025 copre 15 Ministeri. Qui seguiamo un solo quadro:
-          la competenza dell&apos;anno, divisa tra quanto è stato pagato nel 2025 e la quota
-          degli impegni non pagata entro fine anno.
-          Non includiamo Palazzo Chigi, Camera, Senato o Regioni.
+          Il rendiconto dello Stato 2025 copre 15 Ministeri. Qui seguiamo il quadro di
+          competenza dell&apos;anno: separiamo Pagato CP da Rimasto da pagare CP e mostriamo
+          come insieme formano il Totale CP. Non includiamo Palazzo Chigi, Camera, Senato o Regioni.
         </p>
       </div>
 
       <section className={styles.frameSection} aria-labelledby="quadro-cp" data-institutional-section>
         <div className={styles.sectionHeader}>
           <div>
-            <h2 id="quadro-cp">Due parti dello stesso impegno</h2>
+            <h2 id="quadro-cp">Due componenti del Totale CP</h2>
             <p>
-              Restiamo nel quadro di competenza 2025: Pagato CP è pagato nell&apos;anno; Rimasto CP
-              è la quota degli impegni non pagata al 31 dicembre. È una fase contabile, non una
-              scadenza futura. Non introduciamo qui cassa o residui di anni precedenti.
+              Pagato CP è il pagamento in conto competenza. Rimasto da pagare CP è la voce RGS
+              che completa il Totale CP: non è un totale di cassa e, da sola, non misura un
+              debito da pagare.
             </p>
           </div>
           <span>Consuntivo · EUR</span>
         </div>
+        <p className={styles.definitionNote}>
+          <strong>Economie-Maggiori spese CP</strong>
+          Nella fonte indica l&apos;importo di competenza rimasto inutilizzato rispetto alle
+          previsioni o utilizzato oltre i limiti. È una voce diversa da Rimasto da pagare CP.
+        </p>
         <dl className="stat-strip">
           <div>
             <dt>Totale CP</dt>
@@ -53,7 +57,7 @@ export default function MinistriesPage() {
             <span className="stat-note">{exactEuro(euro(totals.paymentsCompetenceCpCents))} esatti</span>
           </div>
           <div>
-            <dt>Rimasto CP</dt>
+            <dt>Rimasto da pagare CP</dt>
             <dd>{compactEuro(euro(totals.remainingCpCents))}</dd>
             <span className="stat-note">{exactEuro(euro(totals.remainingCpCents))} esatti</span>
           </div>
@@ -79,7 +83,7 @@ export default function MinistriesPage() {
           <div>
             <h2 id="elenco-ministeri">Valori esatti per Ministero</h2>
             <p>
-              Totale CP è mostrato accanto alle sue due parti: Pagato CP e Rimasto CP. Gli
+              Totale CP è mostrato accanto alle sue due componenti: Pagato CP e Rimasto da pagare CP. Gli
               importi sono in euro e derivano da centesimi interi.
             </p>
           </div>
@@ -99,7 +103,7 @@ export default function MinistriesPage() {
                 <th scope="col">Ministero</th>
                 <th scope="col">Totale CP</th>
                 <th scope="col">Pagato CP</th>
-                <th scope="col">Rimasto CP</th>
+                <th scope="col">Rimasto da pagare CP</th>
               </tr>
             </thead>
             <tbody>

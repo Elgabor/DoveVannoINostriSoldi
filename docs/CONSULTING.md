@@ -9,9 +9,10 @@ un database applicativo di contatti e non espone le credenziali al browser.
 - `RESEND_FROM_EMAIL`: mittente appartenente a un dominio verificato in Resend;
 - `LEAD_INBOX_EMAIL`: destinatario gestito dal titolare indicato in `/privacy`.
 
-Se una variabile manca o contiene un indirizzo non valido, l'endpoint risponde `503`: non usa
-fallback impliciti. Le richieste a Resend hanno timeout e `Idempotency-Key`; un retry dello stesso
-contenuto non deve produrre una seconda email nell'arco supportato dal provider.
+Se manca `RESEND_API_KEY`, l'endpoint risponde `503`. Inbox e mittente usano i valori del
+progetto quando le variabili sono vuote; un indirizzo configurato ma non valido resta un errore.
+Le richieste a Resend hanno timeout e `Idempotency-Key`; un retry dello stesso contenuto non deve
+produrre una seconda email nell'arco supportato dal provider.
 
 ## Controlli applicativi e limite dichiarato
 

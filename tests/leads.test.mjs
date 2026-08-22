@@ -178,14 +178,14 @@ test("consulting API sends a plain-text email to the configured inbox", async ()
   }
 });
 
-test("lead email configuration fails closed", () => {
+test("lead email configuration uses project defaults and rejects an invalid inbox", () => {
   const previousFrom = process.env.RESEND_FROM_EMAIL;
   const previousInbox = process.env.LEAD_INBOX_EMAIL;
   delete process.env.RESEND_FROM_EMAIL;
   delete process.env.LEAD_INBOX_EMAIL;
   try {
-    assert.equal(leadFromAddress(), null);
-    assert.equal(leadInbox(), null);
+    assert.equal(leadFromAddress(), "Consulenza <consulenza@dovevannoinostrisoldi.com>");
+    assert.equal(leadInbox(), CONTACT_EMAIL);
   } finally {
     if (previousFrom === undefined) delete process.env.RESEND_FROM_EMAIL;
     else process.env.RESEND_FROM_EMAIL = previousFrom;

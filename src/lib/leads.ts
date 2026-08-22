@@ -7,6 +7,7 @@ import {
   type OrganizationType,
   type ProjectBudget,
 } from "@/lib/consulting-contract";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 const RESEND_TIMEOUT_MS = 8_000;
 
@@ -135,16 +136,20 @@ export function leadEmailSubject(lead: Lead): string {
 
 const mailbox = z.email();
 const namedMailbox = /^[^<>\r\n]+<([^<>\r\n]+)>$/;
+const RESEND_DEFAULT_FROM = "Consulenza <consulenza@dovevannoinostrisoldi.com>";
+
+function namedOrBareAddress(value: string): string {
+  return namedMailbox.exec(value)?.[1]?.trim() ?? value;
+}
 
 export function leadInbox(): string | null {
-  const configured = process.env.LEAD_INBOX_EMAIL?.trim();
-  return configured && mailbox.safeParse(configured).success ? configured : null;
+  const configured = process.env.LEAD_INBOX_EMAIL?.trim() || CONTACT_EMAIL;
+  return mailbox.safeParse(configured).success ? configured : null;
 }
 
 export function leadFromAddress(): string | null {
-  const configured = process.env.RESEND_FROM_EMAIL?.trim();
-  if (!configured) return null;
-  const address = namedMailbox.exec(configured)?.[1]?.trim() ?? configured;
+  const configured = process.env.RESEND_FROM_EMAIL?.trim() || RESEND_DEFAULT_FROM;
+  const address = namedOrBareAddress(configured);
   return mailbox.safeParse(address).success ? configured : null;
 }
 

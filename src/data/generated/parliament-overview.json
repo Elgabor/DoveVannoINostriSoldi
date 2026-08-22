@@ -52,7 +52,7 @@
             }
           ],
           "categoryReconciliationTolerance": 0.5,
-          "meaning": "Il totale impegnato include anche soldi che la Camera riceve e riversa per conto di altri (partite di giro). Pagamenti e categorie riguardano la spesa effettiva dei titoli I, II e III."
+          "meaning": "Il totale degli impegni comprende anche le partite di giro. Pagamenti e categorie si riferiscono alla spesa effettiva dei titoli I, II e III."
         },
         {
           "kind": "budget",
@@ -70,7 +70,7 @@
             { "id": "other-staff", "label": "Altro personale", "value": 31.2 },
             { "id": "goods-services", "label": "Beni e servizi", "value": 90.9 }
           ],
-          "meaning": "Sono previsioni approvate, non pagamenti già fatti. Le voci in evidenza non coprono tutto il totale."
+          "meaning": "Sono previsioni approvate, non pagamenti già effettuati. Gli importi evidenziati non formano una ripartizione completa del totale."
         }
       ]
     }

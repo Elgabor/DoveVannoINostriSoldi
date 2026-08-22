@@ -117,12 +117,6 @@ main td a:not(.btn) {
   letter-spacing: -.02em;
   line-height: 1.1;
 }
-.brand-text small {
-  display: block;
-  margin-top: 2px;
-  font-size: 13px;
-  color: var(--color-neutral-600);
-}
 
 .header-spacer { flex: 1; }
 
@@ -499,7 +493,6 @@ main { display: block; }
   .header-spacer { display: none; }
   .brand { flex: 1; min-width: 0; }
   .brand-text strong { font-size: 19px; }
-  .brand-text small { display: none; }
   .header-search { order: 3; width: 100%; }
   .nav-note { display: none; }
 }
@@ -513,7 +506,6 @@ main { display: block; }
   .header-spacer { display: none; }
   .brand { flex: 1; min-width: 0; }
   .brand-text strong { font-size: 19px; }
-  .brand-text small { display: none; }
   .header-search { order: 3; width: 100%; }
   .nav-note { display: none; }
   .stat-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }

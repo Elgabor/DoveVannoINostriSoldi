@@ -56,7 +56,6 @@ export function Navigation() {
           />
           <span className="brand-text">
             <strong>Dove vanno i nostri soldi?</strong>
-            <small>I soldi pubblici, spiegati semplice</small>
           </span>
         </Link>
 

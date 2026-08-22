@@ -19,42 +19,15 @@ const amount = new Intl.NumberFormat("it-IT", {
 });
 
 const valueLabels: Record<string, string> = {
-  totalCommitments: "Soldi impegnati in totale",
-  effectiveCommitments: "Impegnati per la spesa effettiva",
-  effectivePayments: "Pagati per la spesa effettiva",
-  finalAdministrationSurplus: "Soldi rimasti a fine anno",
-  annualStateContribution: "Soldi dallo Stato",
+  totalCommitments: "Impegni totali",
+  effectiveCommitments: "Impegni per la spesa effettiva",
+  effectivePayments: "Pagamenti per la spesa effettiva",
+  finalAdministrationSurplus: "Avanzo finale di amministrazione",
+  annualStateContribution: "Contributo dello Stato",
   plannedExpenditure: "Spesa prevista",
   functioningExpenditure: "Spesa di funzionamento prevista",
   plannedRevenue: "Entrate previste",
 };
-
-/** Plain labels for category rows; official wording stays in the snapshot contract. */
-const categoryLabels: Record<string, string> = {
-  deputies: "Deputati",
-  employees: "Personale dipendente",
-  "other-staff": "Altro personale",
-  "goods-services": "Beni e servizi",
-  transfers: "Trasferimenti",
-  "parliamentary-bodies": "Attività degli organi",
-  "common-costs": "Spese comuni",
-  capital: "Investimenti",
-  pensions: "Pensioni e previdenza",
-  "former-deputies": "Ex deputati",
-  "retired-staff": "Personale in pensione",
-};
-
-function plainCategoryLabel(id: string, fallback: string): string {
-  return categoryLabels[id] ?? fallback;
-}
-
-function plainCaveat(id: string, caveat: string | undefined): string | undefined {
-  if (!caveat) return undefined;
-  if (id === "pensions") {
-    return "Questa voce raccoglie più tipi di pagamento pensionistico. Il consuntivo non separa i pagamenti delle sottovoci interne.";
-  }
-  return caveat;
-}
 
 function millionEuro(value: number): string {
   return `${amount.format(value)} mln €`;
@@ -224,7 +197,7 @@ export default function ParliamentPage() {
                             return (
                               <li key={item.id}>
                                 <div>
-                                  <span>{plainCategoryLabel(item.id, item.label)}</span>
+                                  <span>{item.label}</span>
                                   <strong>{millionEuro(value)}</strong>
                                 </div>
                                 <i style={{ width: `${Math.max(2, (value / maximum) * 100)}%` }} />
@@ -232,7 +205,7 @@ export default function ParliamentPage() {
                                   <dl className={styles.categoryComponents}>
                                     {item.components.map((component) => (
                                       <div key={component.id}>
-                                        <dt>{plainCategoryLabel(component.id, component.label)}</dt>
+                                        <dt>{component.label}</dt>
                                         <dd>{millionEuro(component.paid)}</dd>
                                       </div>
                                     ))}
@@ -240,7 +213,7 @@ export default function ParliamentPage() {
                                 ) : null}
                                 {"caveat" in item && item.caveat ? (
                                   <p className={styles.categoryCaveat}>
-                                    {plainCaveat(item.id, item.caveat)}
+                                    {item.caveat}
                                   </p>
                                 ) : null}
                               </li>

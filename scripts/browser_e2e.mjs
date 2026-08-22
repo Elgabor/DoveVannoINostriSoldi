@@ -994,9 +994,10 @@ try {
       width,
       validate: async (page) => {
         const text = await bodyText(page);
-        assertTextMatches(text, /competenza economica, non pagamenti di cassa/i, label);
+        assertTextMatches(text, /costi di competenza economica/i, label);
         assertTextMatches(text, /non pubblica una voce chiamata “gettonisti” o “cooperative”/i, label);
-        assertTextMatches(text, /Non è una graduatoria/i, label);
+        assertTextMatches(text, /alfabetico per codice geografico e Codice Ente SSN/i, label);
+        assertTextMatches(text, /non sostituisce una contabilità dei pagamenti/i, label);
         await assertHealthSpendingTables(page, label);
       },
     });

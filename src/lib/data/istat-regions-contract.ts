@@ -98,8 +98,10 @@ export function validateIstatRegionsSnapshot(data: IstatRegionsData, metadata: I
     data.entities.every((entity) =>
       EXPECTED_ENTITIES.get(entity.id)?.sourceSheet === entity.sourceSheet &&
       EXPECTED_ENTITIES.get(entity.id)?.status === entity.status &&
-      entity.label.trim() && entity.sourceLabel.trim() && entity.sourceSheet.trim() && money(entity.commitmentsCents) &&
-      entity.titles.length === 6 && entity.titles.every((title) => title.code && title.label && money(title.commitmentsCents)) &&
+      entity.label.trim() && entity.sourceLabel.trim() && entity.sourceSheet.trim() &&
+      money(entity.commitmentsCents) && entity.commitmentsCents > 0 &&
+      entity.titles.length === 6 && entity.titles.map((title) => title.code).join(",") === "1,2,3,4,5,7" &&
+      entity.titles.every((title) => title.label && money(title.commitmentsCents)) &&
       entity.titles.reduce((sum, title) => sum + title.commitmentsCents, 0) === entity.commitmentsCents),
     "identità o Titoli non riconciliati",
   );

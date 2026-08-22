@@ -14,7 +14,7 @@ import {
 const baseUrl = defaultBaseUrl();
 const TABLE_REGION = '[role="region"][aria-label="Redditi e variabili IRPEF per territorio"]';
 const ACTIVE_LEVEL = 'nav[aria-label="Livello territoriale"] a[aria-current="page"]';
-const INFO_TOOLTIP_IDS = ["cash-payments-tip", "spending-glossary-tip"];
+const INFO_TOOLTIP_IDS = ["cash-payments-tip"];
 
 if (!/^https?:$/.test(baseUrl.protocol)) {
   throw new Error("DVNS_BASE_URL deve usare il protocollo HTTP oppure HTTPS.");

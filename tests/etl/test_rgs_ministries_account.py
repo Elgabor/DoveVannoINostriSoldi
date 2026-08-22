@@ -51,6 +51,25 @@ class RgsMinistriesAccountTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "5394/5395"):
             MODULE.validate_coverage(5395, 5394)
 
+    def test_source_manifest_rejects_hash_drift(self):
+        meta = {
+            "source": {
+                "owner": "Ragioneria Generale dello Stato",
+                "sourceRecordId": MODULE.SOURCE_RECORD_ID,
+                "referencePeriod": "2025",
+                "landingUrl": MODULE.LANDING_URL,
+                "resourceUrl": MODULE.RESOURCE_URL,
+            },
+            "asset": {
+                "bytes": MODULE.EXPECTED_BYTES,
+                "sha256": "0" * 64,
+                "encoding": "cp1252",
+                "delimiter": ";",
+            },
+        }
+        with self.assertRaisesRegex(ValueError, "fonte validata"):
+            MODULE.validate_source_manifest(meta)
+
     def test_committed_snapshot_is_byte_bound(self):
         MODULE.validate_committed()
 

@@ -76,6 +76,11 @@ const EXPECTED_MINISTRIES: ReadonlyMap<string, string> = new Map([
   ["16", "MINISTERO DEL TURISMO"],
 ] as const);
 
+const EXPECTED_LANDING_URL = "https://bdap-opendata.rgs.mef.gov.it/content/2025-rendiconto-pubblicato-elaborabile-spese-capitolo?metadati=showall";
+const EXPECTED_RESOURCE_URL = "https://bdap-opendata.rgs.mef.gov.it/export/csv/2025---Rendiconto-Pubblicato-Elaborabile-Spese-Capitolo.csv";
+const EXPECTED_ASSET_SHA256 = "2887db4905d30445abc795083f2861f969173baf235a56917932c9fcc242e368";
+const EXPECTED_DATA_SHA256 = "79484f5493120c4c4d29e0d5b6bb5a9fe12a00ab8b6fc8ef67072a32ff9d0db3";
+
 export function validateRgsMinistriesSnapshot(data: RgsMinistriesData, metadata: RgsMinistriesMetadata) {
   invariant(data.schemaVersion === 1 && metadata.schemaVersion === 1, "versione inattesa");
   invariant(
@@ -90,7 +95,8 @@ export function validateRgsMinistriesSnapshot(data: RgsMinistriesData, metadata:
     "schema o righe inattesi",
   );
   invariant(
-    data.ministries.every((item) => EXPECTED_MINISTRIES.get(item.code) === item.label),
+    new Set(data.ministries.map((item) => item.code)).size === EXPECTED_MINISTRIES.size &&
+      data.ministries.every((item) => EXPECTED_MINISTRIES.get(item.code) === item.label),
     "identità amministrazioni inattese",
   );
   invariant(Object.values(data.totals).every(money), "totali monetari non validi");
@@ -129,11 +135,26 @@ export function validateRgsMinistriesSnapshot(data: RgsMinistriesData, metadata:
   invariant(data.totals.paymentsCashCsCents === data.totals.paymentsCompetenceCpCents + data.totals.paymentsResidualRsCents, "pagamenti CS non riconciliati");
   invariant(data.totals.commitmentsCpCents === data.totals.paymentsCompetenceCpCents + data.totals.remainingCpCents, "impegni CP non riconciliati");
   invariant(data.totals.residualsEndCents === data.totals.remainingCpCents + data.totals.remainingRsCents, "residui finali non riconciliati");
-  invariant(metadata.source.owner === "Ragioneria Generale dello Stato", "titolare inatteso");
-  invariant(metadata.source.landingUrl.startsWith("https://bdap-opendata.rgs.mef.gov.it/"), "landing non ufficiale");
-  invariant(metadata.source.resourceUrl.startsWith("https://bdap-opendata.rgs.mef.gov.it/"), "risorsa non ufficiale");
+  invariant(
+    metadata.source.owner === "Ragioneria Generale dello Stato" &&
+      metadata.source.sourceRecordId === "2025_RND_SPE_ELB_CAP_001" &&
+      metadata.source.referencePeriod === "2025" && metadata.source.createdAt === "2026-05-28" &&
+      metadata.source.updatedAt === "2026-07-14",
+    "identità o date sorgente inattese",
+  );
+  invariant(metadata.source.landingUrl === EXPECTED_LANDING_URL, "landing non ufficiale");
+  invariant(metadata.source.resourceUrl === EXPECTED_RESOURCE_URL, "risorsa non ufficiale");
   invariant(metadata.source.licenseStatus === "declared" && metadata.source.licenseName === "CC BY 3.0", "licenza inattesa");
-  invariant(metadata.asset.bytes === 4196648 && /^[a-f0-9]{64}$/.test(metadata.asset.sha256), "asset non valido");
+  invariant(
+    metadata.asset.bytes === 4196648 && metadata.asset.sha256 === EXPECTED_ASSET_SHA256 &&
+      metadata.asset.encoding === "cp1252" && metadata.asset.delimiter === ";",
+    "asset non valido",
+  );
+  invariant(
+    metadata.dataArtifact.path === "src/data/generated/rgs-ministries-2025.data.json" &&
+      metadata.dataArtifact.bytes === 24911 && metadata.dataArtifact.sha256 === EXPECTED_DATA_SHA256,
+    "artefatto dati inatteso",
+  );
   invariant(metadata.transformation.version === 1 && metadata.transformation.description.trim(), "trasformazione assente");
   return { data, metadata };
 }

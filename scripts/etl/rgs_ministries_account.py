@@ -134,6 +134,25 @@ def validate_coverage(source_rows: int, included_rows: int) -> None:
         raise ValueError(f"Copertura RGS non completa: {included_rows}/{source_rows} righe incluse")
 
 
+def validate_source_manifest(meta: dict) -> None:
+    source = meta.get("source", {})
+    if (
+        source.get("owner") != "Ragioneria Generale dello Stato"
+        or source.get("sourceRecordId") != SOURCE_RECORD_ID
+        or source.get("referencePeriod") != "2025"
+        or source.get("landingUrl") != LANDING_URL
+        or source.get("resourceUrl") != RESOURCE_URL
+    ):
+        raise ValueError("Identità della fonte Ministeri inattesa")
+    if meta.get("asset") != {
+        "bytes": EXPECTED_BYTES,
+        "sha256": EXPECTED_SHA256,
+        "encoding": "cp1252",
+        "delimiter": ";",
+    }:
+        raise ValueError("CSV Ministeri non legato alla fonte validata")
+
+
 def canonical_bytes(value: object) -> bytes:
     return (json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode()
 
@@ -250,6 +269,7 @@ def validate_committed() -> None:
     artifact = meta["dataArtifact"]
     if len(data_bytes) != artifact["bytes"] or hashlib.sha256(data_bytes).hexdigest() != artifact["sha256"]:
         raise ValueError("Artefatto Ministeri non legato al manifesto")
+    validate_source_manifest(meta)
     if data["coverage"] != {"sourceRows": EXPECTED_ROWS, "includedRows": EXPECTED_ROWS, "headers": 41, "ministries": 15, "rowsReconciled": EXPECTED_ROWS}:
         raise ValueError("Copertura Ministeri inattesa")
 

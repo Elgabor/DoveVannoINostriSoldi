@@ -60,6 +60,20 @@ test("RGS Ministries account fails closed on frame and mission drift", () => {
   assert.throws(
     () => validateRgsMinistriesSnapshot({
       ...data,
+      ministries: [first, first, ...data.ministries.slice(2)],
+    }, metadata),
+    /identità amministrazioni inattese/,
+  );
+  assert.throws(
+    () => validateRgsMinistriesSnapshot(data, {
+      ...metadata,
+      asset: { ...metadata.asset, sha256: "0".repeat(64) },
+    }),
+    /asset non valido/,
+  );
+  assert.throws(
+    () => validateRgsMinistriesSnapshot({
+      ...data,
       ministries: [{
         ...first,
         missions: [{ ...first.missions[0], label: "Etichetta in conflitto" }, ...first.missions],

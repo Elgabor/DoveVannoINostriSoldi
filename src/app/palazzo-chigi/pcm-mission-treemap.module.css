@@ -12,8 +12,15 @@
 .tileLabel,
 .tileShare,
 .tileAmount {
-  fill: var(--color-raised);
   pointer-events: none;
+}
+
+.tileInkLight {
+  fill: var(--color-raised);
+}
+
+.tileInkDark {
+  fill: var(--color-text);
 }
 
 .tileLabel {

@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { compactEuro, exactEuro, longDate } from "@/lib/format";
 import { istatRegionsMetadata, istatRegionsSnapshot } from "@/lib/istat-regions-snapshot";
+import { siopeTitleCopy } from "@/lib/siope-titles";
 import { RegionTitleTreemap } from "./region-title-treemap";
 import styles from "./regioni.module.css";
 
 export const metadata: Metadata = {
   title: "Spese delle Regioni, consuntivi 2024",
   description:
-    "Impegni 2024 dei bilanci consuntivi Istat per 22 amministrazioni regionali e Province autonome, con Titoli esatti e perimetri distinti.",
+    "Soldi impegnati nel 2024 nei bilanci Istat di 22 Regioni e Province autonome, con voci semplici e importi esatti.",
 };
 
 const percentage = new Intl.NumberFormat("it-IT", {
@@ -40,8 +41,8 @@ export default async function RegionsPage({
         <h1>Spese delle Regioni</h1>
         <p>
           Leggiamo i consuntivi 2024 di 22 amministrazioni: 15 Regioni ordinarie, 5 speciali e
-          2 Province autonome. Qui mostriamo impegni, non pagamenti, e non li mescoliamo con
-          Comuni, sanità, CPT o residuo fiscale.
+          2 Province autonome. Qui mostriamo i soldi impegnati, non i pagamenti, e non li
+          mescoliamo con Comuni, sanità o altri conti.
         </p>
       </div>
 
@@ -59,14 +60,14 @@ export default async function RegionsPage({
 
       <dl className="stat-strip">
         <div>
-          <dt>Impegni 2024</dt>
+          <dt>Soldi impegnati nel 2024</dt>
           <dd>{compactEuro(euro(selected.commitmentsCents))}</dd>
           <span className="stat-note">{exactEuro(euro(selected.commitmentsCents))} esatti</span>
         </div>
         <div>
-          <dt>Composizione</dt>
+          <dt>Voci nel bilancio</dt>
           <dd>{selected.titles.length}</dd>
-          <span className="stat-note">Titoli riconciliati al totale</span>
+          <span className="stat-note">Somma uguale al totale ufficiale</span>
         </div>
         <div>
           <dt>Tipo</dt>
@@ -78,7 +79,7 @@ export default async function RegionsPage({
       <div className="notice">
         <strong>Non è una classifica tra territori</strong>
         <p>
-          Gli importi sono valori assoluti del bilancio di {selected.label}. Senza una popolazione
+          Gli importi sono i valori assoluti del bilancio di {selected.label}. Senza una popolazione
           Istat bloccata sullo stesso periodo non calcoliamo valori pro capite. Le 22 amministrazioni
           non coincidono con le 20 geometrie regionali, quindi in questa vista non usiamo la mappa.
         </p>
@@ -87,10 +88,10 @@ export default async function RegionsPage({
       <section className="panel" aria-labelledby="composizione-regionale">
         <div className={styles.sectionHeader}>
           <div>
-            <h2 id="composizione-regionale">Per cosa sono stati impegnati</h2>
+            <h2 id="composizione-regionale">In che cosa sono finiti i soldi</h2>
             <p>
-              Composizione per Titolo di {selected.label}. Il denominatore è il totale ufficiale
-              degli impegni 2024 della stessa amministrazione.
+              Composizione del bilancio di {selected.label}. Il totale è quello ufficiale degli
+              impegni 2024 della stessa amministrazione.
             </p>
           </div>
           <span>Consuntivo definitivo</span>
@@ -100,22 +101,38 @@ export default async function RegionsPage({
         <div
           className={`table-scroll ${styles.titleTable}`}
           role="region"
-          aria-label={`Valori esatti degli impegni 2024 di ${selected.label} per Titolo`}
+          aria-label={`Valori esatti dei soldi impegnati nel 2024 da ${selected.label}`}
           tabIndex={0}
         >
           <table className="table">
-            <thead><tr><th scope="col">Titolo</th><th scope="col">Impegni 2024</th><th scope="col">Quota</th></tr></thead>
+            <thead>
+              <tr>
+                <th scope="col">Voce</th>
+                <th scope="col">Impegnato 2024</th>
+                <th scope="col">Quota</th>
+              </tr>
+            </thead>
             <tbody>
-              {selected.titles.map((title) => (
-                <tr key={title.code}>
-                  <th scope="row">{title.label}</th>
-                  <td>{exactEuro(euro(title.commitmentsCents))}</td>
-                  <td>{percentage.format(title.commitmentsCents / selected.commitmentsCents)}</td>
-                </tr>
-              ))}
+              {selected.titles.map((title) => {
+                const copy = siopeTitleCopy(title.code);
+                return (
+                  <tr key={title.code}>
+                    <th scope="row">
+                      {copy.name}
+                      <small>{title.label}</small>
+                    </th>
+                    <td>{exactEuro(euro(title.commitmentsCents))}</td>
+                    <td>{percentage.format(title.commitmentsCents / selected.commitmentsCents)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
             <tfoot>
-              <tr><th scope="row">Totale ufficiale</th><td>{exactEuro(euro(selected.commitmentsCents))}</td><td>{percentage.format(1)}</td></tr>
+              <tr>
+                <th scope="row">Totale ufficiale</th>
+                <td>{exactEuro(euro(selected.commitmentsCents))}</td>
+                <td>{percentage.format(1)}</td>
+              </tr>
             </tfoot>
           </table>
         </div>
@@ -134,9 +151,15 @@ export default async function RegionsPage({
           e assetti non sono equivalenti. Non calcoliamo una media comune.
         </p>
         <p className={styles.scrollHint}>Scorri la tabella verso destra per vedere gli importi.</p>
-        <div className={`table-scroll ${styles.allEntitiesTable}`} role="region" aria-label="Impegni esatti delle 22 amministrazioni regionali" tabIndex={0}>
+        <div className={`table-scroll ${styles.allEntitiesTable}`} role="region" aria-label="Soldi impegnati esatti delle 22 amministrazioni regionali" tabIndex={0}>
           <table className="table">
-            <thead><tr><th scope="col">Amministrazione</th><th scope="col">Tipo</th><th scope="col">Impegni 2024</th></tr></thead>
+            <thead>
+              <tr>
+                <th scope="col">Amministrazione</th>
+                <th scope="col">Tipo</th>
+                <th scope="col">Impegnato 2024</th>
+              </tr>
+            </thead>
             <tbody>
               {istatRegionsSnapshot.entities.map((entity) => (
                 <tr key={entity.id}>
@@ -161,7 +184,7 @@ export default async function RegionsPage({
         <p className={styles.statusNote}>
           Fonte {source.sourceRecordId}, foglio “{selected.sourceSheet}”. Abbiamo escluso i tre
           fogli aggregati Italia, Regioni ordinarie e Regioni speciali; per ogni amministrazione
-          la somma dei sei Titoli coincide con il totale ufficiale. La pagina Istat non dichiara
+          la somma delle sei voci coincide con il totale ufficiale. La pagina Istat non dichiara
           una licenza per l&apos;archivio: non ne attribuiamo una.
         </p>
         <div className={styles.sourceLinks}>

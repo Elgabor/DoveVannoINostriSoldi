@@ -96,9 +96,9 @@ export default async function MoneyPage({
           <span className="stat-note">{exactEuro(data.totalPaid)} esatti</span>
         </div>
         <div>
-          <span className="stat-label">Pagamenti al netto delle partite di giro</span>
+          <span className="stat-label">Pagamenti senza soldi di passaggio</span>
           <span className="stat-value">{compactEuro(netPayments)}</span>
-          <span className="stat-note">totale meno le uscite per conto terzi</span>
+          <span className="stat-note">totale meno le partite di giro</span>
         </div>
         <div>
           <span className="stat-label">Media dei mesi completi</span>

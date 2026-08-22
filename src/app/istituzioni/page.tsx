@@ -14,28 +14,28 @@ const dossiers = [
     title: "Parlamento",
     period: "Camera: dati 2025 · documenti 2024 per Camera e Senato",
     description:
-      "Camera e Senato restano distinti. I numeri sono pubblicati solo dove il dato ufficiale è verificato; per gli altri documenti mostriamo la copertura mancante.",
+      "Camera e Senato restano distinti. Mostriamo i numeri solo dove li abbiamo già controllati; per gli altri documenti diciamo che cosa manca.",
   },
   {
     href: "/palazzo-chigi",
     title: "Palazzo Chigi",
     period: "Rendiconto PCM 2024",
     description:
-      "Impegni e pagamenti della sola Presidenza del Consiglio, con fasi contabili separate e fonte ufficiale scaricabile.",
+      "Soldi impegnati e soldi pagati dalla sola Presidenza del Consiglio, con file ufficiale scaricabile.",
   },
   {
     href: "/ministeri",
     title: "Ministeri",
     period: "Rendiconto dello Stato 2025",
     description:
-      "Totale CP, Pagato CP e Rimasto CP per 15 Ministeri. Palazzo Chigi e Parlamento non sono inclusi.",
+      "Quanto hanno impegnato, già pagato e ancora da pagare 15 ministeri. Palazzo Chigi e Parlamento non ci sono.",
   },
   {
     href: "/regioni",
     title: "Regioni",
     period: "Consuntivi Istat 2024",
     description:
-      "Impegni per Titolo di 22 amministrazioni regionali e Province autonome, senza classifiche o confronti pro capite improvvisati.",
+      "Come si spezzano i soldi impegnati di 22 Regioni e Province autonome, senza classifiche inventate.",
   },
 ] as const;
 
@@ -45,14 +45,14 @@ export default function InstitutionsPage() {
       <div className="page-intro">
         <h1>Spese delle istituzioni</h1>
         <p>
-          Parlamento, Palazzo Chigi, Ministeri e Regioni hanno conti e regole diverse.
-          Scegli il percorso che ti interessa: non li sommiamo in un totale unico.
+          Parlamento, Palazzo Chigi, Ministeri e Regioni hanno conti diversi.
+          Scegli il percorso: non li sommiamo in un totale unico.
         </p>
       </div>
 
       <section aria-labelledby="percorsi-istituzionali">
         <div className={styles.sectionHeader}>
-          <h2 id="percorsi-istituzionali">Quattro conti, quattro perimetri</h2>
+          <h2 id="percorsi-istituzionali">Quattro conti, quattro confini</h2>
           <p>In ogni pagina trovi importi esatti o limiti di copertura, periodo e fonte ufficiale.</p>
         </div>
         <div className={styles.grid}>
@@ -72,7 +72,7 @@ export default function InstitutionsPage() {
       <div className="notice">
         <strong>Perché non c&apos;è un totale delle istituzioni</strong>
         <p>
-          Periodi, perimetri e fasi contabili non coincidono. Sommarli produrrebbe un numero
+          Anni, confini e regole contabili non coincidono. Sommarli produrrebbe un numero
           fuorviante. I confronti restano dentro ogni fonte e solo tra grandezze compatibili.
         </p>
       </div>

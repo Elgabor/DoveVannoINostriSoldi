@@ -3,6 +3,7 @@
 import { ResponsiveContainer, Tooltip, Treemap } from "recharts";
 import type { TreemapNode } from "recharts";
 import type { RgsMinistry } from "@/lib/data/rgs-ministries-contract";
+import { treemapTile } from "@/lib/treemap-palette";
 import styles from "./ministry-commitment-treemap.module.css";
 
 const exactEuro = new Intl.NumberFormat("it-IT", {
@@ -52,6 +53,8 @@ function tile(props: TreemapNode) {
   const node = props as MinistryNode;
   const showLabel = node.width >= 145 && node.height >= 62;
   const showShare = node.width >= 155 && node.height >= 88;
+  const { fill, ink } = treemapTile(node.index);
+  const inkClass = ink === "light" ? styles.tileInkLight : styles.tileInkDark;
 
   return (
     <g>
@@ -60,18 +63,17 @@ function tile(props: TreemapNode) {
         y={node.y}
         width={node.width}
         height={node.height}
-        fill="var(--color-accent)"
-        fillOpacity={0.96 - (node.index % 4) * 0.1}
+        fill={fill}
         stroke="var(--color-raised)"
         strokeWidth={2}
       />
       {showLabel ? (
         <>
-          <text x={node.x + 12} y={node.y + 25} className={styles.tileLabel}>
+          <text x={node.x + 12} y={node.y + 25} className={`${styles.tileLabel} ${inkClass}`}>
             {node.shortLabel}
           </text>
           {showShare ? (
-            <text x={node.x + 12} y={node.y + 47} className={styles.tileShare}>
+            <text x={node.x + 12} y={node.y + 47} className={`${styles.tileShare} ${inkClass}`}>
               {percentage.format(node.share ?? 0)}
             </text>
           ) : null}
@@ -97,7 +99,7 @@ export function MinistryCommitmentTreemap({ ministries }: { ministries: RgsMinis
       <div
         className={styles.chart}
         role="img"
-        aria-label="Composizione del Totale CP 2025 tra i 15 Ministeri"
+        aria-label="Come si spezza il totale impegnato 2025 tra i 15 ministeri"
         aria-describedby="ministeri-totale-cp-caption"
       >
         <ResponsiveContainer width="100%" height="100%">
@@ -117,7 +119,7 @@ export function MinistryCommitmentTreemap({ ministries }: { ministries: RgsMinis
                   <div className={styles.tooltip}>
                     <span>{point.fullLabel}</span>
                     <strong>{exactEuro.format((point.totalCpCents ?? 0) / 100)}</strong>
-                    <small>{percentage.format(point.share ?? 0)} del Totale CP dei 15 Ministeri</small>
+                    <small>{percentage.format(point.share ?? 0)} del totale dei 15 ministeri</small>
                   </div>
                 );
               }}
@@ -126,9 +128,9 @@ export function MinistryCommitmentTreemap({ ministries }: { ministries: RgsMinis
         </ResponsiveContainer>
       </div>
       <figcaption id="ministeri-totale-cp-caption">
-        Ogni area rappresenta la quota di un Ministero sul Totale CP 2025. Totale CP è la
-        somma di Pagato CP e Rimasto CP: descrive la composizione degli impegni di competenza,
-        non un pagamento aggiuntivo.
+        Ogni riquadro è un ministero: più è grande, più pesa sul totale impegnato nel 2025.
+        Quel totale è la somma di già pagato e ancora da pagare (nella fonte: Totale CP = Pagato CP
+        + Rimasto CP). Non è un pagamento in più.
       </figcaption>
     </figure>
   );

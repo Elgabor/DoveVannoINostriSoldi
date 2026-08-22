@@ -3,6 +3,7 @@
 import { ResponsiveContainer, Tooltip, Treemap } from "recharts";
 import type { TreemapNode } from "recharts";
 import type { PcmFinancialMission } from "@/lib/data/pcm-financial-contract";
+import { treemapTile } from "@/lib/treemap-palette";
 import styles from "./pcm-mission-treemap.module.css";
 
 const compactEuro = new Intl.NumberFormat("it-IT", {
@@ -36,6 +37,8 @@ function tile(props: TreemapNode) {
   const node = props as MissionNode;
   const showLabel = node.width >= 128 && node.height >= 62;
   const showAmount = node.width >= 150 && node.height >= 92;
+  const { fill, ink } = treemapTile(node.index);
+  const inkClass = ink === "light" ? styles.tileInkLight : styles.tileInkDark;
 
   return (
     <g>
@@ -44,21 +47,20 @@ function tile(props: TreemapNode) {
         y={node.y}
         width={node.width}
         height={node.height}
-        fill="var(--color-accent)"
-        fillOpacity={0.96 - (node.index % 4) * 0.1}
+        fill={fill}
         stroke="var(--color-raised)"
         strokeWidth={2}
       />
       {showLabel ? (
         <>
-          <text x={node.x + 12} y={node.y + 25} className={styles.tileLabel}>
+          <text x={node.x + 12} y={node.y + 25} className={`${styles.tileLabel} ${inkClass}`}>
             {node.shortLabel}
           </text>
-          <text x={node.x + 12} y={node.y + 45} className={styles.tileShare}>
+          <text x={node.x + 12} y={node.y + 45} className={`${styles.tileShare} ${inkClass}`}>
             {percentage.format(node.share ?? 0)}
           </text>
           {showAmount ? (
-            <text x={node.x + 12} y={node.y + 66} className={styles.tileAmount}>
+            <text x={node.x + 12} y={node.y + 66} className={`${styles.tileAmount} ${inkClass}`}>
               {compactEuro.format((node.paymentsCents ?? 0) / 100)}
             </text>
           ) : null}
@@ -101,7 +103,7 @@ export function PcmMissionTreemap({
       <div
         className={styles.chart}
         role="img"
-        aria-label="Composizione dei pagamenti 2024 della Presidenza del Consiglio per missione"
+        aria-label="Come si spezzano i pagamenti 2024 della Presidenza del Consiglio per area di lavoro"
       >
         <ResponsiveContainer width="100%" height="100%">
           <Treemap
@@ -120,7 +122,7 @@ export function PcmMissionTreemap({
                   <div className={styles.tooltip}>
                     <span>{point.fullLabel}</span>
                     <strong>{exactEuro.format((point.paymentsCents ?? 0) / 100)}</strong>
-                    <small>{percentage.format(point.share ?? 0)} del pagato PCM</small>
+                    <small>{percentage.format(point.share ?? 0)} del pagato di Palazzo Chigi</small>
                   </div>
                 );
               }}
@@ -129,8 +131,8 @@ export function PcmMissionTreemap({
         </ResponsiveContainer>
       </div>
       <figcaption>
-        Ogni area rappresenta la quota di una missione sul totale pagato PCM 2024. Le due missioni
-        a zero restano nella tabella e non occupano area. I valori esatti sono nella tabella.
+        Ogni riquadro è un&apos;area di lavoro: più è grande, più pesa sul totale pagato nel 2024.
+        Le due aree a zero restano nella tabella e non occupano spazio. I valori esatti sono sotto.
       </figcaption>
     </figure>
   );

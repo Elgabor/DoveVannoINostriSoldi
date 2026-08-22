@@ -161,11 +161,11 @@ export default function CohesionPage() {
       </div>
 
       <div className="notice">
-        <strong>Come leggere i nuovi dettagli</strong>
+        <strong>Come leggere questi numeri</strong>
         <p>
-          La quota confronta ogni categoria con il costo pubblico nazionale; pagato/costo è un
-          rapporto finanziario. La media per progetto è un rapporto contabile fra record molto
-          diversi: non misura qualità, beneficio ricevuto, completamento o irregolarità.
+          La quota confronta ogni categoria con il costo pubblico nazionale. “Pagato sul costo”
+          è un rapporto tra soldi: non dice se un progetto è finito bene, se è utile o se ci sono
+          irregolarità. La media per progetto mescola record molto diversi.
         </p>
       </div>
 

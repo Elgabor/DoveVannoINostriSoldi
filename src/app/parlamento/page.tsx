@@ -19,15 +19,42 @@ const amount = new Intl.NumberFormat("it-IT", {
 });
 
 const valueLabels: Record<string, string> = {
-  totalCommitments: "Impegni totali",
-  effectiveCommitments: "Impegni per la spesa effettiva",
-  effectivePayments: "Pagamenti per la spesa effettiva",
-  finalAdministrationSurplus: "Avanzo finale",
-  annualStateContribution: "Contributo dello Stato",
+  totalCommitments: "Soldi impegnati in totale",
+  effectiveCommitments: "Impegnati per la spesa effettiva",
+  effectivePayments: "Pagati per la spesa effettiva",
+  finalAdministrationSurplus: "Soldi rimasti a fine anno",
+  annualStateContribution: "Soldi dallo Stato",
   plannedExpenditure: "Spesa prevista",
   functioningExpenditure: "Spesa di funzionamento prevista",
   plannedRevenue: "Entrate previste",
 };
+
+/** Plain labels for category rows; official wording stays in the snapshot contract. */
+const categoryLabels: Record<string, string> = {
+  deputies: "Deputati",
+  employees: "Personale dipendente",
+  "other-staff": "Altro personale",
+  "goods-services": "Beni e servizi",
+  transfers: "Trasferimenti",
+  "parliamentary-bodies": "Attività degli organi",
+  "common-costs": "Spese comuni",
+  capital: "Investimenti",
+  pensions: "Pensioni e previdenza",
+  "former-deputies": "Ex deputati",
+  "retired-staff": "Personale in pensione",
+};
+
+function plainCategoryLabel(id: string, fallback: string): string {
+  return categoryLabels[id] ?? fallback;
+}
+
+function plainCaveat(id: string, caveat: string | undefined): string | undefined {
+  if (!caveat) return undefined;
+  if (id === "pensions") {
+    return "Questa voce non sono solo i vitalizi. Il consuntivo non separa i pagamenti delle sottovoci interne.";
+  }
+  return caveat;
+}
 
 function millionEuro(value: number): string {
   return `${amount.format(value)} mln €`;
@@ -57,8 +84,8 @@ export default function ParliamentPage() {
         <h1>Spese del Parlamento</h1>
         <p>
           Camera e Senato hanno bilanci autonomi. Per la Camera mostriamo i dati che abbiamo già
-          estratto e riconciliato; per i documenti 2024 dei due rami mostriamo per ora soltanto
-          metadati e procedure. Non li sommiamo e non stimiamo i numeri che non abbiamo verificato.
+          estratto e controllato; per i documenti 2024 dei due rami, per ora solo i riferimenti
+          ufficiali. Non li sommiamo e non inventiamo i numeri che mancano.
         </p>
       </div>
 
@@ -88,8 +115,8 @@ export default function ParliamentPage() {
       <div className="notice">
         <strong>Come leggere questi numeri</strong>
         <p>
-          Un bilancio indica quanto si prevede di spendere. Un consuntivo indica quanto è stato
-          impegnato o pagato. Non sommiamo i due valori e non stimiamo i dati che mancano.
+          Un bilancio dice quanto si prevede di spendere. Un consuntivo dice quanto è stato
+          impegnato o pagato. Non sommiamo i due valori e non inventiamo i dati che mancano.
         </p>
       </div>
 
@@ -198,7 +225,7 @@ export default function ParliamentPage() {
                             return (
                               <li key={item.id}>
                                 <div>
-                                  <span>{item.label}</span>
+                                  <span>{plainCategoryLabel(item.id, item.label)}</span>
                                   <strong>{millionEuro(value)}</strong>
                                 </div>
                                 <i style={{ width: `${Math.max(2, (value / maximum) * 100)}%` }} />
@@ -206,14 +233,16 @@ export default function ParliamentPage() {
                                   <dl className={styles.categoryComponents}>
                                     {item.components.map((component) => (
                                       <div key={component.id}>
-                                        <dt>{component.label}</dt>
+                                        <dt>{plainCategoryLabel(component.id, component.label)}</dt>
                                         <dd>{millionEuro(component.paid)}</dd>
                                       </div>
                                     ))}
                                   </dl>
                                 ) : null}
                                 {"caveat" in item && item.caveat ? (
-                                  <p className={styles.categoryCaveat}>{item.caveat}</p>
+                                  <p className={styles.categoryCaveat}>
+                                    {plainCaveat(item.id, item.caveat)}
+                                  </p>
                                 ) : null}
                               </li>
                             );

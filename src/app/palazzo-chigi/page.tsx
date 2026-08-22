@@ -10,7 +10,7 @@ import styles from "./palazzo-chigi.module.css";
 export const metadata: Metadata = {
   title: "Spese di Palazzo Chigi, rendiconto 2024",
   description:
-    "Impegni e pagamenti della Presidenza del Consiglio nel rendiconto ufficiale 2024, con fonte, perimetro e fasi contabili separate.",
+    "Soldi impegnati e pagati dalla Presidenza del Consiglio nel rendiconto ufficiale 2024, con fonte e numeri separati.",
 };
 
 function euro(cents: number): number {
@@ -37,8 +37,8 @@ export default function PalazzoChigiPage() {
         <h1>Spese di Palazzo Chigi</h1>
         <p>
           Il rendiconto 2024 riguarda soltanto la Presidenza del Consiglio dei ministri.
-          Mostriamo separatamente ciò che è stato impegnato e ciò che è stato pagato, senza
-          sommarlo ai Ministeri o al Parlamento.
+          Mostriamo separatamente quanto è stato impegnato e quanto è stato pagato, senza
+          sommarlo ai ministeri o al Parlamento.
         </p>
       </div>
 
@@ -69,9 +69,10 @@ export default function PalazzoChigiPage() {
       <div className="notice">
         <strong>Tre numeri diversi, tre significati diversi</strong>
         <p>
-          Lo stanziamento indica quanto era disponibile. L&apos;impegno registra un&apos;obbligazione.
-          Il pagamento indica quanto è uscito nel 2024. Non li sommiamo: sono fasi dello stesso
-          ciclo contabile, non spese aggiuntive.
+          <strong>Disponibile</strong>: quanto c&apos;era in bilancio.
+          <strong> Impegnato</strong>: quanto si è deciso di spendere.
+          <strong> Pagato</strong>: quanto è davvero uscito nel 2024.
+          Non li sommiamo: sono passaggi dello stesso percorso, non spese in più.
         </p>
       </div>
 
@@ -79,25 +80,25 @@ export default function PalazzoChigiPage() {
         <div className={styles.phaseHeading}>
           <h2 id="fasi-contabili">Come si compone il pagato</h2>
           <p>
-            Il workbook distingue i pagamenti su impegni del 2024 da quelli riferiti a residui
-            di esercizi precedenti.
+            Il file separa i pagamenti legati all&apos;anno 2024 da quelli che chiudono
+            debiti degli anni precedenti.
           </p>
         </div>
         <dl className={styles.phaseValues}>
           <div>
-            <dt>Conto competenza</dt>
+            <dt>Pagamenti dell&apos;anno 2024</dt>
             <dd>{exactEuro(euro(data.totals.paymentsCurrentCents))}</dd>
-            <span>Pagamenti su impegni dello stesso esercizio.</span>
+            <span>Uscite su impegni presi nello stesso anno.</span>
           </div>
           <div>
-            <dt>Conto residui</dt>
+            <dt>Pagamenti di anni precedenti</dt>
             <dd>{exactEuro(euro(data.totals.paymentsResidualCents))}</dd>
-            <span>Pagamenti su obbligazioni di esercizi precedenti.</span>
+            <span>Uscite su impegni presi prima del 2024.</span>
           </div>
           <div>
-            <dt>Stanziamento definitivo di competenza</dt>
+            <dt>Disponibile in bilancio</dt>
             <dd>{exactEuro(euro(data.totals.finalCompetenceAppropriationCents))}</dd>
-            <span>Disponibilità finale: non è denaro già pagato.</span>
+            <span>Quanto restava a disposizione: non è denaro già pagato.</span>
           </div>
         </dl>
       </section>
@@ -105,10 +106,10 @@ export default function PalazzoChigiPage() {
       <section className="panel" aria-labelledby="missioni-pcm">
         <div className={styles.sectionHeader}>
           <div>
-            <h2 id="missioni-pcm">Pagamenti per missione</h2>
-            <p>Le missioni descrivono la funzione pubblica a cui il capitolo è attribuito.</p>
+            <h2 id="missioni-pcm">Per cosa sono stati pagati</h2>
+            <p>Ogni area di lavoro raccoglie i capitoli di spesa collegati a quella funzione.</p>
           </div>
-          <span>{data.missions.length} missioni nel file</span>
+          <span>{data.missions.length} aree nel file</span>
         </div>
         <PcmMissionTreemap
           missions={data.missions}
@@ -118,15 +119,15 @@ export default function PalazzoChigiPage() {
         <div
           className={`table-scroll ${styles.exactTable}`}
           role="region"
-          aria-label="Valori esatti dei pagamenti PCM per missione"
+          aria-label="Valori esatti dei pagamenti di Palazzo Chigi per area di lavoro"
           tabIndex={0}
         >
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">Missione</th>
+                <th scope="col">Area di lavoro</th>
                 <th scope="col">Pagato nel 2024</th>
-                <th scope="col">Quota del pagato PCM</th>
+                <th scope="col">Quota del pagato</th>
               </tr>
             </thead>
             <tbody>
@@ -143,7 +144,7 @@ export default function PalazzoChigiPage() {
             </tbody>
             <tfoot>
               <tr>
-                <th scope="row">Totale PCM</th>
+                <th scope="row">Totale Palazzo Chigi</th>
                 <td>{exactEuro(euro(data.totals.paymentsTotalCents))}</td>
                 <td>{percentage.format(1)}</td>
               </tr>
@@ -174,7 +175,7 @@ export default function PalazzoChigiPage() {
         </div>
         <p className={styles.sourceNote}>
           Abbiamo escluso una riga vuota, convertito gli importi in centesimi e riconciliato tutte
-          le 572 righe con la formula del file: impegnato = pagato in conto competenza + rimasto da
+          le 572 righe con la formula del file: impegnato = pagato dell&apos;anno + ancora da
           pagare. La pagina ufficiale non dichiara una licenza per il workbook.
         </p>
         <div className={styles.sourceLinks}>

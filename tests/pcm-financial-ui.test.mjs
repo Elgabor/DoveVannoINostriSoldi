@@ -10,14 +10,16 @@ const parliamentCss = fs.readFileSync(new URL("../src/app/parlamento/parlamento.
 
 test("Palazzo Chigi keeps scope, accounting phases and source visible", () => {
   assert.match(page, /soltanto la Presidenza del Consiglio/);
-  assert.match(page, /Conto competenza/);
-  assert.match(page, /Conto residui/);
+  assert.match(page, /Pagamenti dell&apos;anno 2024|Pagamenti dell'anno 2024/);
+  assert.match(page, /Pagamenti di anni precedenti/);
+  assert.match(page, /Disponibile in bilancio/);
   assert.match(page, /non dichiara una licenza/);
   assert.match(page, /Scarica il file ufficiale XLSX/);
-  assert.match(page, /Quota del pagato PCM/);
+  assert.match(page, /Quota del pagato/);
   assert.match(treemap, /dataKey="paymentsCents"/);
   assert.match(treemap, /mission\.paymentsCents > 0/);
-  assert.match(treemap, /Le due missioni\s*\n?\s*a zero restano nella tabella/);
+  assert.match(treemap, /treemapTile/);
+  assert.match(treemap, /Le due aree\s*\n?\s*a zero restano nella tabella/);
   assert.doesNotMatch(page, /spreco|corruzione|illecito/i);
 });
 

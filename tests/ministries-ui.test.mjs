@@ -17,6 +17,7 @@ test("Ministries page keeps the competence frame exact and separate", () => {
   assert.match(page, /Pagato CP/);
   assert.match(page, /Rimasto CP/);
   assert.match(page, /quadro di competenza 2025/);
+  assert.match(page, /È una fase contabile, non una\s*\n?\s*scadenza futura/);
   assert.match(page, /senza arrotondamenti intermedi/);
   assert.match(page, /Scorri la tabella verso destra/);
   assert.match(page, /sourceRecordId/);

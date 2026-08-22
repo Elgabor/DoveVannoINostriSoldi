@@ -8,7 +8,7 @@ import styles from "./ministeri.module.css";
 export const metadata: Metadata = {
   title: "Spese dei Ministeri, rendiconto 2025",
   description:
-    "Pagato CP e Rimasto CP dei 15 Ministeri nel rendiconto ufficiale RGS 2025, con composizione del Totale CP e valori esatti.",
+    "Pagato CP e quota non pagata nel 2025 dei 15 Ministeri, nel rendiconto ufficiale RGS con composizione del Totale CP e valori esatti.",
 };
 
 const euro = (cents: number) => cents / 100;
@@ -23,7 +23,8 @@ export default function MinistriesPage() {
         <h1>Spese dei Ministeri</h1>
         <p>
           Il rendiconto dello Stato 2025 copre 15 Ministeri. Qui seguiamo un solo quadro:
-          la competenza dell&apos;anno, divisa tra quanto è già pagato e quanto rimane da pagare.
+          la competenza dell&apos;anno, divisa tra quanto è stato pagato nel 2025 e la quota
+          degli impegni non pagata entro fine anno.
           Non includiamo Palazzo Chigi, Camera, Senato o Regioni.
         </p>
       </div>
@@ -33,8 +34,9 @@ export default function MinistriesPage() {
           <div>
             <h2 id="quadro-cp">Due parti dello stesso impegno</h2>
             <p>
-              Restiamo nel quadro di competenza 2025: Pagato CP è già pagato, Rimasto CP è
-              ancora da pagare. Non introduciamo qui cassa o residui di anni precedenti.
+              Restiamo nel quadro di competenza 2025: Pagato CP è pagato nell&apos;anno; Rimasto CP
+              è la quota degli impegni non pagata al 31 dicembre. È una fase contabile, non una
+              scadenza futura. Non introduciamo qui cassa o residui di anni precedenti.
             </p>
           </div>
           <span>Consuntivo · EUR</span>

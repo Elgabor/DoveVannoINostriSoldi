@@ -6,9 +6,9 @@
     "sha256": "2887db4905d30445abc795083f2861f969173baf235a56917932c9fcc242e368"
   },
   "dataArtifact": {
-    "bytes": 24911,
+    "bytes": 25183,
     "path": "src/data/generated/rgs-ministries-2025.data.json",
-    "sha256": "79484f5493120c4c4d29e0d5b6bb5a9fe12a00ab8b6fc8ef67072a32ff9d0db3"
+    "sha256": "86280974963c227e66cfcebab6849b54fa1edfccf67de9e15ed076290cd86028"
   },
   "schemaVersion": 1,
   "source": {

@@ -8,9 +8,11 @@
     "sourceRows": 5395
   },
   "definitions": {
-    "commitmentsCp": "Impegni di competenza: pagato CP più rimasto da pagare CP.",
+    "commitmentsCp": "Totale CP: pagato CP più rimasto da pagare CP.",
+    "economiesGreaterExpensesCp": "importo di competenza rimasto inutilizzato rispetto alle previsioni o utilizzato oltre i limiti.",
     "notAdditive": "Impegni, pagamenti e residui descrivono fasi diverse e non vanno sommati.",
     "paymentsCashCs": "Pagamenti di cassa: pagato CP più pagato su residui RS.",
+    "remainingCp": "Rimasto da pagare CP: voce RGS che completa il Totale CP; non è un totale di cassa e, da sola, non misura un debito da pagare.",
     "residualsEnd": "Residui al 31 dicembre: rimasto CP più rimasto RS."
   },
   "ministries": [

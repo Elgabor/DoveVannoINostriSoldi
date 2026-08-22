@@ -18,6 +18,8 @@ test("RGS Ministries account preserves frames, coverage and public provenance", 
   assert.equal(snapshot.data.totals.paymentsCashCsCents, 115_416_545_988_384);
   assert.equal(snapshot.data.totals.residualsEndCents, 19_719_858_419_419);
   assert.equal(snapshot.metadata.source.licenseName, "CC BY 3.0");
+  assert.match(snapshot.data.definitions.remainingCp, /non è un totale di cassa/);
+  assert.match(snapshot.data.definitions.economiesGreaterExpensesCp, /rimasto inutilizzato rispetto alle previsioni o utilizzato oltre i limiti/);
 });
 
 test("RGS Ministries account keeps the CP mission identity exact", () => {

@@ -54,6 +54,14 @@ EXPECTED_MINISTRIES = {
     "15": "MINISTERO DELLA SALUTE",
     "16": "MINISTERO DEL TURISMO",
 }
+EXPECTED_DEFINITIONS = {
+    "commitmentsCp": "Totale CP: pagato CP più rimasto da pagare CP.",
+    "remainingCp": "Rimasto da pagare CP: voce RGS che completa il Totale CP; non è un totale di cassa e, da sola, non misura un debito da pagare.",
+    "economiesGreaterExpensesCp": "importo di competenza rimasto inutilizzato rispetto alle previsioni o utilizzato oltre i limiti.",
+    "paymentsCashCs": "Pagamenti di cassa: pagato CP più pagato su residui RS.",
+    "residualsEnd": "Residui al 31 dicembre: rimasto CP più rimasto RS.",
+    "notAdditive": "Impegni, pagamenti e residui descrivono fasi diverse e non vanno sommati.",
+}
 
 
 def fetch() -> bytes:
@@ -232,12 +240,7 @@ def build_snapshot(payload: bytes, acquired_at: str) -> tuple[dict, dict]:
         "totals": totals,
         "ministries": ministry_rows,
         "coverage": {"sourceRows": len(rows), "includedRows": included_rows, "headers": len(EXPECTED_HEADERS), "ministries": len(ministry_rows), "rowsReconciled": included_rows},
-        "definitions": {
-            "commitmentsCp": "Impegni di competenza: pagato CP più rimasto da pagare CP.",
-            "paymentsCashCs": "Pagamenti di cassa: pagato CP più pagato su residui RS.",
-            "residualsEnd": "Residui al 31 dicembre: rimasto CP più rimasto RS.",
-            "notAdditive": "Impegni, pagamenti e residui descrivono fasi diverse e non vanno sommati.",
-        },
+        "definitions": EXPECTED_DEFINITIONS,
     }
     data_bytes = canonical_bytes(data)
     meta = {
@@ -272,6 +275,8 @@ def validate_committed() -> None:
     validate_source_manifest(meta)
     if data["coverage"] != {"sourceRows": EXPECTED_ROWS, "includedRows": EXPECTED_ROWS, "headers": 41, "ministries": 15, "rowsReconciled": EXPECTED_ROWS}:
         raise ValueError("Copertura Ministeri inattesa")
+    if data.get("definitions") != EXPECTED_DEFINITIONS:
+        raise ValueError("Definizioni contabili Ministeri inattese")
 
 
 def main() -> None:

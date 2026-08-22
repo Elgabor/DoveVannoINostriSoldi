@@ -73,6 +73,10 @@ class RgsMinistriesAccountTests(unittest.TestCase):
     def test_committed_snapshot_is_byte_bound(self):
         MODULE.validate_committed()
 
+    def test_semantic_definitions_reject_debt_shortcuts(self):
+        self.assertIn("non misura un debito da pagare", MODULE.EXPECTED_DEFINITIONS["remainingCp"])
+        self.assertNotIn("quota non pagata", " ".join(MODULE.EXPECTED_DEFINITIONS.values()).lower())
+
 
 if __name__ == "__main__":
     unittest.main()

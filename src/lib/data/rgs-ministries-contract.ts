@@ -79,7 +79,7 @@ const EXPECTED_MINISTRIES: ReadonlyMap<string, string> = new Map([
 const EXPECTED_LANDING_URL = "https://bdap-opendata.rgs.mef.gov.it/content/2025-rendiconto-pubblicato-elaborabile-spese-capitolo?metadati=showall";
 const EXPECTED_RESOURCE_URL = "https://bdap-opendata.rgs.mef.gov.it/export/csv/2025---Rendiconto-Pubblicato-Elaborabile-Spese-Capitolo.csv";
 const EXPECTED_ASSET_SHA256 = "2887db4905d30445abc795083f2861f969173baf235a56917932c9fcc242e368";
-const EXPECTED_DATA_SHA256 = "79484f5493120c4c4d29e0d5b6bb5a9fe12a00ab8b6fc8ef67072a32ff9d0db3";
+const EXPECTED_DATA_SHA256 = "86280974963c227e66cfcebab6849b54fa1edfccf67de9e15ed076290cd86028";
 
 export function validateRgsMinistriesSnapshot(data: RgsMinistriesData, metadata: RgsMinistriesMetadata) {
   invariant(data.schemaVersion === 1 && metadata.schemaVersion === 1, "versione inattesa");
@@ -136,6 +136,13 @@ export function validateRgsMinistriesSnapshot(data: RgsMinistriesData, metadata:
   invariant(data.totals.commitmentsCpCents === data.totals.paymentsCompetenceCpCents + data.totals.remainingCpCents, "impegni CP non riconciliati");
   invariant(data.totals.residualsEndCents === data.totals.remainingCpCents + data.totals.remainingRsCents, "residui finali non riconciliati");
   invariant(
+    data.definitions.remainingCp ===
+      "Rimasto da pagare CP: voce RGS che completa il Totale CP; non è un totale di cassa e, da sola, non misura un debito da pagare." &&
+      data.definitions.economiesGreaterExpensesCp ===
+      "importo di competenza rimasto inutilizzato rispetto alle previsioni o utilizzato oltre i limiti.",
+    "definizioni contabili inattese",
+  );
+  invariant(
     metadata.source.owner === "Ragioneria Generale dello Stato" &&
       metadata.source.sourceRecordId === "2025_RND_SPE_ELB_CAP_001" &&
       metadata.source.referencePeriod === "2025" && metadata.source.createdAt === "2026-05-28" &&
@@ -152,7 +159,7 @@ export function validateRgsMinistriesSnapshot(data: RgsMinistriesData, metadata:
   );
   invariant(
     metadata.dataArtifact.path === "src/data/generated/rgs-ministries-2025.data.json" &&
-      metadata.dataArtifact.bytes === 24911 && metadata.dataArtifact.sha256 === EXPECTED_DATA_SHA256,
+      metadata.dataArtifact.bytes === 25183 && metadata.dataArtifact.sha256 === EXPECTED_DATA_SHA256,
     "artefatto dati inatteso",
   );
   invariant(metadata.transformation.version === 1 && metadata.transformation.description.trim(), "trasformazione assente");

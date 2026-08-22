@@ -12,17 +12,21 @@ export type RgsMinistry = {
     code: string;
     label: string;
     commitmentsCpCents: number;
-    paymentsCashCsCents: number;
+    paymentsCompetenceCpCents: number;
+    remainingCpCents: number;
   }>;
 };
 
 export type RgsMinistriesData = {
   schemaVersion: 1;
   referenceYear: 2025;
-  unit: "euro_cents";
+  period: { kind: "consuntivo"; year: 2025 };
+  accountingFrame: "competenza";
+  unit: "EUR";
+  valueEncoding: "integer_cents";
   totals: Omit<RgsMinistry, "code" | "label" | "missions">;
   ministries: RgsMinistry[];
-  coverage: { sourceRows: 5395; headers: 41; ministries: 15; rowsReconciled: 5395 };
+  coverage: { sourceRows: 5395; includedRows: 5395; headers: 41; ministries: 15; rowsReconciled: 5395 };
   definitions: Record<string, string>;
 };
 
@@ -54,14 +58,39 @@ function money(value: unknown): value is number {
   return Number.isSafeInteger(value) && (value as number) >= 0;
 }
 
+const EXPECTED_MINISTRIES: ReadonlyMap<string, string> = new Map([
+  ["02", "MINISTERO DELL'ECONOMIA E DELLE FINANZE"],
+  ["03", "MINISTERO DELLE IMPRESE E DEL MADE IN ITALY"],
+  ["04", "MINISTERO DEL LAVORO E DELLE POLITICHE SOCIALI"],
+  ["05", "MINISTERO DELLA GIUSTIZIA"],
+  ["06", "MINISTERO DEGLI AFFARI ESTERI E DELLA COOPERAZIONE INTERNAZIONALE"],
+  ["07", "MINISTERO DELL'ISTRUZIONE E DEL MERITO"],
+  ["08", "MINISTERO DELL'INTERNO"],
+  ["09", "MINISTERO DELL'AMBIENTE E DELLA SICUREZZA ENERGETICA"],
+  ["10", "MINISTERO DELLE INFRASTRUTTURE E DEI TRASPORTI"],
+  ["11", "MINISTERO DELL'UNIVERSITA' E DELLA RICERCA"],
+  ["12", "MINISTERO DELLA DIFESA"],
+  ["13", "MINISTERO DELL'AGRICOLTURA, DELLA SOVRANITA' ALIMENTARE E DELLE FORESTE"],
+  ["14", "MINISTERO DELLA CULTURA"],
+  ["15", "MINISTERO DELLA SALUTE"],
+  ["16", "MINISTERO DEL TURISMO"],
+] as const);
+
 export function validateRgsMinistriesSnapshot(data: RgsMinistriesData, metadata: RgsMinistriesMetadata) {
   invariant(data.schemaVersion === 1 && metadata.schemaVersion === 1, "versione inattesa");
-  invariant(data.referenceYear === 2025 && data.unit === "euro_cents", "periodo o unità inattesi");
-  invariant(data.ministries.length === 15 && data.coverage.ministries === 15, "copertura amministrazioni inattesa");
-  invariant(data.coverage.sourceRows === 5395 && data.coverage.rowsReconciled === 5395 && data.coverage.headers === 41, "schema o righe inattesi");
   invariant(
-    data.ministries.map((item) => item.code).sort().join(",") ===
-      Array.from({ length: 15 }, (_, index) => String(index + 2).padStart(2, "0")).join(","),
+    data.referenceYear === 2025 && data.period.kind === "consuntivo" && data.period.year === 2025 &&
+      data.accountingFrame === "competenza" && data.unit === "EUR" && data.valueEncoding === "integer_cents",
+    "periodo, frame o unità inattesi",
+  );
+  invariant(data.ministries.length === 15 && data.coverage.ministries === 15, "copertura amministrazioni inattesa");
+  invariant(
+    data.coverage.sourceRows === 5395 && data.coverage.includedRows === 5395 &&
+      data.coverage.rowsReconciled === 5395 && data.coverage.headers === 41,
+    "schema o righe inattesi",
+  );
+  invariant(
+    data.ministries.every((item) => EXPECTED_MINISTRIES.get(item.code) === item.label),
     "identità amministrazioni inattese",
   );
   invariant(Object.values(data.totals).every(money), "totali monetari non validi");
@@ -87,9 +116,14 @@ export function validateRgsMinistriesSnapshot(data: RgsMinistriesData, metadata:
   invariant(
     data.ministries.every((ministry) =>
       ministry.missions.length > 0 &&
-      ministry.missions.every((mission) => mission.code && mission.label && money(mission.commitmentsCpCents) && money(mission.paymentsCashCsCents)) &&
+      new Map(ministry.missions.map((mission) => [mission.code, mission.label])).size === ministry.missions.length &&
+      ministry.missions.every((mission) =>
+        mission.code && mission.label && money(mission.commitmentsCpCents) &&
+        money(mission.paymentsCompetenceCpCents) && money(mission.remainingCpCents) &&
+        mission.commitmentsCpCents === mission.paymentsCompetenceCpCents + mission.remainingCpCents) &&
       ministry.missions.reduce((sum, mission) => sum + mission.commitmentsCpCents, 0) === ministry.commitmentsCpCents &&
-      ministry.missions.reduce((sum, mission) => sum + mission.paymentsCashCsCents, 0) === ministry.paymentsCashCsCents),
+      ministry.missions.reduce((sum, mission) => sum + mission.paymentsCompetenceCpCents, 0) === ministry.paymentsCompetenceCpCents &&
+      ministry.missions.reduce((sum, mission) => sum + mission.remainingCpCents, 0) === ministry.remainingCpCents),
     "missioni non riconciliate",
   );
   invariant(data.totals.paymentsCashCsCents === data.totals.paymentsCompetenceCpCents + data.totals.paymentsResidualRsCents, "pagamenti CS non riconciliati");

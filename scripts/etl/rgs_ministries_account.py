@@ -11,7 +11,7 @@ import json
 import urllib.request
 from collections import defaultdict
 from datetime import datetime, timezone
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -37,6 +37,23 @@ EXPECTED_HEADERS = (
     "Economie-Maggiori Spese CS", "RS al 31/12",
 )
 MONEY_HEADERS = EXPECTED_HEADERS[20:]
+EXPECTED_MINISTRIES = {
+    "02": "MINISTERO DELL'ECONOMIA E DELLE FINANZE",
+    "03": "MINISTERO DELLE IMPRESE E DEL MADE IN ITALY",
+    "04": "MINISTERO DEL LAVORO E DELLE POLITICHE SOCIALI",
+    "05": "MINISTERO DELLA GIUSTIZIA",
+    "06": "MINISTERO DEGLI AFFARI ESTERI E DELLA COOPERAZIONE INTERNAZIONALE",
+    "07": "MINISTERO DELL'ISTRUZIONE E DEL MERITO",
+    "08": "MINISTERO DELL'INTERNO",
+    "09": "MINISTERO DELL'AMBIENTE E DELLA SICUREZZA ENERGETICA",
+    "10": "MINISTERO DELLE INFRASTRUTTURE E DEI TRASPORTI",
+    "11": "MINISTERO DELL'UNIVERSITA' E DELLA RICERCA",
+    "12": "MINISTERO DELLA DIFESA",
+    "13": "MINISTERO DELL'AGRICOLTURA, DELLA SOVRANITA' ALIMENTARE E DELLE FORESTE",
+    "14": "MINISTERO DELLA CULTURA",
+    "15": "MINISTERO DELLA SALUTE",
+    "16": "MINISTERO DEL TURISMO",
+}
 
 
 def fetch() -> bytes:
@@ -54,12 +71,14 @@ def decimal_value(row: dict[str, str], field: str) -> Decimal:
         raise ValueError(f"Importo RGS non numerico in {field}: {row.get(field)!r}") from error
 
 
-def cents(value: Decimal) -> int:
-    return int((value * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
-
-
-def close(left: Decimal, right: Decimal) -> bool:
-    return abs(left - right) <= Decimal("0.01")
+def money_cents(row: dict[str, str], field: str) -> int:
+    value = decimal_value(row, field)
+    if value.as_tuple().exponent < -2:
+        raise ValueError(f"Importo RGS con frazioni di centesimo in {field}: {row[field]!r}")
+    scaled = value * 100
+    if scaled != scaled.to_integral_value():
+        raise ValueError(f"Importo RGS non convertibile in centesimi in {field}: {row[field]!r}")
+    return int(scaled)
 
 
 def parse(payload: bytes) -> list[dict[str, str]]:
@@ -76,8 +95,7 @@ def parse(payload: bytes) -> list[dict[str, str]]:
 
 
 def validate_row(row: dict[str, str]) -> None:
-    for field in MONEY_HEADERS:
-        decimal_value(row, field)
+    values = {field: money_cents(row, field) for field in MONEY_HEADERS}
     identities = (
         ("Previsioni Definitive RS", "Previsioni Iniziali RS", "Variazioni RS"),
         ("Previsioni Definitive CP", "Previsioni Iniziali CP", "Variazioni CP"),
@@ -88,16 +106,32 @@ def validate_row(row: dict[str, str]) -> None:
         ("RS al 31/12", "Rimasto da Pagare CP", "Rimasto da Pagare RS"),
     )
     for total, first, second in identities:
-        if not close(decimal_value(row, total), decimal_value(row, first) + decimal_value(row, second)):
+        if values[total] != values[first] + values[second]:
             raise ValueError(f"Identità RGS non riconciliata: {total}")
-    if not close(decimal_value(row, "Totale CS"), decimal_value(row, "Pagato CS")):
+    if values["Totale CS"] != values["Pagato CS"]:
         raise ValueError("Identità RGS non riconciliata: Totale CS")
     for frame in ("RS", "CP", "CS"):
-        if not close(
-            decimal_value(row, f"Economie-Maggiori Spese {frame}"),
-            decimal_value(row, f"Totale {frame}") - decimal_value(row, f"Previsioni Definitive {frame}"),
-        ):
+        if values[f"Economie-Maggiori Spese {frame}"] != values[f"Totale {frame}"] - values[f"Previsioni Definitive {frame}"]:
             raise ValueError(f"Identità RGS non riconciliata: economie {frame}")
+
+
+def validate_ministry(row: dict[str, str]) -> None:
+    code = row["Stato di Previsione"]
+    if EXPECTED_MINISTRIES.get(code) != row["Amministrazione"]:
+        raise ValueError(f"Amministrazione RGS inattesa per il codice {code}")
+
+
+def register_mission_label(labels: dict[tuple[str, str], str], row: dict[str, str]) -> None:
+    key = (row["Stato di Previsione"], row["Codice Missione"])
+    label = row["Missione"]
+    previous = labels.setdefault(key, label)
+    if previous != label:
+        raise ValueError(f"Etichetta missione RGS in conflitto per {key[0]}:{key[1]}")
+
+
+def validate_coverage(source_rows: int, included_rows: int) -> None:
+    if source_rows != EXPECTED_ROWS or included_rows != source_rows:
+        raise ValueError(f"Copertura RGS non completa: {included_rows}/{source_rows} righe incluse")
 
 
 def canonical_bytes(value: object) -> bytes:
@@ -106,19 +140,25 @@ def canonical_bytes(value: object) -> bytes:
 
 def build_snapshot(payload: bytes, acquired_at: str) -> tuple[dict, dict]:
     rows = parse(payload)
-    ministries: dict[tuple[str, str], dict[str, Decimal]] = defaultdict(lambda: defaultdict(Decimal))
-    missions: dict[tuple[str, str, str, str], dict[str, Decimal]] = defaultdict(lambda: defaultdict(Decimal))
+    ministries: dict[tuple[str, str], dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    missions: dict[tuple[str, str, str, str], dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    mission_labels: dict[tuple[str, str], str] = {}
+    included_rows = 0
     for row in rows:
         validate_row(row)
         if row["Esercizio Finanziario"] != "2025":
             raise ValueError("Esercizio RGS inatteso")
+        validate_ministry(row)
+        register_mission_label(mission_labels, row)
         ministry = (row["Stato di Previsione"], row["Amministrazione"])
         mission = (*ministry, row["Codice Missione"], row["Missione"])
         for field in ("Totale CP", "Pagato CP", "Pagato RS", "Pagato CS", "Rimasto da Pagare CP", "Rimasto da Pagare RS", "RS al 31/12"):
-            value = decimal_value(row, field)
+            value = money_cents(row, field)
             ministries[ministry][field] += value
             missions[mission][field] += value
-    if len(ministries) != 15 or {code for code, _ in ministries} != {f"{value:02d}" for value in range(2, 17)}:
+        included_rows += 1
+    validate_coverage(len(rows), included_rows)
+    if len(ministries) != 15 or {code: label for code, label in ministries} != EXPECTED_MINISTRIES:
         raise ValueError("Identità delle 15 amministrazioni RGS inattesa")
 
     ministry_rows = []
@@ -127,8 +167,9 @@ def build_snapshot(payload: bytes, acquired_at: str) -> tuple[dict, dict]:
             {
                 "code": mission_code,
                 "label": mission_label,
-                "commitmentsCpCents": cents(mission_values["Totale CP"]),
-                "paymentsCashCsCents": cents(mission_values["Pagato CS"]),
+                "commitmentsCpCents": mission_values["Totale CP"],
+                "paymentsCompetenceCpCents": mission_values["Pagato CP"],
+                "remainingCpCents": mission_values["Rimasto da Pagare CP"],
             }
             for (ministry_code, _, mission_code, mission_label), mission_values in missions.items()
             if ministry_code == code
@@ -137,13 +178,13 @@ def build_snapshot(payload: bytes, acquired_at: str) -> tuple[dict, dict]:
         ministry_rows.append({
             "code": code,
             "label": label,
-            "commitmentsCpCents": cents(values["Totale CP"]),
-            "paymentsCompetenceCpCents": cents(values["Pagato CP"]),
-            "paymentsResidualRsCents": cents(values["Pagato RS"]),
-            "paymentsCashCsCents": cents(values["Pagato CS"]),
-            "remainingCpCents": cents(values["Rimasto da Pagare CP"]),
-            "remainingRsCents": cents(values["Rimasto da Pagare RS"]),
-            "residualsEndCents": cents(values["RS al 31/12"]),
+            "commitmentsCpCents": values["Totale CP"],
+            "paymentsCompetenceCpCents": values["Pagato CP"],
+            "paymentsResidualRsCents": values["Pagato RS"],
+            "paymentsCashCsCents": values["Pagato CS"],
+            "remainingCpCents": values["Rimasto da Pagare CP"],
+            "remainingRsCents": values["Rimasto da Pagare RS"],
+            "residualsEndCents": values["RS al 31/12"],
             "missions": mission_rows,
         })
     ministry_rows.sort(key=lambda item: (-item["commitmentsCpCents"], item["code"]))
@@ -165,10 +206,13 @@ def build_snapshot(payload: bytes, acquired_at: str) -> tuple[dict, dict]:
     data = {
         "schemaVersion": 1,
         "referenceYear": 2025,
-        "unit": "euro_cents",
+        "period": {"kind": "consuntivo", "year": 2025},
+        "accountingFrame": "competenza",
+        "unit": "EUR",
+        "valueEncoding": "integer_cents",
         "totals": totals,
         "ministries": ministry_rows,
-        "coverage": {"sourceRows": len(rows), "headers": len(EXPECTED_HEADERS), "ministries": len(ministry_rows), "rowsReconciled": len(rows)},
+        "coverage": {"sourceRows": len(rows), "includedRows": included_rows, "headers": len(EXPECTED_HEADERS), "ministries": len(ministry_rows), "rowsReconciled": included_rows},
         "definitions": {
             "commitmentsCp": "Impegni di competenza: pagato CP più rimasto da pagare CP.",
             "paymentsCashCs": "Pagamenti di cassa: pagato CP più pagato su residui RS.",
@@ -206,7 +250,7 @@ def validate_committed() -> None:
     artifact = meta["dataArtifact"]
     if len(data_bytes) != artifact["bytes"] or hashlib.sha256(data_bytes).hexdigest() != artifact["sha256"]:
         raise ValueError("Artefatto Ministeri non legato al manifesto")
-    if data["coverage"] != {"sourceRows": EXPECTED_ROWS, "headers": 41, "ministries": 15, "rowsReconciled": EXPECTED_ROWS}:
+    if data["coverage"] != {"sourceRows": EXPECTED_ROWS, "includedRows": EXPECTED_ROWS, "headers": 41, "ministries": 15, "rowsReconciled": EXPECTED_ROWS}:
         raise ValueError("Copertura Ministeri inattesa")
 
 

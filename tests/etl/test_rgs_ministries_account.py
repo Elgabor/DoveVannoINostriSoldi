@@ -22,6 +22,35 @@ class RgsMinistriesAccountTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Pagato CS"):
             MODULE.validate_row(row)
 
+    def test_row_reconciliation_rejects_one_cent_of_drift(self):
+        row = {field: "0.00" for field in MODULE.EXPECTED_HEADERS}
+        row["Totale CP"] = "0.01"
+        with self.assertRaisesRegex(ValueError, "Totale CP"):
+            MODULE.validate_row(row)
+
+    def test_row_reconciliation_rejects_subcent_values(self):
+        row = {field: "0.00" for field in MODULE.EXPECTED_HEADERS}
+        row["Pagato CP"] = "0.001"
+        with self.assertRaisesRegex(ValueError, "frazioni di centesimo"):
+            MODULE.validate_row(row)
+
+    def test_ministry_identity_requires_the_locked_official_label(self):
+        row = {"Stato di Previsione": "02", "Amministrazione": "MINISTERO RINOMINATO"}
+        with self.assertRaisesRegex(ValueError, "Amministrazione RGS inattesa"):
+            MODULE.validate_ministry(row)
+
+    def test_mission_code_rejects_a_conflicting_label(self):
+        labels = {}
+        first = {"Stato di Previsione": "02", "Codice Missione": "001", "Missione": "Prima etichetta"}
+        second = {**first, "Missione": "Seconda etichetta"}
+        MODULE.register_mission_label(labels, first)
+        with self.assertRaisesRegex(ValueError, "Etichetta missione RGS in conflitto"):
+            MODULE.register_mission_label(labels, second)
+
+    def test_coverage_rejects_an_excluded_row(self):
+        with self.assertRaisesRegex(ValueError, "5394/5395"):
+            MODULE.validate_coverage(5395, 5394)
+
     def test_committed_snapshot_is_byte_bound(self):
         MODULE.validate_committed()
 

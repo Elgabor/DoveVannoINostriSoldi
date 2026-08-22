@@ -1,6 +1,8 @@
 {
+  "accountingFrame": "competenza",
   "coverage": {
     "headers": 41,
+    "includedRows": 5395,
     "ministries": 15,
     "rowsReconciled": 5395,
     "sourceRows": 5395
@@ -21,139 +23,162 @@
           "code": "034",
           "commitmentsCpCents": 35779530486529,
           "label": "Debito pubblico",
-          "paymentsCashCsCents": 35957243461998
+          "paymentsCompetenceCpCents": 35567313308398,
+          "remainingCpCents": 212217178131
         },
         {
           "code": "003",
           "commitmentsCpCents": 13756426837394,
           "label": "Relazioni finanziarie con le autonomie territoriali",
-          "paymentsCashCsCents": 13109502151147
+          "paymentsCompetenceCpCents": 12854449677621,
+          "remainingCpCents": 901977159773
         },
         {
           "code": "029",
           "commitmentsCpCents": 12963526370414,
           "label": "Politiche economico-finanziarie e di bilancio e tutela della finanza pubblica",
-          "paymentsCashCsCents": 12998543035632
+          "paymentsCompetenceCpCents": 12898942955615,
+          "remainingCpCents": 64583414799
         },
         {
           "code": "011",
           "commitmentsCpCents": 7025971705642,
           "label": "Competitivita' e sviluppo delle imprese",
-          "paymentsCashCsCents": 7092602272581
+          "paymentsCompetenceCpCents": 6947915474611,
+          "remainingCpCents": 78056231031
         },
         {
           "code": "004",
           "commitmentsCpCents": 3346633496082,
           "label": "L'Italia in Europa e nel mondo",
-          "paymentsCashCsCents": 3346205508688
+          "paymentsCompetenceCpCents": 3346205508688,
+          "remainingCpCents": 427987394
         },
         {
           "code": "028",
           "commitmentsCpCents": 1520003484022,
           "label": "Sviluppo e riequilibrio territoriale",
-          "paymentsCashCsCents": 1332317584022
+          "paymentsCompetenceCpCents": 508987584022,
+          "remainingCpCents": 1011015900000
         },
         {
           "code": "025",
           "commitmentsCpCents": 1133738808299,
           "label": "Politiche previdenziali",
-          "paymentsCashCsCents": 1133738808299
+          "paymentsCompetenceCpCents": 1133738808299,
+          "remainingCpCents": 0
         },
         {
           "code": "033",
           "commitmentsCpCents": 1057352657300,
           "label": "Fondi da ripartire",
-          "paymentsCashCsCents": 541582087100
+          "paymentsCompetenceCpCents": 323129901700,
+          "remainingCpCents": 734222755600
         },
         {
           "code": "013",
           "commitmentsCpCents": 865525138994,
           "label": "Diritto alla mobilita' e sviluppo dei sistemi di trasporto",
-          "paymentsCashCsCents": 807304611609
+          "paymentsCompetenceCpCents": 790338637786,
+          "remainingCpCents": 75186501208
         },
         {
           "code": "007",
           "commitmentsCpCents": 395530283782,
           "label": "Ordine pubblico e sicurezza",
-          "paymentsCashCsCents": 398252486461
+          "paymentsCompetenceCpCents": 389732518031,
+          "remainingCpCents": 5797765751
         },
         {
           "code": "001",
           "commitmentsCpCents": 379320820361,
           "label": "Organi costituzionali, a rilevanza costituzionale e Presidenza del Consiglio dei ministri",
-          "paymentsCashCsCents": 376731659761
+          "paymentsCompetenceCpCents": 376552329561,
+          "remainingCpCents": 2768490800
         },
         {
           "code": "008",
           "commitmentsCpCents": 336156181777,
           "label": "Soccorso civile",
-          "paymentsCashCsCents": 383529316279
+          "paymentsCompetenceCpCents": 278584819988,
+          "remainingCpCents": 57571361789
         },
         {
           "code": "030",
           "commitmentsCpCents": 157995512441,
           "label": "Giovani e sport",
-          "paymentsCashCsCents": 160204380127
+          "paymentsCompetenceCpCents": 154795512441,
+          "remainingCpCents": 3200000000
         },
         {
           "code": "017",
           "commitmentsCpCents": 152147402500,
           "label": "Ricerca e innovazione",
-          "paymentsCashCsCents": 154047402500
+          "paymentsCompetenceCpCents": 149346982924,
+          "remainingCpCents": 2800419576
         },
         {
           "code": "032",
           "commitmentsCpCents": 137437721149,
           "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
-          "paymentsCashCsCents": 138158897644
+          "paymentsCompetenceCpCents": 122084619908,
+          "remainingCpCents": 15353101241
         },
         {
           "code": "024",
           "commitmentsCpCents": 124630145327,
           "label": "Diritti sociali, politiche sociali e famiglia",
-          "paymentsCashCsCents": 124832336730
+          "paymentsCompetenceCpCents": 124556948035,
+          "remainingCpCents": 73197292
         },
         {
           "code": "014",
           "commitmentsCpCents": 114640000000,
           "label": "Infrastrutture pubbliche e logistica",
-          "paymentsCashCsCents": 27191033298
+          "paymentsCompetenceCpCents": 0,
+          "remainingCpCents": 114640000000
         },
         {
           "code": "027",
           "commitmentsCpCents": 110328823574,
           "label": "Immigrazione, accoglienza e garanzia dei diritti",
-          "paymentsCashCsCents": 110251817833
+          "paymentsCompetenceCpCents": 110251817833,
+          "remainingCpCents": 77005741
         },
         {
           "code": "006",
           "commitmentsCpCents": 49473772409,
           "label": "Giustizia",
-          "paymentsCashCsCents": 48288205099
+          "paymentsCompetenceCpCents": 46500143074,
+          "remainingCpCents": 2973629335
         },
         {
           "code": "015",
           "commitmentsCpCents": 47639413500,
           "label": "Comunicazioni",
-          "paymentsCashCsCents": 47678979991
+          "paymentsCompetenceCpCents": 47639413500,
+          "remainingCpCents": 0
         },
         {
           "code": "019",
           "commitmentsCpCents": 32535000000,
           "label": "Casa e assetto urbanistico",
-          "paymentsCashCsCents": 16475000000
+          "paymentsCompetenceCpCents": 16475000000,
+          "remainingCpCents": 16060000000
         },
         {
           "code": "018",
           "commitmentsCpCents": 3648681011,
           "label": "Sviluppo sostenibile e tutela del territorio e dell'ambiente",
-          "paymentsCashCsCents": 748681011
+          "paymentsCompetenceCpCents": 748681011,
+          "remainingCpCents": 2900000000
         },
         {
           "code": "005",
           "commitmentsCpCents": 0,
           "label": "Difesa e sicurezza del territorio",
-          "paymentsCashCsCents": 0
+          "paymentsCompetenceCpCents": 0,
+          "remainingCpCents": 0
         }
       ],
       "paymentsCashCsCents": 78305429717810,
@@ -172,31 +197,36 @@
           "code": "025",
           "commitmentsCpCents": 9719360160941,
           "label": "Politiche previdenziali",
-          "paymentsCashCsCents": 9721670059341
+          "paymentsCompetenceCpCents": 9718436099852,
+          "remainingCpCents": 924061089
         },
         {
           "code": "024",
           "commitmentsCpCents": 6533929217090,
           "label": "Diritti sociali, politiche sociali e famiglia",
-          "paymentsCashCsCents": 6365728901967
+          "paymentsCompetenceCpCents": 6204442409481,
+          "remainingCpCents": 329486807609
         },
         {
           "code": "026",
           "commitmentsCpCents": 1218480658992,
           "label": "Politiche per il lavoro",
-          "paymentsCashCsCents": 1147685312202
+          "paymentsCompetenceCpCents": 1010443486857,
+          "remainingCpCents": 208037172135
         },
         {
           "code": "032",
           "commitmentsCpCents": 3797775096,
           "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
-          "paymentsCashCsCents": 3742410480
+          "paymentsCompetenceCpCents": 3695157230,
+          "remainingCpCents": 102617866
         },
         {
           "code": "027",
           "commitmentsCpCents": 1244094519,
           "label": "Immigrazione, accoglienza e garanzia dei diritti",
-          "paymentsCashCsCents": 876278974
+          "paymentsCompetenceCpCents": 821608249,
+          "remainingCpCents": 422486270
         }
       ],
       "paymentsCashCsCents": 17239702962964,
@@ -215,13 +245,15 @@
           "code": "022",
           "commitmentsCpCents": 5753193061613,
           "label": "Istruzione scolastica",
-          "paymentsCashCsCents": 5747656611860
+          "paymentsCompetenceCpCents": 5630036148563,
+          "remainingCpCents": 123156913050
         },
         {
           "code": "032",
           "commitmentsCpCents": 14234709780,
           "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
-          "paymentsCashCsCents": 15119565265
+          "paymentsCompetenceCpCents": 11078284275,
+          "remainingCpCents": 3156425505
         }
       ],
       "paymentsCashCsCents": 5762776177125,
@@ -240,19 +272,22 @@
           "code": "005",
           "commitmentsCpCents": 3240834908136,
           "label": "Difesa e sicurezza del territorio",
-          "paymentsCashCsCents": 3247130880674
+          "paymentsCompetenceCpCents": 3042785943350,
+          "remainingCpCents": 198048964786
         },
         {
           "code": "032",
           "commitmentsCpCents": 127966417508,
           "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
-          "paymentsCashCsCents": 130627326896
+          "paymentsCompetenceCpCents": 127161608722,
+          "remainingCpCents": 804808786
         },
         {
           "code": "018",
           "commitmentsCpCents": 55962223003,
           "label": "Sviluppo sostenibile e tutela del territorio e dell'ambiente",
-          "paymentsCashCsCents": 56265260105
+          "paymentsCompetenceCpCents": 54969305662,
+          "remainingCpCents": 992917341
         }
       ],
       "paymentsCashCsCents": 3434023467675,
@@ -271,37 +306,43 @@
           "code": "003",
           "commitmentsCpCents": 1714914647837,
           "label": "Relazioni finanziarie con le autonomie territoriali",
-          "paymentsCashCsCents": 1722122455307
+          "paymentsCompetenceCpCents": 1374990726047,
+          "remainingCpCents": 339923921790
         },
         {
           "code": "007",
           "commitmentsCpCents": 944470283891,
           "label": "Ordine pubblico e sicurezza",
-          "paymentsCashCsCents": 940164015783
+          "paymentsCompetenceCpCents": 889468270158,
+          "remainingCpCents": 55002013733
         },
         {
           "code": "008",
           "commitmentsCpCents": 341696828021,
           "label": "Soccorso civile",
-          "paymentsCashCsCents": 336066908628
+          "paymentsCompetenceCpCents": 311610829595,
+          "remainingCpCents": 30085998426
         },
         {
           "code": "027",
           "commitmentsCpCents": 257371516238,
           "label": "Immigrazione, accoglienza e garanzia dei diritti",
-          "paymentsCashCsCents": 239668998100
+          "paymentsCompetenceCpCents": 195688977019,
+          "remainingCpCents": 61682539219
         },
         {
           "code": "002",
           "commitmentsCpCents": 95722768597,
           "label": "Amministrazione generale e supporto alla rappresentanza generale di Governo e dello Stato sul territorio",
-          "paymentsCashCsCents": 93193655007
+          "paymentsCompetenceCpCents": 92023576391,
+          "remainingCpCents": 3699192206
         },
         {
           "code": "032",
           "commitmentsCpCents": 29396828307,
           "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
-          "paymentsCashCsCents": 24339053645
+          "paymentsCompetenceCpCents": 20316229991,
+          "remainingCpCents": 9080598316
         }
       ],
       "paymentsCashCsCents": 3355555086470,
@@ -320,31 +361,36 @@
           "code": "013",
           "commitmentsCpCents": 1071769337009,
           "label": "Diritto alla mobilita' e sviluppo dei sistemi di trasporto",
-          "paymentsCashCsCents": 870604452880
+          "paymentsCompetenceCpCents": 709619819651,
+          "remainingCpCents": 362149517358
         },
         {
           "code": "014",
           "commitmentsCpCents": 545502678991,
           "label": "Infrastrutture pubbliche e logistica",
-          "paymentsCashCsCents": 577268058562
+          "paymentsCompetenceCpCents": 259521250503,
+          "remainingCpCents": 285981428488
         },
         {
           "code": "007",
           "commitmentsCpCents": 103567461020,
           "label": "Ordine pubblico e sicurezza",
-          "paymentsCashCsCents": 102760651405
+          "paymentsCompetenceCpCents": 98077289237,
+          "remainingCpCents": 5490171783
         },
         {
           "code": "019",
           "commitmentsCpCents": 61634701584,
           "label": "Casa e assetto urbanistico",
-          "paymentsCashCsCents": 62059520944
+          "paymentsCompetenceCpCents": 21170597668,
+          "remainingCpCents": 40464103916
         },
         {
           "code": "032",
           "commitmentsCpCents": 14598836506,
           "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
-          "paymentsCashCsCents": 43144048664
+          "paymentsCompetenceCpCents": 9575407565,
+          "remainingCpCents": 5023428941
         }
       ],
       "paymentsCashCsCents": 1655836732455,
@@ -363,31 +409,36 @@
           "code": "011",
           "commitmentsCpCents": 1476019347622,
           "label": "Competitivita' e sviluppo delle imprese",
-          "paymentsCashCsCents": 1430174367262
+          "paymentsCompetenceCpCents": 1277650138164,
+          "remainingCpCents": 198369209458
         },
         {
           "code": "015",
           "commitmentsCpCents": 54566113486,
           "label": "Comunicazioni",
-          "paymentsCashCsCents": 36837028798
+          "paymentsCompetenceCpCents": 26920194247,
+          "remainingCpCents": 27645919239
         },
         {
           "code": "032",
           "commitmentsCpCents": 10408316789,
           "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
-          "paymentsCashCsCents": 13645309348
+          "paymentsCompetenceCpCents": 8067984984,
+          "remainingCpCents": 2340331805
         },
         {
           "code": "012",
           "commitmentsCpCents": 3447226167,
           "label": "Regolazione dei mercati",
-          "paymentsCashCsCents": 4276266323
+          "paymentsCompetenceCpCents": 2868290925,
+          "remainingCpCents": 578935242
         },
         {
           "code": "017",
           "commitmentsCpCents": 1004580970,
           "label": "Ricerca e innovazione",
-          "paymentsCashCsCents": 982296264
+          "paymentsCompetenceCpCents": 838858655,
+          "remainingCpCents": 165722315
         }
       ],
       "paymentsCashCsCents": 1485915267995,
@@ -406,19 +457,22 @@
           "code": "023",
           "commitmentsCpCents": 1161551777470,
           "label": "Istruzione universitaria e formazione post-universitaria",
-          "paymentsCashCsCents": 1217962016275
+          "paymentsCompetenceCpCents": 1099923950531,
+          "remainingCpCents": 61627826939
         },
         {
           "code": "017",
           "commitmentsCpCents": 250141292629,
           "label": "Ricerca e innovazione",
-          "paymentsCashCsCents": 259829492995
+          "paymentsCompetenceCpCents": 205146508543,
+          "remainingCpCents": 44994784086
         },
         {
           "code": "032",
           "commitmentsCpCents": 6029300813,
           "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
-          "paymentsCashCsCents": 5891141201
+          "paymentsCompetenceCpCents": 5537763707,
+          "remainingCpCents": 491537106
         }
       ],
       "paymentsCashCsCents": 1483682650471,
@@ -437,13 +491,15 @@
           "code": "006",
           "commitmentsCpCents": 1108391653694,
           "label": "Giustizia",
-          "paymentsCashCsCents": 1111592332498
+          "paymentsCompetenceCpCents": 1075699334161,
+          "remainingCpCents": 32692319533
         },
         {
           "code": "032",
           "commitmentsCpCents": 42892517840,
           "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
-          "paymentsCashCsCents": 35212683651
+          "paymentsCompetenceCpCents": 26432969130,
+          "remainingCpCents": 16459548710
         }
       ],
       "paymentsCashCsCents": 1146805016149,
@@ -462,19 +518,22 @@
           "code": "018",
           "commitmentsCpCents": 256588401051,
           "label": "Sviluppo sostenibile e tutela del territorio e dell'ambiente",
-          "paymentsCashCsCents": 255234988059
+          "paymentsCompetenceCpCents": 178418453249,
+          "remainingCpCents": 78169947802
         },
         {
           "code": "010",
           "commitmentsCpCents": 168109325176,
           "label": "Energia e diversificazione delle fonti energetiche",
-          "paymentsCashCsCents": 139916774233
+          "paymentsCompetenceCpCents": 126073028720,
+          "remainingCpCents": 42036296456
         },
         {
           "code": "032",
           "commitmentsCpCents": 6749947351,
           "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
-          "paymentsCashCsCents": 8600703355
+          "paymentsCompetenceCpCents": 6504621072,
+          "remainingCpCents": 245326279
         }
       ],
       "paymentsCashCsCents": 403752465647,
@@ -493,19 +552,22 @@
           "code": "004",
           "commitmentsCpCents": 310277619548,
           "label": "L'Italia in Europa e nel mondo",
-          "paymentsCashCsCents": 316927739240
+          "paymentsCompetenceCpCents": 302065233010,
+          "remainingCpCents": 8212386538
         },
         {
           "code": "016",
           "commitmentsCpCents": 36837528515,
           "label": "Commercio internazionale ed internazionalizzazione del sistema produttivo",
-          "paymentsCashCsCents": 40785815734
+          "paymentsCompetenceCpCents": 36510271305,
+          "remainingCpCents": 327257210
         },
         {
           "code": "032",
           "commitmentsCpCents": 11275403147,
           "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
-          "paymentsCashCsCents": 10961218552
+          "paymentsCompetenceCpCents": 8305354191,
+          "remainingCpCents": 2970048956
         }
       ],
       "paymentsCashCsCents": 368674773526,
@@ -524,13 +586,15 @@
           "code": "021",
           "commitmentsCpCents": 288195836732,
           "label": "Tutela e valorizzazione dei beni e attivita' culturali e paesaggistici",
-          "paymentsCashCsCents": 293500303289
+          "paymentsCompetenceCpCents": 237369564893,
+          "remainingCpCents": 50826271839
         },
         {
           "code": "032",
           "commitmentsCpCents": 13910729077,
           "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
-          "paymentsCashCsCents": 10679783116
+          "paymentsCompetenceCpCents": 4048288179,
+          "remainingCpCents": 9862440898
         }
       ],
       "paymentsCashCsCents": 304180086405,
@@ -549,19 +613,22 @@
           "code": "020",
           "commitmentsCpCents": 235310622408,
           "label": "Tutela della salute",
-          "paymentsCashCsCents": 171886997625
+          "paymentsCompetenceCpCents": 156133856158,
+          "remainingCpCents": 79176766250
         },
         {
           "code": "017",
           "commitmentsCpCents": 48359909997,
           "label": "Ricerca e innovazione",
-          "paymentsCashCsCents": 43344462875
+          "paymentsCompetenceCpCents": 42386992786,
+          "remainingCpCents": 5972917211
         },
         {
           "code": "032",
           "commitmentsCpCents": 11919566811,
           "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
-          "paymentsCashCsCents": 11877414320
+          "paymentsCompetenceCpCents": 11097937625,
+          "remainingCpCents": 821629186
         }
       ],
       "paymentsCashCsCents": 227108874820,
@@ -580,19 +647,22 @@
           "code": "009",
           "commitmentsCpCents": 198570830126,
           "label": "Agricoltura, politiche agroalimentari e pesca",
-          "paymentsCashCsCents": 209848069908
+          "paymentsCompetenceCpCents": 160511171534,
+          "remainingCpCents": 38059658592
         },
         {
           "code": "018",
           "commitmentsCpCents": 5537331322,
           "label": "Sviluppo sostenibile e tutela del territorio e dell'ambiente",
-          "paymentsCashCsCents": 5037496326
+          "paymentsCompetenceCpCents": 4936539628,
+          "remainingCpCents": 600791694
         },
         {
           "code": "032",
           "commitmentsCpCents": 3397823875,
           "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
-          "paymentsCashCsCents": 3218133939
+          "paymentsCompetenceCpCents": 2081491467,
+          "remainingCpCents": 1316332408
         }
       ],
       "paymentsCashCsCents": 218103700173,
@@ -611,13 +681,15 @@
           "code": "031",
           "commitmentsCpCents": 42400693407,
           "label": "Turismo",
-          "paymentsCashCsCents": 24226797604
+          "paymentsCompetenceCpCents": 11817553004,
+          "remainingCpCents": 30583140403
         },
         {
           "code": "032",
           "commitmentsCpCents": 1087953091,
           "label": "Servizi istituzionali e generali delle amministrazioni pubbliche",
-          "paymentsCashCsCents": 772211095
+          "paymentsCompetenceCpCents": 713753957,
+          "remainingCpCents": 374199134
         }
       ],
       "paymentsCashCsCents": 24999008699,
@@ -628,6 +700,10 @@
       "residualsEndCents": 59191117594
     }
   ],
+  "period": {
+    "kind": "consuntivo",
+    "year": 2025
+  },
   "referenceYear": 2025,
   "schemaVersion": 1,
   "totals": {
@@ -639,5 +715,6 @@
     "remainingRsCents": 13619318686056,
     "residualsEndCents": 19719858419419
   },
-  "unit": "euro_cents"
+  "unit": "EUR",
+  "valueEncoding": "integer_cents"
 }

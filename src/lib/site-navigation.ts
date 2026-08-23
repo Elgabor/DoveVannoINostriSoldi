@@ -151,7 +151,6 @@ export const SITE_MAP_GROUPS: readonly { title: string; links: readonly NavLink[
     title: "Strumenti",
     links: [
       { href: "/assistente", label: "Assistente" },
-      { href: "/consulenza", label: "Consulenza" },
       { href: "/mcp", label: "MCP" },
       { href: "/supporto", label: "Supporto" },
     ],

@@ -28,8 +28,8 @@ export default function SupportPage() {
         <h2 className="panel-title">Privacy e segnalazioni riservate</h2>
         <p>
           Per esercitare i diritti privacy o segnalare un problema che non deve essere pubblico,
-          usa il <a href="/consulenza">form di consulenza</a> indicando l&apos;oggetto «diritti
-          privacy». Non inviare segreti o dataset personali non richiesti; descrivi prima il
+          apri una <a href={`${REPO_URL}/issues`}>issue su GitHub</a> indicando l&apos;oggetto
+          «diritti privacy». Non inviare segreti o dataset personali non richiesti; descrivi prima il
           problema e attendi una risposta prima di allegare materiali sensibili.
         </p>
       </section>

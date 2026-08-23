@@ -1110,41 +1110,17 @@ try {
     completed.push(label);
   }
 
-  for (const width of [320, 390, 768, 1024, 1280]) {
-    const label = `Consulenza ${width}px`;
-    await runScenario(browser, {
-      label,
-      pathname: "/consulenza",
-      width,
-      validate: async (page) => {
-        assertTextMatches(
-          await bodyText(page),
-          /Intelligenza artificiale per aziende e PA/i,
-          label,
-        );
-        const form = await page.$eval("main form", (element) => ({
-          hasPrivacyLink: Boolean(element.querySelector('a[href="/privacy"]')),
-          invalidBeforeSubmit: !element.checkValidity(),
-          requiredFields: element.querySelectorAll("[required]").length,
-        }));
-        assert.equal(form.hasPrivacyLink, true, `${label}: informativa privacy non collegata`);
-        assert.equal(form.invalidBeforeSubmit, true, `${label}: form vuoto considerato valido`);
-        assert.ok(form.requiredFields >= 7, `${label}: campi obbligatori inattesi`);
-      },
-    });
-    completed.push(label);
-  }
-
   for (const width of [390, 1280]) {
-    const label = `Privacy consulenza ${width}px`;
+    const label = `Privacy ${width}px`;
     await runScenario(browser, {
       label,
       pathname: "/privacy",
       width,
       validate: async (page) => {
         const text = await bodyText(page);
-        assertTextMatches(text, /Resend/i, label);
-        assertTextMatches(text, /Stati Uniti/i, label);
+        assertTextMatches(text, /Dati tecnici/i, label);
+        assertTextMatches(text, /Server MCP/i, label);
+        assert.doesNotMatch(text, /form di consulenza/i);
       },
     });
     completed.push(label);

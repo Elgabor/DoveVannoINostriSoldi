@@ -50,9 +50,6 @@ export function SiteFooter({ latestTerritorialCheckLabel }: SiteFooterProps) {
         <span>Ultimo controllo SIOPE o IRPEF: {latestTerritorialCheckLabel}</span>
         <span>Dati pubblici, liberi da riusare</span>
         <span className="footer-spacer" />
-        <Link className="footer-link" href="/consulenza">
-          Consulenza
-        </Link>
         <Link className="footer-link" href="/privacy">
           Privacy
         </Link>

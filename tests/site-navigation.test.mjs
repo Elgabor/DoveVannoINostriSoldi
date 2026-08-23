@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import "./helpers/register-ts-alias.mjs";
 
@@ -22,6 +23,20 @@ test("site navigation exposes coesione asili in primary and footer maps", () => 
   assert.match(globalsCss, /\.footer-sitemap-rows \{/);
   assert.match(globalsCss, /row-gap: var\(--space-6\)/);
   assert.doesNotMatch(globalsCss, /var\(--space-5\)/);
+});
+
+test("public legal pages do not expose a personal mailbox", async () => {
+  const files = await Promise.all([
+    readFile(new URL("../src/app/privacy/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/app/supporto/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/lib/site.ts", import.meta.url), "utf8"),
+  ]);
+  for (const source of files) {
+    assert.doesNotMatch(source, /mailto:/i);
+    assert.doesNotMatch(source, /@gmail\.com/i);
+  }
+  assert.doesNotMatch(files[0], /panel-title">Titolare/i);
+  assert.doesNotMatch(files.join("\n"), /\/consulenza/);
 });
 
 test("activeNavSection resolves nested routes to the parent menu", () => {

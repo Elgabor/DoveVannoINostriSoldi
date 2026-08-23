@@ -13,7 +13,6 @@ test("narrow responsive grids cannot exceed their container", async () => {
     ["../src/app/controlli/controlli.module.css", "300px"],
     ["../src/app/controlli/controlli.module.css", "280px"],
     ["../src/app/metodologia/metodologia.module.css", "300px"],
-    ["../src/app/consulenza/consulenza.module.css", "300px"],
   ];
 
   for (const [path, minimum] of cases) {
@@ -88,21 +87,6 @@ test("Lighthouse budgets use a three-run median instead of a single noisy sample
   assert.match(lighthouse, /function medianMetricValues\(runs\)/);
   assert.match(lighthouse, /medianMetricValues\(runs\.map\(\(run\) => run\.values\)\)/);
   assert.match(lighthouse, /irpef-lighthouse-summary\.json/);
-});
-
-test("consulting keeps client contracts separate from server email delivery", async () => {
-  const [form, page, leads] = await Promise.all([
-    source("../src/app/consulenza/lead-form.tsx"),
-    source("../src/app/consulenza/page.tsx"),
-    source("../src/lib/leads.ts"),
-  ]);
-
-  assert.match(form, /@\/lib\/consulting-contract/);
-  assert.doesNotMatch(form, /@\/lib\/leads/);
-  assert.match(page, /@\/lib\/consulting-contract/);
-  assert.match(leads, /Idempotency-Key/);
-  assert.match(form, /aria-describedby=\{error \? "consulting-form-error" : undefined\}/);
-  assert.doesNotMatch(form, /noValidate|startedAt/);
 });
 
 test("the regional map has a deterministic fallback and roving keyboard focus", async () => {

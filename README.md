@@ -122,11 +122,6 @@ soltanto a pochi intenti allowlisted in italiano e richiama direttamente gli ada
 verificati; non usa provider LLM o voce, non salva il prompt e non accetta URL, SQL o dataset scelti
 dal testo. Il contratto, i limiti HTTP e la roadmap sono in [docs/ASSISTENTE.md](docs/ASSISTENTE.md).
 
-Il form di consulenza usa configurazione email fail-closed, richieste same-origin limitate e invii
-idempotenti. Honeypot e validazione non vengono presentati come rate limit: la regola WAF e la
-procedura di cancellazione restano controlli operativi del deployment, descritti in
-[docs/CONSULTING.md](docs/CONSULTING.md).
-
 Per OpenCivitas, la differenza tra spesa storica e spesa standard non viene chiamata spreco. L'API restituisce anche i valori per abitante, il confronto sui servizi e i limiti territoriali della fonte.
 
 Per le opere pubbliche, l'API può segnalare date da controllare, crescita dei costi, finanziamenti ancora da trovare o problemi di qualità del dato. Sono indicazioni per scegliere cosa approfondire, non prove automatiche di spreco.

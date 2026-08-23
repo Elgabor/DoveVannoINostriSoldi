@@ -55,9 +55,6 @@ export function Navigation() {
         <HeaderSearch />
 
         <div className="header-actions">
-          <Link className="header-action" href="/consulenza">
-            Consulenza
-          </Link>
           <Link className="header-action header-action-accent" href="/mcp">
             MCP
           </Link>

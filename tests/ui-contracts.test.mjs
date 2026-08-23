@@ -59,8 +59,10 @@ test("the three INPS headline statistics use a complete responsive grid", () => 
 });
 
 test("municipal screening is marked derived, bounded and dimension-aware", () => {
-  assert.match(controlsPage, /Screening derivato sui Comuni/);
-  assert.match(controlsPage, /modo compatto per scegliere cosa leggere meglio/);
+  assert.match(controlsPage, /Screening derivato · OpenCivitas/);
+  assert.match(controlsPage, /Non è un esito ufficiale di controllo/);
+  assert.match(controlsPage, /Segnali da relazioni ufficiali/);
+  assert.match(controlsPage, /Come leggere i numeri/);
   assert.match(controlsPage, /Popolazione implicita/);
   assert.match(controlsPage, /sensitivityByPopulationBand/);
   assert.match(controlsPage, /OpenCivitas/);

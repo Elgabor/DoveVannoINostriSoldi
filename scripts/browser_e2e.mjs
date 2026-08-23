@@ -490,6 +490,15 @@ function assertTextMatches(text, pattern, label) {
   assert.ok(pattern.test(text), `${label}: testo atteso ${pattern} assente`);
 }
 
+async function assertSectionSubnav(page, label, { activeChild }) {
+  const subnav = await page.$("nav.subnav");
+  assert.ok(subnav, `${label}: sottomenu di sezione assente`);
+  const active = await page.$('nav.subnav a[aria-current="page"]');
+  assert.ok(active, `${label}: voce attiva assente nel sottomenu`);
+  const activeText = await active.evaluate((element) => element.textContent ?? "");
+  assert.match(activeText, new RegExp(activeChild, "i"), `${label}: voce attiva errata (${activeText})`);
+}
+
 async function activeLevel(page) {
   return page.$eval(ACTIVE_LEVEL, (link) => link.textContent?.trim());
 }
@@ -678,6 +687,44 @@ try {
     },
   });
   completed.push("Ente non comunale invariato 390px");
+
+  const subnavRoutes = [
+    { pathname: "/controlli", label: "Controlli hub", activeChild: "Segnali da controllare" },
+    { pathname: "/appalti", label: "Appalti 2025", activeChild: "Appalti 2025" },
+    { pathname: "/incarichi", label: "Incarichi pubblici", activeChild: "Incarichi pubblici" },
+    { pathname: "/stato", label: "Stato spese", activeChild: "Amministrazioni centrali" },
+    { pathname: "/coesione/asili", label: "PNRR asili", activeChild: "Asili e prima infanzia" },
+    { pathname: "/parlamento", label: "Parlamento", activeChild: "Parlamento" },
+    { pathname: "/partecipazioni", label: "Partecipazioni", activeChild: "Partecipazioni" },
+  ];
+
+  for (const route of subnavRoutes) {
+    for (const width of [390, 1280]) {
+      const label = `Subnav ${route.label} ${width}px`;
+      await runScenario(browser, {
+        label,
+        pathname: route.pathname,
+        width,
+        validate: async (page) => {
+          await assertSectionSubnav(page, label, { activeChild: route.activeChild });
+        },
+      });
+      completed.push(label);
+    }
+  }
+
+  await runScenario(browser, {
+    label: "Controlli leggibilità 390px",
+    pathname: "/controlli",
+    width: 390,
+    validate: async (page) => {
+      const text = await bodyText(page);
+      assertTextMatches(text, /Come leggere i numeri/i, "Controlli leggibilità");
+      assertTextMatches(text, /Segnali da relazioni ufficiali/i, "Controlli leggibilità");
+      assertTextMatches(text, /Screening derivato · OpenCivitas/i, "Controlli leggibilità");
+    },
+  });
+  completed.push("Controlli leggibilità 390px");
 
   for (const width of [320, 390, 768, 1280]) {
     const label = `IRPEF ${width}px`;

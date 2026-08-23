@@ -48,6 +48,12 @@ const scenarioComponentNumber = new Intl.NumberFormat("it-IT", {
 });
 
 const OUTLIER_TABLE_SIZE = 15;
+const toneLabels = {
+  observed: "Misura diretta",
+  attention: "Priorità di verifica",
+  policy: "Effetto di policy",
+  stock: "Stock / esposizione",
+} as const;
 const populationBandLabels = {
   "meno-di-1.000": "Meno di 1.000",
   "1.000-4.999": "Da 1.000 a 4.999",
@@ -197,11 +203,33 @@ export default async function ControlsPage({ searchParams }: PageProps) {
         </div>
       </section>
 
+      <section className={`panel ${styles.typeLegend}`} aria-labelledby="signal-types-title">
+        <h2 id="signal-types-title" className="panel-title">Come leggere i numeri</h2>
+        <p className={styles.legendLead}>
+          Ogni blocco indica un tipo di dato diverso. La riga colorata sopra la cifra principale
+          mostra quanto è forte il segnale, non una colpevolezza.
+        </p>
+        <ul className={styles.toneLegend}>
+          {(Object.keys(toneLabels) as Array<keyof typeof toneLabels>).map((tone) => (
+            <li key={tone} data-tone={tone}>
+              <span className={styles.toneSwatch} aria-hidden="true" />
+              <span>
+                <strong>{toneLabels[tone]}</strong>
+                {tone === "attention" && " · cifre da approfondire con la fonte"}
+                {tone === "observed" && " · valore pubblicato o contato"}
+                {tone === "policy" && " · effetto di una scelta pubblica"}
+                {tone === "stock" && " · esposizione accumulata nel tempo"}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
       <details className={`panel ${styles.readingGuide}`}>
-        <summary>Come distinguere questi numeri</summary>
+        <summary>Definizioni dei tipi di segnale</summary>
         <p>
-          Le parole qui sotto hanno significati diversi. Servono a capire quanto è forte il dato e
-          che cosa possiamo concludere.
+          Le etichette sulle schede riprendono le categorie sotto. Servono a capire quanto possiamo
+          concludere da ogni numero.
         </p>
         <dl>
           {classificationEntries.map(([id, classification]) => (
@@ -213,16 +241,70 @@ export default async function ControlsPage({ searchParams }: PageProps) {
         </dl>
       </details>
 
-      {(selectedYear === null || selectedYear === openCivitasSnapshot.referenceYear) && (
-        <section className="panel" aria-labelledby="municipal-screening-title">
-          <h2 id="municipal-screening-title" className="panel-title">
-            Screening derivato sui Comuni · dati {openCivitasSnapshot.referenceYear}
-          </h2>
+      <section className={styles.signalSection} aria-labelledby="official-signals-title">
+        <header className={styles.sectionIntro}>
+          <h2 id="official-signals-title">Segnali da relazioni ufficiali</h2>
           <p>
-            Partiamo dalla differenza per abitante tra spesa storica e spesa standard pubblicata da
-            OpenCivitas e calcoliamo, per ogni Regione a statuto ordinario, la soglia di Tukey (1,5 ×
-            IQR). È un modo compatto per scegliere cosa leggere meglio.
+            Cifre pubblicate da autorità di controllo, indagine o vigilanza. Ogni scheda riporta
+            perimetro, stato del dato e limiti di interpretazione.
           </p>
+        </header>
+        <div className={styles.signals}>
+          {signals.map((signal) => (
+            <article className="panel" key={signal.id} data-tone={signal.tone}>
+              <p className={styles.signalMeta}>
+                {signal.area} · {referencePeriod(signal.referenceDate)}
+              </p>
+              <div className={styles.signalBadges}>
+                <span className={styles.signalTone} data-tone={signal.tone}>
+                  {toneLabels[signal.tone]}
+                </span>
+                <span className={styles.signalKind}>
+                  {auditClassifications[signal.classification].label}
+                </span>
+              </div>
+              <strong className={styles.signalValue}>{formatSignal(signal)}</strong>
+              <h3>{signal.label}</h3>
+              <p>{signal.plainMeaning}</p>
+              <details className={styles.signalDetails}>
+                <summary>Perimetro e stato del dato</summary>
+                <dl>
+                  <div>
+                    <dt>Comprende</dt>
+                    <dd>{signal.coverage}</dd>
+                  </div>
+                  <div>
+                    <dt>Stato</dt>
+                    <dd>{signal.evidenceStatus}</dd>
+                  </div>
+                </dl>
+              </details>
+              <footer>
+                <span>{signal.caveat}</span>
+                <a href={signal.source.url} target="_blank" rel="noreferrer">
+                  {signal.source.institution} ↗
+                </a>
+              </footer>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {(selectedYear === null || selectedYear === openCivitasSnapshot.referenceYear) && (
+        <section className={`panel ${styles.derivedSection}`} aria-labelledby="municipal-screening-title">
+          <header className={styles.sectionIntro}>
+            <div>
+              <span className={styles.derivedBadge}>Screening derivato · OpenCivitas</span>
+              <h2 id="municipal-screening-title" className="panel-title">
+                Comuni oltre la soglia regionale · dati {openCivitasSnapshot.referenceYear}
+              </h2>
+            </div>
+            <p>
+              Non è un esito ufficiale di controllo: ordiniamo le differenze per abitante rispetto
+              alla spesa standard e segnaliamo i valori oltre la soglia di Tukey (1,5 × IQR) per
+              Regione a statuto ordinario.
+            </p>
+          </header>
 
           <div className="stat-strip">
             <div>
@@ -360,43 +442,19 @@ export default async function ControlsPage({ searchParams }: PageProps) {
         </section>
       )}
 
-      <div className={styles.signals}>
-        {signals.map((signal) => (
-          <article className="panel" key={signal.id} data-tone={signal.tone}>
-            <h2 className="panel-title">
-              {signal.area} · {referencePeriod(signal.referenceDate)}
-            </h2>
-            <span className={styles.signalKind}>
-              {auditClassifications[signal.classification].label}
-            </span>
-            <strong className={styles.signalValue}>{formatSignal(signal)}</strong>
-            <h3>{signal.label}</h3>
-            <p>{signal.plainMeaning}</p>
-            <details className={styles.signalDetails}>
-              <summary>Perimetro e stato del dato</summary>
-              <dl>
-                <div>
-                  <dt>Comprende</dt>
-                  <dd>{signal.coverage}</dd>
-                </div>
-                <div>
-                  <dt>Stato</dt>
-                  <dd>{signal.evidenceStatus}</dd>
-                </div>
-              </dl>
-            </details>
-            <footer>
-              <span>{signal.caveat}</span>
-              <a href={signal.source.url} target="_blank" rel="noreferrer">
-                {signal.source.institution} ↗
-              </a>
-            </footer>
-          </article>
-        ))}
-      </div>
-
-      <section className="panel">
-        <h2 className="panel-title">Appalti pubblici · confronto annuale omogeneo</h2>
+      <section className={`panel ${styles.relatedSection}`} aria-labelledby="appalti-related-title">
+        <header className={styles.sectionIntro}>
+          <h2 id="appalti-related-title">Appalti pubblici</h2>
+          <p>
+            Serie ANAC omogenee e confronti tra percentuali. Per CIG 2025 verificati e
+            concentrazioni vicino alle soglie consulta la pagina dedicata.
+          </p>
+          <p className={styles.relatedLinks}>
+            <Link href="/appalti">Apri Appalti 2025 →</Link>
+            {" · "}
+            <Link href="/incarichi">Incarichi pubblici →</Link>
+          </p>
+        </header>
         {comparison && comparisonValue !== null ? (
           <div className={styles.comparison}>
             <div>
@@ -551,8 +609,16 @@ export default async function ControlsPage({ searchParams }: PageProps) {
 
       {selectedYear === null && (
         <>
-          <section className="panel">
-            <h2 className="panel-title">Tre ipotesi di miglioramento annuale</h2>
+          <section className={`panel ${styles.policySection}`} aria-labelledby="policy-scenarios-title">
+            <header className={styles.sectionIntro}>
+              <span className={styles.policyBadge}>
+                {auditClassifications["policy-scenario"].label}
+              </span>
+              <h2 id="policy-scenarios-title" className="panel-title">
+                Tre ipotesi di miglioramento annuale
+              </h2>
+              <p>{auditClassifications["policy-scenario"].plainMeaning}</p>
+            </header>
             <div className={styles.scenarios}>
               {auditScenarios.map((scenario) => (
                 <div key={scenario.id}>
@@ -605,10 +671,15 @@ export default async function ControlsPage({ searchParams }: PageProps) {
             </details>
           </section>
 
-          <section className="panel">
-            <h2 className="panel-title">
-              Composizione dell&apos;ipotesi centrale · {scenarioTotalNumber.format(centralTotal)} mld €
-            </h2>
+          <section className={`panel ${styles.policySection}`}>
+            <header className={styles.sectionIntro}>
+              <span className={styles.policyBadge}>
+                {auditClassifications["policy-scenario"].label}
+              </span>
+              <h2 className="panel-title">
+                Composizione dell&apos;ipotesi centrale · {scenarioTotalNumber.format(centralTotal)} mld €
+              </h2>
+            </header>
             <ul className={styles.breakdown}>
               {centralScenarioBreakdown.map((item) => (
                 <li key={item.label}>

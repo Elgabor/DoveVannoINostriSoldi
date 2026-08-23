@@ -73,6 +73,7 @@ export const PRIMARY_NAV: readonly NavSection[] = [
   {
     href: "/controlli",
     label: "Cosa controllare",
+    aliases: ["/appalti", "/incarichi"],
     children: [
       { href: "/controlli", label: "Segnali da controllare" },
       { href: "/appalti", label: "Appalti 2025" },
@@ -174,9 +175,12 @@ export const SITE_MAP_GROUPS: readonly { title: string; links: readonly NavLink[
 
 export function isNavSectionActive(pathname: string, item: NavSection): boolean {
   if (item.href === "/") return pathname === "/";
+  if (pathname.startsWith(item.href)) return true;
+  if (item.aliases?.some((alias) => pathname.startsWith(alias))) return true;
   return (
-    pathname.startsWith(item.href) ||
-    item.aliases?.some((alias) => pathname.startsWith(alias)) === true
+    item.children?.some(
+      (child) => pathname === child.href || pathname.startsWith(`${child.href}/`),
+    ) ?? false
   );
 }
 

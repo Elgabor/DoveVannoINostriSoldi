@@ -28,6 +28,16 @@ test("activeNavSection resolves nested routes to the parent menu", () => {
   const enti = activeNavSection("/enti/c_a783");
   assert.equal(enti?.href, "/enti");
 
+  const appalti = activeNavSection("/appalti");
+  assert.equal(appalti?.href, "/controlli");
+  assert.equal(isNavChildActive("/appalti", "/appalti", appalti.children), true);
+
+  const incarichi = activeNavSection("/incarichi");
+  assert.equal(incarichi?.href, "/controlli");
+
+  const stato = activeNavSection("/stato");
+  assert.equal(stato?.href, "/spese");
+
   assert.equal(
     isNavChildActive("/coesione/asili", "/coesione/asili", coesione.children),
     true,

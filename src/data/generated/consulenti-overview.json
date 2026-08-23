@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "transformVersion": 1,
   "scope": "national-annual-overview",
-  "generatedAt": "2026-08-23T07:17:51Z",
+  "generatedAt": "2026-08-23T13:15:07Z",
   "latestYear": 2026,
   "externalAppointments": [
     {
@@ -60,20 +60,20 @@
     {
       "year": 2025,
       "assignments": 564980,
-      "paidCents": 27092045632,
-      "completedAssignments": 223265,
+      "paidCents": 27092367960,
+      "completedAssignments": 223270,
       "managerAssignments": 72878,
       "nonManagerAssignments": 492102,
       "publicAdministrationGrantorRecords": 413692
     },
     {
       "year": 2026,
-      "assignments": 212829,
-      "paidCents": 3679419192,
-      "completedAssignments": 37319,
-      "managerAssignments": 36878,
-      "nonManagerAssignments": 175951,
-      "publicAdministrationGrantorRecords": 141891
+      "assignments": 212837,
+      "paidCents": 3679499192,
+      "completedAssignments": 37320,
+      "managerAssignments": 36884,
+      "nonManagerAssignments": 175953,
+      "publicAdministrationGrantorRecords": 141892
     }
   ],
   "source": {
@@ -83,7 +83,7 @@
     "endpoint": "https://adp-api.perlapa.gov.it/api/public/incarichi/StatisticheIncarichi",
     "licenseUrl": "https://www.perlapa.gov.it/cd-note-legali.html",
     "reuseTerms": "Riuso consentito con attribuzione e licenza identica o equivalente",
-    "observedAt": "2026-08-23T07:17:51Z",
+    "observedAt": "2026-08-23T13:15:07Z",
     "declaredCadence": "Aggiornamento per singola amministrazione e incarico",
     "platformCheckCadence": "Ogni 6 ore"
   },

@@ -7,10 +7,11 @@ un database applicativo di contatti e non espone le credenziali al browser.
 
 - `RESEND_API_KEY`: chiave con solo permesso di invio e, quando possibile, limitata al dominio;
 - `RESEND_FROM_EMAIL`: mittente appartenente a un dominio verificato in Resend;
-- `LEAD_INBOX_EMAIL`: destinatario gestito dal titolare indicato in `/privacy`.
+- `LEAD_INBOX_EMAIL`: casella di destinazione delle richieste (non pubblicata sul sito).
 
-Se manca `RESEND_API_KEY`, l'endpoint risponde `503`. Inbox e mittente usano i valori del
-progetto quando le variabili sono vuote; un indirizzo configurato ma non valido resta un errore.
+Se manca `RESEND_API_KEY` o `LEAD_INBOX_EMAIL`, l'endpoint risponde `503`. Il mittente usa il
+valore predefinito del progetto quando la variabile è vuota; un indirizzo configurato ma non valido
+resta un errore.
 Le richieste a Resend hanno timeout e `Idempotency-Key`; un retry dello stesso contenuto non deve
 produrre una seconda email nell'arco supportato dal provider.
 

@@ -7,6 +7,3 @@
 export const REPO_URL = "https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi";
 export const PUBLIC_SITE_URL = "https://www.dovevannoinostrisoldi.com";
 export const PUBLIC_MCP_ENDPOINT = `${PUBLIC_SITE_URL}/api/mcp`;
-
-/** Public contact shown in the privacy notice; delivery is configured separately. */
-export const CONTACT_EMAIL = "gagliardidomenico46@gmail.com";

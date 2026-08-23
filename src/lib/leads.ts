@@ -7,7 +7,6 @@ import {
   type OrganizationType,
   type ProjectBudget,
 } from "@/lib/consulting-contract";
-import { CONTACT_EMAIL } from "@/lib/site";
 
 const RESEND_TIMEOUT_MS = 8_000;
 
@@ -143,7 +142,8 @@ function namedOrBareAddress(value: string): string {
 }
 
 export function leadInbox(): string | null {
-  const configured = process.env.LEAD_INBOX_EMAIL?.trim() || CONTACT_EMAIL;
+  const configured = process.env.LEAD_INBOX_EMAIL?.trim();
+  if (!configured) return null;
   return mailbox.safeParse(configured).success ? configured : null;
 }
 

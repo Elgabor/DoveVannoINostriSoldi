@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import "./helpers/register-ts-alias.mjs";
+
+const TEST_INBOX = "inbox@example.com";
 
 const {
   formatLeadEmail,
@@ -11,7 +14,6 @@ const {
   sendLeadEmail,
 } = await import("../src/lib/leads.ts");
 const { POST } = await import("../src/app/api/consulenza/route.ts");
-const { CONTACT_EMAIL } = await import("../src/lib/site.ts");
 
 const validLead = {
   name: "Anna Rossi",
@@ -141,7 +143,7 @@ test("consulting API sends a plain-text email to the configured inbox", async ()
   const previousInbox = process.env.LEAD_INBOX_EMAIL;
   const previousFrom = process.env.RESEND_FROM_EMAIL;
   process.env.RESEND_API_KEY = "re_test";
-  process.env.LEAD_INBOX_EMAIL = CONTACT_EMAIL;
+  process.env.LEAD_INBOX_EMAIL = TEST_INBOX;
   process.env.RESEND_FROM_EMAIL = "Consulenza <consulenza@dovevannoinostrisoldi.com>";
 
   const calls = [];
@@ -160,7 +162,7 @@ test("consulting API sends a plain-text email to the configured inbox", async ()
     assert.equal(calls[0].init.headers["Idempotency-Key"], `consulting/${validLead.submissionId}`);
     assert.ok(calls[0].init.signal instanceof AbortSignal);
     const sent = JSON.parse(calls[0].init.body);
-    assert.deepEqual(sent.to, [CONTACT_EMAIL]);
+    assert.deepEqual(sent.to, [TEST_INBOX]);
     assert.equal(sent.from, "Consulenza <consulenza@dovevannoinostrisoldi.com>");
     assert.equal(sent.reply_to, validLead.email);
     assert.match(sent.text, /anna\.rossi@example\.com/);
@@ -178,14 +180,14 @@ test("consulting API sends a plain-text email to the configured inbox", async ()
   }
 });
 
-test("lead email configuration uses project defaults and rejects an invalid inbox", () => {
+test("lead email configuration requires an explicit inbox and rejects an invalid one", () => {
   const previousFrom = process.env.RESEND_FROM_EMAIL;
   const previousInbox = process.env.LEAD_INBOX_EMAIL;
   delete process.env.RESEND_FROM_EMAIL;
   delete process.env.LEAD_INBOX_EMAIL;
   try {
     assert.equal(leadFromAddress(), "Consulenza <consulenza@dovevannoinostrisoldi.com>");
-    assert.equal(leadInbox(), CONTACT_EMAIL);
+    assert.equal(leadInbox(), null);
   } finally {
     if (previousFrom === undefined) delete process.env.RESEND_FROM_EMAIL;
     else process.env.RESEND_FROM_EMAIL = previousFrom;
@@ -204,6 +206,19 @@ test("lead email configuration uses project defaults and rejects an invalid inbo
     if (previousInbox === undefined) delete process.env.LEAD_INBOX_EMAIL;
     else process.env.LEAD_INBOX_EMAIL = previousInbox;
   }
+});
+
+test("public legal pages do not expose a personal mailbox", async () => {
+  const files = await Promise.all([
+    readFile(new URL("../src/app/privacy/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/app/supporto/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/lib/site.ts", import.meta.url), "utf8"),
+  ]);
+  for (const source of files) {
+    assert.doesNotMatch(source, /mailto:/i);
+    assert.doesNotMatch(source, /@gmail\.com/i);
+  }
+  assert.doesNotMatch(files[0], /panel-title">Titolare/i);
 });
 
 test("consulting API rejects cross-origin, wrong content type and oversized bodies", async () => {
@@ -251,7 +266,7 @@ test("Resend rejection bodies are not retained or returned for logging", async (
   const previousInbox = process.env.LEAD_INBOX_EMAIL;
   const previousFrom = process.env.RESEND_FROM_EMAIL;
   process.env.RESEND_API_KEY = "re_test";
-  process.env.LEAD_INBOX_EMAIL = CONTACT_EMAIL;
+  process.env.LEAD_INBOX_EMAIL = TEST_INBOX;
   process.env.RESEND_FROM_EMAIL = "Consulenza <consulenza@dovevannoinostrisoldi.com>";
   try {
     const parsed = parseLead(validLead);

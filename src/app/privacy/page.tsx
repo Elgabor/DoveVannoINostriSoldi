@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { CONTACT_EMAIL } from "@/lib/site";
 import styles from "../legal-page.module.css";
 
 export const metadata: Metadata = {
@@ -17,14 +16,6 @@ export default function PrivacyPage() {
           il sito. Il sito legge fonti pubbliche e non chiede un account.
         </p>
       </div>
-
-      <section className="panel">
-        <h2 className="panel-title">Titolare</h2>
-        <p>
-          Domenico Gagliardi, contattabile all&apos;indirizzo{" "}
-          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
-        </p>
-      </section>
 
       <section className="panel">
         <h2 className="panel-title">Quali dati e perché</h2>
@@ -113,8 +104,9 @@ export default function PrivacyPage() {
         <h2 className="panel-title">I tuoi diritti</h2>
         <p>
           Puoi chiedere accesso, correzione, cancellazione, limitazione, portabilità quando
-          applicabile o opposizione
-          scrivendo alla stessa email. Puoi anche revocare il consenso e presentare
+          applicabile o opposizione tramite la pagina{" "}
+          <a href="/supporto">Supporto</a> o, se hai già usato il form di consulenza,
+          rispondendo alla stessa conversazione. Puoi anche revocare il consenso e presentare
           reclamo al Garante per la protezione dei dati personali.
         </p>
       </section>

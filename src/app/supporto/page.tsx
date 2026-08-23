@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CONTACT_EMAIL, PUBLIC_MCP_ENDPOINT, REPO_URL } from "@/lib/site";
+import { PUBLIC_MCP_ENDPOINT, REPO_URL } from "@/lib/site";
 import styles from "../legal-page.module.css";
 
 export const metadata: Metadata = {
@@ -28,8 +28,9 @@ export default function SupportPage() {
         <h2 className="panel-title">Privacy e segnalazioni riservate</h2>
         <p>
           Per esercitare i diritti privacy o segnalare un problema che non deve essere pubblico,
-          scrivi a <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. Non inviare segreti o
-          dataset personali non richiesti; descrivi prima il problema e concorda un canale adatto.
+          usa il <a href="/consulenza">form di consulenza</a> indicando l&apos;oggetto «diritti
+          privacy». Non inviare segreti o dataset personali non richiesti; descrivi prima il
+          problema e attendi una risposta prima di allegare materiali sensibili.
         </p>
       </section>
 

@@ -20,6 +20,8 @@ test("site navigation exposes coesione asili in primary and footer maps", () => 
   assert.match(layoutSource, /SiteFooter/);
   assert.match(globalsCss, /\.subnav-row \{/);
   assert.match(globalsCss, /\.footer-sitemap-rows \{/);
+  assert.match(globalsCss, /row-gap: var\(--space-6\)/);
+  assert.doesNotMatch(globalsCss, /var\(--space-5\)/);
 });
 
 test("activeNavSection resolves nested routes to the parent menu", () => {

@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import {
   getIpaEntityByCode,
   IPA_ENTI_DATASET_URL,
-  IPA_ENTI_RESOURCE_ID,
   IPA_LICENSE,
 } from "@/lib/ipa";
 import {
@@ -13,6 +12,9 @@ import {
   IPA_UO_DATASET_URL,
   type IpaOrganizationStructure,
 } from "@/lib/ipa-structure";
+import { getMunicipalityProfile } from "@/lib/municipality-profile";
+import { MunicipalityEconomics } from "./municipality-economics";
+import { MunicipalityInformation } from "./municipality-information";
 import styles from "./scheda.module.css";
 
 export const dynamic = "force-dynamic";
@@ -69,6 +71,7 @@ export default async function EntityPage({ params }: PageProps) {
   }
 
   if (!entity) notFound();
+  const municipalityProfile = await getMunicipalityProfile(entity);
 
   const responsible = responsibleLabel(
     entity.responsabile.titolo,
@@ -83,23 +86,27 @@ export default async function EntityPage({ params }: PageProps) {
         <span aria-hidden="true">/</span>
         <Link href="/enti">Enti e società</Link>
         <span aria-hidden="true">/</span>
-        <span>{entity.codiceIpa}</span>
+        <span>{municipalityProfile ? "Scheda comunale" : entity.codiceIpa}</span>
       </nav>
 
       <div className={styles.head}>
         <div className="page-intro">
           <h1>{entity.denominazione}</h1>
-          <p>
-            Codice IPA <strong>{entity.codiceIpa}</strong>
-            {entity.acronimo ? `, ${entity.acronimo}` : ""}
-            {entity.dataAggiornamento ? `, aggiornato ${entity.dataAggiornamento}` : ""}
-          </p>
-          <div className={styles.badges}>
-            {entity.tipologia && <span className="tag tag-neutral">{entity.tipologia}</span>}
-            {entity.inLiquidazione && (
-              <span className="tag tag-accent">ente in liquidazione</span>
-            )}
-          </div>
+          {municipalityProfile ? (
+            entity.dataAggiornamento ? <p>Aggiornamento anagrafico: {entity.dataAggiornamento}</p> : null
+          ) : (
+            <p>
+              Codice IPA <strong>{entity.codiceIpa}</strong>
+              {entity.acronimo ? `, ${entity.acronimo}` : ""}
+              {entity.dataAggiornamento ? `, aggiornato ${entity.dataAggiornamento}` : ""}
+            </p>
+          )}
+          {(!municipalityProfile && entity.tipologia) || entity.inLiquidazione ? (
+            <div className={styles.badges}>
+              {!municipalityProfile && entity.tipologia ? <span className="tag tag-neutral">{entity.tipologia}</span> : null}
+              {entity.inLiquidazione ? <span className="tag tag-accent">ente in liquidazione</span> : null}
+            </div>
+          ) : null}
         </div>
 
         {entity.sitoIstituzionale && (
@@ -114,15 +121,13 @@ export default async function EntityPage({ params }: PageProps) {
         )}
       </div>
 
-      <div className={styles.split}>
+      <div className={municipalityProfile ? styles.municipalityLayout : styles.split}>
         <div className={styles.main}>
-          <section className="panel">
+          {municipalityProfile ? <MunicipalityEconomics profile={municipalityProfile} /> : null}
+
+          {!municipalityProfile ? <section className="panel">
             <h2 className="panel-title">Identità amministrativa</h2>
             <dl className={styles.definitions}>
-              <div>
-                <dt>Codice IPA</dt>
-                <dd>{entity.codiceIpa}</dd>
-              </div>
               <div>
                 <dt>Codice fiscale</dt>
                 <dd>{show(entity.codiceFiscale)}</dd>
@@ -132,29 +137,23 @@ export default async function EntityPage({ params }: PageProps) {
                 <dd>{show(entity.tipologia)}</dd>
               </div>
               <div>
-                <dt>Codice ISTAT ente</dt>
-                <dd>{show(entity.codiceIstat)}</dd>
-              </div>
-              <div>
-                <dt>Categoria</dt>
-                <dd>{show(entity.codiceCategoria)}</dd>
-              </div>
-              <div>
-                <dt>Natura giuridica</dt>
-                <dd>{show(entity.codiceNatura)}</dd>
-              </div>
-              <div>
-                <dt>Codice ATECO</dt>
-                <dd>{show(entity.codiceAteco)}</dd>
-              </div>
-              <div>
                 <dt>Responsabile</dt>
                 <dd>{responsible}</dd>
               </div>
             </dl>
-          </section>
+            <details className={styles.technicalDetails}>
+              <summary>Mostra identificativi tecnici</summary>
+              <dl className={styles.definitions}>
+                <div><dt>Codice IPA</dt><dd>{entity.codiceIpa}</dd></div>
+                <div><dt>Codice ISTAT ente</dt><dd>{show(entity.codiceIstat)}</dd></div>
+                <div><dt>Categoria IPA</dt><dd>{show(entity.codiceCategoria)}</dd></div>
+                <div><dt>Natura giuridica</dt><dd>{show(entity.codiceNatura)}</dd></div>
+                <div><dt>Codice ATECO</dt><dd>{show(entity.codiceAteco)}</dd></div>
+              </dl>
+            </details>
+          </section> : null}
 
-          <section className="panel" id="struttura-ipa">
+          {!municipalityProfile ? <section className="panel" id="struttura-ipa">
             <h2 className="panel-title">Struttura dichiarata in IPA · UO e AOO</h2>
 
             {structure ? (
@@ -185,7 +184,7 @@ export default async function EntityPage({ params }: PageProps) {
                         </tr>
                       </thead>
                       <tbody>
-                        {structure.unitaOrganizzative.records.slice(0, 24).map((unit) => (
+                        {structure.unitaOrganizzative.records.slice(0, 6).map((unit) => (
                           <tr key={unit.codice}>
                             <th scope="row">
                               {unit.denominazione}
@@ -210,9 +209,44 @@ export default async function EntityPage({ params }: PageProps) {
                   </p>
                 )}
 
+                {structure.unitaOrganizzative.records.length > 6 ? (
+                  <details className={styles.structureDetails} data-structure-details>
+                    <summary>
+                      Mostra altre {Math.min(structure.unitaOrganizzative.records.length, 24) - 6} unità organizzative
+                    </summary>
+                    <div className="table-scroll" role="region" aria-label="Altre unità organizzative dell’ente" tabIndex={0}>
+                      <table className="table">
+                        <thead>
+                          <tr>
+                            <th scope="col">Unità organizzativa</th>
+                            <th scope="col">Codice UO</th>
+                            <th scope="col">AOO</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {structure.unitaOrganizzative.records.slice(6, 24).map((unit) => (
+                            <tr key={unit.codice}>
+                              <th scope="row">
+                                {unit.denominazione}
+                                <small>
+                                  {unit.codicePadre
+                                    ? `dipende dalla UO ${unit.codicePadre}`
+                                    : "livello padre non indicato"}
+                                </small>
+                              </th>
+                              <td><code>{unit.codice}</code></td>
+                              <td>{unit.codiceAoo ? <code>{unit.codiceAoo}</code> : "non indicata"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </details>
+                ) : null}
+
                 {structure.unitaOrganizzative.total > 24 && (
                   <p className={styles.note}>
-                    Mostriamo le prime 24 unità in ordine alfabetico. L&apos;API espone pagine fino a
+                    La scheda include le prime 24 unità in ordine alfabetico. L&apos;API espone pagine fino a
                     500 record tramite <code>limit</code> e <code>offset</code>.
                   </p>
                 )}
@@ -247,9 +281,9 @@ export default async function EntityPage({ params }: PageProps) {
               direzioni generali e strutture giuridiche fanno fede anche regolamenti e pagine di
               Amministrazione trasparente.
             </p>
-          </section>
+          </section> : null}
 
-          <section className="panel">
+          {!municipalityProfile ? <section className="panel">
             <h2 className="panel-title">Sede e contatti pubblicati</h2>
             <dl className={styles.definitions}>
               <div>
@@ -273,36 +307,29 @@ export default async function EntityPage({ params }: PageProps) {
                 </div>
               ))}
             </dl>
-          </section>
+          </section> : null}
 
-          <section className="panel">
-            <h2 className="panel-title">Dati economici · collegamenti in corso</h2>
-            <dl className={styles.definitions}>
-              <div>
-                <dt>Pagamenti e serie storiche</dt>
-                <dd>SIOPE / OpenBDAP</dd>
-              </div>
-              <div>
-                <dt>Contratti e fornitori</dt>
-                <dd>ANAC / BDNCP</dd>
-              </div>
-              <div>
-                <dt>Progetti, opere e PNRR</dt>
-                <dd>CUP / ReGiS / OpenCoesione</dd>
-              </div>
-              <div>
-                <dt>Consulenze e incarichi</dt>
-                <dd>Funzione Pubblica</dd>
-              </div>
-            </dl>
-            <p className={styles.note}>
-              Mostreremo un grafico economico solo quando riusciremo a collegare questo ente a una
-              fonte ufficiale. Non usiamo valori stimati o abbinamenti basati solo sul nome.
-            </p>
-          </section>
+          {!municipalityProfile ? (
+            <section className="panel">
+              <h2 className="panel-title">Dati economici · collegamenti in corso</h2>
+              <dl className={styles.definitions}>
+                <div><dt>Pagamenti e serie storiche</dt><dd>SIOPE / OpenBDAP</dd></div>
+                <div><dt>Contratti e fornitori</dt><dd>ANAC / BDNCP</dd></div>
+                <div><dt>Progetti, opere e PNRR</dt><dd>CUP / ReGiS / OpenCoesione</dd></div>
+                <div><dt>Consulenze e incarichi</dt><dd>Funzione Pubblica</dd></div>
+              </dl>
+              <p className={styles.note}>
+                Non pubblichiamo dati economici senza un collegamento esatto a una fonte ufficiale.
+              </p>
+            </section>
+          ) : null}
+
+          {municipalityProfile ? (
+            <MunicipalityInformation entity={entity} responsible={responsible} structure={structure} />
+          ) : null}
         </div>
 
-        <aside className={styles.side}>
+        {!municipalityProfile ? <aside className={styles.side}>
           <section className="panel">
             <h2 className="panel-title">Da dove arrivano i dati</h2>
             <dl className={styles.sideList}>
@@ -312,16 +339,6 @@ export default async function EntityPage({ params }: PageProps) {
                   <a href={IPA_ENTI_DATASET_URL} target="_blank" rel="noreferrer">
                     Indice PA · Enti ↗
                   </a>
-                </dd>
-              </div>
-              <div>
-                <dt>Titolare</dt>
-                <dd>Agenzia per l&apos;Italia Digitale</dd>
-              </div>
-              <div>
-                <dt>Identificativo del file</dt>
-                <dd>
-                  <code>{IPA_ENTI_RESOURCE_ID}</code>
                 </dd>
               </div>
               <div>
@@ -336,27 +353,17 @@ export default async function EntityPage({ params }: PageProps) {
                 <dt>Data del dato</dt>
                 <dd>{show(entity.dataAggiornamento)}</dd>
               </div>
-            </dl>
-          </section>
-
-          <section className="panel">
-            <h2 className="panel-title">Usa questi dati · formato JSON</h2>
-            <dl className={styles.sideList}>
               <div>
-                <dt>Indirizzo per altre applicazioni</dt>
+                <dt>Formato JSON</dt>
                 <dd>
                   <Link href={`/api/enti/${encodeURIComponent(entity.codiceIpa)}`}>
-                    /api/enti/{entity.codiceIpa} →
+                    Apri API →
                   </Link>
                 </dd>
               </div>
             </dl>
-            <p className={styles.note}>
-              Il servizio rende i campi più facili da usare, ma non cambia ciò che IPA ha
-              pubblicato.
-            </p>
           </section>
-        </aside>
+        </aside> : null}
       </div>
     </main>
   );

@@ -7,10 +7,16 @@ on:
       - feat/siope-territorial-dashboard
     paths:
       - scripts/etl/siope_municipal_snapshot.py
+      - src/lib/siope-municipality-detail.ts
+      - tests/municipality-profile.test.mjs
+      - tests/siope-snapshot.test.mjs
       - .github/workflows/siope-refresh.yml
   pull_request:
     paths:
       - scripts/etl/siope_municipal_snapshot.py
+      - src/lib/siope-municipality-detail.ts
+      - tests/municipality-profile.test.mjs
+      - tests/siope-snapshot.test.mjs
       - .github/workflows/siope-refresh.yml
   schedule:
     - cron: "29 * * * *"
@@ -65,14 +71,24 @@ jobs:
           years=(2024 2025 2026)
           for year in "${years[@]}"; do
             case "${year}" in
-              2024) output="src/data/generated/siope-municipal-2024.json" ;;
-              2025) output="src/data/generated/siope-municipal-2025.json" ;;
-              2026) output="src/data/generated/siope-municipal.json" ;;
+              2024)
+                output="src/data/generated/siope-municipal-2024.json"
+                detail_output="src/data/generated/siope-municipal-detail-2024.json"
+                ;;
+              2025)
+                output="src/data/generated/siope-municipal-2025.json"
+                detail_output="src/data/generated/siope-municipal-detail-2025.json"
+                ;;
+              2026)
+                output="src/data/generated/siope-municipal.json"
+                detail_output="src/data/generated/siope-municipal-detail.json"
+                ;;
               *) echo "Unsupported SIOPE snapshot year: ${year}" >&2; exit 1 ;;
             esac
             python scripts/etl/siope_municipal_snapshot.py \
               --year "${year}" \
               --output "${output}" \
+              --detail-output "${detail_output}" \
               "${args[@]}"
           done
 
@@ -236,7 +252,10 @@ jobs:
           }, ensure_ascii=False, indent=2))
 
       - name: Validate every published SIOPE year with the runtime contract
-        run: node --experimental-strip-types --test tests/siope-snapshot.test.mjs
+        run: >-
+          node --experimental-strip-types --test
+          tests/siope-snapshot.test.mjs
+          tests/municipality-profile.test.mjs
 
       - name: Commit source update
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
@@ -247,6 +266,9 @@ jobs:
             src/data/generated/siope-municipal-2024.json
             src/data/generated/siope-municipal-2025.json
             src/data/generated/siope-municipal.json
+            src/data/generated/siope-municipal-detail-2024.json
+            src/data/generated/siope-municipal-detail-2025.json
+            src/data/generated/siope-municipal-detail.json
           )
           if [[ -z "$(git status --porcelain -- "${artifacts[@]}")" ]]; then
             echo "No SIOPE snapshot change to commit."

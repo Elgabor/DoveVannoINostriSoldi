@@ -5,6 +5,7 @@ import {
   IPA_ENTI_RESOURCE_ID,
   IPA_LICENSE,
 } from "@/lib/ipa";
+import { getMunicipalityProfile } from "@/lib/municipality-profile";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,7 @@ export async function GET(_request: Request, context: RouteContext) {
         { status: 404 },
       );
     }
+    const municipalityProfile = await getMunicipalityProfile(entity);
 
     return NextResponse.json(
       {
@@ -47,6 +49,7 @@ export async function GET(_request: Request, context: RouteContext) {
         },
         observedAt: new Date().toISOString(),
         record: entity,
+        municipalityProfile,
       },
       {
         headers: {

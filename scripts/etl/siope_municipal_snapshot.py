@@ -40,6 +40,7 @@ IPA_ADMINISTRATIONS_URL = (
     "resource/3ed63523-ff9c-41f6-a6fe-980f3d9e501f/download/amministrazioni.txt"
 )
 DEFAULT_OUTPUT = Path("src/data/generated/siope-municipal.json")
+DEFAULT_DETAIL_OUTPUT = Path("src/data/generated/siope-municipal-detail.json")
 USER_AGENT = "DoveVannoINostriSoldi-ETL/1.0 (+https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi)"
 CHUNK_SIZE = 1 << 20
 MAX_ATTEMPTS = 3
@@ -71,6 +72,7 @@ TITLE_LABELS = {
     "5": "Chiusura anticipazioni da tesoriere/cassiere",
     "7": "Uscite per conto terzi e partite di giro",
 }
+DETAIL_TITLE_ORDER = tuple(TITLE_LABELS)
 
 MONTH_NAMES = [
     "Gennaio",
@@ -215,6 +217,43 @@ def parse_ipa_regions(path: Path) -> dict[str, str]:
     }
 
 
+def parse_ipa_municipality_identifiers(path: Path) -> dict[str, dict[str, str]]:
+    raw = path.read_bytes()
+    text = raw.decode("utf-8-sig", errors="replace")
+    sample = text[:16_384]
+    try:
+        dialect = csv.Sniffer().sniff(sample, delimiters=";\t,|")
+        delimiter = dialect.delimiter
+    except csv.Error:
+        delimiter = "\t"
+
+    rows = csv.reader(io.StringIO(text), delimiter=delimiter)
+    try:
+        header = next(rows)
+    except StopIteration as error:
+        raise RuntimeError("Dataset IPA Amministrazioni vuoto") from error
+    index = {normalize_header(name): position for position, name in enumerate(header)}
+    required = ("cf", "cod_amm")
+    if any(field not in index for field in required):
+        raise RuntimeError(f"Schema IPA inatteso: mancano identificativi {required}")
+
+    candidates: dict[str, set[str]] = defaultdict(set)
+    maximum = max(index[field] for field in required)
+    for row in rows:
+        if len(row) <= maximum:
+            continue
+        cf = row[index["cf"]].strip()
+        codice_ipa = row[index["cod_amm"]].strip()
+        if re.fullmatch(r"\d{11}", cf) and codice_ipa:
+            candidates[cf].add(codice_ipa)
+
+    return {
+        cf: {"codiceIpa": next(iter(values))}
+        for cf, values in candidates.items()
+        if len(values) == 1
+    }
+
+
 def parse_population(raw: str) -> int | None:
     cleaned = raw.strip().replace(" ", "").replace(".", "")
     if not cleaned:
@@ -253,6 +292,7 @@ def load_municipalities(
     registry_zip: Path,
     ipa_regions: dict[str, str],
     year: int,
+    ipa_identifiers: dict[str, dict[str, str]] | None = None,
 ) -> tuple[dict[str, dict], dict[str, dict], int]:
     """Return municipalities whose SIOPE validity intersects the requested year."""
     active: dict[str, dict] = {}
@@ -291,6 +331,7 @@ def load_municipalities(
             "region": region,
             "province": province,
             "population": parse_population(population),
+            "codiceIpa": (ipa_identifiers or {}).get(cf, {}).get("codiceIpa"),
             "validFrom": valid_from,
             "validTo": valid_to,
         }
@@ -564,10 +605,12 @@ def build_snapshot(
     validators: dict[str, dict[str, str | None]],
 ) -> dict:
     ipa_regions = parse_ipa_regions(ipa_path)
+    ipa_identifiers = parse_ipa_municipality_identifiers(ipa_path)
     by_code, municipalities, active_siope_count = load_municipalities(
         registry_zip,
         ipa_regions,
         year,
+        ipa_identifiers,
     )
 
     municipality_cents: dict[str, int] = defaultdict(int)
@@ -736,7 +779,76 @@ def build_snapshot(
         validators=validators,
     )
 
+    detail_rows: list[list] = []
+    for key in sorted(municipalities):
+        municipality = municipalities[key]
+        has_movements = key in observed_keys
+        detail_rows.append(
+            [
+                municipality["cf"],
+                municipality["codiceIpa"],
+                municipality["name"],
+                municipality["province"],
+                municipality["region"],
+                municipality["population"],
+                municipality_cents[key] if has_movements else None,
+                [
+                    municipality_title_cents[key].get(code, 0)
+                    for code in DETAIL_TITLE_ORDER
+                ]
+                if has_movements
+                else None,
+            ]
+        )
+
+    detail = {
+        "schemaVersion": 1,
+        "scope": "municipality-detail",
+        "year": year,
+        "latestMonth": latest_month,
+        "generatedAt": observed_at,
+        "titleOrder": list(DETAIL_TITLE_ORDER),
+        "titleLabels": {code: TITLE_LABELS[code] for code in DETAIL_TITLE_ORDER},
+        "columns": [
+            "taxCode",
+            "codiceIpa",
+            "name",
+            "province",
+            "region",
+            "population",
+            "totalCents",
+            "titleCents",
+        ],
+        "coverage": {
+            "activeMunicipalities": len(municipalities),
+            "withMovements": len(observed_keys),
+            "withoutMovements": len(municipalities) - len(observed_keys),
+            "withPopulation": sum(
+                municipality["population"] is not None
+                for municipality in municipalities.values()
+            ),
+            "withRegion": sum(
+                municipality["region"] is not None
+                for municipality in municipalities.values()
+            ),
+            "withIpaIdentifier": sum(
+                municipality["codiceIpa"] is not None
+                for municipality in municipalities.values()
+            ),
+        },
+        "municipalities": detail_rows,
+        "methodology": {
+            "join": "codice fiscale del Comune nell'anagrafica SIOPE",
+            "absence": (
+                "totalCents e titleCents null indicano nessun movimento osservato; "
+                "zero indica un valore osservato"
+            ),
+            "amounts": "centesimi di euro interi; i Titoli riconciliano con il totale comunale",
+        },
+    }
+
     return {
+        "_municipalityDetail": detail,
         "schemaVersion": 3,
         "generatedAt": observed_at,
         "scope": "municipalities",
@@ -822,8 +934,15 @@ def source_validators(year: int) -> dict[str, dict[str, str | None]]:
     }
 
 
-def is_unchanged(output: Path, year: int, validators: dict) -> bool:
+def is_unchanged(
+    output: Path,
+    year: int,
+    validators: dict,
+    detail_output: Path | None = None,
+) -> bool:
     if not output.exists():
+        return False
+    if detail_output is not None and not detail_output.exists():
         return False
     try:
         current = json.loads(output.read_text(encoding="utf-8"))
@@ -865,6 +984,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--year", type=int, default=datetime.now(timezone.utc).year)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--detail-output", type=Path, default=DEFAULT_DETAIL_OUTPUT)
     parser.add_argument("--force", action="store_true")
     return parser.parse_args()
 
@@ -876,11 +996,17 @@ def main() -> int:
 
     validators = source_validators(args.year)
     print("source validators:", json.dumps(validators, ensure_ascii=False))
-    if not args.force and is_unchanged(args.output, args.year, validators):
+    if not args.force and is_unchanged(
+        args.output,
+        args.year,
+        validators,
+        args.detail_output,
+    ):
         print("SIOPE snapshot unchanged; no large download required")
         return 0
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.detail_output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="trasparenza-siope-") as temp_dir:
         temp = Path(temp_dir)
         movements = temp / f"SIOPE_USCITE.{args.year}.zip"
@@ -913,9 +1039,14 @@ def main() -> int:
             ipa_path=ipa,
             validators=validators,
         )
+        detail = snapshot.pop("_municipalityDetail")
 
     args.output.write_text(
         json.dumps(snapshot, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    args.detail_output.write_text(
+        json.dumps(detail, ensure_ascii=False, separators=(",", ":")) + "\n",
         encoding="utf-8",
     )
     print(
@@ -925,6 +1056,12 @@ def main() -> int:
         f"municipalities={snapshot['coverage']['withMovements']}",
         f"latest={snapshot['latestMonthLabel']}",
         f"total={snapshot['totalPaid']:.2f}",
+    )
+    print(
+        "municipality detail written:",
+        args.detail_output,
+        f"municipalities={len(detail['municipalities'])}",
+        f"withMovements={detail['coverage']['withMovements']}",
     )
     return 0
 

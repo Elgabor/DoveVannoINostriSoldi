@@ -21,6 +21,14 @@ if (pnrrChildcareData.projects.length !== pnrrChildcareMeta.coverage.uniqueProje
 assertPnrrChildcareReconciliation(pnrrChildcareData, pnrrChildcareMeta);
 
 const projectsByCup = new Map(pnrrChildcareData.projects.map((project) => [project.cup, project]));
+const projectsByImplementerTaxCode = new Map<string, PnrrChildcareProject[]>();
+for (const project of pnrrChildcareData.projects) {
+  const taxCode = project.implementer.taxCode?.trim();
+  if (!taxCode) continue;
+  const projects = projectsByImplementerTaxCode.get(taxCode) ?? [];
+  projects.push(project);
+  projectsByImplementerTaxCode.set(taxCode, projects);
+}
 
 export type PnrrChildcareQuery = {
   cup?: string;
@@ -94,6 +102,14 @@ function searchable(project: PnrrChildcareProject): string {
 
 export function getPnrrChildcareProject(rawCup: string): PnrrChildcareProject | null {
   return projectsByCup.get(normalizedCup(rawCup)) ?? null;
+}
+
+export function getPnrrChildcareProjectsByImplementerTaxCode(
+  rawTaxCode: string,
+): readonly PnrrChildcareProject[] {
+  const taxCode = rawTaxCode.trim();
+  if (!/^\d{11}$/.test(taxCode)) return [];
+  return projectsByImplementerTaxCode.get(taxCode) ?? [];
 }
 
 export function awardeesForTender(project: PnrrChildcareProject, tender: PnrrChildcareProject["tenders"][number]) {

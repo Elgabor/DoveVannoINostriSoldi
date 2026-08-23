@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "generatedAt": "2026-08-23T03:34:58+00:00",
+  "generatedAt": "2026-08-23T09:52:09+00:00",
   "scope": "municipalities",
   "year": 2025,
   "latestMonth": 12,
@@ -3768,7 +3768,7 @@
       "siopeMovementsSha256": "074c7b382543df2212a6603d4cbfb2c9696f9ff4f92f607da2d4de75c1324007",
       "siopeRegistrySha256": "bf5ec3331ce62be671d5d2789e22e18009ab48526cec30f9ae31e649195244c3",
       "ipaSha256": "05fbc4f51ec1f17ccd2617cc8a54ccdeb279a4209691ee38b6449665bbe8f21a",
-      "observedAt": "2026-08-23T03:34:58+00:00"
+      "observedAt": "2026-08-23T09:52:09+00:00"
     }
   },
   "source": {
@@ -3785,7 +3785,7 @@
     "siopeMovementsSha256": "074c7b382543df2212a6603d4cbfb2c9696f9ff4f92f607da2d4de75c1324007",
     "siopeRegistrySha256": "bf5ec3331ce62be671d5d2789e22e18009ab48526cec30f9ae31e649195244c3",
     "ipaSha256": "05fbc4f51ec1f17ccd2617cc8a54ccdeb279a4209691ee38b6449665bbe8f21a",
-    "observedAt": "2026-08-23T03:34:58+00:00"
+    "observedAt": "2026-08-23T09:52:09+00:00"
   },
   "methodology": {
     "measure": "pagamenti di cassa SIOPE dei Comuni",

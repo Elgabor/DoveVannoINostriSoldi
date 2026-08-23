@@ -25,6 +25,7 @@
 - [ ] pagina pagamenti con filtri temporali e categorie
 
 ## Fase 3: investimenti e territorio
+- [x] scheda economica comunale con IPA, SIOPE 2024-2026, IRPEF, OpenCivitas e PNRR asili collegati solo tramite identificativi ufficiali
 - [ ] ReGiS / PNRR
 - [x] overview nazionale OpenCoesione con snapshot riconciliato, retry ETL, grafici, API e refresh automatico
 - [ ] drill-down OpenCoesione per progetto, soggetto e territorio con regole anti-doppio conteggio

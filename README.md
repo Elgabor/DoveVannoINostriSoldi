@@ -16,7 +16,7 @@ L'AI serve a confrontare dati omogenei, trovare scostamenti e ordinare i casi da
 | Sanità | Conto Economico consuntivo 2024 degli enti SSN: personale, servizi e voci di prestazioni di lavoro | OpenBDAP |
 | Territori | Pagamenti comunali, conti territoriali e redditi/IRPEF dichiarati, con perimetri separati | SIOPE, IPA, CPT, MEF |
 | Fondi e progetti | Costo previsto e pagamenti OpenCoesione; traccia PNRR per asili con CUP, gare e aggiudicatari | OpenCoesione, Italia Domani |
-| Enti e società | Ministeri, enti pubblici, uffici, contatti e società partecipate | IPA, AgID, MEF |
+| Enti e società | Ministeri, enti pubblici, uffici e contatti; per i Comuni riconosciuti, pagamenti, dati fiscali e approfondimenti disponibili | IPA, SIOPE, MEF, OpenCivitas, Italia Domani |
 | Spese dello Stato | Pagamenti per funzione, amministrazione e tipo di spesa | RGS, OpenBDAP |
 | Fabbisogni comunali | Spesa storica, spesa standard e servizi dei Comuni nel 2022 | OpenCivitas |
 | Partecipazioni | Società e organizzazioni partecipate dichiarate dalle amministrazioni | MEF |
@@ -28,6 +28,7 @@ Per ANAC è disponibile uno snapshot verificato sui dodici file mensili CIG 2025
 
 Il backend espone inoltre:
 
+- `GET /api/enti/c_a783`, con la scheda IPA invariata e il campo additivo `municipalityProfile` quando codice fiscale, Codice IPA e codici territoriali permettono collegamenti esatti; copertura, regole e limiti sono in [docs/MUNICIPALITY_PROFILE.md](docs/MUNICIPALITY_PROFILE.md);
 - `GET /api/incarichi`, con statistiche nazionali ufficiali di Consulenti Pubblici dal 2023;
 - `GET /api/spese/comuni/fabbisogni?anno=2022`, con il confronto OpenCivitas per 6.557 Comuni delle Regioni a statuto ordinario;
 - `GET /api/spese/stato?anno=2024`, con il consuntivo annuale OpenBDAP quando disponibile; in sua assenza, l'ultimo rilascio mensile dell'anno;

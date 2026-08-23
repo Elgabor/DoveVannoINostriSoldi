@@ -553,6 +553,97 @@ try {
     timeout: BROWSER_LAUNCH_TIMEOUT_MS,
   });
 
+  for (const width of [390, 768, 1280]) {
+    const label = `Scheda economica Benevento ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/enti/c_a783",
+      width,
+      validate: async (page) => {
+        const text = await bodyText(page);
+        assertTextMatches(text, /SIOPE · pagamenti di cassa/i, label);
+        assertTextMatches(text, /Pagamenti del Comune/i, label);
+        assertTextMatches(text, /Redditi e imposte dei residenti/i, label);
+        assertTextMatches(text, /Spesa storica e standard/i, label);
+        assertTextMatches(text, /Progetti con il Comune soggetto attuatore/i, label);
+        assertTextMatches(text, /Da gennaio a agosto · dati parziali/i, label);
+        assertTextMatches(text, /Anno completo/i, label);
+        assertTextMatches(text, /Altre categorie/i, label);
+        assertTextMatches(text, /Informazioni sul Comune e fonti/i, label);
+        assert.ok(
+          text.indexOf("Pagamenti del Comune") < text.indexOf("Spesa storica e standard") &&
+          text.indexOf("Spesa storica e standard") < text.indexOf("Progetti con il Comune soggetto attuatore") &&
+          text.indexOf("Progetti con il Comune soggetto attuatore") < text.indexOf("Redditi e imposte dei residenti") &&
+          text.indexOf("Redditi e imposte dei residenti") < text.indexOf("Informazioni sul Comune e fonti"),
+          `${label}: ordine cittadino inatteso`,
+        );
+        assert.doesNotMatch(text, /API struttura|Dataset UO|Dataset AOO|limit|offset/i);
+
+        const titleSummary = await page.$("details[data-siope-titles] summary");
+        assert.ok(titleSummary, `${label}: spiegazione dei Titoli SIOPE assente`);
+        await titleSummary.focus();
+        await page.keyboard.press("Enter");
+        assert.equal(
+          await titleSummary.evaluate((element) => element.parentElement?.open),
+          true,
+        );
+
+        const pnrrSummary = await page.$("details[data-pnrr-projects] summary");
+        assert.ok(pnrrSummary, `${label}: progetti PNRR espandibili assenti`);
+        await pnrrSummary.focus();
+        await page.keyboard.press("Enter");
+        assert.equal(await pnrrSummary.evaluate((element) => element.parentElement?.open), true);
+
+        const irpefSummary = await page.$("details[data-irpef-details] > summary");
+        assert.ok(irpefSummary, `${label}: sezione IRPEF secondaria assente`);
+        assert.equal(await irpefSummary.evaluate((element) => element.parentElement?.open), false);
+        await irpefSummary.focus();
+        await page.keyboard.press("Enter");
+        assert.equal(await irpefSummary.evaluate((element) => element.parentElement?.open), true);
+
+        const informationSummary = await page.$("details[data-municipality-information] > summary");
+        assert.ok(informationSummary, `${label}: informazioni comunali finali assenti`);
+        assert.equal(await informationSummary.evaluate((element) => element.parentElement?.open), false);
+        await informationSummary.focus();
+        await page.keyboard.press("Enter");
+        assert.equal(await informationSummary.evaluate((element) => element.parentElement?.open), true);
+
+        const structureSummary = await page.$("details[data-structure-details] summary");
+        assert.ok(structureSummary, `${label}: struttura IPA espandibile assente`);
+        await structureSummary.focus();
+        await page.keyboard.press("Enter");
+        assert.equal(
+          await structureSummary.evaluate((element) => element.parentElement?.open),
+          true,
+        );
+
+        const apiResponse = await page.evaluate(async () => {
+          const response = await fetch("/api/enti/c_a783");
+          return { body: await response.json(), status: response.status };
+        });
+        assert.equal(apiResponse.status, 200);
+        assert.equal(apiResponse.body.record.codiceIpa, "c_a783");
+        assert.equal(apiResponse.body.municipalityProfile.identifiers.joinMethod, "exact_official_identifiers");
+        assert.equal(apiResponse.body.municipalityProfile.siope.data.years.length, 3);
+      },
+    });
+    completed.push(label);
+  }
+
+  await runScenario(browser, {
+    label: "Ente non comunale invariato 390px",
+    pathname: "/enti/agid",
+    width: 390,
+    validate: async (page) => {
+      const text = await bodyText(page);
+      assertTextMatches(text, /Identità amministrativa/i, "Ente non comunale");
+      assertTextMatches(text, /Dati economici · collegamenti in corso/i, "Ente non comunale");
+      assertTextMatches(text, /Formato JSON/i, "Ente non comunale");
+      assert.doesNotMatch(text, /Pagamenti del Comune/i);
+    },
+  });
+  completed.push("Ente non comunale invariato 390px");
+
   for (const width of [320, 390, 768, 1280]) {
     const label = `IRPEF ${width}px`;
     await runScenario(browser, {

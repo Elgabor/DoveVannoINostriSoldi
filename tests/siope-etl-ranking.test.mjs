@@ -156,7 +156,7 @@ test("SIOPE ETL keeps an IPA-unmatched municipality national but not geographic"
     "        target.writestr('ANAG_REG_PROV.csv', 'ITALIA NORD-OCCIDENTALE,01,PIEMONTE,001,Torino\\nITALIA CENTRALE,12,LAZIO,002,Roma\\n')",
     "        target.writestr('ANAG_ENTI_SIOPE.csv', '1,2020-01-01,9999-12-31,CF-A,COMUNE A,001,001,100,COMUNE\\n2,2020-01-01,9999-12-31,CF-B,COMUNE B,002,002,200,COMUNE\\n3,2020-01-01,9999-12-31,CF-C,COMUNE C,003,001,300,COMUNE\\n')",
     "    ipa = root / 'ipa.csv'",
-    "    ipa.write_text('cf;regione\\nCF-A;Piemonte\\nCF-B;Lazio\\n', encoding='utf-8')",
+    "    ipa.write_text('cf;regione;cod_amm\\nCF-A;Piemonte;c_a\\nCF-B;Lazio;c_b\\n', encoding='utf-8')",
     "    movements = root / 'movements.zip'",
     "    with zipfile.ZipFile(movements, 'w') as target:",
     "        target.writestr('USCITE_2026.csv', '1,2026,1,1,100\\n1,2026,1,2,50\\n2,2026,1,1,200\\n3,2026,1,1,300\\n')",

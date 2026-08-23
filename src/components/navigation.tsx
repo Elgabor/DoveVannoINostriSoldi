@@ -7,28 +7,19 @@ import { useEffect, useRef } from "react";
 import { HeaderSearch } from "@/components/header-search";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { GithubIcon } from "@hugeicons/core-free-icons";
+import {
+  PRIMARY_NAV,
+  activeNavSection,
+  isNavChildActive,
+  isNavSectionActive,
+} from "@/lib/site-navigation";
 import { REPO_URL } from "@/lib/site";
-
-const primary = [
-  { href: "/", label: "Home" },
-  { href: "/spese", label: "Soldi", aliases: ["/stato"] },
-  { href: "/territori", label: "Territori" },
-  { href: "/coesione", label: "Fondi e progetti" },
-  {
-    href: "/istituzioni",
-    label: "Istituzioni",
-    aliases: ["/parlamento", "/palazzo-chigi", "/ministeri", "/regioni"],
-  },
-  { href: "/enti", label: "Enti e società", aliases: ["/partecipazioni"] },
-  { href: "/controlli", label: "Cosa controllare" },
-  { href: "/assistente", label: "Assistente" },
-  { href: "/fonti", label: "Fonti", aliases: ["/metodologia"] },
-];
 
 export function Navigation() {
   const pathname = usePathname();
   const navigationRef = useRef<HTMLElement>(null);
   const activeLinkRef = useRef<HTMLAnchorElement>(null);
+  const section = activeNavSection(pathname);
 
   useEffect(() => {
     const navigation = navigationRef.current;
@@ -85,27 +76,86 @@ export function Navigation() {
 
       <div className="shell nav-row">
         <nav className="primary-nav" aria-label="Navigazione principale" ref={navigationRef}>
-          {primary.map((item) => {
-            const active =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(item.href) ||
-                  item.aliases?.some((alias) => pathname.startsWith(alias));
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={active ? "page" : undefined}
-                ref={active ? activeLinkRef : undefined}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
+          <ul className="primary-nav-list">
+            {PRIMARY_NAV.map((item) => {
+              const active = isNavSectionActive(pathname, item);
+              const hasChildren = Boolean(item.children?.length);
+              return (
+                <li
+                  key={item.href}
+                  className={hasChildren ? "nav-item nav-item-has-menu" : "nav-item"}
+                >
+                  <Link
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    aria-haspopup={hasChildren ? "true" : undefined}
+                    aria-expanded={hasChildren && active ? "true" : undefined}
+                    ref={active ? activeLinkRef : undefined}
+                  >
+                    {item.label}
+                    {hasChildren ? (
+                      <span className="nav-item-caret" aria-hidden="true">
+                        ▾
+                      </span>
+                    ) : null}
+                  </Link>
+                  {hasChildren && item.children ? (
+                    <div
+                      className="nav-submenu"
+                      role="region"
+                      aria-label={`Pagine in ${item.label}`}
+                    >
+                      <ul>
+                        {item.children.map((child) => (
+                          <li key={child.href}>
+                            <Link
+                              href={child.href}
+                              aria-current={
+                                isNavChildActive(pathname, child.href, item.children!)
+                                  ? "page"
+                                  : undefined
+                              }
+                            >
+                              {child.label}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
         </nav>
-        <span className="nav-scroll-hint" aria-hidden="true">Scorri →</span>
+        <span className="nav-scroll-hint" aria-hidden="true">
+          Scorri →
+        </span>
         <span className="nav-note">Fonte e data sempre visibili</span>
       </div>
+
+      {section?.children ? (
+        <div className="shell subnav-row">
+          <nav className="subnav" aria-label={`Sezioni di ${section.label}`}>
+            <ul className="subnav-list">
+              {section.children.map((child) => (
+                <li key={child.href}>
+                  <Link
+                    href={child.href}
+                    aria-current={
+                      isNavChildActive(pathname, child.href, section.children!)
+                        ? "page"
+                        : undefined
+                    }
+                  >
+                    {child.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+      ) : null}
     </header>
   );
 }

@@ -11,7 +11,7 @@ test("assistant UI is a separate accessible text-only surface", async () => {
     source("../src/app/assistente/page.tsx"),
     source("../src/components/assistant-chat.tsx"),
     source("../src/app/assistente/assistant.module.css"),
-    source("../src/components/navigation.tsx"),
+    source("../src/lib/site-navigation.ts"),
   ]);
   assert.match(page, /deterministic|deterministica/i);
   assert.match(page, /non usa voce|provider AI/i);

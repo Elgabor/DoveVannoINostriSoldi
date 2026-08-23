@@ -4,7 +4,7 @@ import test from "node:test";
 
 const page = fs.readFileSync(new URL("../src/app/istituzioni/page.tsx", import.meta.url), "utf8");
 const css = fs.readFileSync(new URL("../src/app/istituzioni/istituzioni.module.css", import.meta.url), "utf8");
-const navigation = fs.readFileSync(new URL("../src/components/navigation.tsx", import.meta.url), "utf8");
+const navigation = fs.readFileSync(new URL("../src/lib/site-navigation.ts", import.meta.url), "utf8");
 
 test("Institutions hub indexes four separate routes without a combined total", () => {
   for (const route of ["/parlamento", "/palazzo-chigi", "/ministeri", "/regioni"]) {

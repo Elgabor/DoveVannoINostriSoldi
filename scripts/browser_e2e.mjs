@@ -872,6 +872,34 @@ try {
     }
   }
 
+  for (const width of [320, 390]) {
+    const label = `Footer sitemap ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/",
+      width,
+      validate: async (page) => {
+        const sitemap = await page.$(".footer-sitemap");
+        assert.ok(sitemap, `${label}: mappa del sito assente`);
+        const rowCount = await page.$$eval(".footer-sitemap-grid", (rows) => rows.length);
+        assert.equal(rowCount, 2, `${label}: attese 2 righe nella mappa`);
+        const groupCount = await page.$$eval(".footer-sitemap-group", (groups) => groups.length);
+        assert.equal(groupCount, 8, `${label}: attesi 8 gruppi nella mappa`);
+        const headings = await page.$$eval(".footer-sitemap-group h3", (items) =>
+          items.map((item) => item.textContent?.trim() ?? ""),
+        );
+        assert.ok(headings.includes("Istituzioni"), `${label}: sezione Istituzioni assente`);
+        assert.ok(headings.includes("Fonti e metodo"), `${label}: sezione Fonti e metodo assente`);
+        assert.ok(!headings.includes("Legale"), `${label}: sezione Legale non attesa in mappa`);
+        const text = await bodyText(page);
+        assertTextMatches(text, /Privacy/i, label);
+        assertTextMatches(text, /Termini/i, label);
+        await assertResponsiveShell(page, label, width);
+      },
+    });
+    completed.push(label);
+  }
+
   for (const width of [320, 1280]) {
     const label = `Prompt MCP ${width}px`;
     await runScenario(browser, {

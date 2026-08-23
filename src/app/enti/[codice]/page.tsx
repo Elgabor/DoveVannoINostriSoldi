@@ -12,6 +12,7 @@ import {
   IPA_UO_DATASET_URL,
   type IpaOrganizationStructure,
 } from "@/lib/ipa-structure";
+import { longDate } from "@/lib/format";
 import { getMunicipalityProfile } from "@/lib/municipality-profile";
 import { MunicipalityEconomics } from "./municipality-economics";
 import { MunicipalityInformation } from "./municipality-information";
@@ -89,11 +90,11 @@ export default async function EntityPage({ params }: PageProps) {
         <span>{municipalityProfile ? "Scheda comunale" : entity.codiceIpa}</span>
       </nav>
 
-      <div className={styles.head}>
+      <div className={`${styles.head} ${municipalityProfile ? styles.municipalityHead : ""}`}>
         <div className="page-intro">
           <h1>{entity.denominazione}</h1>
           {municipalityProfile ? (
-            entity.dataAggiornamento ? <p>Aggiornamento anagrafico: {entity.dataAggiornamento}</p> : null
+            entity.dataAggiornamento ? <p>Informazioni sul Comune aggiornate al {longDate(entity.dataAggiornamento)}</p> : null
           ) : (
             <p>
               Codice IPA <strong>{entity.codiceIpa}</strong>
@@ -111,7 +112,7 @@ export default async function EntityPage({ params }: PageProps) {
 
         {entity.sitoIstituzionale && (
           <a
-            className="btn btn-secondary"
+            className={municipalityProfile ? styles.institutionalLink : "btn btn-secondary"}
             href={entity.sitoIstituzionale}
             target="_blank"
             rel="noreferrer"

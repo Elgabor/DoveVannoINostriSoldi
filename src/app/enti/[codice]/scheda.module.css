@@ -16,6 +16,21 @@
   flex-wrap: wrap;
 }
 
+.municipalityHead { align-items: center; }
+
+.institutionalLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--color-accent-800);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.institutionalLink:hover { color: var(--color-accent-700); }
+
 .badges {
   display: flex;
   flex-wrap: wrap;
@@ -110,22 +125,27 @@
   padding-block: calc(var(--space-4) + var(--space-1));
 }
 
+.insightSection { border-top: 3px solid var(--color-accent-200); }
+.insightSection .sectionKicker { color: var(--color-accent-800); }
+
 .paymentSummary {
   display: grid;
-  grid-template-columns: 1.2fr .8fr 1fr;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, .85fr);
   margin: var(--space-4) 0 0;
-  border-block: 1px solid var(--color-neutral-300);
+  border: 1px solid var(--color-accent-300);
+  background: var(--color-accent-100);
 }
 
 .paymentSummary > div {
   min-width: 0;
   padding: var(--space-4);
 }
-.paymentSummary > div + div { border-left: 1px solid var(--color-neutral-300); }
+.paymentSummary > div + div { border-left: 1px solid var(--color-accent-200); }
 
 .paymentSummary dt {
-  color: var(--color-neutral-600);
+  color: var(--color-neutral-700);
   font-size: 11px;
+  font-weight: 650;
   letter-spacing: .06em;
   text-transform: uppercase;
 }
@@ -139,20 +159,66 @@
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
-.paymentSummary .paymentTotal dd { font-size: clamp(30px, 4vw, 42px); }
-.paymentSummary small { display: block; margin-top: 5px; color: var(--color-neutral-600); }
+.paymentSummary .paymentTotal dd {
+  color: var(--color-accent-800);
+  font-size: clamp(32px, 4vw, 46px);
+}
+.paymentSummary small { display: block; margin-top: 5px; color: var(--color-neutral-700); }
+.paymentSummary .paymentPeriod {
+  margin-top: var(--space-2);
+  font-size: 14px;
+  font-weight: 650;
+}
 
-.paymentHistory { margin-top: var(--space-4); }
-.paymentHistory h3,
+.paymentSummary > .paymentFacts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0;
+}
+
+.paymentFacts > div {
+  min-width: 0;
+  padding: var(--space-4);
+}
+.paymentFacts > div + div { border-left: 1px solid var(--color-accent-200); }
+.paymentFacts dd { font-size: 21px; }
+
+.partialStatus,
+.completeStatus {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.partialStatus {
+  border-color: var(--color-warning-border);
+  color: var(--color-warning);
+  background: var(--color-warning-bg);
+}
+
+.completeStatus {
+  border-color: var(--color-neutral-300);
+  color: var(--color-neutral-800);
+  background: var(--color-neutral-100);
+}
+
 .spendingBreakdown h3 {
   margin: 0 0 var(--space-3);
   font-size: 14px;
 }
-.paymentHistory table { min-width: 620px; }
-.paymentHistory tbody td,
-.paymentHistory tbody th { font-variant-numeric: tabular-nums; }
 
 .spendingBreakdown { margin-top: var(--space-4); }
+.spendingBreakdown > p {
+  margin: calc(var(--space-3) * -1 + 4px) 0 var(--space-3);
+  color: var(--color-neutral-600);
+  font-size: 12px;
+}
 
 .spendingRow {
   display: grid;
@@ -179,7 +245,7 @@
 }
 
 .spendingTrack {
-  height: 7px;
+  height: 10px;
   overflow: hidden;
   background: var(--color-neutral-200);
 }
@@ -188,6 +254,187 @@
   width: var(--share);
   height: 100%;
   background: var(--color-accent-700);
+}
+
+.paymentTrend {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-neutral-300);
+}
+
+.paymentTrend h3,
+.benchmarkBlock h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.paymentTrend > div > p {
+  margin: 4px 0 0;
+  color: var(--color-neutral-600);
+  font-size: 12px;
+}
+
+.trendChart {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trendChart li {
+  display: grid;
+  grid-template-areas:
+    "value"
+    "plot"
+    "year"
+    "coverage";
+  grid-template-rows: auto 150px auto auto;
+  min-width: 0;
+  text-align: center;
+}
+
+.trendChart strong {
+  grid-area: year;
+  margin-top: var(--space-2);
+  font-family: var(--font-heading);
+  font-size: 16px;
+}
+
+.trendChart b {
+  grid-area: value;
+  margin-bottom: var(--space-2);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.trendChart small {
+  grid-area: coverage;
+  margin-top: 3px;
+  color: var(--color-neutral-600);
+  font-size: 11px;
+}
+
+.trendPlot {
+  display: flex;
+  grid-area: plot;
+  align-items: flex-end;
+  justify-content: center;
+  border-bottom: 1px solid var(--color-neutral-400);
+  background: var(--color-neutral-100);
+}
+
+.trendPlot > span {
+  display: block;
+  width: min(76px, 55%);
+  height: var(--bar-height);
+  min-height: 2px;
+}
+
+.trendBarComplete { background: var(--color-neutral-700); }
+.trendPlot > .trendBarEmpty { min-height: 0; }
+.trendBarPartial {
+  border: 2px dashed var(--color-accent-700);
+  border-bottom: 0;
+  background: var(--color-accent-200);
+}
+
+.paymentHistory {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-neutral-300);
+}
+
+.paymentHistory > summary {
+  width: fit-content;
+  cursor: pointer;
+  color: var(--color-accent-800);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.paymentHistory[open] > summary { margin-bottom: var(--space-3); }
+.historyTable { overflow-x: auto; }
+.historyTable table { min-width: 0; }
+.historyTable tbody td,
+.historyTable tbody th { font-variant-numeric: tabular-nums; }
+
+.benchmarkBlock { margin-top: var(--space-4); }
+
+.benchmarkChart {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.benchmarkChart li {
+  display: grid;
+  grid-template-columns: minmax(130px, 180px) minmax(160px, 1fr) minmax(90px, auto);
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.benchmarkChart strong { font-size: 13px; }
+.benchmarkChart b {
+  text-align: right;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.benchmarkTrack {
+  height: 14px;
+  overflow: hidden;
+  background: var(--color-neutral-200);
+}
+
+.benchmarkTrack > span {
+  display: block;
+  width: var(--share);
+  height: 100%;
+}
+
+.benchmarkHistorical { background: var(--color-accent-700); }
+.benchmarkStandard { background: var(--color-neutral-700); }
+
+.benchmarkFacts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: var(--space-4) 0 0;
+}
+
+.benchmarkFacts > div {
+  min-width: 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-neutral-300);
+}
+
+.benchmarkFacts dt {
+  color: var(--color-neutral-600);
+  font-size: 11px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.benchmarkFacts dd {
+  margin: 5px 0 0;
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: var(--font-heading-weight);
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.benchmarkFacts small {
+  display: block;
+  margin-top: 5px;
+  color: var(--color-neutral-600);
+  font-size: 11px;
 }
 
 .metricGrid {
@@ -403,13 +650,69 @@
 @media (max-width: 640px) {
   .sectionHeading { align-items: stretch; flex-direction: column; }
   .paymentSummary { grid-template-columns: minmax(0, 1fr); }
-  .paymentSummary > div + div { border-left: 0; border-top: 1px solid var(--color-neutral-300); }
+  .paymentSummary > div + div { border-left: 0; border-top: 1px solid var(--color-accent-200); }
   .metricGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .spendingRow { grid-template-columns: minmax(0, 1fr) auto; }
   .spendingTrack { grid-column: 1 / -1; grid-row: 2; }
+  .trendChart { gap: var(--space-2); }
+  .trendChart li { grid-template-rows: auto 110px auto minmax(30px, auto); }
+  .trendPlot > span { width: min(58px, 62%); }
+  .benchmarkChart li { grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); }
+  .benchmarkTrack { grid-column: 1 / -1; grid-row: 2; }
+  .benchmarkFacts { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
   .methodDetails dl > div { grid-template-columns: minmax(0, 1fr); gap: 3px; }
   .secondarySection > summary,
   .municipalityInformation > summary { align-items: flex-start; flex-direction: column; }
+
+  .historyTable { overflow: visible; }
+  .historyTable table,
+  .historyTable tbody,
+  .historyTable tr,
+  .historyTable th,
+  .historyTable td { display: block; width: 100%; }
+
+  .historyTable thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .historyTable tbody {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .historyTable tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2) var(--space-3);
+    padding: var(--space-3);
+    border: 1px solid var(--color-neutral-200);
+    background: var(--color-neutral-100);
+  }
+
+  .historyTable th,
+  .historyTable td { padding: 0; border: 0; }
+  .historyTable th {
+    grid-column: 1 / -1;
+    font-family: var(--font-heading);
+    font-size: 18px;
+  }
+  .historyTable td:first-of-type { grid-column: 1 / -1; color: var(--color-neutral-700); }
+  .historyTable td::before {
+    display: block;
+    margin-bottom: 3px;
+    color: var(--color-neutral-600);
+    content: attr(data-label);
+    font-size: 10px;
+    font-weight: 650;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
 }
 
 @media (max-width: 390px) {

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import { compactEuro, exactEuro, integer, percent } from "@/lib/format";
+import { compactEuro, exactEuro, integer, longDate, percent } from "@/lib/format";
 import type { MunicipalityProfile } from "@/lib/municipality-profile";
 import { buildMunicipalitySpendingRows } from "@/lib/municipality-spending-view";
 import type { ReportedMeasure } from "@/lib/mef-irpef-snapshot";
@@ -20,8 +20,28 @@ function monthName(month: number): string {
   );
 }
 
+function observedMonths(month: number): string {
+  const name = monthName(month);
+  return `Da gennaio ${/^[aeiou]/i.test(name) ? "ad" : "a"} ${name}`;
+}
+
 function signedEuro(cents: number): string {
-  return `${cents > 0 ? "+" : ""}${exactEuro(cents / 100)}`;
+  if (cents === 0) return "In linea con la spesa standard";
+  return `${compactEuro(Math.abs(cents) / 100)} ${cents > 0 ? "in più" : "in meno"}`;
+}
+
+function roundedEuro(cents: number): string {
+  return `${integer(Math.round(cents / 100))} €`;
+}
+
+function signedPerCapita(cents: number): string {
+  if (cents === 0) return "Nessuno scostamento per abitante";
+  return `${roundedEuro(Math.abs(cents))} ${cents > 0 ? "in più" : "in meno"} per abitante`;
+}
+
+function servicesComparison(basisPoints: number): string {
+  if (basisPoints === 0) return "In linea con Comuni simili";
+  return `${percent(Math.abs(basisPoints) / 100)} ${basisPoints > 0 ? "in più" : "in meno"}`;
 }
 
 const titleExplanations: Readonly<Record<string, string>> = {
@@ -36,7 +56,7 @@ const titleExplanations: Readonly<Record<string, string>> = {
 
 function coverageText(year: MunicipalityProfile["siope"]["data"]["years"][number]): string {
   return year.completeness === "partial"
-    ? `Da gennaio a ${monthName(year.latestMonth)} · dati parziali`
+    ? `${observedMonths(year.latestMonth)} · dati parziali`
     : "Anno completo";
 }
 
@@ -48,6 +68,11 @@ export function MunicipalityEconomics({ profile }: { profile: MunicipalityProfil
   const openCivitasUnavailable = profile.openCivitas.status === "available" ? null : profile.openCivitas.message;
   const pnrr = profile.pnrrChildcare.data;
   const spendingRows = buildMunicipalitySpendingRows(latestSiope.titles, latestSiope.totalCents);
+  const trendYears = profile.siope.data.years.slice().reverse();
+  const trendMaximum = Math.max(1, ...trendYears.map((year) => year.totalCents ?? 0));
+  const openCivitasMaximum = openCivitas
+    ? Math.max(openCivitas.record.historicalSpendingCents, openCivitas.record.standardSpendingCents, 1)
+    : 1;
 
   return (
     <>
@@ -55,67 +80,49 @@ export function MunicipalityEconomics({ profile }: { profile: MunicipalityProfil
         <div className={styles.sectionHeading}>
           <div>
             <span className={styles.sectionKicker}>SIOPE · pagamenti di cassa</span>
-            <h2 className={styles.sectionTitle} id="siope-title">Pagamenti del Comune</h2>
+            <h2 className={styles.sectionTitle} id="siope-title">Quanto ha pagato il Comune</h2>
           </div>
         </div>
 
         <dl className={styles.paymentSummary} aria-label={`Sintesi dei pagamenti ${latestSiope.year}`}>
           <div className={styles.paymentTotal}>
-            <dt>Totale pagato</dt>
+            <dt>Totale pagato nel periodo</dt>
             <dd>
               {latestSiope.totalCents === null
                 ? "Nessun movimento osservato"
                 : compactEuro(latestSiope.totalCents / 100)}
             </dd>
-          </div>
-          <div>
-            <dt>Per abitante</dt>
-            <dd>
-              {latestSiope.perCapitaCents === null
-                ? "Non disponibile"
-                : exactEuro(latestSiope.perCapitaCents / 100)}
-            </dd>
-          </div>
-          <div>
-            <dt>Periodo osservato</dt>
-            <dd>
+            <small className={styles.paymentPeriod}>
               {latestSiope.completeness === "partial"
-                ? `Da gennaio a ${monthName(latestSiope.latestMonth)} ${latestSiope.year}`
-                : String(latestSiope.year)}
-            </dd>
-            <small>{latestSiope.completeness === "partial" ? "Dati parziali" : "Anno completo"}</small>
+                ? `${observedMonths(latestSiope.latestMonth)} ${latestSiope.year}`
+                : `Anno ${latestSiope.year}`}
+            </small>
+          </div>
+          <div className={styles.paymentFacts}>
+            <div>
+              <dt>Per abitante</dt>
+              <dd>
+                {latestSiope.perCapitaCents === null
+                  ? "Non disponibile"
+                  : roundedEuro(latestSiope.perCapitaCents)}
+              </dd>
+            </div>
+            <div>
+              <dt>Copertura</dt>
+              <dd>
+                <span className={latestSiope.completeness === "partial" ? styles.partialStatus : styles.completeStatus}>
+                  {latestSiope.completeness === "partial" ? "Dati parziali" : "Anno completo"}
+                </span>
+              </dd>
+              {latestSiope.completeness === "partial" ? <small>L’anno è ancora in corso</small> : null}
+            </div>
           </div>
         </dl>
 
-        <div className={styles.paymentHistory}>
-          <h3>Storico disponibile</h3>
-          <div className="table-scroll" role="region" aria-label="Storico dei pagamenti comunali" tabIndex={0}>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th scope="col">Anno</th>
-                  <th scope="col">Copertura</th>
-                  <th scope="col">Totale</th>
-                  <th scope="col">Per abitante</th>
-                </tr>
-              </thead>
-              <tbody>
-                {profile.siope.data.years.map((year) => (
-                  <tr key={year.year}>
-                    <th scope="row">{year.year}</th>
-                    <td>{coverageText(year)}</td>
-                    <td>{year.totalCents === null ? "Nessun movimento" : compactEuro(year.totalCents / 100)}</td>
-                    <td>{year.perCapitaCents === null ? "Non disponibile" : exactEuro(year.perCapitaCents / 100)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
         {latestSiope.hasMovements ? (
           <div className={styles.spendingBreakdown}>
-            <h3>Le principali categorie di pagamento</h3>
+            <h3>Per cosa ha pagato il Comune</h3>
+            <p>Le categorie contabili mostrate compongono il totale registrato nel periodo.</p>
             <div aria-label={`Principali pagamenti ${latestSiope.year} per categoria SIOPE`}>
               {spendingRows.map((title) => {
                 const share = latestSiope.totalCents
@@ -156,34 +163,132 @@ export function MunicipalityEconomics({ profile }: { profile: MunicipalityProfil
             SIOPE riconosce il Comune, ma non pubblica movimenti nel periodo selezionato. Non trasformiamo l’assenza in zero.
           </div>
         )}
+
+        <section className={styles.paymentTrend} aria-labelledby="payment-trend-title">
+          <div>
+            <h3 id="payment-trend-title">Pagamenti registrati per anno</h3>
+            <p>Il 2026 copre solo i mesi disponibili e non è direttamente confrontabile con gli anni completi.</p>
+          </div>
+          <ul
+            className={styles.trendChart}
+            data-siope-history-chart
+            aria-label="Pagamenti comunali per anno e copertura"
+          >
+            {trendYears.map((year) => {
+              const barHeight = year.totalCents === null ? 0 : year.totalCents / trendMaximum * 100;
+              return (
+                <li key={year.year}>
+                  <strong>{year.year}</strong>
+                  <b>{year.totalCents === null ? "Nessun movimento" : compactEuro(year.totalCents / 100)}</b>
+                  <span className={styles.trendPlot} aria-hidden="true">
+                    <span
+                      className={year.totalCents === null || year.totalCents === 0
+                        ? styles.trendBarEmpty
+                        : year.completeness === "partial"
+                          ? styles.trendBarPartial
+                          : styles.trendBarComplete}
+                      style={{ "--bar-height": `${barHeight}%` } as CSSProperties}
+                    />
+                  </span>
+                  <small>
+                    {year.completeness === "partial"
+                      ? `${observedMonths(year.latestMonth)} · parziale`
+                      : "Anno completo"}
+                  </small>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+
+        <details className={styles.paymentHistory} data-payment-history>
+          <summary>Vedi importi esatti e periodi coperti</summary>
+          <div className={styles.historyTable} role="region" aria-label="Storico dei pagamenti comunali">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">Anno</th>
+                  <th scope="col">Copertura</th>
+                  <th scope="col">Totale</th>
+                  <th scope="col">Per abitante</th>
+                </tr>
+              </thead>
+              <tbody>
+                {profile.siope.data.years.map((year) => (
+                  <tr key={year.year}>
+                    <th scope="row">{year.year}</th>
+                    <td data-label="Copertura">{coverageText(year)}</td>
+                    <td data-label="Totale">{year.totalCents === null ? "Nessun movimento" : compactEuro(year.totalCents / 100)}</td>
+                    <td data-label="Per abitante">{year.perCapitaCents === null ? "Non disponibile" : exactEuro(year.perCapitaCents / 100)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
+
         <p className={styles.sourceNote}>
           Fonte: <a href={profile.siope.sources[0].url} target="_blank" rel="noreferrer">SIOPE · Ragioneria Generale dello Stato e Banca d’Italia ↗</a>.
-          I pagamenti del Comune non indicano necessariamente dove la spesa produce effetti fisici.
+          Questi dati mostrano quanto il Comune ha pagato, non necessariamente il territorio o il servizio che ne ha beneficiato.
         </p>
       </section>
 
-      <section className={`panel ${styles.economicSection}`} aria-labelledby="opencivitas-title">
+      <section className={`panel ${styles.economicSection} ${styles.insightSection}`} aria-labelledby="opencivitas-title">
         <div className={styles.sectionHeading}>
           <div>
             <span className={styles.sectionKicker}>OpenCivitas · fabbisogni e servizi</span>
-            <h2 className={styles.sectionTitle} id="opencivitas-title">Spesa storica e standard</h2>
+            <h2 className={styles.sectionTitle} id="opencivitas-title">Spesa e servizi a confronto</h2>
           </div>
           {openCivitas ? <span className="tag tag-neutral">{openCivitas.referenceYear}</span> : null}
         </div>
         {openCivitas ? (
           <>
-            <dl className={styles.metricGrid}>
-              <div><dt>Spesa storica</dt><dd>{compactEuro(openCivitas.record.historicalSpendingCents / 100)}</dd></div>
-              <div><dt>Spesa standard</dt><dd>{compactEuro(openCivitas.record.standardSpendingCents / 100)}</dd></div>
+            <div className={styles.benchmarkBlock}>
+              <h3>Spesa registrata e valore di riferimento</h3>
+              <p>
+                La spesa standard è un valore di riferimento calcolato considerando le caratteristiche del Comune
+                e i servizi analizzati dalla fonte.
+              </p>
+              <ul
+                className={styles.benchmarkChart}
+                data-opencivitas-chart
+                aria-label={`Spesa storica e standard ${openCivitas.referenceYear}`}
+              >
+                {[
+                  {
+                    amountCents: openCivitas.record.historicalSpendingCents,
+                    key: "historical",
+                    label: "Spesa registrata",
+                  },
+                  {
+                    amountCents: openCivitas.record.standardSpendingCents,
+                    key: "standard",
+                    label: "Valore di riferimento",
+                  },
+                ].map((row) => (
+                  <li key={row.key}>
+                    <strong>{row.label}</strong>
+                    <span className={styles.benchmarkTrack} aria-hidden="true">
+                      <span
+                        className={row.key === "historical" ? styles.benchmarkHistorical : styles.benchmarkStandard}
+                        style={{ "--share": `${row.amountCents / openCivitasMaximum * 100}%` } as CSSProperties}
+                      />
+                    </span>
+                    <b>{compactEuro(row.amountCents / 100)}</b>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <dl className={styles.benchmarkFacts}>
               <div>
-                <dt>Differenza</dt>
+                <dt>Differenza rispetto al valore di riferimento</dt>
                 <dd>{signedEuro(openCivitas.record.differenceCents)}</dd>
-                <small>{signedEuro(openCivitas.record.differencePerCapitaCents)} per abitante</small>
+                <small>{signedPerCapita(openCivitas.record.differencePerCapitaCents)}</small>
               </div>
               <div>
                 <dt>Servizi rispetto a Comuni simili</dt>
-                <dd>{openCivitas.record.serviceDifferenceBasisPoints === null ? "Non valutabile" : percent(openCivitas.record.serviceDifferenceBasisPoints / 100)}</dd>
-                <small>{openCivitas.record.serviceLevel === null ? "Livello non disponibile" : `Livello servizi ${openCivitas.record.serviceLevel}/10`}</small>
+                <dd>{openCivitas.record.serviceDifferenceBasisPoints === null ? "Non valutabile" : servicesComparison(openCivitas.record.serviceDifferenceBasisPoints)}</dd>
+                <small>{openCivitas.record.serviceLevel === null ? "Indicatore non disponibile" : `Indicatore OpenCivitas: livello ${openCivitas.record.serviceLevel} su 10`}</small>
               </div>
             </dl>
             <p className={styles.sourceNote}>
@@ -196,20 +301,20 @@ export function MunicipalityEconomics({ profile }: { profile: MunicipalityProfil
         )}
       </section>
 
-      <section className={`panel ${styles.economicSection}`} aria-labelledby="pnrr-title">
+      <section className={`panel ${styles.economicSection} ${styles.insightSection}`} aria-labelledby="pnrr-title">
         <div className={styles.sectionHeading}>
           <div>
             <span className={styles.sectionKicker}>PNRR · asili e prima infanzia</span>
-            <h2 className={styles.sectionTitle} id="pnrr-title">Progetti con il Comune soggetto attuatore</h2>
+            <h2 className={styles.sectionTitle} id="pnrr-title">Progetti PNRR per asili e prima infanzia</h2>
           </div>
-          <span className="tag tag-neutral">Dati al {pnrr.referenceDate}</span>
+          <span className="tag tag-neutral">Dati al {longDate(pnrr.referenceDate)}</span>
         </div>
         <dl className={styles.metricGrid}>
-          <div><dt>Progetti trovati</dt><dd>{integer(pnrr.totalProjects)}</dd></div>
+          <div><dt>Progetti collegati al Comune</dt><dd>{integer(pnrr.totalProjects)}</dd></div>
           <div>
-            <dt>Finanziamento totale noto</dt>
+            <dt>Finanziamenti pubblicati</dt>
             <dd>{pnrr.projectsWithKnownFunding === 0 ? "Non disponibile" : compactEuro(pnrr.knownTotalFundingCents / 100)}</dd>
-            <small>{integer(pnrr.projectsWithKnownFunding)} progetti con importo pubblicato</small>
+            <small>{integer(pnrr.projectsWithKnownFunding)} progetti con importo disponibile</small>
           </div>
         </dl>
         {pnrr.projects.length > 0 ? (
@@ -230,12 +335,13 @@ export function MunicipalityEconomics({ profile }: { profile: MunicipalityProfil
           </details>
         ) : (
           <p className={styles.emptyState}>
-            Nessun progetto trovato in questo specifico verticale. Il risultato non riguarda l’intero PNRR.
+            Nessun progetto collegato al Comune in questo specifico ambito. Il risultato non riguarda l’intero PNRR.
           </p>
         )}
         <p className={styles.sourceNote}>
           Fonte: <a href={pnrr.source.landingUrl} target="_blank" rel="noreferrer">Italia Domani ↗</a>.
-          Il finanziamento non è un pagamento osservato; questa sezione copre soltanto asili e prima infanzia.
+          L’importo finanziato non corrisponde necessariamente a somme già pagate. Questa sezione copre soltanto
+          asili e prima infanzia.
         </p>
       </section>
 

@@ -562,22 +562,57 @@ try {
       validate: async (page) => {
         const text = await bodyText(page);
         assertTextMatches(text, /SIOPE · pagamenti di cassa/i, label);
-        assertTextMatches(text, /Pagamenti del Comune/i, label);
+        assertTextMatches(text, /Quanto ha pagato il Comune/i, label);
         assertTextMatches(text, /Redditi e imposte dei residenti/i, label);
-        assertTextMatches(text, /Spesa storica e standard/i, label);
-        assertTextMatches(text, /Progetti con il Comune soggetto attuatore/i, label);
-        assertTextMatches(text, /Da gennaio a agosto · dati parziali/i, label);
-        assertTextMatches(text, /Anno completo/i, label);
+        assertTextMatches(text, /Spesa e servizi a confronto/i, label);
+        assertTextMatches(text, /Progetti PNRR per asili e prima infanzia/i, label);
+        assertTextMatches(text, /Da gennaio ad agosto 2026/i, label);
+        assertTextMatches(text, /Dati parziali/i, label);
+        assertTextMatches(text, /Per cosa ha pagato il Comune/i, label);
+        assertTextMatches(text, /Pagamenti registrati per anno/i, label);
+        assertTextMatches(text, /Vedi importi esatti e periodi coperti/i, label);
         assertTextMatches(text, /Altre categorie/i, label);
         assertTextMatches(text, /Informazioni sul Comune e fonti/i, label);
         assert.ok(
-          text.indexOf("Pagamenti del Comune") < text.indexOf("Spesa storica e standard") &&
-          text.indexOf("Spesa storica e standard") < text.indexOf("Progetti con il Comune soggetto attuatore") &&
-          text.indexOf("Progetti con il Comune soggetto attuatore") < text.indexOf("Redditi e imposte dei residenti") &&
+          text.indexOf("Quanto ha pagato il Comune") < text.indexOf("Per cosa ha pagato il Comune") &&
+          text.indexOf("Per cosa ha pagato il Comune") < text.indexOf("Pagamenti registrati per anno") &&
+          text.indexOf("Pagamenti registrati per anno") < text.indexOf("Vedi importi esatti e periodi coperti") &&
+          text.indexOf("Vedi importi esatti e periodi coperti") < text.indexOf("Spesa e servizi a confronto") &&
+          text.indexOf("Spesa e servizi a confronto") < text.indexOf("Progetti PNRR per asili e prima infanzia") &&
+          text.indexOf("Progetti PNRR per asili e prima infanzia") < text.indexOf("Redditi e imposte dei residenti") &&
           text.indexOf("Redditi e imposte dei residenti") < text.indexOf("Informazioni sul Comune e fonti"),
           `${label}: ordine cittadino inatteso`,
         );
         assert.doesNotMatch(text, /API struttura|Dataset UO|Dataset AOO|limit|offset/i);
+
+        const summaryPresentation = await page.$eval("#dati-economici dl", (element) => ({
+          background: getComputedStyle(element).backgroundColor,
+          label: element.textContent,
+        }));
+        assert.notEqual(summaryPresentation.background, "rgba(0, 0, 0, 0)");
+        assert.match(summaryPresentation.label, /Per abitante\s*1\.402 €/i);
+
+        const trendBars = await page.$$eval("[data-siope-history-chart] > li", (rows) => rows.map((row) => ({
+          height: row.querySelector("[aria-hidden='true'] > span")?.style.getPropertyValue("--bar-height"),
+          text: row.textContent,
+        })));
+        assert.equal(trendBars.length, 3);
+        assert.match(trendBars[2].text, /2026.*parziale/is);
+        assert.ok(trendBars.every((row) => /%$/.test(row.height ?? "")));
+
+        const openCivitasBars = await page.$$eval("[data-opencivitas-chart] > li", (rows) => rows.map((row) => row.textContent));
+        assert.equal(openCivitasBars.length, 2);
+        assert.match(openCivitasBars.join(" "), /Spesa registrata.*Valore di riferimento/is);
+
+        const historySummary = await page.$("details[data-payment-history] > summary");
+        assert.ok(historySummary, `${label}: storico espandibile assente`);
+        assert.equal(await historySummary.evaluate((element) => element.parentElement?.open), false);
+        await historySummary.focus();
+        await page.keyboard.press("Enter");
+        assert.equal(await historySummary.evaluate((element) => element.parentElement?.open), true);
+        const historyText = await page.$eval("details[data-payment-history]", (element) => element.innerText);
+        assert.match(historyText, /Da gennaio ad agosto · dati parziali/i);
+        assert.match(historyText, /Anno completo/i);
 
         const titleSummary = await page.$("details[data-siope-titles] summary");
         assert.ok(titleSummary, `${label}: spiegazione dei Titoli SIOPE assente`);
@@ -639,7 +674,7 @@ try {
       assertTextMatches(text, /Identità amministrativa/i, "Ente non comunale");
       assertTextMatches(text, /Dati economici · collegamenti in corso/i, "Ente non comunale");
       assertTextMatches(text, /Formato JSON/i, "Ente non comunale");
-      assert.doesNotMatch(text, /Pagamenti del Comune/i);
+      assert.doesNotMatch(text, /Quanto ha pagato il Comune/i);
     },
   });
   completed.push("Ente non comunale invariato 390px");

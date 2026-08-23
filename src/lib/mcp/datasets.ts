@@ -133,6 +133,10 @@ export async function queryPublicDataset(
         offset: query.offset,
       }));
     }
+    case "openbdap_ssn_storico_nazionale": {
+      const { getSsnNationalHistory } = await import("@/lib/ssn-national-history");
+      return jsonSafe(await getSsnNationalHistory({ signal: options.signal }));
+    }
     case "opencivitas_fabbisogni": {
       const { openCivitasSnapshot } = await import("@/lib/opencivitas-snapshot");
       if (query.year && query.year !== openCivitasSnapshot.referenceYear) {

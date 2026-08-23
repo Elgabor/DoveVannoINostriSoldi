@@ -15,9 +15,11 @@ const { activeNavSection, isNavChildActive } = await import("../src/lib/site-nav
 test("site navigation exposes coesione asili in primary and footer maps", () => {
   assert.match(navigationSource, /href: "\/coesione\/asili", label: "Asili e prima infanzia"/);
   assert.match(navigationSource, /title: "Fondi e progetti"/);
+  assert.match(navigationSource, /FOOTER_SITEMAP_GROUPS/);
+  assert.match(navigationSource, /FOOTER_SITEMAP_COLUMNS = 4/);
   assert.match(layoutSource, /SiteFooter/);
   assert.match(globalsCss, /\.subnav-row \{/);
-  assert.match(globalsCss, /\.footer-sitemap \{/);
+  assert.match(globalsCss, /\.footer-sitemap-rows \{/);
 });
 
 test("activeNavSection resolves nested routes to the parent menu", () => {

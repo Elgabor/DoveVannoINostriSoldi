@@ -1,29 +1,46 @@
 import Link from "next/link";
-import { SITE_MAP_GROUPS } from "@/lib/site-navigation";
+import {
+  FOOTER_SITEMAP_COLUMNS,
+  FOOTER_SITEMAP_GROUPS,
+} from "@/lib/site-navigation";
 import { REPO_URL } from "@/lib/site";
 
 type SiteFooterProps = Readonly<{
   latestTerritorialCheckLabel: string;
 }>;
 
+function footerSitemapRows() {
+  const rows: (typeof FOOTER_SITEMAP_GROUPS)[number][][] = [];
+  for (let index = 0; index < FOOTER_SITEMAP_GROUPS.length; index += FOOTER_SITEMAP_COLUMNS) {
+    rows.push(FOOTER_SITEMAP_GROUPS.slice(index, index + FOOTER_SITEMAP_COLUMNS));
+  }
+  return rows;
+}
+
 export function SiteFooter({ latestTerritorialCheckLabel }: SiteFooterProps) {
+  const sitemapRows = footerSitemapRows();
+
   return (
     <footer className="shell site-footer">
       <section className="footer-sitemap" aria-labelledby="footer-sitemap-title">
         <h2 id="footer-sitemap-title" className="footer-sitemap-title">
           Mappa del sito
         </h2>
-        <div className="footer-sitemap-grid">
-          {SITE_MAP_GROUPS.map((group) => (
-            <div key={group.title} className="footer-sitemap-group">
-              <h3>{group.title}</h3>
-              <ul>
-                {group.links.map((link) => (
-                  <li key={link.href}>
-                    <Link href={link.href}>{link.label}</Link>
-                  </li>
-                ))}
-              </ul>
+        <div className="footer-sitemap-rows">
+          {sitemapRows.map((row, rowIndex) => (
+            <div key={`footer-sitemap-row-${rowIndex}`} className="footer-sitemap-grid">
+              {row.map((group) => (
+                <div key={group.title} className="footer-sitemap-group">
+                  <h3>{group.title}</h3>
+                  <ul>
+                    {group.links.map((link) => (
+                      <li key={link.href}>
+                        <Link href={link.href}>{link.label}</Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           ))}
         </div>

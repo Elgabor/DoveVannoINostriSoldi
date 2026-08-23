@@ -173,6 +173,12 @@ export const SITE_MAP_GROUPS: readonly { title: string; links: readonly NavLink[
   },
 ] as const;
 
+/** Footer map: main sections only, in reading order, split into balanced rows. */
+export const FOOTER_SITEMAP_GROUPS: readonly { title: string; links: readonly NavLink[] }[] =
+  SITE_MAP_GROUPS.filter((group) => group.title !== "Home" && group.title !== "Legale");
+
+export const FOOTER_SITEMAP_COLUMNS = 4;
+
 export function isNavSectionActive(pathname: string, item: NavSection): boolean {
   if (item.href === "/") return pathname === "/";
   if (pathname.startsWith(item.href)) return true;

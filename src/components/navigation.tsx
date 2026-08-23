@@ -131,7 +131,7 @@ export function Navigation() {
         <span className="nav-scroll-hint" aria-hidden="true">
           Scorri →
         </span>
-        <span className="nav-note">Fonte e data sempre visibili</span>
+        <span className="nav-note">Fonti e dati sempre visibili</span>
       </div>
 
       {section?.children ? (

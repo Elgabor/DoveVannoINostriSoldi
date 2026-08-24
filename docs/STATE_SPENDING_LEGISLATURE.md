@@ -8,8 +8,9 @@ e non prova né implica spesa elettorale o responsabilità individuale.
 ## Fonti
 
 - **Spesa**: consuntivo annuale OpenBDAP RGS, "Pagamenti Bilancio dello Stato per Missione",
-  disponibile senza interruzioni dal 2014 al 2025. Riusa lo stesso adapter di `/stato`
-  (`getStateSpendingSnapshot`), nessun nuovo connettore.
+  disponibile senza interruzioni dal 2014 al 2025. Licenza Creative Commons Attribution
+  (CC-BY), dichiarata dal catalogo CKAN OpenBDAP per ogni rilascio annuale verificato. Riusa
+  lo stesso adapter di `/stato` (`getStateSpendingSnapshot`), nessun nuovo connettore.
 - **Date delle legislature**: Camera dei Deputati (camera.it) e Ministero dell'Interno
   (interno.gov.it), verificate contro le pagine ufficiali di ciascuna legislatura.
 

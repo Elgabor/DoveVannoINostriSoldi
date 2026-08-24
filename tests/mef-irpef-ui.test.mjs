@@ -62,7 +62,8 @@ test("the production deployment advertises HTTPS and a security contact", async 
   ]);
 
   assert.match(vercel, /Strict-Transport-Security/);
-  assert.match(vercel, /includeSubDomains; preload/);
+  assert.match(vercel, /max-age=86400/);
+  assert.doesNotMatch(vercel, /preload/);
   assert.match(vercel, /X-Content-Type-Options/);
   assert.match(securityTxt, /Italian-Builders-Org\/DoveVannoINostriSoldi\/issues/);
   assert.match(securityTxt, /Expires: 2027-08-24T00:00:00.000Z/);

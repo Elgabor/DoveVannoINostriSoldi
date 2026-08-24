@@ -20,10 +20,20 @@ test("site navigation exposes coesione asili in primary and footer maps", () => 
   assert.match(navigationSource, /FOOTER_SITEMAP_COLUMNS = 4/);
   assert.match(layoutSource, /SiteFooter/);
   assert.match(layoutSource, /GoogleAnalytics/);
-  assert.match(globalsCss, /\.subnav-row \{/);
+  assert.match(globalsCss, /\.nav-submenu \{/);
+  assert.doesNotMatch(globalsCss, /\.subnav-row \{/);
   assert.match(globalsCss, /\.footer-sitemap-rows \{/);
   assert.match(globalsCss, /row-gap: var\(--space-6\)/);
   assert.doesNotMatch(globalsCss, /var\(--space-5\)/);
+});
+
+test("primary navigation keeps dropdowns and no section subnav bar", async () => {
+  const navigationComponent = await readFile(
+    new URL("../src/components/navigation.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(navigationComponent, /nav-submenu/);
+  assert.doesNotMatch(navigationComponent, /subnav-row|nav\.subnav|activeNavSection/);
 });
 
 test("public legal pages do not expose a personal mailbox", async () => {

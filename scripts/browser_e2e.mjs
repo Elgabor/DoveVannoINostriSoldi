@@ -192,7 +192,7 @@ async function viewportState(page) {
 
 async function assertResponsiveShell(page, label, width) {
   const state = await viewportState(page);
-  assert.equal(state.innerWidth, width, `${label}: viewport inatteso`);
+  assert.equal(state.clientWidth, width, `${label}: viewport inatteso`);
   assert.equal(state.h1Count, 1, `${label}: deve esserci un solo h1`);
   assert.equal(state.mainVisible, true, `${label}: il contenuto principale non è visibile`);
   assert.ok(
@@ -575,13 +575,33 @@ function assertTextMatches(text, pattern, label) {
   assert.ok(pattern.test(text), `${label}: testo atteso ${pattern} assente`);
 }
 
-async function assertSectionSubnav(page, label, { activeChild }) {
-  const subnav = await page.$("nav.subnav");
-  assert.ok(subnav, `${label}: sottomenu di sezione assente`);
-  const active = await page.$('nav.subnav a[aria-current="page"]');
-  assert.ok(active, `${label}: voce attiva assente nel sottomenu`);
-  const activeText = await active.evaluate((element) => element.textContent ?? "");
-  assert.match(activeText, new RegExp(activeChild, "i"), `${label}: voce attiva errata (${activeText})`);
+async function assertPrimaryDropdownOnly(page, label, { sectionLabel, childLabel }) {
+  assert.equal(await page.$("nav.subnav"), null, `${label}: barra sottosezioni non attesa`);
+  assert.equal(await page.$(".subnav-row"), null, `${label}: riga subnav non attesa`);
+
+  const item = await page.evaluateHandle((wanted) => {
+    const link = [...document.querySelectorAll("nav.primary-nav .nav-item-has-menu > a")].find(
+      (candidate) => (candidate.textContent ?? "").includes(wanted),
+    );
+    return link?.closest(".nav-item-has-menu") ?? null;
+  }, sectionLabel);
+  const itemElement = item.asElement();
+  assert.ok(itemElement, `${label}: sezione ${sectionLabel} assente`);
+
+  await itemElement.hover();
+  await page.waitForFunction(
+    (element) => {
+      const submenu = element.querySelector(".nav-submenu");
+      if (!submenu) return false;
+      const style = window.getComputedStyle(submenu);
+      return style.display !== "none" && style.visibility !== "hidden";
+    },
+    { timeout: 3_000 },
+    itemElement,
+  );
+
+  const childText = await itemElement.$eval(".nav-submenu", (element) => element.textContent ?? "");
+  assert.match(childText, new RegExp(childLabel, "i"), `${label}: voce ${childLabel} assente in tendina`);
 }
 
 async function activeLevel(page) {
@@ -773,25 +793,50 @@ try {
   });
   completed.push("Ente non comunale invariato 390px");
 
-  const subnavRoutes = [
-    { pathname: "/controlli", label: "Controlli hub", activeChild: "Segnali da controllare" },
-    { pathname: "/appalti", label: "Appalti 2025", activeChild: "Appalti 2025" },
-    { pathname: "/incarichi", label: "Incarichi pubblici", activeChild: "Incarichi pubblici" },
-    { pathname: "/stato", label: "Stato spese", activeChild: "Amministrazioni centrali" },
-    { pathname: "/coesione/asili", label: "PNRR asili", activeChild: "Asili e prima infanzia" },
-    { pathname: "/parlamento", label: "Parlamento", activeChild: "Parlamento" },
-    { pathname: "/partecipazioni", label: "Partecipazioni", activeChild: "Partecipazioni" },
+  const dropdownRoutes = [
+    {
+      pathname: "/controlli",
+      label: "Controlli",
+      sectionLabel: "Cosa controllare",
+      childLabel: "Appalti 2025",
+    },
+    {
+      pathname: "/territori/irpef",
+      label: "Territori IRPEF",
+      sectionLabel: "Territori",
+      childLabel: "Redditi IRPEF",
+    },
+    {
+      pathname: "/appalti",
+      label: "Appalti",
+      sectionLabel: "Cosa controllare",
+      childLabel: "Incarichi pubblici",
+    },
+    {
+      pathname: "/parlamento",
+      label: "Parlamento",
+      sectionLabel: "Istituzioni",
+      childLabel: "Parlamento",
+    },
   ];
 
-  for (const route of subnavRoutes) {
+  for (const route of dropdownRoutes) {
     for (const width of [390, 1280]) {
-      const label = `Subnav ${route.label} ${width}px`;
+      const label = `Menu tendina ${route.label} ${width}px`;
       await runScenario(browser, {
         label,
         pathname: route.pathname,
         width,
         validate: async (page) => {
-          await assertSectionSubnav(page, label, { activeChild: route.activeChild });
+          assert.equal(await page.$("nav.subnav"), null, `${label}: subnav non attesa`);
+          assert.equal(await page.$(".subnav-row"), null, `${label}: riga subnav non attesa`);
+          assert.ok(await page.$("nav.primary-nav .nav-submenu"), `${label}: markup tendina assente`);
+          if (width >= 1280) {
+            await assertPrimaryDropdownOnly(page, label, {
+              sectionLabel: route.sectionLabel,
+              childLabel: route.childLabel,
+            });
+          }
         },
       });
       completed.push(label);

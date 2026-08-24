@@ -9,7 +9,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { GithubIcon } from "@hugeicons/core-free-icons";
 import {
   PRIMARY_NAV,
-  activeNavSection,
   isNavChildActive,
   isNavSectionActive,
 } from "@/lib/site-navigation";
@@ -19,7 +18,6 @@ export function Navigation() {
   const pathname = usePathname();
   const navigationRef = useRef<HTMLElement>(null);
   const activeLinkRef = useRef<HTMLAnchorElement>(null);
-  const section = activeNavSection(pathname);
 
   useEffect(() => {
     const navigation = navigationRef.current;
@@ -130,29 +128,6 @@ export function Navigation() {
         </span>
         <span className="nav-note">Fonti e dati sempre visibili</span>
       </div>
-
-      {section?.children ? (
-        <div className="shell subnav-row">
-          <nav className="subnav" aria-label={`Sezioni di ${section.label}`}>
-            <ul className="subnav-list">
-              {section.children.map((child) => (
-                <li key={child.href}>
-                  <Link
-                    href={child.href}
-                    aria-current={
-                      isNavChildActive(pathname, child.href, section.children!)
-                        ? "page"
-                        : undefined
-                    }
-                  >
-                    {child.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </div>
-      ) : null}
     </header>
   );
 }

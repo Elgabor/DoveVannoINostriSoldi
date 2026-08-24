@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Pagination from "@/components/pagination";
 import { integer } from "@/lib/format";
 import {
   getIntegratedSourceCoverage,
+  INTEGRATED_DEFAULT_LIMIT,
   IntegratedQueryError,
   selectPublicSourceCatalog,
   type PublicSourceResult,
 } from "@/lib/integrated-public-view";
+import { offsetFromPage, pageCountFromTotal, pageFromOffset } from "@/lib/pagination";
 import styles from "./catalogo.module.css";
 
 export const metadata: Metadata = {
@@ -39,6 +42,23 @@ function pageHref(result: PublicSourceResult, offset: number): string {
   return `/fonti/catalogo?${query.toString()}`;
 }
 
+/**
+ * `pagina` is the readable form of `offset` and only fills in when no explicit
+ * offset is given; the selector still validates whatever comes out of it.
+ */
+function requestedOffset(search: Record<string, SearchValue>): SearchValue {
+  if (search.offset !== undefined && search.offset !== "") return search.offset;
+  const page = search.pagina;
+  if (typeof page === "string" && /^\d+$/.test(page) && Number(page) >= 1) {
+    const limit =
+      typeof search.limit === "string" && /^\d+$/.test(search.limit) && Number(search.limit) >= 1
+        ? Number(search.limit)
+        : INTEGRATED_DEFAULT_LIMIT;
+    return String(offsetFromPage(Number(page), limit));
+  }
+  return undefined;
+}
+
 async function safeResult(search: Record<string, SearchValue>) {
   try {
     return {
@@ -46,7 +66,7 @@ async function safeResult(search: Record<string, SearchValue>) {
         q: search.q,
         disposition: search.disposition,
         limit: search.limit,
-        offset: search.offset,
+        offset: requestedOffset(search),
       }),
       queryError: null,
     };
@@ -66,8 +86,6 @@ export default async function PublicSourceCatalogPage({ searchParams }: SourceCa
   ]);
   const firstVisible = result.sources.length === 0 ? 0 : result.offset + 1;
   const lastVisible = result.offset + result.sources.length;
-  const hasPrevious = result.offset > 0;
-  const hasNext = lastVisible < result.matchedSources;
 
   return (
     <main className={`shell page ${styles.page}`}>
@@ -216,18 +234,26 @@ export default async function PublicSourceCatalogPage({ searchParams }: SourceCa
           </div>
         ) : null}
 
-        {(hasPrevious || hasNext) ? (
-          <nav className={styles.pagination} aria-label="Pagine del catalogo fonti">
-            {hasPrevious ? (
-              <Link href={pageHref(result, Math.max(0, result.offset - result.limit))}>
-                ← Pagina precedente
-              </Link>
-            ) : <span />}
-            {hasNext ? (
-              <Link href={pageHref(result, result.offset + result.limit)}>Pagina successiva →</Link>
-            ) : null}
-          </nav>
-        ) : null}
+        <Pagination
+          label="Pagine del catalogo fonti"
+          page={pageFromOffset(result.offset, result.limit)}
+          pageCount={pageCountFromTotal(result.matchedSources, result.limit)}
+          summary={
+            result.sources.length > 0
+              ? `identità ${integer(firstVisible)}-${integer(lastVisible)} di ${integer(result.matchedSources)}`
+              : undefined
+          }
+          hrefForPage={(target) => pageHref(result, offsetFromPage(target, result.limit))}
+          jump={{
+            action: "/fonti/catalogo",
+            pageParam: "pagina",
+            fields: {
+              limit: String(result.limit),
+              ...(result.query ? { q: result.query } : {}),
+              ...(result.disposition ? { disposition: result.disposition } : {}),
+            },
+          }}
+        />
       </section>
 
       <section className={`panel ${styles.finalLinks}`}>

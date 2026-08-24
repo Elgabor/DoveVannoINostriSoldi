@@ -144,6 +144,17 @@ export default async function ControlsPage({ searchParams }: PageProps) {
     limit: OUTLIER_TABLE_SIZE,
   });
   const topSpendingOutliers = spendingOutliers.outliers;
+  const showsMunicipalScreening =
+    selectedYear === null || selectedYear === openCivitasSnapshot.referenceYear;
+  const showsProcurement2025 = selectedYear === null || selectedYear === 2025;
+  const showsPolicyScenarios = selectedYear === null;
+  const pageSections = [
+    { id: "official-signals-title", label: "Segnali ufficiali", shown: true },
+    { id: "municipal-screening-title", label: "Comuni oltre la soglia", shown: showsMunicipalScreening },
+    { id: "appalti-related-title", label: "Appalti pubblici", shown: true },
+    { id: "procurement-2025-title", label: "Appalti 2025", shown: showsProcurement2025 },
+    { id: "policy-scenarios-title", label: "Ipotesi di miglioramento", shown: showsPolicyScenarios },
+  ].filter((section) => section.shown);
 
   return (
     <main className="shell page">
@@ -173,11 +184,22 @@ export default async function ControlsPage({ searchParams }: PageProps) {
         </div>
       </nav>
 
+      <nav className={styles.pageIndex} aria-labelledby="page-index-title">
+        <h2 id="page-index-title">In questa pagina</h2>
+        <ul>
+          {pageSections.map((section) => (
+            <li key={section.id}>
+              <a href={`#${section.id}`}>{section.label}</a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
       <section
         className="notice scope-notice"
         aria-labelledby="controlli-reading-title"
       >
-        <h2 id="controlli-reading-title">Come leggere questi dati</h2>
+        <h2 id="controlli-reading-title">Che cosa dicono e che cosa non dicono</h2>
         <p>
           Pagamenti, debiti, costi e ipotesi misurano cose diverse e restano separati. Un segnale
           indica cosa approfondire. Consulta le <Link href="/fonti">fonti
@@ -224,23 +246,22 @@ export default async function ControlsPage({ searchParams }: PageProps) {
             </li>
           ))}
         </ul>
+        <details className={styles.readingGuide}>
+          <summary>Definizioni dei tipi di segnale</summary>
+          <p>
+            Le etichette sulle schede riprendono le categorie sotto. Servono a capire quanto
+            possiamo concludere da ogni numero.
+          </p>
+          <dl>
+            {classificationEntries.map(([id, classification]) => (
+              <div key={id}>
+                <dt>{classification.label}</dt>
+                <dd>{classification.plainMeaning}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
       </section>
-
-      <details className={`panel ${styles.readingGuide}`}>
-        <summary>Definizioni dei tipi di segnale</summary>
-        <p>
-          Le etichette sulle schede riprendono le categorie sotto. Servono a capire quanto possiamo
-          concludere da ogni numero.
-        </p>
-        <dl>
-          {classificationEntries.map(([id, classification]) => (
-            <div key={id}>
-              <dt>{classification.label}</dt>
-              <dd>{classification.plainMeaning}</dd>
-            </div>
-          ))}
-        </dl>
-      </details>
 
       <section className={styles.signalSection} aria-labelledby="official-signals-title">
         <header className={styles.sectionIntro}>
@@ -250,26 +271,33 @@ export default async function ControlsPage({ searchParams }: PageProps) {
             perimetro, stato del dato e limiti di interpretazione.
           </p>
         </header>
+        {signals.length === 0 ? (
+          <p className={styles.note}>
+            Per l&apos;anno selezionato non ci sono segnali da relazioni ufficiali nel nostro
+            perimetro. Non significa che non ce ne siano stati: significa che noi non ne abbiamo
+            ancora uno documentato e verificabile.
+          </p>
+        ) : null}
+
         <div className={styles.signals}>
           {signals.map((signal) => (
             <article className="panel" key={signal.id} data-tone={signal.tone}>
               <p className={styles.signalMeta}>
-                {signal.area} · {referencePeriod(signal.referenceDate)}
-              </p>
-              <div className={styles.signalBadges}>
+                <span>{signal.area} · {referencePeriod(signal.referenceDate)}</span>
                 <span className={styles.signalTone} data-tone={signal.tone}>
                   {toneLabels[signal.tone]}
                 </span>
-                <span className={styles.signalKind}>
-                  {auditClassifications[signal.classification].label}
-                </span>
-              </div>
-              <strong className={styles.signalValue}>{formatSignal(signal)}</strong>
+              </p>
               <h3>{signal.label}</h3>
-              <p>{signal.plainMeaning}</p>
+              <strong className={styles.signalValue}>{formatSignal(signal)}</strong>
+              <p className={styles.signalMeaning}>{signal.plainMeaning}</p>
               <details className={styles.signalDetails}>
                 <summary>Perimetro e stato del dato</summary>
                 <dl>
+                  <div>
+                    <dt>Tipo di segnale</dt>
+                    <dd>{auditClassifications[signal.classification].label}</dd>
+                  </div>
                   <div>
                     <dt>Comprende</dt>
                     <dd>{signal.coverage}</dd>
@@ -291,7 +319,7 @@ export default async function ControlsPage({ searchParams }: PageProps) {
         </div>
       </section>
 
-      {(selectedYear === null || selectedYear === openCivitasSnapshot.referenceYear) && (
+      {showsMunicipalScreening && (
         <section className={`panel ${styles.derivedSection}`} aria-labelledby="municipal-screening-title">
           <header className={styles.sectionIntro}>
             <div>
@@ -529,9 +557,11 @@ export default async function ControlsPage({ searchParams }: PageProps) {
         </p>
       </section>
 
-      {(selectedYear === null || selectedYear === 2025) && (
-        <section className="panel">
-          <h2 className="panel-title">Appalti 2025: 55,3% e quasi 95% usano calcoli diversi</h2>
+      {showsProcurement2025 && (
+        <section className="panel" aria-labelledby="procurement-2025-title">
+          <h2 id="procurement-2025-title" className="panel-title">
+            Appalti 2025: 55,3% e quasi 95% usano calcoli diversi
+          </h2>
           <div className="stat-strip">
             <div>
               <span className="stat-label">Tutte le procedure da 40.000 euro in su</span>
@@ -608,7 +638,7 @@ export default async function ControlsPage({ searchParams }: PageProps) {
         </section>
       )}
 
-      {selectedYear === null && (
+      {showsPolicyScenarios && (
         <>
           <section className={`panel ${styles.policySection}`} aria-labelledby="policy-scenarios-title">
             <header className={styles.sectionIntro}>

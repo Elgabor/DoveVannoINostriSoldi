@@ -36,6 +36,47 @@ test("primary navigation keeps dropdowns and no section subnav bar", async () =>
   assert.doesNotMatch(navigationComponent, /subnav-row|nav\.subnav|activeNavSection/);
 });
 
+test("a submenu can be opened without a pointer that can hover", async () => {
+  const navigationComponent = await readFile(
+    new URL("../src/components/navigation.tsx", import.meta.url),
+    "utf8",
+  );
+  // The caret is a control, not a glyph: on a touch screen it is the only way
+  // into a section's pages, since hover never fires and the label navigates.
+  assert.match(navigationComponent, /<button\s+type="button"\s+className="nav-item-toggle"/);
+  assert.match(navigationComponent, /aria-expanded=\{open\}/);
+  assert.match(navigationComponent, /aria-controls=\{menuId\}/);
+  assert.match(navigationComponent, /event\.key === "Escape"/);
+  assert.match(navigationComponent, /document\.addEventListener\("pointerdown", dismissOutside\)/);
+  // Open state carries the path it was opened on, so a completed navigation
+  // closes the menu without a setState in an effect.
+  assert.match(navigationComponent, /openMenu\?\.pathname === pathname/);
+
+  assert.match(globalsCss, /\.nav-item-has-menu\[data-open="true"\] \.nav-submenu/);
+  assert.match(globalsCss, /\.nav-item-toggle \{/);
+  assert.match(globalsCss, /@media \(max-width: 1260px\)/);
+  // Below that break the row scrolls, so the panel must be anchored outside it.
+  assert.match(globalsCss, /\.nav-row \{\n\s*position: relative;/);
+});
+
+test("every page offers the rest of its section without the header menu", async () => {
+  const [component, layout, css] = await Promise.all([
+    readFile(new URL("../src/components/section-nav.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/app/layout.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/section-nav.module.css", import.meta.url), "utf8"),
+  ]);
+  assert.match(layout, /<SectionNav \/>/);
+  assert.match(component, /activeNavSection/);
+  assert.match(component, /isNavChildActive/);
+  // A section with a single page has nothing to offer and renders nothing.
+  assert.match(component, /if \(pages\.length < 2\) return null;/);
+  // The current page is a destination already reached, not a link back to here.
+  assert.match(component, /aria-current="page"/);
+  assert.doesNotMatch(component, /subnav-row|nav\.subnav/);
+  assert.match(css, /min-height: 44px/);
+  assert.doesNotMatch(css, /border-radius\s*:/);
+});
+
 test("public legal pages do not expose a personal mailbox", async () => {
   const files = await Promise.all([
     readFile(new URL("../src/app/privacy/page.tsx", import.meta.url), "utf8"),

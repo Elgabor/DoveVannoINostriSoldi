@@ -111,19 +111,17 @@
 }
 
 .signalMeta {
-  margin: 0 0 var(--space-2);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: .06em;
   text-transform: uppercase;
   color: var(--color-neutral-600);
-}
-
-.signalBadges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-bottom: var(--space-2);
 }
 
 .signalTone {
@@ -216,10 +214,19 @@
   align-items: center;
 }
 
+.readingGuide {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-neutral-200);
+}
+
 .readingGuide summary {
   font-family: var(--font-heading);
-  font-size: 18px;
+  font-size: 14px;
   font-weight: var(--font-heading-weight);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--color-accent-700);
 }
 
 .readingGuide > p {
@@ -260,19 +267,6 @@
   line-height: 1.5;
 }
 
-.signalKind {
-  align-self: flex-start;
-  margin-bottom: var(--space-2);
-  padding: 4px 7px;
-  border: 1px solid var(--color-neutral-400);
-  color: var(--color-neutral-700);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .05em;
-  line-height: 1;
-  text-transform: uppercase;
-}
-
 /* The tone says what kind of number this is: something measured, something to
    check, a policy choice, or an accumulated stock. It tints the rule above the
    value rather than the whole card, so no signal reads as an accusation. */
@@ -281,25 +275,28 @@
 .signals article[data-tone="policy"] .signalValue { border-top-color: var(--color-neutral-800); }
 .signals article[data-tone="stock"] .signalValue { border-top-color: var(--color-accent-300); }
 
-.signals article[data-tone="attention"] .signalKind {
-  border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-neutral-400));
-}
-
 .signalValue {
   display: block;
   padding-top: var(--space-3);
   border-top: 3px solid var(--color-neutral-400);
   font-family: var(--font-heading);
-  font-size: 32px;
+  font-size: 38px;
   font-weight: var(--font-heading-weight);
   letter-spacing: -.03em;
-  line-height: 1.05;
+  line-height: 1.02;
   font-variant-numeric: tabular-nums;
 }
 
+/* The label asks the question, the figure answers it: name first, number
+   second, so nobody meets a large number before knowing what it counts. */
 .signals h3 {
-  margin: var(--space-2) 0 var(--space-2);
+  margin: 0 0 var(--space-3);
   font-size: 15px;
+  color: var(--color-neutral-800);
+}
+
+.signalMeaning {
+  margin-top: var(--space-3);
 }
 
 .signals p {
@@ -544,4 +541,51 @@
     grid-template-columns: minmax(0, 1fr) 112px;
   }
   .breakdown li > i { display: none; }
+}
+
+/* The page carries five sections of different kinds. Without an index the only
+   way to reach the last one is to scroll past everything before it. */
+.pageIndex {
+  padding: 14px 18px;
+  background: var(--color-raised);
+  border: 1px solid var(--color-neutral-300);
+}
+
+.pageIndex h2 {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: var(--font-heading-weight);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+
+.pageIndex ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pageIndex a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--space-3);
+  border: 1px solid var(--color-neutral-400);
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pageIndex a:hover {
+  color: var(--color-text);
+  background: var(--color-neutral-200);
+}
+
+@media (max-width: 620px) {
+  .pageIndex a { flex: 1 1 auto; justify-content: center; }
 }

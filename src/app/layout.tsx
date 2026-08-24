@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Archivo } from "next/font/google";
 import { GoogleAnalytics } from "@/components/google-analytics";
 import { Navigation } from "@/components/navigation";
+import { SectionNav } from "@/components/section-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { mefIrpefSourceMeta } from "@/lib/data/mef-irpef-source";
 import { siopeMunicipalSnapshot } from "@/lib/siope-snapshot";
@@ -54,6 +55,7 @@ export default function RootLayout({
         <a className="skip-link" href="#contenuto-principale">Salta al contenuto principale</a>
         <Navigation />
         <div id="contenuto-principale" tabIndex={-1}>{children}</div>
+        <SectionNav />
         <SiteFooter latestTerritorialCheckLabel={latestTerritorialCheckLabel} />
       </body>
     </html>

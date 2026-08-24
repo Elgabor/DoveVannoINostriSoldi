@@ -65,6 +65,8 @@ main td a:not(.btn) {
   text-decoration-thickness: 1px;
   text-underline-offset: .18em;
 }
+main li a:where(.btn),
+nav li a { text-decoration: none; }
 
 /* The shell bounds every band of the page — header, nav, main and footer all
    share one measure so their rules line up vertically. */
@@ -239,6 +241,7 @@ main td a:not(.btn) {
 /* ── primary navigation ─────────────────────────────────────────────────── */
 
 .nav-row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-4);
@@ -257,29 +260,51 @@ main td a:not(.btn) {
   padding: 0;
   list-style: none;
 }
-.nav-item { position: relative; flex: none; }
+/* The label and its caret are two controls on one underline: the label goes to
+   the section, the caret opens the list of its pages. */
+.nav-item {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  flex: none;
+  border-bottom: 2px solid transparent;
+}
+.nav-item[data-section-active="true"] { border-bottom-color: var(--color-accent); }
 .nav-item > a {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
   padding: 14px 16px;
   font-size: 14px;
   font-weight: 600;
   white-space: nowrap;
   color: var(--color-neutral-600);
-  border-bottom: 2px solid transparent;
 }
+.nav-item-has-menu > a { padding-right: 6px; }
 .nav-item > a:hover { color: var(--color-text); }
 .nav-item > a[aria-current="page"],
-.nav-item > a[data-section-active="true"] {
-  color: var(--color-text);
-  border-bottom-color: var(--color-accent);
-}
-.nav-item-caret {
+.nav-item > a[data-section-active="true"] { color: var(--color-text); }
+
+/* Hover cannot open anything on a touch screen, so the caret is a button and
+   not a glyph: it is the only way a phone reaches a section's pages. */
+.nav-item-toggle {
+  display: grid;
+  place-items: center;
+  min-width: 30px;
+  padding: 0 8px 0 2px;
   font-size: 10px;
-  color: var(--color-neutral-600);
   line-height: 1;
+  color: var(--color-neutral-600);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
 }
+.nav-item-toggle:hover { color: var(--color-text); }
+.nav-item-toggle > span {
+  display: block;
+  transition: transform 140ms var(--ease-out);
+}
+.nav-item-toggle[aria-expanded="true"] > span { transform: rotate(180deg); }
+.nav-item[data-section-active="true"] .nav-item-toggle { color: var(--color-text); }
 .nav-submenu {
   display: none;
   position: absolute;
@@ -313,7 +338,8 @@ main td a:not(.btn) {
   background: var(--color-neutral-100);
 }
 .nav-item-has-menu:hover .nav-submenu,
-.nav-item-has-menu:focus-within .nav-submenu {
+.nav-item-has-menu:focus-within .nav-submenu,
+.nav-item-has-menu[data-open="true"] .nav-submenu {
   display: block;
 }
 
@@ -584,14 +610,35 @@ main { display: block; }
 
 /* ── responsive ─────────────────────────────────────────────────────────── */
 
-@media (max-width: 1000px) {
-  :root { --gutter: 20px; }
-  .header-search { width: 260px; }
+/* The nine sections need about 1250px to sit flat. Below that the row scrolls
+   inside itself rather than pushing the page sideways, and the note that
+   competes with it for the same line steps aside. */
+@media (max-width: 1260px) {
+  .nav-note { display: none; }
   .primary-nav {
     overflow-x: auto;
     scrollbar-width: none;
   }
   .primary-nav::-webkit-scrollbar { display: none; }
+  /* A scrolling row cannot show a panel that hangs out of it. Anchoring the
+     panel to the row instead of to its own item puts it outside that scrolling
+     box, so it is neither clipped by it nor placed against the document. */
+  .nav-item-has-menu[data-open="true"] { position: static; }
+  .nav-item-has-menu[data-open="true"] .nav-submenu {
+    top: 100%;
+    left: 0;
+    right: 0;
+    width: auto;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 1000px) {
+  :root { --gutter: 20px; }
+  .header-search { width: 260px; }
+  /* Below the desktop break the caret is the primary way in, so it gets a
+     full-height target instead of the hairline it needs beside a pointer. */
+  .nav-item-toggle { min-width: 40px; padding-inline: 8px; }
 }
 
 /* Keep the header's fixed actions inside the viewport before the full
@@ -640,6 +687,7 @@ main { display: block; }
   .brand-text strong { font-size: 17px; }
   .header-action { padding-inline: 14px; }
   .primary-nav a { padding: 12px 12px; font-size: 13px; }
+  .nav-item-has-menu > a { padding-right: 4px; }
   .primary-nav { scrollbar-width: thin; }
   .primary-nav::-webkit-scrollbar { display: block; height: 3px; }
   .primary-nav::-webkit-scrollbar-thumb { background: var(--color-neutral-400); }

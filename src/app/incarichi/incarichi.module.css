@@ -219,7 +219,7 @@
 
 .compositionRow {
   display: grid;
-  grid-template-columns: 150px minmax(120px, 1fr) max-content;
+  grid-template-columns: 150px minmax(120px, 1fr) minmax(0, max-content);
   gap: var(--space-3);
   align-items: center;
 }
@@ -239,10 +239,16 @@
 }
 
 .compositionRow small {
+  min-width: 0;
   color: var(--color-neutral-600);
   font-size: 11px;
   text-align: right;
-  white-space: nowrap;
+}
+
+/* Between the tablet width and the stacked layout the caption wraps instead of
+   holding the row open wider than the viewport. */
+@media (min-width: 621px) and (max-width: 900px) {
+  .compositionRow { grid-template-columns: 130px minmax(100px, 1fr) minmax(0, 22ch); }
 }
 
 .sourceGrid {

@@ -20,7 +20,7 @@ const handler = createMcpHandler(createDvnsMcpServer, {
 function secureResponse(response: Response, request?: Request): Response {
   response.headers.set("Cache-Control", "private, no-store");
   response.headers.set("X-Content-Type-Options", "nosniff");
-  if (request) {
+  if (request && requestHostAllowed(request)) {
     const origin = request.headers.get("origin");
     const normalized = origin ? normalizedOrigin(origin) : null;
     if (normalized && allowedOrigins(request).has(normalized)) {
@@ -29,6 +29,11 @@ function secureResponse(response: Response, request?: Request): Response {
     }
   }
   return response;
+}
+
+function requestHostAllowed(request: Request): boolean {
+  const host = normalizedHost(request.headers.get("host") ?? new URL(request.url).host);
+  return host !== null && allowedHosts(request).has(host);
 }
 
 function normalizedOrigin(value: string): string | null {
@@ -73,19 +78,14 @@ function allowedHosts(request: Request): Set<string> {
     .filter((value): value is string => value !== null);
 
   const allowed = new Set(configured);
-  if (
-    configured.length === 0 ||
-    requestUrl.hostname === "localhost" ||
-    requestUrl.hostname === "127.0.0.1" ||
-    requestUrl.hostname === "[::1]"
-  ) {
-    allowed.add(requestUrl.host.toLocaleLowerCase("en-US"));
-  }
+  const requestUrlHost = normalizedHost(requestUrl.host);
+  if (requestUrlHost && isLoopbackHost(requestUrlHost)) allowed.add(requestUrlHost);
   const requestHost = normalizedHost(request.headers.get("host") ?? "");
   if (
     requestHost &&
     isLoopbackHost(requestHost) &&
-    isLoopbackHost(requestUrl.host.toLocaleLowerCase("en-US"))
+    requestUrlHost &&
+    isLoopbackHost(requestUrlHost)
   ) {
     allowed.add(requestHost);
   }
@@ -93,8 +93,7 @@ function allowedHosts(request: Request): Set<string> {
 }
 
 function validateRequest(request: Request): Response | null {
-  const host = normalizedHost(request.headers.get("host") ?? new URL(request.url).host);
-  if (!host || !allowedHosts(request).has(host)) {
+  if (!requestHostAllowed(request)) {
     return Response.json({ error: "Host non consentito" }, { status: 403 });
   }
   const origin = request.headers.get("origin");

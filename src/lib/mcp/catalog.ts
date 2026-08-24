@@ -1,5 +1,6 @@
 import type { SourceId } from "@/lib/data/source-policy";
 import { MEF_IRPEF_SOURCE } from "@/lib/data/mef-irpef-source";
+import { INTEGRATED_CORPUS_CONTRACT } from "@/lib/integrated-source-contract";
 import { publicSources } from "@/lib/sources";
 
 export const DATASET_IDS = [
@@ -22,6 +23,7 @@ export const DATASET_IDS = [
   "parlamento_bilanci",
   "controlli_segnali",
   "registro_fonti",
+  "spesa_pa_dettaglio",
 ] as const;
 
 export type DatasetId = (typeof DATASET_IDS)[number];
@@ -40,6 +42,7 @@ export type DatasetQuery = {
   chamber?: "camera" | "senato";
   limit?: number;
   offset?: number;
+  cursor?: string;
 };
 
 export type DatasetDescriptor = {
@@ -90,6 +93,11 @@ const exampleQueries = {
   parlamento_bilanci: { dataset: "parlamento_bilanci", chamber: "camera", year: 2024 },
   controlli_segnali: { dataset: "controlli_segnali", area: "spesa-comuni", year: 2022, limit: 20 },
   registro_fonti: { dataset: "registro_fonti", query: "SIOPE" },
+  spesa_pa_dettaglio: {
+    dataset: "spesa_pa_dettaglio",
+    code: "consulenze-legali",
+    limit: 20,
+  },
 } as const satisfies Record<DatasetId, DatasetQuery>;
 
 const datasetDescriptors: DatasetDescriptorInput[] = [
@@ -112,6 +120,17 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
   { id: "parlamento_bilanci", title: "Bilanci del Parlamento", summary: "Documenti e valori strutturati verificati per Camera e Senato quando disponibili.", sourceIds: ["camera"], freshness: "snapshot", filters: ["chamber", "year"] },
   { id: "controlli_segnali", title: "Segnali da controllare", summary: "Indicatori, classificazioni e screening derivati che orientano verifiche ulteriori.", sourceIds: ["opencivitas"], freshness: "snapshot", filters: ["area", "year", "region", "limit", "offset"], caveat: "Un segnale, compreso lo screening OpenCivitas, non attribuisce responsabilità e non dimostra da solo spreco o illecito." },
   { id: "registro_fonti", title: "Registro delle fonti", summary: "Proprietari, copertura, formati, cadenza e stato di integrazione delle fonti censite.", sourceIds: [], freshness: "snapshot", filters: ["query"] },
+  {
+    id: "spesa_pa_dettaglio",
+    title: "Dettaglio integrato della spesa pubblica",
+    summary:
+      `Accesso uniforme ai ${INTEGRATED_CORPUS_CONTRACT.datasets} dataset integrati su affidamenti, fornitori, incarichi, consulenze, personale, spese operative, trasparenza e benchmark.`,
+    sourceIds: [],
+    freshness: "snapshot",
+    filters: ["code", "query", "limit", "cursor", "offset"],
+    caveat:
+      "code è l’identificativo restituito dal catalogo /dati. cursor continua una scansione limitata ed è legato a dataset, rilascio e ricerca; offset resta compatibile soltanto senza ricerca testuale. Importi mancanti e zero restano distinti; segnali, confronti e documenti mancanti non dimostrano automaticamente spreco o illecito.",
+  },
 ];
 
 export const datasetCatalog: DatasetDescriptor[] = datasetDescriptors.map((dataset) => ({

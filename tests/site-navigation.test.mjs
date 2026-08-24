@@ -56,7 +56,7 @@ test("supporters page lists the current acknowledgements", async () => {
   assert.match(navigationSource, /href: "\/supporter", label: "Chi ci sostiene"/);
 });
 
-test("Google Analytics tag is loaded from the shared measurement id", async () => {
+test("Google Analytics loads only on the public site hostname", async () => {
   const [analytics, site] = await Promise.all([
     readFile(new URL("../src/components/google-analytics.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/lib/site.ts", import.meta.url), "utf8"),
@@ -64,6 +64,11 @@ test("Google Analytics tag is loaded from the shared measurement id", async () =
   assert.match(site, /GOOGLE_ANALYTICS_MEASUREMENT_ID = "G-6NKJM5HWR4"/);
   assert.match(analytics, /next\/script/);
   assert.match(analytics, /strategy="afterInteractive"/);
+  assert.match(analytics, /PUBLIC_SITE_URL/);
+  assert.match(analytics, /window\.location\.hostname ===/);
+  assert.match(analytics, /document\.createElement\('script'\)/);
+  assert.match(analytics, /document\.head\.appendChild\(analyticsScript\)/);
+  assert.doesNotMatch(analytics, /<Script\s+src=/);
   assert.match(analytics, /gtag\('config'/);
 });
 

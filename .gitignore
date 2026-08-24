@@ -20,6 +20,8 @@ npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
 /.lighthouseci/
+/.verification-artifacts/
+/.impeccable/review/
 
 # editor / os
 .DS_Store

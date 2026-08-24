@@ -2,6 +2,34 @@
 
 The MIT license in `LICENSE` applies to the project code. Embedded or linked datasets keep their original licenses and attribution requirements.
 
+## Consip participation and awardee data 2024–2026
+
+- **Works:** annual Consip `Partecipazioni` records projected as the three
+  awardee datasets `consip-winners-2024`, `consip-winners-2025` and
+  `consip-winners-2026`;
+- **Publisher:** Consip S.p.A.;
+- **Source:** https://dati.consip.it/dataset/dataset-partecipazioni;
+- **License:** Creative Commons Attribution 4.0 International (CC BY 4.0),
+  https://creativecommons.org/licenses/by/4.0/;
+- **Changes:** the selected annual rows are normalized into the common public
+  JSONL contract; initiative, lot, instrument, participation form, role and
+  award date remain distinct fields.
+
+Attribution: `Consip S.p.A., dataset Partecipazioni 2024–2026, CC BY 4.0. Adapted by DoveVannoINostriSoldi.`
+
+## RGS State accounts for consulting, 2024–2025
+
+- **Works:** `2024/2025 - Rendiconto Pubblicato Elaborabile Spese - Piano di gestione`;
+- **Publisher:** Ragioneria Generale dello Stato, Data Warehouse RGS;
+- **Sources:** https://bdap-opendata.rgs.mef.gov.it/content/2024-rendiconto-pubblicato-elaborabile-spese-piano-di-gestione and https://bdap-opendata.rgs.mef.gov.it/content/2025-rendiconto-pubblicato-elaborabile-spese-piano-di-gestione;
+- **License:** Creative Commons Attribution 3.0 (CC BY 3.0), as linked by
+  each resource landing page;
+- **Changes:** the official rows classified as consulting/analysis/studies or
+  coordinated and continuous collaboration are selected; amounts are stored
+  as integer cents and the accounting dimensions remain separate.
+
+Attribution: `Ragioneria Generale dello Stato, Rendiconto Pubblicato Elaborabile Spese 2024–2025, CC BY 3.0. Adapted by DoveVannoINostriSoldi.`
+
 ## Italia Domani PNRR childcare data
 
 - **Works:** `PNRR_Progetti.csv`, `PNRR_Localizzazione.csv`, `PNRR_Gare.csv` and `PNRR_Aggiudicatari_Gare.csv`, filtered to submeasure `M4C1I1.01.00`;

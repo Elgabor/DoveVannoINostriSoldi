@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import IntegratedSectionPreview from "@/components/integrated-section-preview";
 import { anacCigSnapshot } from "@/lib/anac-cig-snapshot";
 import { exactEuro, integer, longDate, percent } from "@/lib/format";
 import styles from "./appalti.module.css";
@@ -357,6 +358,14 @@ export default function AppaltiPage() {
           </table>
         </ScrollRegion>
       </section>
+
+      <IntegratedSectionPreview
+        section="appalti"
+        title="Dal quadro nazionale ai singoli atti"
+        description="Affidamenti, fornitori, rinnovi e confronti Consip sono organizzati in percorsi leggibili; ogni percorso arriva alle righe e alle fonti."
+        hubHref="/appalti/dettaglio"
+        limit={3}
+      />
 
       <section className={`panel ${styles.sourcePanel}`} id="fonti-metodo" aria-labelledby="sources-title">
         <h2 id="sources-title" className="panel-title">Fonti, metodo e limiti</h2>

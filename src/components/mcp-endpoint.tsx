@@ -10,7 +10,7 @@ ${PUBLIC_MCP_ENDPOINT}
 Procedura:
 1. Scopri i tool disponibili e usa list_datasets prima di interrogare i dati.
 2. Scegli il dataset coerente con la domanda e usa solo filtri dichiarati dal catalogo.
-3. Usa limit e offset soltanto quando il catalogo li dichiara; mantieni sempre i filtri più stretti necessari.
+3. Usa limit, offset e cursor soltanto quando il catalogo li dichiara; per continuare una scansione riutilizza il cursor restituito senza modificarlo.
 4. Nella risposta indica dataset, periodo, territorio, fonte ufficiale e limiti interpretativi.
 5. Distingui pagamenti, costi, imposte dichiarate e stime: l'imposta netta dichiarata MEF resta separata dal gettito totale e dal saldo CPT; il saldo CPT resta un saldo contabile territorializzato.
 6. Chiama un valore spreco, frode o qualità del servizio soltanto se una fonte lo documenta.

@@ -2,6 +2,47 @@
 
 Questa è la mappa iniziale delle fonti. Il criterio è semplice: prima fonti istituzionali nazionali, strutturate e con identificativi stabili; poi portali territoriali e documenti meno standardizzati.
 
+## Registro integrato row-level
+
+Oltre alle pipeline istituzionali descritte sotto, il repository contiene un
+rilascio integrato di 79 dataset curati. Prima delle viste applicative sono
+stati chiusi tre registri: 51.303 elementi inventariati, 34.071 identità di fonte e
+13.321.128 righe sorgente. Le equazioni, tutti i dataset, gli stati di licenza
+e i comandi di verifica sono documentati in
+[INTEGRATED_SOURCE_LEDGER.md](INTEGRATED_SOURCE_LEDGER.md).
+
+Il catalogo non promuove una nota secondaria a fonte ufficiale: conserva i
+collegamenti pubblicabili e mette in quarantena valori locali, malformed,
+sensibili o di processo senza eliminare l'identità. La proiezione row-level
+mantiene 338.782 righe interrogabili; `not-declared` resta una cautela di riuso,
+non un gate che nasconde la riga.
+
+La UI non usa il catalogo come esperienza primaria: 21 percorsi editoriali
+e un'anteprima nella pagina Partecipazioni coprono tutti i 79 insiemi,
+partendo da anteprime nelle pagine esistenti e arrivando a risultati, limiti,
+prime righe, fonte e drill-down completo. Il registro tecnico resta espandibile
+per chi deve controllare schema e stato di
+pubblicazione. Le schede dataset espongono titolare, periodo di riferimento,
+pubblicazione, acquisizione, ultimo controllo e frequenza. I campi non presenti
+nel materiale sono indicati come non disponibili, senza ricostruzioni; quando
+una riga non porta un URL puntuale, la UI usa il portale canonico dichiarato o
+segnala esplicitamente che l’URL non è disponibile. Ricevute e hash del dataset
+restano verificabili nel registro di copertura senza creare link circolari.
+
+Il periodo è valorizzato per 32 dataset su 79 soltanto quando il confine è
+ricavabile da una colonna temporale dedicata (`anno`, `data`, `esercizio`,
+`dal`/`al`, `periodo_*`, `source_year`, `data_aggiornamento`) o dal contratto
+esplicito di un aggregato derivato. Gli anni presenti solo in testo libero o
+negli URL non vengono usati. I 47 dataset senza un confine non ambiguo restano
+quindi su “Non disponibile”; gli estremi futuri degli incarichi descrivono la
+durata dichiarata del record e non una data di pubblicazione o acquisizione.
+
+Due insiemi `catalog-only` espongono anche il denominatore fisico usato nella
+verifica. OpenCUP contiene 11.942.784 record CSV, mentre 11.991.275 è il numero
+di linee fisiche di dati: il delta di 48.491 deriva da newline dentro campi
+quotati. Consip conserva 1.028.559 unità fisiche, formate da 1.028.557 record
+validi e 2 frammenti malformati che non vengono ricostruiti.
+
 ## Tier 1: infrastrutture nazionali
 
 ### SIOPE / SIOPE+
@@ -35,6 +76,33 @@ Per ogni opera manteniamo distinti:
 - avvisi sulla qualità del dato.
 
 Gli avvisi su tempi, costi o copertura finanziaria hanno uso di screening. Indicano cosa verificare e includono spiegazioni alternative plausibili. Non classificano automaticamente un'opera come spreco, irregolarità o illecito.
+
+### Rendiconto RGS: consulenze e lavoro parasubordinato
+
+La pagina `/spese/consulenze` usa i rendiconti elaborabili per piano di
+gestione 2024 e 2025, risorse `spd_rnd_spe_elb_pig_01_2024` e
+`spd_rnd_spe_elb_pig_01_2025`. I due CSV ufficiali sono bloccati per URL,
+dimensione, SHA-256 e schema; le landing collegate dichiarano CC BY 3.0.
+
+La selezione contiene 268 righe contabili e mantiene distinti anno,
+amministrazione, centro di responsabilità, missione, programma, capitolo e
+piano di gestione. `Pagato CS` ammonta a 113.570.396,41 euro; 153 righe hanno
+uno zero osservato. Sono aggregati di rendiconto, non contratti, beneficiari o
+prestazioni individuali, e il confronto fra amministrazioni non è una
+classifica di efficienza.
+
+### Spesa del Bilancio dello Stato per territorio destinatario 2023
+
+La pagina `/spese/territoriale` usa il record RGS
+`SRS_SPE_BIL_SPESR_001`: 20.268 righe sorgente, organizzate in 5.067
+combinazioni territorio/titolo/categoria/missione con quattro misure separate.
+Il CSV CP1252 da 3.933.609 byte è bloccato con SHA-256; la singola landing non
+dichiara una licenza e il portale non gliene attribuisce una.
+
+Italia, cinque macroaree e venti Regioni sono livelli sovrapposti e non vengono
+sommati. Valore assoluto, quota di PIL, euro per abitante ed euro per km²
+restano misure distinte; i denominatori delle ultime tre sono calcolati
+dall'editore ma non versionati nel record. Una riga assente non diventa zero.
 
 ### Conto Economico degli enti del SSN 2024
 
@@ -214,7 +282,11 @@ Ogni dimensione deve riconciliarsi con il totale nazionale, sia per i valori gen
 
 OpenCUP è l'anagrafe nazionale dei progetti di investimento pubblico promossa dal DIPE della Presidenza del Consiglio dei Ministri. Pubblica ogni mese progetti, localizzazioni, soggetti titolari e fonti di copertura con licenza CC BY 4.0. Il CUP è la chiave necessaria per collegare investimento, finanziamento, contratto e avanzamento senza usare corrispondenze testuali.
 
-Il rilascio nazionale dei progetti supera 1,7 GB. Per questo la fonte è registrata ma non viene scaricata durante una richiesta Next.js. L'integrazione prevista usa:
+Il rilascio nazionale dei progetti supera 1,7 GB. Lo snapshot bulk registrato
+contiene 11.942.784 record CSV reali; le 11.991.275 linee fisiche di dati
+includono 48.491 newline interne a campi quotati e non indicano progetti
+aggiuntivi. Per questo la fonte è registrata ma non viene scaricata durante una
+richiesta Next.js. L'integrazione prevista usa:
 
 1. discovery del rilascio mensile e dei suoi metadati;
 2. download in object storage con hash e validator HTTP;

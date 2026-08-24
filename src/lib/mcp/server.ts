@@ -1,4 +1,4 @@
-import { McpServer } from "@modelcontextprotocol/server";
+import { McpServer, type McpRequestContext } from "@modelcontextprotocol/server";
 import * as z from "zod/v4";
 import { APP_VERSION } from "@/lib/app-version";
 import { DATASET_IDS, datasetCatalog } from "@/lib/mcp/catalog";
@@ -46,6 +46,9 @@ const querySchema = z.object({
   offset: z.number().int().min(0).max(100_000)
     .describe("Numero di record da saltare, da 0 a 100000, solo per dataset che supportano offset.")
     .optional(),
+  cursor: z.string().max(512)
+    .describe("Cursore opaco restituito dalla pagina precedente, solo per dataset che dichiarano cursor.")
+    .optional(),
 }).strict();
 
 function toolResult(value: unknown) {
@@ -69,7 +72,7 @@ function toolResult(value: unknown) {
   return result;
 }
 
-export function createDvnsMcpServer() {
+export function createDvnsMcpServer(factoryContext?: McpRequestContext) {
   const server = new McpServer({
     name: "dove-vanno-i-nostri-soldi",
     version: APP_VERSION,
@@ -127,9 +130,13 @@ export function createDvnsMcpServer() {
       inputSchema: querySchema,
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
-    async (input) => {
+    async (input, context) => {
       try {
-        const data = await queryPublicDataset(input);
+        const requestSignal = factoryContext?.requestInfo?.signal;
+        const signal = requestSignal
+          ? AbortSignal.any([requestSignal, context.mcpReq.signal])
+          : context.mcpReq.signal;
+        const data = await queryPublicDataset(input, { signal });
         return toolResult({ ok: true, dataset: input.dataset, query: input, data });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Errore sconosciuto";

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import IntegratedSectionPreview from "@/components/integrated-section-preview";
 import { compactEuro, exactEuro, integer, longDate, percent } from "@/lib/format";
 import { consulentiSnapshot as snapshot } from "@/lib/consulenti-snapshot";
 import styles from "./incarichi.module.css";
@@ -368,6 +369,14 @@ export default function IncarichiPage() {
           amministrazioni distinte.
         </p>
       </section>
+
+      <IntegratedSectionPreview
+        section="incarichi"
+        title="Apri incarichi, consulenze e persone"
+        description="Il quadro DFP resta aggregato; i nuovi percorsi mostrano consulenze legali, PNRR, nominativi, curriculum, personale e organi nel loro perimetro."
+        hubHref="/incarichi/dettaglio"
+        limit={3}
+      />
 
       <section className="panel" id="metodo" aria-labelledby="method-title">
         <h2 id="method-title" className="panel-title">

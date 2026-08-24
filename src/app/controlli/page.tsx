@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import IntegratedSectionPreview from "@/components/integrated-section-preview";
 import {
   auditClassifications,
   auditReviewedAt,
@@ -702,6 +703,14 @@ export default async function ControlsPage({ searchParams }: PageProps) {
           </section>
         </>
       )}
+
+      <IntegratedSectionPreview
+        section="controlli"
+        title="Apri i registri da verificare"
+        description="Segnalazioni, atti della Corte dei conti e working set restano separati per stato probatorio e portano alle fonti disponibili."
+        hubHref="/trasparenza"
+        limit={3}
+      />
 
     </main>
   );

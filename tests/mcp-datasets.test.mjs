@@ -139,6 +139,38 @@ test("datasets requiring a domain identifier fail closed", async () => {
     queryPublicDataset({ dataset: "openbdap_opere_pubbliche" }),
     /filtro cup è obbligatorio/,
   );
+  await assert.rejects(
+    queryPublicDataset({ dataset: "spesa_pa_dettaglio" }),
+    /filtro code è obbligatorio/,
+  );
+});
+
+test("integrated spending MCP adapter delegates to the same bounded public selector", async () => {
+  const result = await queryPublicDataset({
+    dataset: "spesa_pa_dettaglio",
+    code: "consulenze-legali",
+    query: "2024",
+    limit: 5,
+  });
+
+  assert.equal(result.dataset.id, "consulenze-legali");
+  assert.equal(result.limit, 5);
+  assert.ok(result.rows.length <= 5);
+  assert.equal(result.matchedRows, null);
+  assert.equal(typeof result.pagination.nextCursor, "string");
+  assert.ok(result.rows.every((row) => row.evidenceLabel === "documented-fact"));
+
+  const continued = await queryPublicDataset({
+    dataset: "spesa_pa_dettaglio",
+    code: "consulenze-legali",
+    query: "2024",
+    limit: 5,
+    cursor: result.pagination.nextCursor,
+  });
+  assert.ok(
+    continued.rows[0].sourceRow > result.rows.at(-1).sourceRow,
+    "la continuazione deve avanzare oltre l'ultima corrispondenza senza duplicarla",
+  );
 });
 
 test("OpenBDAP month cannot be detached from its reference year", async () => {

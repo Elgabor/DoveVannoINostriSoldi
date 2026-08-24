@@ -81,7 +81,11 @@ export default function McpPage() {
             <tbody>
               {datasetCatalog.map((dataset) => (
                 <tr key={dataset.id}>
-                  <th scope="row"><strong>{dataset.title}</strong><small>{dataset.summary}</small></th>
+                  <th scope="row">
+                    <strong>{dataset.title}</strong>
+                    <code className={styles.datasetId}>{dataset.id}</code>
+                    <small>{dataset.summary}</small>
+                  </th>
                   <td>
                     {dataset.sources.length > 0
                       ? dataset.sources.map((source, index) => (

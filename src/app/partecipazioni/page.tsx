@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import IntegratedSurfacePreview from "@/components/integrated-surface-preview";
 import { integer, longDate, percent } from "@/lib/format";
+import { getEditorialSurfacePreview } from "@/lib/integrated-editorial";
 import { mefParticipationsSnapshot as snapshot } from "@/lib/mef-participations-snapshot";
 import styles from "./partecipazioni.module.css";
 
@@ -8,6 +10,16 @@ export const metadata: Metadata = {
   title: "Partecipazioni pubbliche",
   description: "Quadro verificabile del censimento MEF delle partecipazioni pubbliche.",
 };
+
+function requireParticipationPreview() {
+  const preview = getEditorialSurfacePreview("/partecipazioni");
+  if (!preview) {
+    throw new Error("Preview editoriale delle partecipazioni non configurata.");
+  }
+  return preview;
+}
+
+const participationPreview = requireParticipationPreview();
 
 export default function ParticipationsPage() {
   const directShare = snapshot.totals.participationRecords > 0
@@ -98,6 +110,8 @@ export default function ParticipationsPage() {
           <p className={styles.note}>{snapshot.declaredEvidence.legalMeaning}</p>
         </section>
       </div>
+
+      <IntegratedSurfacePreview preview={participationPreview} />
 
       <section className="panel">
         <h2 className="panel-title">Organizzazioni dichiarate da più amministrazioni</h2>

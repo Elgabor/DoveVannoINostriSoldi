@@ -107,6 +107,13 @@ function amountCents(record: DelimitedRecord): number {
 export function nationalValuesFromRows(rows: DelimitedRecord[], year: number): SsnCceValues {
   const byCode = new Map<string | undefined, DelimitedRecord>();
   for (const row of rows) {
+    // The package is selected by its discovered year, but the CSV's own declared year is
+    // the actual contract: a mislabeled or swapped package must fail closed here rather
+    // than silently attribute another year's figures to this one.
+    const rowYear = row["Anno di Riferimento"]?.trim();
+    if (rowYear !== String(year)) {
+      throw new Error(`Anno di Riferimento "${rowYear}" incoerente con il rilascio ${year} richiesto`);
+    }
     const code = row["Codice Voce Contabile"]?.trim();
     if (code && byCode.has(code)) {
       throw new Error(`Voce ${code} duplicata nel Conto Economico SSN nazionale ${year}`);

@@ -82,6 +82,12 @@ test("nationalValuesFromRows ignores voice codes it does not need", () => {
   assert.equal(Object.keys(values).length, 5);
 });
 
+test("nationalValuesFromRows fails closed when a row's declared year does not match the requested year", () => {
+  // Simulates a mislabeled or swapped package: the CSV's own year field disagrees with the
+  // year this package was discovered under.
+  assert.throws(() => nationalValuesFromRows(VALID_ROWS, 2023), /incoerente con il rilascio 2023/);
+});
+
 test("nationalValuesFromRows fails closed on a duplicate voice code instead of silently keeping one", () => {
   assert.throws(
     () => nationalValuesFromRows([...VALID_ROWS, row("BZ9999", "1.00")], 2024),

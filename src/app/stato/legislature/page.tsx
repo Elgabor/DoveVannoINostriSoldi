@@ -9,7 +9,13 @@ import styles from "./legislature.module.css";
 
 export const dynamic = "force-dynamic";
 
-const PAGE_DATA_BUDGET_MS = 20_000;
+// 7 sequential OpenBDAP calls (2014-2017, 2019-2021); a single retry on any one of them
+// (up to ~30s per the openbdap source policy) can already push the total past 20s, which
+// this budget originally used and which a live run did exceed during review. Headroom here
+// is about giving the sequential fetch a fair chance, not a guarantee: this repo's
+// deployment does not declare a functions.maxDuration in vercel.json, so the real ceiling
+// on the hosting platform is unverified and may itself be lower than this value.
+const PAGE_DATA_BUDGET_MS = 45_000;
 
 export const metadata: Metadata = {
   title: "Spesa dello Stato per legislatura",

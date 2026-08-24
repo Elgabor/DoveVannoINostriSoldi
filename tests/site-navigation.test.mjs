@@ -53,7 +53,7 @@ test("supporters page lists the current acknowledgements", async () => {
   assert.match(supporters, /modello GLM/);
   assert.match(page, /SITE_SUPPORTERS/);
   assert.match(footer, /href="\/supporter"/);
-  assert.match(navigationSource, /href: "\/supporter", label: "Supporter"/);
+  assert.match(navigationSource, /href: "\/supporter", label: "Chi ci sostiene"/);
 });
 
 test("Google Analytics tag is loaded from the shared measurement id", async () => {

@@ -49,6 +49,6 @@ descrive il contratto e la procedura di integrazione.
 ## Privacy e codice
 
 - [Privacy](https://www.dovevannoinostrisoldi.com/privacy): il sito non richiede account.
-- [Supporter](https://www.dovevannoinostrisoldi.com/supporter): chi sostiene il progetto con infrastruttura o community.
+- [Chi ci sostiene](https://www.dovevannoinostrisoldi.com/supporter): chi sostiene il progetto con infrastruttura o community.
 - [Repository](https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi): codice, ETL, test, documentazione e licenza MIT.
 - [Attribuzioni di terze parti](https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi/blob/main/THIRD_PARTY_NOTICES.md): licenze delle fonti e dei componenti riusati.

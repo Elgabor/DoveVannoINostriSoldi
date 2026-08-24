@@ -70,7 +70,7 @@ export function SiteFooter({ latestTerritorialCheckLabel }: SiteFooterProps) {
           @dom_gag_96
         </a>
         <span className="footer-spacer" />
-        <Link href="/supporter">Supporter</Link>
+        <Link href="/supporter">Chi ci sostiene</Link>
         <Link href="/supporto">Supporto</Link>
         <Link href="/termini">Termini</Link>
       </div>

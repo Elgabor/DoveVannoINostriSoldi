@@ -3,7 +3,7 @@ import { SITE_SUPPORTERS } from "@/lib/supporters";
 import styles from "../legal-page.module.css";
 
 export const metadata: Metadata = {
-  title: "Supporter",
+  title: "Chi ci sostiene",
   description: "Chi sostiene DoveVannoINostriSoldi con infrastruttura, tempo o community.",
 };
 
@@ -11,7 +11,7 @@ export default function SupportersPage() {
   return (
     <main className={`shell page ${styles.page}`}>
       <div className="page-intro">
-        <h1>Supporter</h1>
+        <h1>Chi ci sostiene</h1>
         <p>
           Il sito resta indipendente e open source. Qui riconosciamo chi ci dà infrastruttura,
           tempo o una community in cui lavorare. Non sono fonti dei dati pubblici e non

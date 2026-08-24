@@ -17,7 +17,7 @@
   border-top: 3px solid var(--color-accent);
 }
 .tracePanel > div > span:first-child {
-  color: var(--color-accent);
+  color: var(--color-accent-300);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: .12em;
@@ -49,7 +49,7 @@
 }
 .traceAction span {
   margin-bottom: var(--space-3);
-  color: var(--color-neutral-400);
+  color: var(--color-neutral-300);
   font-size: 11px;
 }
 

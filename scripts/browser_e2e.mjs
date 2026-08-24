@@ -183,6 +183,69 @@ async function assertResponsiveShell(page, label, width) {
   );
 }
 
+async function assertCohesionTracePanelContrast(page, label) {
+  const state = await page.evaluate(() => {
+    function luminance(red, green, blue) {
+      const channels = [red, green, blue]
+        .map((value) => value / 255)
+        .map((value) => (value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+    }
+    function contrast(first, second) {
+      const [lighter, darker] = [luminance(...first), luminance(...second)].sort((left, right) => right - left);
+      return (lighter + 0.05) / (darker + 0.05);
+    }
+    function parseRgb(color) {
+      const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+      if (!match) return null;
+      return [Number(match[1]), Number(match[2]), Number(match[3])];
+    }
+
+    const section = [...document.querySelectorAll("main section")].find(
+      (candidate) => candidate.querySelector("h2")?.textContent?.includes("Il totale non basta"),
+    );
+    if (!section) return null;
+
+    const background = parseRgb(getComputedStyle(section).backgroundColor);
+    const heading = section.querySelector("h2");
+    const body = section.querySelector("p");
+    const kicker = section.querySelector("div > span");
+    const metricValue = section.querySelector("strong");
+    const metricLabel = metricValue?.nextElementSibling;
+
+    return {
+      background,
+      samples: [
+        ["heading", heading, 4.5],
+        ["body", body, 4.5],
+        ["kicker", kicker, 4.5],
+        ["metric value", metricValue, 4.5],
+        ["metric label", metricLabel, 4.5],
+      ].map(([name, element, minimum]) => {
+        const foreground = element ? parseRgb(getComputedStyle(element).color) : null;
+        return {
+          name,
+          minimum,
+          ratio: foreground && background ? contrast(foreground, background) : null,
+        };
+      }),
+    };
+  });
+
+  assert.ok(state, `${label}: pannello traccia PNRR non trovato`);
+  assert.ok(
+    state.background?.every((channel) => channel < 80),
+    `${label}: sfondo del pannello traccia non risulta scuro`,
+  );
+  for (const sample of state.samples) {
+    assert.ok(sample.ratio !== null, `${label}: colore ${sample.name} non misurabile`);
+    assert.ok(
+      sample.ratio >= sample.minimum,
+      `${label}: contrasto ${sample.name} ${sample.ratio.toFixed(2)} < ${sample.minimum}`,
+    );
+  }
+}
+
 async function assertCohesionStatusLayout(page, label) {
   const state = await page.$eval("main", (main) => {
     const section = [...main.querySelectorAll("section")].find(
@@ -1104,6 +1167,7 @@ try {
       width,
       validate: async (page) => {
         assertTextMatches(await bodyText(page), /A che punto sono i progetti/i, label);
+        await assertCohesionTracePanelContrast(page, label);
         await assertCohesionStatusLayout(page, label);
       },
     });

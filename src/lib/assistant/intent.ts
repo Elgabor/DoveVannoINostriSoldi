@@ -6,29 +6,7 @@ import {
   type AssistantIntent,
   type AssistantResponse,
 } from "@/lib/assistant/contracts";
-
-const REGIONS = new Map<string, string>([
-  ["abruzzo", "Abruzzo"],
-  ["basilicata", "Basilicata"],
-  ["calabria", "Calabria"],
-  ["campania", "Campania"],
-  ["emilia romagna", "Emilia-Romagna"],
-  ["friuli venezia giulia", "Friuli-Venezia Giulia"],
-  ["lazio", "Lazio"],
-  ["liguria", "Liguria"],
-  ["lombardia", "Lombardia"],
-  ["marche", "Marche"],
-  ["molise", "Molise"],
-  ["piemonte", "Piemonte"],
-  ["puglia", "Puglia"],
-  ["sardegna", "Sardegna"],
-  ["sicilia", "Sicilia"],
-  ["toscana", "Toscana"],
-  ["trentino alto adige", "Trentino-Alto Adige/Südtirol"],
-  ["umbria", "Umbria"],
-  ["valle d aosta", "Valle d'Aosta/Vallée d'Aoste"],
-  ["veneto", "Veneto"],
-]);
+import { REGION_PROMPT_ALIASES } from "@/lib/region-query";
 
 const UNSAFE_PATTERNS = [
   /\b(frode|frodi|corruzion\p{Letter}*|evasione|truffa|colpevol\p{Letter}*|responsabilit\p{Letter}*|inculpat\p{Letter}*|reato\p{Letter}*|criminal\p{Letter}*|illegal\p{Letter}*|colpa)\b/u,
@@ -63,7 +41,7 @@ function yearFrom(prompt: string): number | null {
 }
 
 function regionFrom(prompt: string): string | undefined {
-  const found = [...REGIONS.entries()]
+  const found = [...REGION_PROMPT_ALIASES.entries()]
     .sort(([left], [right]) => right.length - left.length)
     .find(([alias]) => new RegExp(`\\b${alias.replace(/ /gu, "\\s+")}\\b`, "u").test(prompt));
   return found?.[1];

@@ -55,6 +55,38 @@ test("SIOPE query validates years and can filter a region", async () => {
   assert.match(result.queryLimitations.distribution, /non è pubblicata|risposta nazionale/i);
 });
 
+test("SIOPE query resolves common region aliases and rejects unknown regions", async () => {
+  const aliased = await queryPublicDataset({
+    dataset: "siope_comuni",
+    year: 2025,
+    region: "Emilia Romagna",
+  });
+  assert.equal(aliased.regionFilter.resolved, "Emilia-Romagna");
+  assert.equal(aliased.regionFilter.matched, true);
+  assert.equal(aliased.regions.length, 1);
+  assert.equal(aliased.regions[0].region, "Emilia-Romagna");
+
+  await assert.rejects(
+    queryPublicDataset({ dataset: "siope_comuni", year: 2025, region: "Atlantide" }),
+    /Regione non trovata: Atlantide/,
+  );
+});
+
+test("OpenCivitas query resolves region aliases and rejects unknown regions", async () => {
+  const aliased = await queryPublicDataset({
+    dataset: "opencivitas_fabbisogni",
+    region: "Emilia Romagna",
+    limit: 5,
+  });
+  assert.ok(aliased.data.length > 0);
+  assert.ok(aliased.data.every((item) => item.region === "EMILIA-ROMAGNA"));
+
+  await assert.rejects(
+    queryPublicDataset({ dataset: "opencivitas_fabbisogni", region: "Sardegna" }),
+    /Regione non trovata: Sardegna/,
+  );
+});
+
 test("SIOPE national MCP query carries only compact full-population aggregates", async () => {
   const result = await queryPublicDataset({ dataset: "siope_comuni", year: 2026 });
   assert.equal(result.distribution.schemaVersion, 2);

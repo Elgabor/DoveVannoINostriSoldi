@@ -1,4 +1,9 @@
 import { datasetCatalog, type DatasetQuery } from "@/lib/mcp/catalog";
+import {
+  formatRegionNotFoundError,
+  resolveCanonicalRegionName,
+  resolveOpenCivitasRegionName,
+} from "@/lib/region-query";
 
 const datasetFilters = new Map(datasetCatalog.map((dataset) => [dataset.id, new Set(dataset.filters)]));
 
@@ -65,15 +70,29 @@ export async function queryPublicDataset(
         throw new Error(`Anno SIOPE non disponibile. Anni validi: ${availableSiopeYears.join(", ")}.`);
       }
       const snapshot = getSiopeMunicipalSnapshot(year);
-      const region = query.region?.trim().toLocaleLowerCase("it-IT");
-      if (!region) return jsonSafe(snapshot);
+      const regionInput = query.region?.trim();
+      if (!regionInput) return jsonSafe(snapshot);
+      const canonicalRegion = resolveCanonicalRegionName(regionInput);
+      if (!canonicalRegion) {
+        throw new Error(formatRegionNotFoundError(regionInput));
+      }
+      const matchesRegion = (item: { region: string }) => item.region === canonicalRegion;
+      const filteredRegions = snapshot.regions.filter(matchesRegion);
+      if (filteredRegions.length === 0) {
+        throw new Error(formatRegionNotFoundError(regionInput));
+      }
       const { distribution: nationalDistribution, ...snapshotWithoutDistribution } = snapshot;
       return jsonSafe({
         ...snapshotWithoutDistribution,
-        regions: snapshot.regions.filter((item) => item.region.toLocaleLowerCase("it-IT") === region),
-        topMunicipalities: snapshot.topMunicipalities.filter((item) => item.region.toLocaleLowerCase("it-IT") === region),
-        topMunicipalitiesByValue: snapshot.topMunicipalitiesByValue.filter((item) => item.region.toLocaleLowerCase("it-IT") === region),
-        topMunicipalitiesByPerCapita: snapshot.topMunicipalitiesByPerCapita.filter((item) => item.region.toLocaleLowerCase("it-IT") === region),
+        regions: filteredRegions,
+        topMunicipalities: snapshot.topMunicipalities.filter(matchesRegion),
+        topMunicipalitiesByValue: snapshot.topMunicipalitiesByValue.filter(matchesRegion),
+        topMunicipalitiesByPerCapita: snapshot.topMunicipalitiesByPerCapita.filter(matchesRegion),
+        regionFilter: {
+          requested: regionInput,
+          resolved: canonicalRegion,
+          matched: true,
+        },
         queryLimitations: {
           regionAggregateComplete: false,
           regionAggregateCompleteDeprecated:
@@ -119,10 +138,17 @@ export async function queryPublicDataset(
       if (query.year && query.year !== openCivitasSnapshot.referenceYear) {
         throw new Error(`OpenCivitas è disponibile per il ${openCivitasSnapshot.referenceYear}.`);
       }
-      const region = query.region?.trim().toLocaleUpperCase("it-IT");
+      const regionInput = query.region?.trim();
+      const region = regionInput ? resolveOpenCivitasRegionName(regionInput) : null;
+      if (regionInput && !region) {
+        throw new Error(formatRegionNotFoundError(regionInput));
+      }
       const code = query.code?.trim();
       const matches = openCivitasSnapshot.municipalities.filter((item) =>
         (!region || item.region === region) && (!code || item.istatCode === code));
+      if (region && matches.length === 0) {
+        throw new Error(formatRegionNotFoundError(regionInput!));
+      }
       return jsonSafe({
         referenceYear: openCivitasSnapshot.referenceYear,
         publishedAt: openCivitasSnapshot.publishedAt,

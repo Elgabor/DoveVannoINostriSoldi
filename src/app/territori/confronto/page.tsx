@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Form from "next/form";
 import Link from "next/link";
+import Pagination from "@/components/pagination";
 import { exactEuro, integer, longDate } from "@/lib/format";
 import { municipalityName } from "@/lib/municipality-name";
 import { openCivitasSnapshot } from "@/lib/opencivitas-snapshot";
@@ -328,33 +329,26 @@ export default async function MunicipalComparisonPage({
           servizi rispetto ai Comuni della stessa fascia di popolazione.
         </p>
 
-        {pageCount > 1 ? (
-          <nav className={styles.pagination} aria-label="Pagine dei risultati">
-            {page > 1 ? (
-              <Link
-                className="btn btn-secondary"
-                href={pageUrl({ query, region, sort, page: page - 1 })}
-              >
-                Pagina precedente
-              </Link>
-            ) : (
-              <span />
-            )}
-            <span>
-              Pagina {integer(page)} di {integer(pageCount)}
-            </span>
-            {page < pageCount ? (
-              <Link
-                className="btn btn-secondary"
-                href={pageUrl({ query, region, sort, page: page + 1 })}
-              >
-                Pagina successiva
-              </Link>
-            ) : (
-              <span />
-            )}
-          </nav>
-        ) : null}
+        <Pagination
+          label="Pagine dei risultati"
+          page={page}
+          pageCount={pageCount}
+          summary={
+            filtered.length > 0
+              ? `Comuni ${integer(firstResult)}-${integer(lastResult)} di ${integer(filtered.length)}`
+              : undefined
+          }
+          hrefForPage={(target) => pageUrl({ query, region, sort, page: target })}
+          jump={{
+            action: "/territori/confronto",
+            pageParam: "pagina",
+            fields: {
+              ...(query ? { comune: query } : {}),
+              ...(region ? { regione: region } : {}),
+              ...(sort !== "per-abitante" ? { ordine: sort } : {}),
+            },
+          }}
+        />
       </section>
 
       <section className="panel" aria-labelledby="source-title">

@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Pagination from "@/components/pagination";
 import { integer } from "@/lib/format";
+import { offsetFromPage, pageCountFromTotal, pageFromOffset } from "@/lib/pagination";
 import {
   formatRgsTerritorialValue,
   queryRgsTerritorial,
+  RGS_TERRITORIAL_DEFAULT_LIMIT,
   rgsTerritorialMeasures,
   RgsTerritorialQueryError,
   rgsTerritorialSnapshot,
@@ -18,6 +20,7 @@ type TerritorialPageProps = {
     misura?: SearchValue;
     limit?: SearchValue;
     offset?: SearchValue;
+    pagina?: SearchValue;
   }>;
 };
 
@@ -47,6 +50,20 @@ function paginationHref(
   return `/spese/territoriale?${query.toString()}`;
 }
 
+/** `pagina` is the readable form of `offset`; an explicit offset still wins. */
+function requestedOffset(params: Awaited<TerritorialPageProps["searchParams"]>): SearchValue {
+  if (params.offset !== undefined && params.offset !== "") return params.offset;
+  const page = params.pagina;
+  if (typeof page === "string" && /^\d+$/.test(page) && Number(page) >= 1) {
+    const limit =
+      typeof params.limit === "string" && /^\d+$/.test(params.limit) && Number(params.limit) >= 1
+        ? Number(params.limit)
+        : RGS_TERRITORIAL_DEFAULT_LIMIT;
+    return String(offsetFromPage(Number(page), limit));
+  }
+  return undefined;
+}
+
 function safeQuery(params: Awaited<TerritorialPageProps["searchParams"]>) {
   try {
     return {
@@ -55,7 +72,7 @@ function safeQuery(params: Awaited<TerritorialPageProps["searchParams"]>) {
         territory: params.territorio,
         measure: params.misura,
         limit: params.limit,
-        offset: params.offset,
+        offset: requestedOffset(params),
       }),
       error: null,
     };
@@ -70,8 +87,6 @@ export default async function RgsTerritorialPage({ searchParams }: TerritorialPa
   const { result, error } = safeQuery(params);
   const firstVisible = result.rows.length === 0 ? 0 : result.pagination.offset + 1;
   const lastVisible = result.pagination.offset + result.pagination.returned;
-  const previousOffset = Math.max(0, result.pagination.offset - result.pagination.limit);
-  const nextOffset = result.pagination.offset + result.pagination.limit;
   const reconciliation = rgsTerritorialSnapshot.reconciliation;
 
   return (
@@ -216,17 +231,29 @@ export default async function RgsTerritorialPage({ searchParams }: TerritorialPa
             </table>
           </div>
         ) : null}
-        {result.pagination.total > result.pagination.limit ? (
-          <nav className={styles.pagination} aria-label="Pagine della distribuzione territoriale RGS">
-            {result.pagination.offset > 0 ? (
-              <Link href={paginationHref(result, previousOffset)}>← Pagina precedente</Link>
-            ) : <span />}
-            <span>Pagina {integer(Math.floor(result.pagination.offset / result.pagination.limit) + 1)}</span>
-            {nextOffset < result.pagination.total ? (
-              <Link href={paginationHref(result, nextOffset)}>Pagina successiva →</Link>
-            ) : <span />}
-          </nav>
-        ) : null}
+        <Pagination
+          label="Pagine della distribuzione territoriale RGS"
+          page={pageFromOffset(result.pagination.offset, result.pagination.limit)}
+          pageCount={pageCountFromTotal(result.pagination.total, result.pagination.limit)}
+          summary={
+            result.rows.length > 0
+              ? `righe ${integer(firstVisible)}-${integer(lastVisible)} di ${integer(result.pagination.total)}`
+              : undefined
+          }
+          hrefForPage={(target) =>
+            paginationHref(result, offsetFromPage(target, result.pagination.limit))
+          }
+          jump={{
+            action: "/spese/territoriale",
+            pageParam: "pagina",
+            fields: {
+              livello: result.query.level,
+              misura: result.query.measure,
+              limit: String(result.pagination.limit),
+              ...(result.query.territory ? { territorio: result.query.territory } : {}),
+            },
+          }}
+        />
       </section>
 
       <section className={`panel ${styles.reconciliationPanel}`} aria-labelledby="territorial-reconciliation-title">

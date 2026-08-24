@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { HeaderSearch } from "@/components/header-search";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { GithubIcon } from "@hugeicons/core-free-icons";
@@ -18,6 +18,18 @@ export function Navigation() {
   const pathname = usePathname();
   const navigationRef = useRef<HTMLElement>(null);
   const activeLinkRef = useRef<HTMLAnchorElement>(null);
+  /**
+   * Which submenu a tap has opened. Hover alone cannot reach these on a touch
+   * screen, so the caret is a real control and this is the state it drives.
+   *
+   * The path it was opened on travels with it: a completed navigation has
+   * already answered the menu, so the open state simply stops applying rather
+   * than being cleared from an effect after the new page has painted.
+   */
+  const [openMenu, setOpenMenu] = useState<{ href: string; pathname: string } | null>(null);
+  const openHref = openMenu?.pathname === pathname ? openMenu.href : null;
+
+  const closeMenu = useCallback(() => setOpenMenu(null), []);
 
   useEffect(() => {
     const navigation = navigationRef.current;
@@ -29,6 +41,22 @@ export function Navigation() {
       activeLink.scrollIntoView({ block: "nearest", inline: "center" });
     }
   }, [pathname]);
+
+  useEffect(() => {
+    if (openHref === null) return;
+    function dismissOutside(event: PointerEvent) {
+      if (!navigationRef.current?.contains(event.target as Node)) closeMenu();
+    }
+    function dismissOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") closeMenu();
+    }
+    document.addEventListener("pointerdown", dismissOutside);
+    document.addEventListener("keydown", dismissOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", dismissOutside);
+      document.removeEventListener("keydown", dismissOnEscape);
+    };
+  }, [openHref, closeMenu]);
 
   return (
     <header className="site-header">
@@ -75,48 +103,61 @@ export function Navigation() {
             {PRIMARY_NAV.map((item) => {
               const active = isNavSectionActive(pathname, item);
               const hasChildren = Boolean(item.children?.length);
+              const menuId = `nav-menu-${item.href.replace(/\W+/g, "-")}`;
+              const open = openHref === item.href;
               return (
                 <li
                   key={item.href}
                   className={hasChildren ? "nav-item nav-item-has-menu" : "nav-item"}
+                  data-section-active={active ? "true" : undefined}
+                  data-open={open ? "true" : undefined}
                 >
                   <Link
                     href={item.href}
                     aria-current={pathname === item.href ? "page" : undefined}
-                    aria-haspopup={hasChildren ? "true" : undefined}
                     data-section-active={active ? "true" : undefined}
                     ref={active ? activeLinkRef : undefined}
                   >
                     {item.label}
-                    {hasChildren ? (
-                      <span className="nav-item-caret" aria-hidden="true">
-                        ▾
-                      </span>
-                    ) : null}
                   </Link>
                   {hasChildren && item.children ? (
-                    <div
-                      className="nav-submenu"
-                      role="region"
-                      aria-label={`Pagine in ${item.label}`}
-                    >
-                      <ul>
-                        {item.children.map((child) => (
-                          <li key={child.href}>
-                            <Link
-                              href={child.href}
-                              aria-current={
-                                isNavChildActive(pathname, child.href, item.children!)
-                                  ? "page"
-                                  : undefined
-                              }
-                            >
-                              {child.label}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                    <>
+                      <button
+                        type="button"
+                        className="nav-item-toggle"
+                        aria-expanded={open}
+                        aria-controls={menuId}
+                        aria-label={`${open ? "Chiudi" : "Apri"} le pagine in ${item.label}`}
+                        onClick={() =>
+                          setOpenMenu(open ? null : { href: item.href, pathname })
+                        }
+                      >
+                        <span aria-hidden="true">▾</span>
+                      </button>
+                      <div
+                        className="nav-submenu"
+                        id={menuId}
+                        role="region"
+                        aria-label={`Pagine in ${item.label}`}
+                      >
+                        <ul>
+                          {item.children.map((child) => (
+                            <li key={child.href}>
+                              <Link
+                                href={child.href}
+                                aria-current={
+                                  isNavChildActive(pathname, child.href, item.children!)
+                                    ? "page"
+                                    : undefined
+                                }
+                              >
+                                {child.label}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </>
                   ) : null}
                 </li>
               );

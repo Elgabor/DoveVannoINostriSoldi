@@ -159,12 +159,15 @@ export function getRgsTerritorialSourceHealth() {
   };
 }
 
+/** Rows per page when the caller does not ask for a size. */
+export const RGS_TERRITORIAL_DEFAULT_LIMIT = 25;
+
 export function queryRgsTerritorial(query: RgsTerritorialQuery = {}) {
   const level = levelParam(query.level);
   const requestedTerritory = textParam(query.territory, "territorio");
   const measureId = measureParam(query.measure);
   const measureIndex = MEASURE_INDEX[measureId];
-  const limit = integerParam(query.limit, "limit", 25, 1, 100);
+  const limit = integerParam(query.limit, "limit", RGS_TERRITORIAL_DEFAULT_LIMIT, 1, 100);
   const offset = integerParam(query.offset, "offset", 0, 0, 100_000);
   const territories = rgsTerritorialSnapshot.dimensions.territories;
   const selectedTerritory = requestedTerritory

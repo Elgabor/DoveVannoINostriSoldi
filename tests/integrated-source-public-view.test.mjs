@@ -529,3 +529,39 @@ test("the server boundary and pages preserve missing, zero and async Next route 
   assert.doesNotMatch(publicSurface, /\/Users\//);
   assert.doesNotMatch(publicSurface, /\.tar\.gz/i);
 });
+
+test("the dataset sheet puts the rows before the panels that describe them", async () => {
+  const detail = await readFile(
+    new URL("../src/app/dati/[dataset]/page.tsx", import.meta.url),
+    "utf8",
+  );
+  const rows = detail.indexOf('id="dataset-rows-title"');
+  const contract = detail.indexOf('id="dataset-contract-title"');
+  const provenance = detail.indexOf('id="dataset-source-title"');
+  const caveats = detail.indexOf('id="dataset-caveats-title"');
+  for (const [name, index] of Object.entries({ rows, contract, provenance, caveats })) {
+    assert.ok(index > 0, `sezione assente: ${name}`);
+  }
+  assert.ok(rows < contract, "le righe devono precedere la nota di lettura");
+  assert.ok(contract < provenance, "la nota di lettura deve precedere la provenienza");
+  assert.ok(provenance < caveats, "la provenienza deve precedere i limiti");
+  // The three value conventions travel with the cells they explain.
+  assert.match(detail, /valueLegend/);
+  // An amount column is realigned only when no value on the page contradicts
+  // the header, so a text column is never turned into a number column.
+  assert.match(detail, /const AMOUNT_HEADER =/);
+  assert.match(detail, /\.every\(\(value\) => AMOUNT_VALUE\.test\(value\.trim\(\)\)\)/);
+});
+
+test("the integrated catalogue indexes its domains and names them in Italian", async () => {
+  const [catalogPage, css] = await Promise.all([
+    readFile(new URL("../src/app/dati/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/app/dati/dati.module.css", import.meta.url), "utf8"),
+  ]);
+  assert.match(catalogPage, /INTEGRATED_DOMAIN_ORDER/);
+  assert.match(catalogPage, /integratedDomainLabel/);
+  assert.match(catalogPage, /domainIndex/);
+  // No page may print a raw domain slug as a heading.
+  assert.doesNotMatch(catalogPage, /DOMAIN_LABELS\[domain\] \?\? domain/);
+  assert.match(css, /\.domainIndex \{/);
+});

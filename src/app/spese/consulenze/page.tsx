@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Pagination from "@/components/pagination";
 import { integer } from "@/lib/format";
+import { offsetFromPage, pageCountFromTotal, pageFromOffset } from "@/lib/pagination";
 import {
   formatRgsEuroCents,
   queryRgsConsulting,
@@ -60,8 +61,6 @@ export default async function RgsConsultingPage({ searchParams }: ConsultingPage
   const { result, error } = safeQuery(params);
   const firstVisible = result.rows.length === 0 ? 0 : result.pagination.offset + 1;
   const lastVisible = result.pagination.offset + result.pagination.returned;
-  const previousOffset = Math.max(0, result.pagination.offset - result.pagination.limit);
-  const nextOffset = result.pagination.offset + result.pagination.limit;
 
   return (
     <main className={`shell page ${styles.page}`}>
@@ -202,17 +201,19 @@ export default async function RgsConsultingPage({ searchParams }: ConsultingPage
             </table>
           </div>
         ) : null}
-        {result.pagination.total > result.pagination.limit ? (
-          <nav className={styles.pagination} aria-label="Pagine delle righe RGS consulenze">
-            {result.pagination.offset > 0 ? (
-              <Link href={paginationHref(result, previousOffset)}>← Pagina precedente</Link>
-            ) : <span />}
-            <span>Pagina {integer(Math.floor(result.pagination.offset / result.pagination.limit) + 1)}</span>
-            {nextOffset < result.pagination.total ? (
-              <Link href={paginationHref(result, nextOffset)}>Pagina successiva →</Link>
-            ) : <span />}
-          </nav>
-        ) : null}
+        <Pagination
+          label="Pagine delle righe RGS consulenze"
+          page={pageFromOffset(result.pagination.offset, result.pagination.limit)}
+          pageCount={pageCountFromTotal(result.pagination.total, result.pagination.limit)}
+          summary={
+            result.rows.length > 0
+              ? `righe ${integer(firstVisible)}-${integer(lastVisible)} di ${integer(result.pagination.total)}`
+              : undefined
+          }
+          hrefForPage={(target) =>
+            paginationHref(result, offsetFromPage(target, result.pagination.limit))
+          }
+        />
       </section>
 
       <section className={`panel ${styles.sourcePanel}`} aria-labelledby="consulting-sources-title">

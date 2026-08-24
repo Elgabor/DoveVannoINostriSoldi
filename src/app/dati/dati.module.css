@@ -32,9 +32,12 @@
 }
 
 .sectionHeading > span {
+  min-width: 0;
   color: var(--color-neutral-600);
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  text-align: right;
+  text-wrap: balance;
 }
 
 .datasetGrid {
@@ -303,13 +306,30 @@
   margin-top: var(--space-1);
 }
 
-.pagination {
+/* A filtered scan advances by cursor, so it has no page count to show: it
+   gets a plain next step and a sentence saying why the numbers are absent. */
+.searchPagination {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-3);
   padding: 14px 18px;
   border-top: 1px solid var(--color-neutral-300);
-  font-weight: 700;
+}
+
+.searchPagination p {
+  flex: 1 1 32ch;
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-neutral-600);
+}
+
+/* An amount reads as a quantity, not as prose: same digit width down the
+   column so two rows can be compared without re-reading them. */
+.amountCell {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
 }
 
 .unavailablePanel p {
@@ -365,3 +385,112 @@
     width: 100%;
   }
 }
+
+/* An index for a page that lists seventy-nine sets: without it the only way to
+   reach an area is to scroll past every other one. */
+.domainIndex {
+  padding: 16px 18px;
+  background: var(--color-raised);
+  border: 1px solid var(--color-neutral-300);
+}
+
+.domainIndex h2 {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: var(--font-heading-weight);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+
+.domainIndex ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.domainIndex a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding-inline: var(--space-3);
+  border: 1px solid var(--color-neutral-400);
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.domainIndex a:hover {
+  color: var(--color-text);
+  background: var(--color-neutral-200);
+}
+
+.domainIndex a span {
+  color: var(--color-neutral-600);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The size of a set is the first thing that tells a reader whether it is worth
+   opening, so it gets the weight of a figure rather than a line of metadata. */
+.cardCount {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+}
+
+.cardCount strong {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: var(--font-heading-weight);
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cardCount span {
+  font-size: 12px;
+  color: var(--color-neutral-600);
+}
+
+@media (max-width: 620px) {
+  .domainIndex ul {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .domainIndex li { display: flex; }
+  .domainIndex a { flex: 1; justify-content: space-between; }
+}
+
+/* The reading conventions belong beside the cells they explain, not in a
+   panel the reader has already scrolled past. */
+.valueLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) 0;
+  border-block: 1px solid var(--color-neutral-200);
+  list-style: none;
+}
+
+.valueLegend li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+  font-size: 12px;
+}
+
+.valueLegend strong {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.valueLegend span { color: var(--color-neutral-600); }

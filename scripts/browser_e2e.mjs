@@ -1183,6 +1183,7 @@ try {
       validate: async (page) => {
         const text = await bodyText(page);
         assertTextMatches(text, /Dati tecnici/i, label);
+        assertTextMatches(text, /Misurazione delle visite/i, label);
         assertTextMatches(text, /Server MCP/i, label);
         assert.doesNotMatch(text, /form di consulenza/i);
       },

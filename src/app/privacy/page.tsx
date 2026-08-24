@@ -40,6 +40,21 @@ export default function PrivacyPage() {
       </section>
 
       <section className="panel">
+        <h2 className="panel-title">Misurazione delle visite</h2>
+        <p>
+          Il sito usa Google Analytics 4 (Google tag) per capire quali pagine vengono lette. Google
+          tratta i dati secondo la propria informativa; consulta{" "}
+          <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer">
+            Privacy Policy di Google
+          </a>{" "}
+          e, se disponibile nel tuo browser,{" "}
+          <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noreferrer">
+            il componente aggiuntivo per disattivare Google Analytics
+          </a>. Non usiamo il tag per profilazione pubblicitaria sul sito.
+        </p>
+      </section>
+
+      <section className="panel">
         <h2 className="panel-title">Server MCP e assistenti esterni</h2>
         <p>
           L&apos;endpoint MCP è pubblico, senza account o autenticazione e in sola lettura. Riceve

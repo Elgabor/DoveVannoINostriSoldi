@@ -19,6 +19,7 @@ test("site navigation exposes coesione asili in primary and footer maps", () => 
   assert.match(navigationSource, /FOOTER_SITEMAP_GROUPS/);
   assert.match(navigationSource, /FOOTER_SITEMAP_COLUMNS = 4/);
   assert.match(layoutSource, /SiteFooter/);
+  assert.match(layoutSource, /GoogleAnalytics/);
   assert.match(globalsCss, /\.subnav-row \{/);
   assert.match(globalsCss, /\.footer-sitemap-rows \{/);
   assert.match(globalsCss, /row-gap: var\(--space-6\)/);
@@ -37,6 +38,18 @@ test("public legal pages do not expose a personal mailbox", async () => {
   }
   assert.doesNotMatch(files[0], /panel-title">Titolare/i);
   assert.doesNotMatch(files.join("\n"), /\/consulenza/);
+  assert.match(files[0], /Google Analytics 4/);
+});
+
+test("Google Analytics tag is loaded from the shared measurement id", async () => {
+  const [analytics, site] = await Promise.all([
+    readFile(new URL("../src/components/google-analytics.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/lib/site.ts", import.meta.url), "utf8"),
+  ]);
+  assert.match(site, /GOOGLE_ANALYTICS_MEASUREMENT_ID = "G-6NKJM5HWR4"/);
+  assert.match(analytics, /next\/script/);
+  assert.match(analytics, /strategy="afterInteractive"/);
+  assert.match(analytics, /gtag\('config'/);
 });
 
 test("activeNavSection resolves nested routes to the parent menu", () => {

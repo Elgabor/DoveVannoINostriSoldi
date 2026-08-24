@@ -1,0 +1,35 @@
+import type { Metadata } from "next";
+import { SITE_SUPPORTERS } from "@/lib/supporters";
+import styles from "../legal-page.module.css";
+
+export const metadata: Metadata = {
+  title: "Supporter",
+  description: "Chi sostiene DoveVannoINostriSoldi con infrastruttura, tempo o community.",
+};
+
+export default function SupportersPage() {
+  return (
+    <main className={`shell page ${styles.page}`}>
+      <div className="page-intro">
+        <h1>Supporter</h1>
+        <p>
+          Il sito resta indipendente e open source. Qui riconosciamo chi ci dà infrastruttura,
+          tempo o una community in cui lavorare. Non sono fonti dei dati pubblici e non
+          influenzano i numeri pubblicati.
+        </p>
+      </div>
+
+      {SITE_SUPPORTERS.map((supporter) => (
+        <section className="panel" key={supporter.href}>
+          <h2 className="panel-title">{supporter.name}</h2>
+          <p>{supporter.contribution}</p>
+          <p>
+            <a href={supporter.href} target="_blank" rel="noreferrer">
+              {new URL(supporter.href).hostname} ↗
+            </a>
+          </p>
+        </section>
+      ))}
+    </main>
+  );
+}

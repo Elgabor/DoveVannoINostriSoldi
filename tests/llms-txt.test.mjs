@@ -25,6 +25,7 @@ const requiredLinks = [
   "/api/territori/fisco",
   "/api/territori/irpef",
   "/privacy",
+  "/supporter",
 ];
 
 const routeFiles = {
@@ -46,6 +47,7 @@ const routeFiles = {
   "/api/territori/fisco": "../src/app/api/territori/fisco/route.ts",
   "/api/territori/irpef": "../src/app/api/territori/irpef/route.ts",
   "/privacy": "../src/app/privacy/page.tsx",
+  "/supporter": "../src/app/supporter/page.tsx",
 };
 
 test("llms.txt is a complete, canonical static discovery surface", async () => {

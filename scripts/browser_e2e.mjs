@@ -919,6 +919,7 @@ try {
 
   for (const [pathname, heading] of [
     ["/supporto", /Supporto/i],
+    ["/supporter", /Supporter/i],
     ["/termini", /Termini di utilizzo/i],
   ]) {
     for (const width of [320, 390, 1280]) {
@@ -957,6 +958,7 @@ try {
         const text = await bodyText(page);
         assertTextMatches(text, /Privacy/i, label);
         assertTextMatches(text, /Termini/i, label);
+        assertTextMatches(text, /Supporter/i, label);
         await assertResponsiveShell(page, label, width);
       },
     });

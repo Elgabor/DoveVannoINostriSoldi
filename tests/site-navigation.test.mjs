@@ -41,6 +41,21 @@ test("public legal pages do not expose a personal mailbox", async () => {
   assert.match(files[0], /Google Analytics 4/);
 });
 
+test("supporters page lists the current acknowledgements", async () => {
+  const [page, supporters, footer] = await Promise.all([
+    readFile(new URL("../src/app/supporter/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/lib/supporters.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/site-footer.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(supporters, /regolo\.ai/);
+  assert.match(supporters, /mantoventure\.com/);
+  assert.match(supporters, /italianbuilders\.co/);
+  assert.match(supporters, /modello GLM/);
+  assert.match(page, /SITE_SUPPORTERS/);
+  assert.match(footer, /href="\/supporter"/);
+  assert.match(navigationSource, /href: "\/supporter", label: "Supporter"/);
+});
+
 test("Google Analytics tag is loaded from the shared measurement id", async () => {
   const [analytics, site] = await Promise.all([
     readFile(new URL("../src/components/google-analytics.tsx", import.meta.url), "utf8"),

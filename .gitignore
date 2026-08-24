@@ -38,5 +38,6 @@ next-env.d.ts
 # Python ETL
 __pycache__/
 *.py[cod]
+
+# Vercel CLI local link
 .vercel
-.env*

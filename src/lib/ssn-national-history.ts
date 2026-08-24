@@ -70,7 +70,13 @@ async function discoverNationalCsvUrlByYear(signal?: AbortSignal): Promise<Map<n
   for (const pkg of payload.result.results) {
     const match = PACKAGE_NAME_PATTERN.exec(pkg.name);
     if (!match || !pkg.id) continue;
-    byYear.set(Number(match[1]), `${BDAP_DUMP}/${pkg.id}.csv`);
+    const year = Number(match[1]);
+    const csvUrl = `${BDAP_DUMP}/${pkg.id}.csv`;
+    const existing = byYear.get(year);
+    if (existing && existing !== csvUrl) {
+      throw new Error(`OpenBDAP pubblica più pacchetti per il Conto Economico SSN nazionale ${year}`);
+    }
+    byYear.set(year, csvUrl);
   }
   return byYear;
 }
@@ -93,6 +99,31 @@ function amountCents(record: DelimitedRecord): number {
   return cents;
 }
 
+/**
+ * Pure parsing step, kept separate from the network fetch so the duplicate-detection and
+ * amount-parsing guardrails are unit-testable with synthetic rows, not only exercised
+ * incidentally by however the live 2012-2024 data happens to be shaped today.
+ */
+export function nationalValuesFromRows(rows: DelimitedRecord[], year: number): SsnCceValues {
+  const byCode = new Map<string | undefined, DelimitedRecord>();
+  for (const row of rows) {
+    const code = row["Codice Voce Contabile"]?.trim();
+    if (code && byCode.has(code)) {
+      throw new Error(`Voce ${code} duplicata nel Conto Economico SSN nazionale ${year}`);
+    }
+    byCode.set(code, row);
+  }
+
+  const values = {} as SsnCceValues;
+  for (const metricId of SSN_CCE_METRICS) {
+    const code = METRIC_CODE[metricId];
+    const row = byCode.get(code);
+    if (!row) throw new Error(`Voce ${code} assente nel Conto Economico SSN nazionale ${year}`);
+    values[metricId] = amountCents(row);
+  }
+  return values;
+}
+
 async function fetchNationalYear(
   year: number,
   csvUrl: string,
@@ -107,16 +138,7 @@ async function fetchNationalYear(
   if (!response.ok) throw new Error(`OpenBDAP CSV HTTP ${response.status} per l'anno ${year}`);
 
   const rows = parseDelimitedRecords(decodePublicDataText(await response.arrayBuffer()));
-  const byCode = new Map(rows.map((row) => [row["Codice Voce Contabile"]?.trim(), row]));
-
-  const values = {} as SsnCceValues;
-  for (const metricId of SSN_CCE_METRICS) {
-    const code = METRIC_CODE[metricId];
-    const row = byCode.get(code);
-    if (!row) throw new Error(`Voce ${code} assente nel Conto Economico SSN nazionale ${year}`);
-    values[metricId] = amountCents(row);
-  }
-  return values;
+  return nationalValuesFromRows(rows, year);
 }
 
 export type SsnNationalHistoryYear = {

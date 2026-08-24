@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import "./helpers/register-ts-alias.mjs";
 
-const { SSN_NATIONAL_HISTORY_YEARS, getSsnNationalHistory } = await import(
+const { SSN_NATIONAL_HISTORY_YEARS, getSsnNationalHistory, nationalValuesFromRows } = await import(
   "../src/lib/ssn-national-history.ts"
 );
 const { ssnCceSnapshot } = await import("../src/lib/ssn-cce-snapshot.ts");
@@ -47,6 +47,59 @@ test(
     assert.ok(byYear.get(2020).healthcareWorkServices > byYear.get(2019).healthcareWorkServices);
   },
 );
+
+function row(code, importo) {
+  return {
+    "Anno di Riferimento": "2024",
+    "Codice Voce Contabile": code,
+    "Descrizione Voce Contabile": code,
+    "Data Aggiornamento": "01/01/2026",
+    "Importo Totale": importo,
+  };
+}
+
+const VALID_ROWS = [
+  row("BZ9999", "100.00"),
+  row("BA2080", "40.50"),
+  row("BA1350", "1.23"),
+  row("BA1750", "0.10"),
+  row("BA0390", "50.00"),
+];
+
+test("nationalValuesFromRows parses the 5 required voice codes into exact cents", () => {
+  const values = nationalValuesFromRows(VALID_ROWS, 2024);
+  assert.deepEqual(values, {
+    productionCosts: 10000,
+    personnelCost: 4050,
+    healthcareWorkServices: 123,
+    nonHealthcareWorkServices: 10,
+    purchasedServices: 5000,
+  });
+});
+
+test("nationalValuesFromRows ignores voice codes it does not need", () => {
+  const values = nationalValuesFromRows([...VALID_ROWS, row("AA0010", "999.99")], 2024);
+  assert.equal(Object.keys(values).length, 5);
+});
+
+test("nationalValuesFromRows fails closed on a duplicate voice code instead of silently keeping one", () => {
+  assert.throws(
+    () => nationalValuesFromRows([...VALID_ROWS, row("BZ9999", "1.00")], 2024),
+    /BZ9999 duplicata/,
+  );
+});
+
+test("nationalValuesFromRows fails closed when a required voice code is missing", () => {
+  const missingPersonnel = VALID_ROWS.filter((entry) => entry["Codice Voce Contabile"] !== "BA2080");
+  assert.throws(() => nationalValuesFromRows(missingPersonnel, 2024), /BA2080 assente/);
+});
+
+test("nationalValuesFromRows rejects an amount with more than 2 decimal digits instead of truncating it", () => {
+  const rows = VALID_ROWS.map((entry) =>
+    entry["Codice Voce Contabile"] === "BZ9999" ? row("BZ9999", "100.005") : entry,
+  );
+  assert.throws(() => nationalValuesFromRows(rows, 2024), /precisione inattesa/);
+});
 
 test("openbdap_ssn_storico_nazionale MCP dataset rejects filters and stays within the response budget", async () => {
   await assert.rejects(

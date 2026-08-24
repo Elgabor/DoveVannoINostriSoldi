@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import "./helpers/register-ts-alias.mjs";
 
-const { LEGISLATURES, getLegislatureSpendingCycles } = await import(
+const { LEGISLATURES, getLegislatureSpendingCycles, fullYearsWithinLegislature } = await import(
   "../src/lib/state-spending-legislature.ts"
 );
 const { queryPublicDataset } = await import("../src/lib/mcp/datasets.ts");
@@ -19,6 +19,27 @@ test("legislature dates are chronological and complete legislatures have a known
   const ongoing = LEGISLATURES.filter((legislature) => legislature.endDate === null);
   assert.equal(ongoing.length, 1, "una sola legislatura può essere in corso");
   assert.equal(ongoing[0].number, LEGISLATURES.at(-1).number);
+});
+
+test("fullYearsWithinLegislature excludes the partial seating year and the election year that ends it", () => {
+  const legislature = { number: "TEST", electionDate: "2013-02-24", startDate: "2013-03-15", endDate: "2018-03-22", source: { label: "", url: "" } };
+  assert.deepEqual(fullYearsWithinLegislature(legislature, 2018), [2014, 2015, 2016, 2017]);
+});
+
+test("fullYearsWithinLegislature returns no years for a legislature still in progress", () => {
+  const legislature = { number: "TEST", electionDate: "2022-09-25", startDate: "2022-10-13", endDate: null, source: { label: "", url: "" } };
+  assert.deepEqual(fullYearsWithinLegislature(legislature, null), []);
+});
+
+test("fullYearsWithinLegislature returns no years for a term too short to have a full calendar year", () => {
+  // Seated in 2020, its own successor elected the following year: no year is fully its own.
+  const legislature = { number: "TEST", electionDate: "2020-01-01", startDate: "2020-06-01", endDate: "2021-01-01", source: { label: "", url: "" } };
+  assert.deepEqual(fullYearsWithinLegislature(legislature, 2021), []);
+});
+
+test("fullYearsWithinLegislature returns exactly one year for a two-calendar-year term", () => {
+  const legislature = { number: "TEST", electionDate: "2020-01-01", startDate: "2020-06-01", endDate: "2022-01-01", source: { label: "", url: "" } };
+  assert.deepEqual(fullYearsWithinLegislature(legislature, 2022), [2021]);
 });
 
 test(

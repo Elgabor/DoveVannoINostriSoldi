@@ -48,8 +48,10 @@ export const LEGISLATURES: readonly Legislature[] = [
  * first year (the legislature is seated mid-year) and the year of the election that ends
  * it (`nextElectionYear`), since that year's budget only partly reflects this legislature.
  * A legislature still in progress (no successor yet) has no pre-election year to compare.
+ * Exported so this boundary arithmetic is unit-tested against synthetic legislatures,
+ * including edge cases (a single-year term) the three real ones never happen to exercise.
  */
-function fullYearsWithinLegislature(legislature: Legislature, nextElectionYear: number | null): number[] {
+export function fullYearsWithinLegislature(legislature: Legislature, nextElectionYear: number | null): number[] {
   if (nextElectionYear === null) return [];
   const startYear = Number(legislature.startDate.slice(0, 4));
   const firstFullYear = startYear + 1;
@@ -108,7 +110,12 @@ export async function getLegislatureSpendingCycles(
     const candidateYears = fullYearsWithinLegislature(legislature, nextElectionYear).filter(
       (year) => year >= MIN_CONSUNTIVO_YEAR,
     );
-    if (candidateYears.length < 2) {
+    // Only a truly empty range skips the fetch entirely (nothing to show). A legislature
+    // with exactly one full year still gets fetched and shown as real data further below;
+    // it simply ends up with no otherYearsAverage/differenceFromAverage to compare against
+    // (computed further down, not hardcoded here) rather than being hidden as if OpenBDAP
+    // had nothing for it.
+    if (candidateYears.length === 0) {
       cycles.push({
         legislature,
         years: [],

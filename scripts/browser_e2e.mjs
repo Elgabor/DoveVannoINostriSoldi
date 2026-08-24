@@ -8,6 +8,7 @@ const baseUrl = new URL(process.env.DVNS_BASE_URL ?? "http://127.0.0.1:3000");
 const SERVER_TIMEOUT_MS = 60_000;
 const NAVIGATION_TIMEOUT_MS = 45_000;
 const BROWSER_LAUNCH_TIMEOUT_MS = 60_000;
+const BROWSER_CLOSE_TIMEOUT_MS = 5_000;
 const TABLE_REGION = '[role="region"][aria-label="Redditi e variabili IRPEF per territorio"]';
 const ACTIVE_LEVEL = 'nav[aria-label="Livello territoriale"] a[aria-current="page"]';
 const INFO_TOOLTIP_IDS = ["cash-payments-tip", "spending-glossary-tip"];
@@ -18,6 +19,27 @@ if (!/^https?:$/.test(baseUrl.protocol)) {
 
 function delay(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+async function closeBrowser(browser) {
+  let timeout;
+  try {
+    await Promise.race([
+      browser.close(),
+      new Promise((_, reject) => {
+        timeout = setTimeout(
+          () => reject(new Error("Timeout durante la chiusura di Chromium.")),
+          BROWSER_CLOSE_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } catch (error) {
+    const browserProcess = browser.process();
+    if (browserProcess && !browserProcess.killed) browserProcess.kill("SIGKILL");
+    console.warn(error instanceof Error ? error.message : String(error));
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
 }
 
 function pageUrl(pathname) {
@@ -1336,5 +1358,5 @@ try {
     ok: true,
   }));
 } finally {
-  await browser?.close().catch(() => {});
+  if (browser) await closeBrowser(browser);
 }

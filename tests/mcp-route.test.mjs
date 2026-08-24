@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import "./helpers/register-ts-alias.mjs";
 
+process.env.MCP_ALLOWED_HOSTS = [process.env.MCP_ALLOWED_HOSTS, "example.test"]
+  .filter(Boolean)
+  .join(",");
+
 const { OPTIONS, POST } = await import("../src/app/api/mcp/route.ts");
+const loader = await import("../src/lib/integrated-sources.ts");
 
 const requestBody = JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" });
 
@@ -61,9 +66,52 @@ test("MCP endpoint enforces an explicit host allowlist", async () => {
     const rejected = await POST(request());
     assert.equal(rejected.status, 403);
     assert.match(await rejected.text(), /Host non consentito/);
+
+    const accepted = await POST(new Request("https://mcp.example.test/api/mcp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+      },
+      body: requestBody,
+    }));
+    assert.equal(accepted.status, 200);
   } finally {
     if (previous === undefined) delete process.env.MCP_ALLOWED_HOSTS;
     else process.env.MCP_ALLOWED_HOSTS = previous;
+  }
+});
+
+test("MCP endpoint fails closed for a public host when no host allowlist is configured", async () => {
+  const previous = {
+    allowedHosts: process.env.MCP_ALLOWED_HOSTS,
+    productionUrl: process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    deploymentUrl: process.env.VERCEL_URL,
+  };
+  delete process.env.MCP_ALLOWED_HOSTS;
+  delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  delete process.env.VERCEL_URL;
+  try {
+    const response = await POST(new Request("https://attacker-rebind.test/api/mcp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+        Host: "attacker-rebind.test",
+        Origin: "https://attacker-rebind.test",
+      },
+      body: requestBody,
+    }));
+    assert.equal(response.status, 403);
+    assert.match(await response.text(), /Host non consentito/);
+    assert.equal(response.headers.get("access-control-allow-origin"), null);
+  } finally {
+    if (previous.allowedHosts === undefined) delete process.env.MCP_ALLOWED_HOSTS;
+    else process.env.MCP_ALLOWED_HOSTS = previous.allowedHosts;
+    if (previous.productionUrl === undefined) delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+    else process.env.VERCEL_PROJECT_PRODUCTION_URL = previous.productionUrl;
+    if (previous.deploymentUrl === undefined) delete process.env.VERCEL_URL;
+    else process.env.VERCEL_URL = previous.deploymentUrl;
   }
 });
 
@@ -93,17 +141,24 @@ test("MCP endpoint accepts the exact loopback host shown by the local UI", async
   const previous = process.env.VERCEL_URL;
   process.env.VERCEL_URL = "production.example.test";
   try {
-    const response = await POST(new Request("http://localhost:3210/api/mcp", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json, text/event-stream",
-        Host: "127.0.0.1:3210",
-      },
-      body: requestBody,
-    }));
-    assert.equal(response.status, 200);
-    assert.match(await response.text(), /query_dataset/);
+    const loopbacks = [
+      ["http://localhost:3210/api/mcp", "127.0.0.1:3210"],
+      ["http://127.0.0.1:3210/api/mcp", "127.0.0.1:3210"],
+      ["http://[::1]:3210/api/mcp", "[::1]:3210"],
+    ];
+    for (const [url, host] of loopbacks) {
+      const response = await POST(new Request(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json, text/event-stream",
+          Host: host,
+        },
+        body: requestBody,
+      }));
+      assert.equal(response.status, 200, host);
+      assert.match(await response.text(), /query_dataset/);
+    }
   } finally {
     if (previous === undefined) delete process.env.VERCEL_URL;
     else process.env.VERCEL_URL = previous;
@@ -188,6 +243,7 @@ test("MCP query tool describes every input parameter for clients and directories
     "chamber",
     "limit",
     "offset",
+    "cursor",
   ]);
   for (const [name, schema] of Object.entries(properties)) {
     assert.equal(
@@ -295,6 +351,72 @@ test("MCP endpoint executes a modern tool call with mirrored request headers", a
   assert.equal(response.status, 200);
   assert.match(body, /"resultType":"complete"/);
   assert.match(body, /SIOPE \/ SIOPE\+/);
+});
+
+test("MCP query cancellation reaches the bounded dataset loader", async () => {
+  loader.resetIntegratedDatasetLoaderDiagnosticsForTests();
+  const controller = new AbortController();
+  const meta = {
+    "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+    "io.modelcontextprotocol/clientCapabilities": {},
+  };
+  const pending = POST(new Request("https://example.test/api/mcp", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json, text/event-stream",
+      "MCP-Protocol-Version": "2026-07-28",
+      "MCP-Method": "tools/call",
+      "MCP-Name": "query_dataset",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 14,
+      method: "tools/call",
+      params: {
+        _meta: meta,
+        name: "query_dataset",
+        arguments: {
+          dataset: "spesa_pa_dettaglio",
+          code: "parti-atti",
+          query: "query-sintetica-che-non-puo-comparire-9f52f21e",
+          limit: 100,
+        },
+      },
+    }),
+    signal: controller.signal,
+  }));
+
+  const observationDeadline = Date.now() + 2_000;
+  while (true) {
+    const diagnostics = loader.getIntegratedDatasetLoaderDiagnosticsForTests();
+    if (diagnostics.activeLoads > 0 || diagnostics.completedChunkLoads > 0) break;
+    assert.ok(Date.now() < observationDeadline, "dataset query did not start in time");
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+
+  controller.abort();
+  const response = await pending;
+  assert.equal(response.status, 499);
+  await response.text();
+
+  const cleanupDeadline = Date.now() + 2_000;
+  let diagnostics;
+  while (true) {
+    diagnostics = loader.getIntegratedDatasetLoaderDiagnosticsForTests();
+    if (
+      diagnostics.activeLoads === 0 &&
+      diagnostics.queuedLoads === 0 &&
+      diagnostics.inFlightChunkKeys.length === 0
+    ) break;
+    assert.ok(Date.now() < cleanupDeadline, "cancelled dataset query did not clean up in time");
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+
+  assert.ok(diagnostics.completedChunkLoads < 8, diagnostics);
+  assert.equal(diagnostics.activeLoads, 0);
+  assert.equal(diagnostics.queuedLoads, 0);
+  assert.deepEqual(diagnostics.inFlightChunkKeys, []);
 });
 
 test("MCP endpoint rejects filters unsupported by the selected dataset", async () => {

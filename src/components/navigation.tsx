@@ -84,9 +84,9 @@ export function Navigation() {
                 >
                   <Link
                     href={item.href}
-                    aria-current={active ? "page" : undefined}
+                    aria-current={pathname === item.href ? "page" : undefined}
                     aria-haspopup={hasChildren ? "true" : undefined}
-                    aria-expanded={hasChildren && active ? "true" : undefined}
+                    data-section-active={active ? "true" : undefined}
                     ref={active ? activeLinkRef : undefined}
                   >
                     {item.label}

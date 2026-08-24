@@ -111,6 +111,30 @@ assert.equal(pnrrData.pagination.total, 1);
 assert.equal(pnrrData.data[0].cup, "B11B21001610005");
 assert.match(pnrrData.methodology.fundingWarning, /non è un pagamento osservato/i);
 
+const integratedDataset = await mcpRequest({
+  jsonrpc: "2.0",
+  id: 22,
+  method: "tools/call",
+  params: {
+    name: "query_dataset",
+    arguments: {
+      dataset: "spesa_pa_dettaglio",
+      code: "consulenze-legali",
+      query: "2024",
+      limit: 5,
+    },
+  },
+});
+const integratedData = successfulMcpToolResult(
+  integratedDataset,
+  "spesa_pa_dettaglio",
+).data;
+assert.equal(integratedData.dataset.id, "consulenze-legali");
+assert.equal(integratedData.limit, 5);
+assert.ok(integratedData.rows.length > 0 && integratedData.rows.length <= 5);
+assert.equal(integratedData.matchedRows, null);
+assert.equal(typeof integratedData.pagination.nextCursor, "string");
+
 const meta = {
   "io.modelcontextprotocol/protocolVersion": "2026-07-28",
   "io.modelcontextprotocol/clientCapabilities": {},
@@ -155,5 +179,13 @@ assert.equal(modernData.pagination.returned, 20);
 console.log(JSON.stringify({
   ok: true,
   baseUrl: baseUrl.origin,
-  checks: ["page", "api", "legacy-tools", "legacy-query", "modern-discovery", "modern-query"],
+  checks: [
+    "page",
+    "api",
+    "legacy-tools",
+    "legacy-query",
+    "integrated-query",
+    "modern-discovery",
+    "modern-query",
+  ],
 }));

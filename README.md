@@ -18,11 +18,36 @@ L'AI serve a confrontare dati omogenei, trovare scostamenti e ordinare i casi da
 | Fondi e progetti | Costo previsto e pagamenti OpenCoesione; traccia PNRR per asili con CUP, gare e aggiudicatari | OpenCoesione, Italia Domani |
 | Enti e società | Ministeri, enti pubblici, uffici e contatti; per i Comuni riconosciuti, pagamenti, dati fiscali e approfondimenti disponibili | IPA, SIOPE, MEF, OpenCivitas, Italia Domani |
 | Spese dello Stato | Pagamenti per funzione, amministrazione e tipo di spesa | RGS, OpenBDAP |
+| Dettaglio integrato | 79 insiemi organizzati in 21 percorsi su appalti, incarichi, spese, trasparenza e benchmark | Anteprime editoriali, 338.782 righe interrogabili e registro completo di stato e provenienza |
 | Fabbisogni comunali | Spesa storica, spesa standard e servizi dei Comuni nel 2022 | OpenCivitas |
 | Partecipazioni | Società e organizzazioni partecipate dichiarate dalle amministrazioni | MEF |
 | Parlamento | Consuntivo e bilancio della Camera | Camera dei deputati |
 | Controlli | Dati che meritano verifiche più approfondite, con spiegazioni e fonti | ANAC, MEF, Corte dei conti e altre fonti ufficiali |
 | Fonti | Stato dei collegamenti e date di aggiornamento | Registro interno delle fonti |
+
+Il [registro integrato](docs/INTEGRATED_SOURCE_LEDGER.md) contabilizza 51.303 elementi,
+34.071 identità di fonte e 13.321.128 righe sorgente. Le 338.782 righe della proiezione
+pubblica sono accessibili da `/dati`; i materiali `catalog-only` e `derived-only`
+restano visibili con conteggio e motivo. Lo stato di licenza non dichiarata viene
+mostrato come caveat e non rimuove le righe sorgente.
+
+Le due viste RGS già verificate sono ora raggiungibili da
+`/spese/consulenze` (268 righe di rendiconto dal 2024 al 2025) e
+`/spese/territoriale` (5.067 combinazioni dimensionali 2023, con quattro
+misure mantenute separate).
+
+Le pagine principali di appalti, incarichi, spese, controlli e confronti
+mostrano anteprime brevi di non più di tre percorsi pertinenti. I quattro hub
+tematici sono le pagine di espansione: organizzano tutti i risultati e lasciano
+il registro tecnico in una sezione espandibile. Ciascuna delle 21 pagine di
+approfondimento arriva al dataset completo, alle fonti e alle cautele
+probatorie; la pagina Partecipazioni aggiunge una preview dedicata senza
+sostituire il censimento nazionale MEF. Tutti i 79 insiemi compaiono in un
+percorso canonico. Ogni scheda dichiara inoltre titolare, periodo, data di
+pubblicazione e acquisizione quando disponibili, ultimo controllo e frequenza
+attesa. La UI apre la fonte puntuale o il portale canonico quando sono presenti;
+altrimenti dichiara esplicitamente che l’URL non è disponibile. Ricevute e hash
+restano consultabili nel registro di copertura.
 
 Per ANAC è disponibile uno snapshot verificato sui dodici file mensili CIG 2025; non è ancora una ricerca live per singolo CIG o fornitore. Per il PNRR è operativo il perimetro asili e prima infanzia di Italia Domani: non include i pagamenti ReGiS e non viene esteso artificialmente al resto del Piano. Il sito dichiara questi limiti e non usa numeri dimostrativi per riempire gli spazi mancanti.
 
@@ -43,6 +68,8 @@ Il backend espone inoltre:
 - `GET /api/spese/comuni/distribuzione?anno=2026`, con quote e quantili compatti soltanto dopo un refresh raw SIOPE completo verificato; non restituisce righe comunali.
 - `GET /api/territori/fisco?anno=2023&regione=Calabria`, con entrate, spese e saldo contabile CPT nello stesso perimetro PA consolidato.
 - `GET /api/territori/irpef?anno=2024&livello=regione`, con contribuenti, redditi, imposta netta dichiarata e addizionali MEF; Province e Comuni sono filtrati e paginati.
+- `GET /api/dati/consulenze-legali?q=2024&limit=20`, esempio del selettore comune per le 57 proiezioni interrogabili integrate.
+- `GET /api/fonti/catalogo?disposition=quarantined&limit=20`, con ricevute opache e motivi delle identità non pubblicabili, senza esporne il valore.
 
 ## MCP per assistenti AI
 
@@ -66,6 +93,12 @@ Il server espone:
   confonderli con gli adapter gestiti dal portale.
 
 Tra i dataset c'è `anac_cig_snapshot`: espone copertura annuale, conteggi, procedure, fasce di importo, hash degli input e cautele della replica CIG 2025. `pnrr_asili` restituisce progetti Italia Domani per CUP con localizzazioni, quadro finanziario, gare e aggiudicatari collegati per chiavi esatte. `inps_invalidita_civile` tiene separate spesa nazionale, stock di prestazioni e nuove decorrenze regionali, senza inferire dati comunali o responsabilità individuali. `cpt_finanza_regionale` espone entrate, spese e saldo territoriale 2000-2023, con valori pro capite solo dove il denominatore ISTAT è coerente. `mef_irpef_comunale` espone il rilascio comunale 2024 come dato dichiarativo, conserva celle soppresse e riga non attribuita e non lo tratta come gettito o saldo di cassa. `opencoesione_progetti` include anche quota del costo pubblico, rapporto pagamenti/costo e costo medio per progetto per tema, natura e stato.
+
+`spesa_pa_dettaglio` espone via MCP lo stesso catalogo di 79 insiemi integrati:
+`code` seleziona l'ID, mentre `query`, `limit` e `offset` usano gli stessi limiti
+di pagina e API. Le 57 proiezioni interrogabili restituiscono righe; i 22
+materiali `catalog-only` o `derived-only` restituiscono metadati e conteggi
+senza inventare né pubblicare record puntuali.
 
 Per il dettaglio civico per singolo Comune segnaliamo anche il MCP pubblico di
 [Cruscotto Italia](https://cruscotto-italia.dati.gov.it/about.html#accesso-mcp), gestito da AgID:

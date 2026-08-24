@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import IntegratedSectionPreview from "@/components/integrated-section-preview";
 import type { EvidenceObservation } from "@/lib/data/public-spending-evidence-contract";
 import { exactEuro, longDate, percent } from "@/lib/format";
 import {
@@ -224,6 +225,14 @@ export default function ConfrontiPage() {
           </table>
         </div>
       </section>
+
+      <IntegratedSectionPreview
+        section="confronti"
+        title="Altri confronti da rendere omogenei"
+        description="Il catalogo aggiuntivo non viene confuso con questo confronto già verificato: ogni caso dichiara se unità, durata e perimetro sono davvero comparabili."
+        hubHref="/confronti/catalogo"
+        limit={1}
+      />
 
       <section className="panel" aria-labelledby="method-title">
         <h2 id="method-title" className="panel-title">Metodo e limiti</h2>

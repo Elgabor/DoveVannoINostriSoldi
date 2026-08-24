@@ -293,6 +293,18 @@ export async function queryPublicDataset(
       return jsonSafe(publicSources.filter((source) => !term || [source.name, source.owner, source.area, source.note]
         .some((value) => value.toLocaleLowerCase("it-IT").includes(term))));
     }
+    case "spesa_pa_dettaglio": {
+      const code = requireText(query.code, "code");
+      const { selectIntegratedDataset } = await import("@/lib/integrated-public-view");
+      return jsonSafe(await selectIntegratedDataset({
+        datasetId: code,
+        q: query.query,
+        limit,
+        offset: query.offset,
+        cursor: query.cursor,
+        signal: options.signal,
+      }));
+    }
     default: {
       const unsupported: never = query.dataset;
       throw new Error(`Dataset non supportato: ${String(unsupported)}.`);

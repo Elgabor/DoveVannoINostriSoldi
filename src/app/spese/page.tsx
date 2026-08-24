@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import IntegratedSectionPreview from "@/components/integrated-section-preview";
 import { PeriodSelector } from "@/components/period-selector";
 import { billions, compactEuro, exactEuro, integer, percent, longDate } from "@/lib/format";
 import { PASS_THROUGH_TITLE_CODE, siopeTitleCopy } from "@/lib/siope-titles";
@@ -355,6 +356,14 @@ export default async function MoneyPage({
           </section>
         </div>
       </div>
+
+      <IntegratedSectionPreview
+        section="spese"
+        title="Dai pagamenti alle singole voci operative"
+        description="Eventi, campagne, affitti, missioni, auto e rimborsi hanno anteprime dedicate e pagine con record, fonti e limiti."
+        hubHref="/spese/operative"
+        limit={3}
+      />
 
       <details className={styles.method}>
         <summary>Come sono raccolti questi dati</summary>

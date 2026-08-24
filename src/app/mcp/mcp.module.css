@@ -64,6 +64,14 @@
 .datasetTable td { font-size: 13px; }
 .datasetTable strong,
 .datasetTable small { display: block; }
+.datasetId {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+  color: var(--color-neutral-700);
+}
 .datasetTable small { margin-top: 3px; max-width: 70ch; color: var(--color-neutral-600); }
 .datasetTable tbody th { min-width: 220px; font-size: 13px; text-align: left; }
 .source { display: block; min-width: 180px; }

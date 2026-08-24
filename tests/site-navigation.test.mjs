@@ -57,6 +57,8 @@ test("a submenu can be opened without a pointer that can hover", async () => {
   assert.match(globalsCss, /@media \(max-width: 1260px\)/);
   // Below that break the row scrolls, so the panel must be anchored outside it.
   assert.match(globalsCss, /\.nav-row \{\n\s*position: relative;/);
+  assert.match(navigationComponent, /data-menu-open=\{openHref \? "true" : undefined\}/);
+  assert.match(globalsCss, /\.nav-row\[data-menu-open="true"\] \.primary-nav \{ overflow: visible; \}/);
 });
 
 test("every page offers the rest of its section without the header menu", async () => {

@@ -97,7 +97,7 @@ export function Navigation() {
         </div>
       </div>
 
-      <div className="shell nav-row">
+      <div className="shell nav-row" data-menu-open={openHref ? "true" : undefined}>
         <nav className="primary-nav" aria-label="Navigazione principale" ref={navigationRef}>
           <ul className="primary-nav-list">
             {PRIMARY_NAV.map((item) => {

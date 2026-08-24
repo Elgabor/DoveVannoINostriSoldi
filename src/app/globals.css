@@ -620,6 +620,9 @@ main { display: block; }
     scrollbar-width: none;
   }
   .primary-nav::-webkit-scrollbar { display: none; }
+  /* overflow-x: auto also clips vertically; release that while a panel is open
+     so the anchored submenu can extend below the scrolling row. */
+  .nav-row[data-menu-open="true"] .primary-nav { overflow: visible; }
   /* A scrolling row cannot show a panel that hangs out of it. Anchoring the
      panel to the row instead of to its own item puts it outside that scrolling
      box, so it is neither clipped by it nor placed against the document. */

@@ -575,20 +575,17 @@ function assertTextMatches(text, pattern, label) {
   assert.ok(pattern.test(text), `${label}: testo atteso ${pattern} assente`);
 }
 
-async function assertPrimaryDropdownOnly(page, label, { sectionLabel, childLabel }) {
-  assert.equal(await page.$("nav.subnav"), null, `${label}: barra sottosezioni non attesa`);
-  assert.equal(await page.$(".subnav-row"), null, `${label}: riga subnav non attesa`);
-
+async function findPrimaryNavSection(page, sectionLabel) {
   const item = await page.evaluateHandle((wanted) => {
     const link = [...document.querySelectorAll("nav.primary-nav .nav-item-has-menu > a")].find(
       (candidate) => (candidate.textContent ?? "").includes(wanted),
     );
     return link?.closest(".nav-item-has-menu") ?? null;
   }, sectionLabel);
-  const itemElement = item.asElement();
-  assert.ok(itemElement, `${label}: sezione ${sectionLabel} assente`);
+  return item.asElement();
+}
 
-  await itemElement.hover();
+async function assertSubmenuVisible(itemElement, page, label, childLabel) {
   await page.waitForFunction(
     (element) => {
       const submenu = element.querySelector(".nav-submenu");
@@ -602,6 +599,50 @@ async function assertPrimaryDropdownOnly(page, label, { sectionLabel, childLabel
 
   const childText = await itemElement.$eval(".nav-submenu", (element) => element.textContent ?? "");
   assert.match(childText, new RegExp(childLabel, "i"), `${label}: voce ${childLabel} assente in tendina`);
+}
+
+async function assertPrimaryDropdownOnly(page, label, { sectionLabel, childLabel }) {
+  assert.equal(await page.$("nav.subnav"), null, `${label}: barra sottosezioni non attesa`);
+  assert.equal(await page.$(".subnav-row"), null, `${label}: riga subnav non attesa`);
+
+  const itemElement = await findPrimaryNavSection(page, sectionLabel);
+  assert.ok(itemElement, `${label}: sezione ${sectionLabel} assente`);
+
+  await itemElement.hover();
+  await assertSubmenuVisible(itemElement, page, label, childLabel);
+}
+
+async function assertPrimaryDropdownTap(page, label, { sectionLabel, childLabel }) {
+  const itemElement = await findPrimaryNavSection(page, sectionLabel);
+  assert.ok(itemElement, `${label}: sezione ${sectionLabel} assente`);
+
+  await page.evaluate((element) => {
+    element.scrollIntoView({ block: "nearest", inline: "center" });
+  }, itemElement);
+
+  const toggle = await itemElement.$(".nav-item-toggle");
+  assert.ok(toggle, `${label}: pulsante tendina assente`);
+
+  await toggle.evaluate((button) => {
+    button.click();
+  });
+  await assertSubmenuVisible(itemElement, page, label, childLabel);
+
+  const navRowOpen = await page.$eval(".nav-row", (row) => row.getAttribute("data-menu-open"));
+  assert.equal(navRowOpen, "true", `${label}: data-menu-open non attivo`);
+
+  await toggle.evaluate((button) => {
+    button.click();
+  });
+  await page.waitForFunction(
+    (element) => {
+      const submenu = element.querySelector(".nav-submenu");
+      if (!submenu) return false;
+      return window.getComputedStyle(submenu).display === "none";
+    },
+    { timeout: 3_000 },
+    itemElement,
+  );
 }
 
 async function activeLevel(page) {
@@ -833,6 +874,11 @@ try {
           assert.ok(await page.$("nav.primary-nav .nav-submenu"), `${label}: markup tendina assente`);
           if (width >= 1280) {
             await assertPrimaryDropdownOnly(page, label, {
+              sectionLabel: route.sectionLabel,
+              childLabel: route.childLabel,
+            });
+          } else {
+            await assertPrimaryDropdownTap(page, label, {
               sectionLabel: route.sectionLabel,
               childLabel: route.childLabel,
             });

@@ -7,7 +7,14 @@ import styles from "./storico.module.css";
 
 export const dynamic = "force-dynamic";
 
-const PAGE_DATA_BUDGET_MS = 30_000;
+// 14 sequential OpenBDAP calls (1 discovery + 13 years); a single retry on any one of them
+// (up to ~30s per the openbdap source policy) can already push the total well past 30s. The
+// analogous /stato/legislature page (7 calls) hit its own tighter 20s budget during review;
+// this page does nearly twice the calls, so it gets the same treatment. This is about giving
+// the sequential fetch a fair chance, not a guarantee: vercel.json declares no
+// functions.maxDuration, so the real ceiling on the hosting platform is unverified and may
+// itself be lower than this value.
+const PAGE_DATA_BUDGET_MS = 60_000;
 
 export const metadata: Metadata = {
   title: "Serie storica della spesa sanitaria",

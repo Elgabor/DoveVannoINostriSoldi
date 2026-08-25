@@ -35,13 +35,44 @@ async function inspectRoute(browser, pathname, title, width) {
     // networkidle0 (PR1.8): wait for the h1 that carries the title.
     await navigate(page, { url, label: `${pathname} ${width}px`, readySelector: "h1" });
 
-    const state = await page.evaluate(() => {
+    let nativeLimits = false;
+    const limitSummaries = await page.$$("details > summary");
+    for (let index = 0; index < limitSummaries.length; index += 1) {
+      const summary = limitSummaries[index];
+      const summaryText = await summary.evaluate((element) => element.textContent ?? "");
+      if (!/non dimostra|limiti/i.test(summaryText)) continue;
+
+      const isOpen = await summary.evaluate((element) => element.closest("details")?.open === true);
+      if (!isOpen) await summary.click();
+
+      nativeLimits = await summary.evaluate((element) => {
+        const details = element.closest("details");
+        if (!details?.open) return false;
+
+        return [...details.children]
+          .filter((child) => child !== element)
+          .some((child) => {
+            const style = window.getComputedStyle(child);
+            const rect = child.getBoundingClientRect();
+            return (
+              (child.textContent ?? "").trim().length > 0 &&
+              style.display !== "none" &&
+              style.visibility !== "hidden" &&
+              rect.width > 0 &&
+              rect.height > 0
+            );
+          });
+      });
+      if (nativeLimits) break;
+    }
+
+    const state = await page.evaluate((nativeBoundaryVisible) => {
       const root = document.documentElement;
       const h1s = [...document.querySelectorAll("h1")];
       const dataLink = [...document.querySelectorAll("a")].some((link) =>
         /Vedi tutte le righe|Dati e fonti|registro completo/i.test(link.textContent ?? ""),
       );
-      const limits = [...document.querySelectorAll("h2")].some((heading) =>
+      const legacyLimits = [...document.querySelectorAll("h2")].some((heading) =>
         /non dimostra|limiti/i.test(heading.textContent ?? ""),
       );
       return {
@@ -50,9 +81,9 @@ async function inspectRoute(browser, pathname, title, width) {
         h1: h1s[0]?.textContent?.trim(),
         h1Count: h1s.length,
         dataLink,
-        limits,
+        limits: nativeBoundaryVisible || legacyLimits,
       };
-    });
+    }, nativeLimits);
     const label = `${pathname} ${width}px`;
     assert.equal(state.h1Count, 1, `${label}: serve un solo h1`);
     assert.equal(state.h1, title, `${label}: titolo inatteso`);

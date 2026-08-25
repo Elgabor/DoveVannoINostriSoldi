@@ -27,3 +27,7 @@ jobs:
         with:
           fail-on-severity: moderate
           comment-summary-in-pr: on-failure
+        # The dependency-graph feature must be enabled in repo settings
+        # (Settings → Code security and analysis → Dependency graph).
+        # Until an org admin enables it, this step is advisory only.
+        continue-on-error: true

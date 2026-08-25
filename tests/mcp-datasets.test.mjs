@@ -31,6 +31,17 @@ test("MCP catalog has one descriptor per stable dataset id and valid source refe
   assert.match(ssn.summary, /Consuntivo 2024 OpenBDAP/i);
   assert.match(ssn.caveat, /gettonisti.*cooperative/i);
   assert.deepEqual(ssn.filters, ["year", "region", "code", "limit", "offset"]);
+  const debt = datasetCatalog.find((dataset) => dataset.id === "debito_pubblico_italiano");
+  assert.deepEqual(debt.filters, []);
+  assert.deepEqual(debt.sourceIds, ["bancaditalia", "eurostat"]);
+});
+
+test("public debt MCP reuses the shared view and accepts no filters", async () => {
+  const result = await queryPublicDataset({ dataset: "debito_pubblico_italiano" });
+  assert.equal(result.ok, true);
+  assert.equal(result.stock.totalCents, 320_724_730_000_000);
+  assert.equal(result.citizenImpact.annualInterest.euroPerHundredEuro, 7.54);
+  await assert.rejects(queryPublicDataset({ dataset: "debito_pubblico_italiano", year: 2025 }), /Filtri non supportati/);
 });
 
 test("SIOPE query validates years and can filter a region", async () => {

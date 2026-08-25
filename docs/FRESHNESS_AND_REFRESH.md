@@ -130,6 +130,20 @@ Il monitor controlla ogni 6 ore i registri ufficiali di Camera e Senato. La vali
 
 Timeout, errori di rete, risposte `408`, `425`, `429` e alcuni errori `5xx` vengono ritentati. I siti parlamentari possono inoltre rispondere con `403` ai runner automatici o restituire temporaneamente un CSV con campi indispensabili vuoti: in questi casi il controllo viene segnato come non riuscito e genera un avviso, ma non invalida l'ultimo snapshot verificato. Il monitor non completa i campi usando il manifesto e non registra un falso successo. Un valore presente ma malformato, un documento rimosso o un cambio di struttura restano invece errori bloccanti. Il timestamp pubblico non viene aggiornato durante questi fallimenti.
 
+### Debito pubblico
+
+Il workflow giornaliero scarica quattro cubi BDS della Banca d'Italia e il
+dataset annuale Eurostat, quindi valida schema, serie, interi monetari e
+riconciliazioni prima della scrittura atomica. Gli hash e le dimensioni dei file
+grezzi vengono sempre ricalcolati e verificati durante il download.
+
+La Banca d'Italia rigenera il contenitore ZIP a ogni richiesta: timestamp e hash
+del trasporto possono quindi cambiare anche quando i CSV normalizzati sono
+identici. Queste sole differenze non riscrivono lo snapshot e non producono un
+commit. Hash, dimensioni e data di acquisizione già versionati vengono sostituiti
+soltanto quando cambia il contenuto normalizzato o la versione upstream; una
+variazione semantica continua a richiedere l'intera validazione.
+
 ## Policy iniziali
 
 | Fonte | Cadenza sorgente | Discovery DoveVannoINostriSoldi | Dati |
@@ -145,6 +159,8 @@ Timeout, errori di rete, risposte `408`, `425`, `429` e alcuni errori `5xx` veng
 | Consulenti Pubblici | dipende dall'ente | 6 h | 6 h |
 | Camera dei deputati | su pubblicazione | 6 h | 12 h |
 | Senato della Repubblica | su pubblicazione | 6 h | 12 h |
+| Banca d'Italia · debito pubblico | mensile, circa 45 giorni di ritardo | controllo giornaliero 06:17 UTC | snapshot versionato; stale oltre 75 giorni |
+| Eurostat · interessi e spesa totale | annuale | controllo giornaliero 06:17 UTC | snapshot versionato; warning oltre 540 giorni |
 
 Camera ha un riepilogo strutturato con data del documento. Senato resta documentale: i nuovi atti vengono collegati, ma i valori non sono pubblicati finché non superano una normalizzazione verificabile.
 
@@ -185,5 +201,6 @@ Stato attuale:
 - Camera: consuntivo 2025 e bilancio 2026 separati per significato contabile;
 - Senato: documenti ufficiali collegati, valori strutturati ancora sospesi;
 - altre fonti: useranno direttamente il nuovo contratto quando verranno implementate.
+- Debito pubblico: quattro ZIP BDS e una risposta JSON-stat Eurostat sono scaricati soltanto dal workflow dedicato; schema, serie, hash e riconciliazioni devono passare prima della sostituzione atomica dello snapshot.
 
 Non riscriviamo tutti gli adapter contemporaneamente soltanto per uniformità estetica: ogni migrazione deve mantenere gli stessi risultati e passare lint, typecheck, design gate e build.

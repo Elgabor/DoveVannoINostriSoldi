@@ -287,6 +287,10 @@ export async function queryPublicDataset(
       }
       return jsonSafe(result);
     }
+    case "debito_pubblico_italiano": {
+      const { getPublicDebtView } = await import("@/lib/public-debt");
+      return jsonSafe(getPublicDebtView());
+    }
     case "registro_fonti": {
       const { publicSources } = await import("@/lib/sources");
       const term = query.query?.trim().toLocaleLowerCase("it-IT");

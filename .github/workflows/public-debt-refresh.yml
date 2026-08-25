@@ -1,0 +1,78 @@
+name: Public debt snapshot
+
+on:
+  pull_request:
+    paths:
+      - scripts/etl/public_debt_snapshot.py
+      - scripts/etl/specs/public-debt.source.json
+      - src/data/generated/public-debt.json
+      - src/lib/data/public-debt-contract.ts
+      - tests/etl/test_public_debt_snapshot.py
+      - tests/public-debt-contract.test.mjs
+      - .github/workflows/public-debt-refresh.yml
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-debt-snapshot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v7
+        with: { python-version: "3.12" }
+      - uses: actions/setup-node@v6
+        with: { node-version: "22", cache: npm }
+      - run: npm ci
+      - name: Validate fixtures and committed snapshot offline
+        run: |
+          python3 -m unittest tests/etl/test_public_debt_snapshot.py
+          python3 scripts/etl/public_debt_snapshot.py --check
+          node --experimental-strip-types --test tests/public-debt-contract.test.mjs
+          git diff --check
+
+  refresh:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions: { contents: write }
+    env: { TARGET_BRANCH: main }
+    steps:
+      - uses: actions/checkout@v6
+        with: { ref: main, fetch-depth: 0 }
+      - uses: actions/setup-python@v7
+        with: { python-version: "3.12" }
+      - uses: actions/setup-node@v6
+        with: { node-version: "22", cache: npm }
+      - run: npm ci
+      - name: Refresh official inputs atomically
+        run: python3 scripts/etl/public_debt_snapshot.py
+      - name: Validate generated contract
+        run: |
+          python3 -m unittest tests/etl/test_public_debt_snapshot.py
+          python3 scripts/etl/public_debt_snapshot.py --check
+          node --experimental-strip-types --test tests/public-debt-contract.test.mjs
+          git diff --check
+      - name: Commit snapshot only when changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$(git status --porcelain -- src/data/generated/public-debt.json)" ]]; then
+            echo "No public-debt release change to commit."
+            exit 0
+          fi
+          git config user.name "dove-vanno-i-nostri-soldi-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/data/generated/public-debt.json
+          git commit -m "chore(data): refresh public debt snapshot"
+          git pull --rebase origin "${TARGET_BRANCH}"
+          git push origin "HEAD:${TARGET_BRANCH}"

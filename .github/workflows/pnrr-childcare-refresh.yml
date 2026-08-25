@@ -29,6 +29,7 @@ concurrency:
 
 jobs:
   offline-contract:
+    name: offline-contract
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -45,6 +46,7 @@ jobs:
         run: python scripts/etl/pnrr_childcare_snapshot.py --check
 
   verify-upstream:
+    name: verify-upstream
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -86,6 +88,7 @@ jobs:
           print("All locked ItaliaDomani CSVs are unchanged")
 
   regenerate-manually:
+    name: regenerate-manually
     if: github.event_name == 'workflow_dispatch'
     needs: verify-upstream
     runs-on: ubuntu-24.04

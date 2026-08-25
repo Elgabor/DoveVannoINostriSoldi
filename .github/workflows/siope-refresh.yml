@@ -32,6 +32,7 @@ concurrency:
 
 jobs:
   refresh:
+    name: refresh
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     # Direct-push data workflow: PR4 will replace with bot PRs.

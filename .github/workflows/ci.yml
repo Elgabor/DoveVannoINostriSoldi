@@ -22,6 +22,7 @@ env:
 
 jobs:
   static:
+    name: static
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -97,6 +98,7 @@ jobs:
           version: "1.29.0"
 
   node:
+    name: node
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -118,6 +120,7 @@ jobs:
         run: npm run test:node
 
   etl:
+    name: etl
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
@@ -174,6 +177,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   production:
+    name: production
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:

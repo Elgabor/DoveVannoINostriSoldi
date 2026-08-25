@@ -159,6 +159,9 @@ test("activeNavSection resolves nested routes to the parent menu", () => {
 
   const stato = activeNavSection("/stato");
   assert.equal(stato?.href, "/spese");
+  const debito = activeNavSection("/debito");
+  assert.equal(debito?.href, "/spese");
+  assert.ok(debito?.children?.some((child) => child.href === "/debito"));
 
   assert.equal(
     isNavChildActive("/coesione/asili", "/coesione/asili", coesione.children),

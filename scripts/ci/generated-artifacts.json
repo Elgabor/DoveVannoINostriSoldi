@@ -352,6 +352,32 @@
       "trustModel": "Source-lock: four upstream CSVs are pinned by SHA-256 and byte size. PR validation checks the committed artifacts offline; the scheduled workflow verifies the pinned hashes."
     },
     {
+      "id": "public-debt",
+      "owner": "Banca d'Italia and Eurostat public debt snapshot",
+      "files": [
+        "src/data/generated/public-debt.json"
+      ],
+      "verificationMode": "online-refresh",
+      "offlineCheck": {
+        "command": "python scripts/etl/public_debt_snapshot.py --check",
+        "coveredBy": "standalone"
+      },
+      "reconciliationTests": [
+        "tests/etl/test_public_debt_snapshot.py"
+      ],
+      "nodeTests": [
+        "tests/public-debt-contract.test.mjs",
+        "tests/public-debt-route.test.mjs",
+        "tests/public-debt-ui.test.mjs"
+      ],
+      "generator": {
+        "command": "python scripts/etl/public_debt_snapshot.py",
+        "requiresNetworkInput": true
+      },
+      "refreshWorkflow": ".github/workflows/public-debt-refresh.yml",
+      "trustModel": "A scheduled workflow downloads four authorized Banca d'Italia BDS cubes and the two authorized Eurostat series. Pull requests validate the committed snapshot and adversarial fixtures entirely offline."
+    },
+    {
       "id": "rgs-consulting-payments",
       "owner": "RGS consulting payments 2024-2025",
       "files": [

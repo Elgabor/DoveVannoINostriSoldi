@@ -16,6 +16,30 @@ export type PublicSource = {
 
 export const publicSources: PublicSource[] = [
   {
+    slug: "bancaditalia",
+    name: "Banca d'Italia · debito pubblico",
+    owner: "Banca d'Italia",
+    area: "Debito lordo della Pubblica amministrazione",
+    cadence: "Mensile, con circa 45 giorni di ritardo atteso",
+    coverage: "Stock, flussi, strumenti, detentori e vita residua",
+    format: "BDS · ZIP · CSV · snapshot JSON verificato",
+    url: "https://www.bancaditalia.it/pubblicazioni/finanza-pubblica/index.html",
+    note: "Quattro cubi BDS alimentano uno snapshot versionato e riconciliato. Stock e flussi hanno significati e periodi distinti; i dati recenti possono essere rivisti.",
+    joinKeys: ["ID serie BDS", "mese"],
+  },
+  {
+    slug: "eurostat",
+    name: "Eurostat · gov_10a_main",
+    owner: "Eurostat",
+    area: "Interessi e spesa pubblica totale",
+    cadence: "Annuale",
+    coverage: "Italia, ultimi cinque anni comuni per D41PAY e TE",
+    format: "Statistics API · JSON-stat · snapshot JSON verificato",
+    url: "https://ec.europa.eu/eurostat/databrowser/view/gov_10a_main/default/table?lang=en",
+    note: "La quota degli interessi sulla spesa totale è una derivazione aritmetica, non una previsione né l'attribuzione di un effetto a un singolo servizio.",
+    joinKeys: ["anno", "na_item"],
+  },
+  {
     slug: "siope",
     name: "SIOPE / SIOPE+",
     owner: "RGS · Banca d'Italia",

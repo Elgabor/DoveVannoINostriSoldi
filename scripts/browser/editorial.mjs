@@ -15,6 +15,10 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 const baseUrl = defaultBaseUrl();
 const reviewDirectory = path.join(root, ".impeccable", "review");
 
+function normalizeVisibleText(value) {
+  return value.normalize("NFKC").replace(/\s+/gu, " ").trim().toLocaleLowerCase("it-IT");
+}
+
 assert.ok(
   ["http:", "https:"].includes(baseUrl.protocol),
   "DVNS_BASE_URL non valido",
@@ -35,35 +39,71 @@ async function inspectRoute(browser, pathname, title, width) {
     // networkidle0 (PR1.8): wait for the h1 that carries the title.
     await navigate(page, { url, label: `${pathname} ${width}px`, readySelector: "h1" });
 
+    const label = `${pathname} ${width}px`;
+    const expectedSummary = "che cosa non dimostra da solo";
     let nativeLimits = false;
     const limitSummaries = await page.$$("details > summary");
     for (let index = 0; index < limitSummaries.length; index += 1) {
       const summary = limitSummaries[index];
       const summaryText = await summary.evaluate((element) => element.textContent ?? "");
-      if (!/non dimostra|limiti/i.test(summaryText)) continue;
+      if (normalizeVisibleText(summaryText) !== expectedSummary) continue;
 
-      const isOpen = await summary.evaluate((element) => element.closest("details")?.open === true);
-      if (!isOpen) await summary.click();
-
-      nativeLimits = await summary.evaluate((element) => {
+      const readDetailsState = () => summary.evaluate((element) => {
         const details = element.closest("details");
-        if (!details?.open) return false;
-
-        return [...details.children]
-          .filter((child) => child !== element)
-          .some((child) => {
-            const style = window.getComputedStyle(child);
-            const rect = child.getBoundingClientRect();
-            return (
-              (child.textContent ?? "").trim().length > 0 &&
-              style.display !== "none" &&
-              style.visibility !== "hidden" &&
-              rect.width > 0 &&
-              rect.height > 0
-            );
-          });
+        const isVisible = (node) => {
+          const style = window.getComputedStyle(node);
+          const rect = node.getBoundingClientRect();
+          return (
+            style.display !== "none" &&
+            style.visibility !== "hidden" &&
+            style.opacity !== "0" &&
+            rect.width > 0 &&
+            rect.height > 0
+          );
+        };
+        return {
+          hasDetails: Boolean(details),
+          open: details?.open === true,
+          summaryVisible: isVisible(element),
+          contentVisible: Boolean(
+            details?.open &&
+              [...details.children]
+                .filter((child) => child !== element)
+                .some((child) => (child.textContent ?? "").trim().length > 0 && isVisible(child)),
+          ),
+        };
       });
-      if (nativeLimits) break;
+
+      let detailsState = await readDetailsState();
+      assert.equal(detailsState.hasDetails, true, `${label}: summary senza details nativo`);
+      assert.equal(detailsState.summaryVisible, true, `${label}: summary del confine non visibile`);
+      if (detailsState.open) await summary.click();
+      detailsState = await readDetailsState();
+      assert.equal(detailsState.open, false, `${label}: confine nativo non chiuso inizialmente`);
+
+      await summary.focus();
+      const focused = await summary.evaluate((element) => document.activeElement === element);
+      assert.equal(focused, true, `${label}: summary del confine non riceve il focus`);
+      await page.keyboard.press("Enter");
+      detailsState = await readDetailsState();
+      if (!detailsState.open || !detailsState.contentVisible) {
+        if (detailsState.open) await summary.click();
+        await summary.focus();
+        await page.keyboard.press("Space");
+        detailsState = await readDetailsState();
+      }
+      assert.equal(detailsState.open, true, `${label}: apertura da tastiera del confine fallita`);
+      assert.equal(detailsState.contentVisible, true, `${label}: contenuto del confine non visibile`);
+
+      await summary.click();
+      detailsState = await readDetailsState();
+      assert.equal(detailsState.open, false, `${label}: chiusura click del confine fallita`);
+      await summary.click();
+      detailsState = await readDetailsState();
+      assert.equal(detailsState.open, true, `${label}: riapertura click del confine fallita`);
+      assert.equal(detailsState.contentVisible, true, `${label}: contenuto non visibile dopo riapertura`);
+      nativeLimits = true;
+      break;
     }
 
     const state = await page.evaluate((nativeBoundaryVisible) => {
@@ -72,9 +112,23 @@ async function inspectRoute(browser, pathname, title, width) {
       const dataLink = [...document.querySelectorAll("a")].some((link) =>
         /Vedi tutte le righe|Dati e fonti|registro completo/i.test(link.textContent ?? ""),
       );
-      const legacyLimits = [...document.querySelectorAll("h2")].some((heading) =>
-        /non dimostra|limiti/i.test(heading.textContent ?? ""),
-      );
+      const normalize = (value) => value.normalize("NFKC").replace(/\s+/gu, " ").trim().toLocaleLowerCase("it-IT");
+      const legacyLimitHeadings = new Set([
+        "che cosa non dimostra da solo",
+        "limiti dichiarati nello snapshot",
+      ]);
+      const legacyLimits = [...document.querySelectorAll("h2")].some((heading) => {
+        const style = window.getComputedStyle(heading);
+        const rect = heading.getBoundingClientRect();
+        return (
+          legacyLimitHeadings.has(normalize(heading.textContent ?? "")) &&
+          style.display !== "none" &&
+          style.visibility !== "hidden" &&
+          style.opacity !== "0" &&
+          rect.width > 0 &&
+          rect.height > 0
+        );
+      });
       return {
         bodyWidth: document.body.scrollWidth,
         clientWidth: root.clientWidth,
@@ -84,7 +138,6 @@ async function inspectRoute(browser, pathname, title, width) {
         limits: nativeBoundaryVisible || legacyLimits,
       };
     }, nativeLimits);
-    const label = `${pathname} ${width}px`;
     assert.equal(state.h1Count, 1, `${label}: serve un solo h1`);
     assert.equal(state.h1, title, `${label}: titolo inatteso`);
     assert.ok(state.bodyWidth <= state.clientWidth + 1, `${label}: overflow globale`);

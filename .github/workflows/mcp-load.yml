@@ -19,6 +19,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: mcp-staging-load-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   staging-load:
     name: staging-load

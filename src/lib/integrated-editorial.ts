@@ -125,7 +125,7 @@ export const EDITORIAL_TOPICS: readonly EditorialTopic[] = [
     section: "appalti",
     slug: "fornitori",
     title: "Fornitori e aggiudicatari",
-    description: "Vincitori, gruppi societari e aggiudicazioni Consip, senza classifiche oltre la copertura disponibile.",
+    description: "Fornitori aggregati, gruppi societari e aggiudicazioni Consip, senza classifiche oltre la copertura disponibile.",
     introduction: "Questa vista segue i destinatari economici dei contratti e rende visibile quanta parte del catalogo dispone davvero di importo, denominazione e collegamento documentale.",
     status: "Fatto documentato",
     primaryMetric: "682",
@@ -133,7 +133,7 @@ export const EDITORIAL_TOPICS: readonly EditorialTopic[] = [
     hubSummary: "Destinatari, concentrazione e aggiudicazioni Consip, con copertura esplicita degli importi.",
     facts: [
       { value: "489", label: "aggregati con importo zero", note: "Zero osservato e dato mancante non vanno confusi." },
-      { value: "120", label: "collegamenti vincitore-CIG", note: "Il sottoinsieme più puntuale fra contratto e aggiudicatario." },
+      { value: "120", label: "collegamenti fornitore-CIG", note: "Il sottoinsieme più puntuale fra contratto e aggiudicatario." },
       { value: "3.867", label: "righe Consip", note: "Aggiudicazioni 2024, 2025 e 2026 conservate per anno." },
       {
         value: "1.028.559",
@@ -150,7 +150,7 @@ export const EDITORIAL_TOPICS: readonly EditorialTopic[] = [
     datasets: [
       {
         id: "vincitori",
-        label: "Vincitori aggregati",
+        label: "Fornitori per settore e importo",
         columns: [
           { key: "ragione_sociale", label: "Fornitore" },
           { key: "settore_cpv", label: "Settore" },
@@ -169,11 +169,11 @@ export const EDITORIAL_TOPICS: readonly EditorialTopic[] = [
           { key: "fonte_url", label: "Fonte" },
         ],
       },
-      { id: "consip-ranking", label: "Ranking Consip" },
+      { id: "consip-ranking", label: "Classifica Consip (derivata)" },
       { id: "consip-winners-2024", label: "Aggiudicatari Consip 2024" },
       { id: "consip-winners-2025", label: "Aggiudicatari Consip 2025" },
       { id: "consip-winners-2026", label: "Aggiudicatari Consip 2026" },
-      { id: "vincitori-cig", label: "Collegamenti vincitore-CIG" },
+      { id: "vincitori-cig", label: "Collegamenti fornitore-CIG" },
       { id: "consip-contratti-riconciliati", label: "Contratti Consip riconciliati" },
       {
         id: "consip-snapshot-strutturati",

@@ -2,8 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
+import { DatasetInsightPanel } from "@/components/dataset-insight-panel";
 import Pagination from "@/components/pagination";
 import { integer } from "@/lib/format";
+import { relatedReadingForDataset } from "@/lib/integrated-catalog-views";
+import { isInsightCapable, loadDatasetInsights } from "@/lib/integrated-dataset-insights";
+import { integratedDomainLabel } from "@/lib/integrated-domains";
 import {
   getIntegratedDataOverview,
   INTEGRATED_DEFAULT_LIMIT,
@@ -13,7 +17,6 @@ import {
   selectIntegratedDataset,
   type IntegratedDatasetResult,
 } from "@/lib/integrated-public-view";
-import { integratedDomainLabel } from "@/lib/integrated-domains";
 import { offsetFromPage, pageCountFromTotal, pageFromOffset } from "@/lib/pagination";
 import styles from "../dati.module.css";
 
@@ -44,11 +47,6 @@ function pageHref(
   return `/dati/${datasetId}?${query.toString()}`;
 }
 
-/**
- * The limit the selector will settle on, needed before the call so a `pagina`
- * request can be translated into the offset the selector actually accepts.
- * The selector stays the authority: an out-of-range value still fails there.
- */
 function requestedLimit(value: SearchValue): number {
   if (typeof value === "string" && /^\d+$/.test(value)) {
     const parsed = Number(value);
@@ -57,7 +55,6 @@ function requestedLimit(value: SearchValue): number {
   return INTEGRATED_DEFAULT_LIMIT;
 }
 
-/** `pagina` is the readable form of `offset`; an explicit offset still wins. */
 function requestedOffset(search: Record<string, SearchValue>, limit: number): SearchValue {
   if (search.offset !== undefined && search.offset !== "") return search.offset;
   if (search.q !== undefined && search.q !== "") return undefined;
@@ -68,11 +65,6 @@ function requestedOffset(search: Record<string, SearchValue>, limit: number): Se
   return undefined;
 }
 
-/**
- * Amount columns are right-aligned so a reader can scan the money down one
- * edge. A header that merely sounds like an amount is not enough: no value on
- * the page may contradict it, so a text column is never realigned.
- */
 const AMOUNT_HEADER =
   /^(importo|valore|spesa|spese|pagato|impegnato|residui|previsioni|compenso|corrispettivo|totale|ammontare)\b/i;
 const AMOUNT_VALUE = /^-?\d{1,3}(?:[.\s]\d{3})*(?:,\d+)?$|^-?\d+(?:[.,]\d+)?$/;
@@ -84,8 +76,6 @@ function amountColumns(
   return new Set(
     headers.filter((header) => {
       if (!AMOUNT_HEADER.test(header.replace(/[_-]+/g, " ").trim())) return false;
-      // An empty column still aligns with its populated siblings: what
-      // disqualifies a header is a value that is plainly not a number.
       return rows
         .map((row) => row.cells[header])
         .filter((value): value is string => typeof value === "string" && value.trim() !== "")
@@ -155,7 +145,7 @@ export async function generateMetadata({ params }: DatasetPageProps): Promise<Me
   if (!dataset) return { title: "Dataset non trovato" };
   return {
     title: dataset.title,
-    description: `${dataset.title}: righe, copertura, fonti e limiti del dataset integrato.`,
+    description: `${dataset.title}: destinatari, importi e righe del dataset integrato.`,
   };
 }
 
@@ -163,6 +153,12 @@ export default async function IntegratedDatasetPage({ params, searchParams }: Da
   const [{ dataset: datasetId }, search] = await Promise.all([params, searchParams]);
   const { result, queryError } = await safeResult(datasetId, search);
   const { dataset } = result;
+  const related = relatedReadingForDataset(dataset);
+  const shouldLoadInsights =
+    dataset.queryable &&
+    isInsightCapable(dataset.headers, true) &&
+    result.query === null;
+  const insights = shouldLoadInsights ? await loadDatasetInsights(dataset.id) : null;
   const firstVisible = result.pagination.scanStartSourceRow ?? 0;
   const lastVisible = result.pagination.scanEndSourceRow ?? 0;
   const hasNext = result.pagination.nextCursor !== null;
@@ -190,40 +186,62 @@ export default async function IntegratedDatasetPage({ params, searchParams }: Da
       <div className="page-intro">
         <p className={styles.eyebrow}>{integratedDomainLabel(dataset.domain)}</p>
         <h1>{dataset.title}</h1>
-        <p>{dataset.publicationNote}</p>
+        <p>
+          {dataset.queryable
+            ? insights?.capable && insights.topRecipients.length > 0
+              ? "Sotto: principali destinatari per importo, eventuali servizi ripetuti, poi ricerca e tabella."
+              : "Righe pubbliche interrogabili. Sotto trovi ricerca e tabella."
+            : "Qui non ci sono società né importi da scorrere: il materiale è contato nel catalogo senza righe pubbliche."}
+        </p>
       </div>
 
       <section className="stat-strip" aria-label="Perimetro del dataset">
+        <div>
+          <span className="stat-label">Righe interrogabili</span>
+          <span className="stat-value">{integer(dataset.publicRows)}</span>
+          <span className="stat-note">{dataset.queryable ? "con ricerca e tabella" : "nessuna riga pubblica"}</span>
+        </div>
         <div>
           <span className="stat-label">Righe sorgente</span>
           <span className="stat-value">{integer(dataset.sourceRows)}</span>
           <span className="stat-note">denominatore del dataset</span>
         </div>
         <div>
-          <span className="stat-label">Righe interrogabili</span>
-          <span className="stat-value">{integer(dataset.publicRows)}</span>
-          <span className="stat-note">stato: {dataset.publication}</span>
+          <span className="stat-label">Etichetta</span>
+          <span className={styles.statText}>
+            {EVIDENCE_LABELS[dataset.evidenceLabel] ?? dataset.evidenceLabel}
+          </span>
+          <span className="stat-note">screening, non giudizio</span>
         </div>
         <div>
           <span className="stat-label">Con fonte puntuale</span>
           <span className="stat-value">{integer(dataset.rowsWithPublicSource)}</span>
-          <span className="stat-note">URL HTTP(S) presenti nelle righe</span>
-        </div>
-        <div>
-          <span className="stat-label">Etichetta probatoria</span>
-          <span className={styles.statText}>
-            {EVIDENCE_LABELS[dataset.evidenceLabel] ?? dataset.evidenceLabel}
-          </span>
-          <span className="stat-note">non equivale a un giudizio automatico</span>
+          <span className="stat-note">URL HTTP(S) nelle righe</span>
         </div>
       </section>
 
-      {dataset.queryable ? (
+      {insights?.capable && insights.topRecipients.length > 0 ? (
+        <DatasetInsightPanel insights={insights} />
+      ) : null}
+
+      {!dataset.queryable ? (
+        <section className={`panel ${styles.unavailablePanel}`} aria-labelledby="dataset-no-rows-title">
+          <h2 id="dataset-no-rows-title">Niente da scorrere qui</h2>
+          <p>
+            Documenta {integer(dataset.sourceRows)} righe sorgente e lo stato di pubblicazione, senza
+            creare destinatari o importi sostitutivi.
+          </p>
+          <div>
+            {related ? <Link href={related.href}>Vai a {related.label} →</Link> : null}
+            <Link href="/dati?vista=priorita">Torna ai numeri da leggere →</Link>
+          </div>
+        </section>
+      ) : (
         <>
           <section className={`panel ${styles.queryPanel}`} aria-labelledby="dataset-search-title">
             <div>
-              <h2 id="dataset-search-title" className="panel-title">Cerca nelle celle pubbliche</h2>
-              <p>La ricerca non distingue maiuscole e minuscole e non interroga campi non pubblici.</p>
+              <h2 id="dataset-search-title" className="panel-title">Cerca nelle celle</h2>
+              <p>Maiuscole e minuscole indifferenti. Solo campi pubblici.</p>
             </div>
             <form action={`/dati/${dataset.id}`} method="get" className={styles.searchForm}>
               <label htmlFor="dataset-query">Testo da cercare</label>
@@ -234,7 +252,7 @@ export default async function IntegratedDatasetPage({ params, searchParams }: Da
                   name="q"
                   defaultValue={result.query ?? ""}
                   maxLength={200}
-                  placeholder="Ente, oggetto, CIG o altro valore"
+                  placeholder="Ente, società, CIG o altro valore"
                 />
                 <input type="hidden" name="limit" value={result.limit} />
                 <button className="btn btn-primary" type="submit">Cerca</button>
@@ -253,20 +271,18 @@ export default async function IntegratedDatasetPage({ params, searchParams }: Da
               {result.query ? <span className="tag tag-neutral">Filtro: {result.query}</span> : null}
             </div>
 
-            {/* The three conventions a reader needs before the first cell, next
-                to the cells rather than four panels above them. */}
             <ul className={styles.valueLegend}>
               <li>
                 <strong>0</strong>
-                <span>zero pubblicato dalla fonte</span>
+                <span>zero pubblicato</span>
               </li>
               <li>
                 <strong>Dato non presente</strong>
-                <span>cella vuota nella fonte</span>
+                <span>cella vuota</span>
               </li>
               <li>
                 <strong>Dato non pubblicato</strong>
-                <span>valore rimosso per protezione, non uno zero</span>
+                <span>valore protetto, non uno zero</span>
               </li>
             </ul>
 
@@ -274,10 +290,8 @@ export default async function IntegratedDatasetPage({ params, searchParams }: Da
               <div className={`table-scroll ${styles.dataTable}`} role="region" aria-label={`Righe di ${dataset.title}`} tabIndex={0}>
                 <table className="table">
                   <caption>
-                    Valori pubblici esatti; la tabella può scorrere orizzontalmente
-                    {amounts.size > 0
-                      ? ". Le colonne di importo sono allineate a destra per confrontarle a colpo d’occhio."
-                      : ""}
+                    Valori pubblici esatti
+                    {amounts.size > 0 ? ". Colonne di importo allineate a destra." : "."}
                   </caption>
                   <thead>
                     <tr>
@@ -291,7 +305,7 @@ export default async function IntegratedDatasetPage({ params, searchParams }: Da
                           {header}
                         </th>
                       ))}
-                      <th scope="col">Fonti puntuali</th>
+                      <th scope="col">Fonti</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -316,15 +330,13 @@ export default async function IntegratedDatasetPage({ params, searchParams }: Da
                                 {dataset.sourceMetadata.canonicalUrls.map((url, index) => (
                                   <li key={url}>
                                     <a href={url} target="_blank" rel="noreferrer">
-                                      Fonte del dataset {index + 1} ↗
+                                      Fonte dataset {index + 1} ↗
                                     </a>
                                   </li>
                                 ))}
                               </ul>
                             ) : (
-                              <span className={styles.missingValue}>
-                                URL puntuale non disponibile per questa riga
-                              </span>
+                              <span className={styles.missingValue}>URL non disponibile</span>
                             )
                           ) : (
                             <ul className={styles.sourceLinks}>
@@ -367,8 +379,7 @@ export default async function IntegratedDatasetPage({ params, searchParams }: Da
             ) : hasNext && result.pagination.nextCursor ? (
               <nav className={styles.searchPagination} aria-label="Continua la ricerca">
                 <p>
-                  La ricerca avanza per passaggi sulle righe già esaminate, quindi non ha un
-                  numero di pagine noto in anticipo. Svuota la ricerca per navigare per pagina.
+                  La ricerca avanza per passaggi. Svuota la ricerca per navigare per pagina.
                 </p>
                 <Link
                   className="btn btn-secondary"
@@ -381,72 +392,48 @@ export default async function IntegratedDatasetPage({ params, searchParams }: Da
             ) : null}
           </section>
         </>
-      ) : (
-        <section className={`panel ${styles.unavailablePanel}`} aria-labelledby="dataset-no-rows-title">
-          <h2 id="dataset-no-rows-title">Dataset contabilizzato senza righe pubbliche</h2>
-          <p>
-            Questa scheda non è vuota: documenta {integer(dataset.sourceRows)} righe sorgente e il
-            loro stato. Non vengono create righe sostitutive e non si usa zero al posto di un dato
-            non pubblicato.
-          </p>
-          <div>
-            <Link href="/fonti/copertura">Verifica la copertura completa →</Link>
-            <Link href="/fonti/catalogo">Consulta le identità di fonte →</Link>
-          </div>
-        </section>
       )}
 
-      <section className={`notice ${styles.contractNotice}`} aria-labelledby="dataset-contract-title">
-        <h2 id="dataset-contract-title">Come leggere questa scheda</h2>
-        <p>{dataset.reuseNote}</p>
-        <p>
-          Le stringhe sono preservate: <strong>0</strong> resta zero, mentre una cella vuota è
-          indicata come <strong>Dato non presente</strong>. I valori rimossi per protezione sono
-          indicati come <strong>Dato non pubblicato</strong> e non diventano zero.
-        </p>
-      </section>
-
-      <section className={`panel ${styles.sourcePanel}`} aria-labelledby="dataset-source-title">
-        <div>
-          <h2 id="dataset-source-title" className="panel-title">Fonte e freschezza</h2>
-          <p>Metadati disponibili per questo insieme, senza ricostruire date non dichiarate.</p>
+      <details className={styles.metaDetails}>
+        <summary>Fonte, riuso e limiti</summary>
+        <div className={styles.metaDetailsBody}>
+          <p>{dataset.reuseNote}</p>
+          <dl className={styles.sourceMetadata}>
+            <div><dt>Titolare</dt><dd>{dataset.sourceMetadata.holder}</dd></div>
+            <div><dt>Periodo del dato</dt><dd>{metadataValue(dataset.sourceMetadata.referencePeriod)}</dd></div>
+            <div><dt>Pubblicazione</dt><dd>{metadataDate(dataset.sourceMetadata.publicationDate)}</dd></div>
+            <div><dt>Acquisizione</dt><dd>{metadataDate(dataset.sourceMetadata.acquisitionDate)}</dd></div>
+            <div><dt>Ultimo controllo</dt><dd>{metadataDate(dataset.sourceMetadata.checkedAt)}</dd></div>
+            <div><dt>Frequenza attesa</dt><dd>{metadataValue(dataset.sourceMetadata.updateFrequency)}</dd></div>
+            <div>
+              <dt>Collegamenti di fonte</dt>
+              <dd>
+                {dataset.sourceMetadata.canonicalUrls.length > 0 ? (
+                  <ul className={styles.sourceLinks}>
+                    {dataset.sourceMetadata.canonicalUrls.map((url, index) => (
+                      <li key={url}>
+                        <a href={url} target="_blank" rel="noreferrer">Portale sorgente {index + 1}</a>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span className={styles.missingValue}>URL canonico non disponibile</span>
+                )}
+              </dd>
+            </div>
+          </dl>
+          {dataset.caveats.length > 0 ? (
+            <ul className={styles.caveatList}>
+              {dataset.caveats.map((caveat) => <li key={caveat}>{caveat}</li>)}
+            </ul>
+          ) : null}
+          {related ? (
+            <p className={styles.relatedLink}>
+              <Link href={related.href}>{related.label} →</Link>
+            </p>
+          ) : null}
         </div>
-        <dl className={styles.sourceMetadata}>
-          <div><dt>Titolare</dt><dd>{dataset.sourceMetadata.holder}</dd></div>
-          <div><dt>Periodo del dato</dt><dd>{metadataValue(dataset.sourceMetadata.referencePeriod)}</dd></div>
-          <div><dt>Pubblicazione</dt><dd>{metadataDate(dataset.sourceMetadata.publicationDate)}</dd></div>
-          <div><dt>Acquisizione</dt><dd>{metadataDate(dataset.sourceMetadata.acquisitionDate)}</dd></div>
-          <div><dt>Ultimo controllo</dt><dd>{metadataDate(dataset.sourceMetadata.checkedAt)}</dd></div>
-          <div><dt>Frequenza attesa</dt><dd>{metadataValue(dataset.sourceMetadata.updateFrequency)}</dd></div>
-          <div>
-            <dt>Collegamenti di fonte</dt>
-            <dd>
-              {dataset.sourceMetadata.canonicalUrls.length > 0 ? (
-                <ul className={styles.sourceLinks}>
-                  {dataset.sourceMetadata.canonicalUrls.map((url, index) => (
-                    <li key={url}>
-                      <a href={url} target="_blank" rel="noreferrer">Portale sorgente {index + 1}</a>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <span className={styles.missingValue}>
-                  URL canonico non disponibile nel materiale integrato
-                </span>
-              )}
-            </dd>
-          </div>
-        </dl>
-      </section>
-
-      {dataset.caveats.length > 0 ? (
-        <section className={`panel ${styles.caveatPanel}`} aria-labelledby="dataset-caveats-title">
-          <h2 id="dataset-caveats-title" className="panel-title">Limiti dichiarati</h2>
-          <ul>
-            {dataset.caveats.map((caveat) => <li key={caveat}>{caveat}</li>)}
-          </ul>
-        </section>
-      ) : null}
+      </details>
     </main>
   );
 }

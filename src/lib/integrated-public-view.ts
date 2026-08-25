@@ -268,10 +268,21 @@ function reuseNote(dataset: IntegratedDatasetCatalogEntry): string {
   return "Condizioni di riuso non dichiarate nella sorgente: verificare l'asset primario prima di riutilizzarlo.";
 }
 
+/** Public titles that should read clearer than the raw catalog slug/title. */
+const PUBLIC_DATASET_TITLES: Readonly<Record<string, string>> = {
+  vincitori: "Fornitori per settore e importo",
+  "gruppi-vincitori": "Gruppi societari dei fornitori",
+  "vincitori-cig": "Collegamenti fornitore-CIG",
+};
+
+function publicTitle(dataset: IntegratedDatasetCatalogEntry): string {
+  return PUBLIC_DATASET_TITLES[dataset.id] ?? dataset.title;
+}
+
 function publicMetadata(dataset: IntegratedDatasetCatalogEntry): IntegratedDatasetMetadata {
   return {
     id: dataset.id,
-    title: dataset.title,
+    title: publicTitle(dataset),
     domain: dataset.domain,
     authority: dataset.authority,
     licenseStatus: dataset.licenseStatus,

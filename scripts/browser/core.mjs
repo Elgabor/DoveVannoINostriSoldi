@@ -714,7 +714,7 @@ try {
       pathname: "/controlli",
       label: "Controlli",
       sectionLabel: "Cosa controllare",
-      childLabel: "Appalti 2025",
+      childLabel: "Appalti",
     },
     {
       pathname: "/territori/irpef",
@@ -726,7 +726,7 @@ try {
       pathname: "/appalti",
       label: "Appalti",
       sectionLabel: "Cosa controllare",
-      childLabel: "Incarichi pubblici",
+      childLabel: "Incarichi",
     },
     {
       pathname: "/parlamento",

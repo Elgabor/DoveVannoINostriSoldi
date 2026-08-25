@@ -10,7 +10,7 @@ export default function ProcurementDetailPage() {
   return (
     <IntegratedDomainHub
       title="Appalti, fornitori e rinnovi"
-      introduction="Affidamenti diretti, CIG di ministeri e autorità, vincitori, gruppi societari, rinnovi, proroghe e materiale Consip sono raccolti senza confondere inventari incompleti con classifiche definitive."
+      introduction="Affidamenti diretti, CIG di ministeri e autorità, fornitori aggregati, gruppi societari, rinnovi, proroghe e materiale Consip sono raccolti senza confondere inventari incompleti con classifiche definitive."
       domains={["procurement"]}
       editorialSection="appalti"
       interpretation="Un affidamento, una ripetizione o una differenza di prezzo è un fatto da contestualizzare. I record fuori Consip restano documentati, ma non sono presentati come sovrapprezzi quando mancano modello o SKU comparabili."

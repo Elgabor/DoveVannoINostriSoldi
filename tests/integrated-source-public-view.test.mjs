@@ -507,15 +507,20 @@ test("the server boundary and pages preserve missing, zero and async Next route 
   assert.match(detail, /value === "0"/);
   assert.match(detail, /<caption>/);
   assert.match(detail, /role="region"/);
-  assert.match(detail, /Fonte e freschezza/);
-  assert.match(detail, /URL canonico non disponibile nel materiale integrato/);
-  assert.match(detail, /URL puntuale non disponibile per questa riga/);
+  assert.match(detail, /Fonte, riuso e limiti/);
+  assert.match(detail, /URL canonico non disponibile/);
+  assert.match(detail, /URL non disponibile/);
   assert.doesNotMatch(detail, /href=\{dataset\.provenanceHref\}/);
   assert.match(detail, /dataset\.sourceMetadata\.canonicalUrls\.map/);
   assert.match(detail, /row\.sourceUrls\.map/);
-  assert.match(detail, /href="\/fonti\/copertura"/);
-  assert.match(detail, /href="\/fonti\/catalogo"/);
+  assert.match(detail, /DatasetInsightPanel|loadDatasetInsights/);
+  assert.match(detail, /Niente da scorrere qui|Torna ai numeri da leggere/);
   assert.match(catalog, /Tutti i dataset integrati/);
+  assert.match(catalog, /parseCatalogQuery/);
+  assert.match(catalog, /catalogViewHref/);
+  assert.match(catalog, /filterBar/);
+  assert.match(catalog, /Numeri da leggere/);
+  assert.match(catalog, /Cosa manca ancora/);
   assert.match(coverage, /51\.303|observedEntries/);
   assert.match(coverage, /URL canonico non disponibile/);
   assert.doesNotMatch(coverage, /Fonti puntuali e limiti/);
@@ -524,33 +529,33 @@ test("the server boundary and pages preserve missing, zero and async Next route 
   assert.doesNotMatch(editorial, /href=\{result\.dataset\.provenanceHref\}/);
   assert.match(editorial, /row\.sourceUrls\[0\]/);
   assert.match(editorial, /sourceMetadata\.canonicalUrls\[0\]/);
+  assert.match(editorial, /DatasetInsightPanel|loadDatasetInsights/);
 
   const publicSurface = files.join("\n");
   assert.doesNotMatch(publicSurface, /\/Users\//);
   assert.doesNotMatch(publicSurface, /\.tar\.gz/i);
 });
 
-test("the dataset sheet puts the rows before the panels that describe them", async () => {
+test("the dataset sheet puts insights and rows before collapsed provenance", async () => {
   const detail = await readFile(
     new URL("../src/app/dati/[dataset]/page.tsx", import.meta.url),
     "utf8",
   );
+  const insight = detail.indexOf("DatasetInsightPanel");
   const rows = detail.indexOf('id="dataset-rows-title"');
-  const contract = detail.indexOf('id="dataset-contract-title"');
-  const provenance = detail.indexOf('id="dataset-source-title"');
-  const caveats = detail.indexOf('id="dataset-caveats-title"');
-  for (const [name, index] of Object.entries({ rows, contract, provenance, caveats })) {
-    assert.ok(index > 0, `sezione assente: ${name}`);
-  }
-  assert.ok(rows < contract, "le righe devono precedere la nota di lettura");
-  assert.ok(contract < provenance, "la nota di lettura deve precedere la provenienza");
-  assert.ok(provenance < caveats, "la provenienza deve precedere i limiti");
+  const meta = detail.indexOf("Fonte, riuso e limiti");
+  assert.ok(insight > 0, "sezione assente: insight");
+  assert.ok(rows > 0, "sezione assente: rows");
+  assert.ok(meta > 0, "sezione assente: meta");
+  assert.ok(insight < rows, "gli insight devono precedere le righe");
+  assert.ok(rows < meta, "le righe devono precedere la provenienza");
   // The three value conventions travel with the cells they explain.
   assert.match(detail, /valueLegend/);
   // An amount column is realigned only when no value on the page contradicts
   // the header, so a text column is never turned into a number column.
   assert.match(detail, /const AMOUNT_HEADER =/);
   assert.match(detail, /\.every\(\(value\) => AMOUNT_VALUE\.test\(value\.trim\(\)\)\)/);
+  assert.doesNotMatch(detail, /Come leggere questa scheda/);
 });
 
 test("the integrated catalogue indexes its domains and names them in Italian", async () => {
@@ -561,7 +566,10 @@ test("the integrated catalogue indexes its domains and names them in Italian", a
   assert.match(catalogPage, /INTEGRATED_DOMAIN_ORDER/);
   assert.match(catalogPage, /integratedDomainLabel/);
   assert.match(catalogPage, /domainIndex/);
+  assert.match(catalogPage, /viewSwitch/);
+  assert.match(catalogPage, /Da controllare/);
   // No page may print a raw domain slug as a heading.
   assert.doesNotMatch(catalogPage, /DOMAIN_LABELS\[domain\] \?\? domain/);
   assert.match(css, /\.domainIndex \{/);
+  assert.match(css, /\.viewSwitch \{/);
 });

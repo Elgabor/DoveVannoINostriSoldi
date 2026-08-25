@@ -182,11 +182,19 @@ async function screenshot(page, directory, name) {
 async function driveCatalog(page, directory) {
   const actions = [];
   actions.push(await goto(page, "/dati", "Tutti i dataset integrati"));
+  const priorityLinks = await page.$$eval('a[href^="/dati/"]', (nodes) =>
+    [...new Set(nodes.map((node) => node.getAttribute("href")))].filter(Boolean),
+  );
+  assert.ok(priorityLinks.length > 0 && priorityLinks.length < 79, "/dati: attesa solo la vista priorità");
+  assert.ok(await page.$('nav[aria-label="Vista del catalogo"]'), "/dati: selettore vista assente");
+  await screenshot(page, directory, "catalog.png");
+
+  actions.push(await goto(page, "/dati?vista=tutti", "Tutti i dataset integrati"));
   const links = await page.$$eval('a[href^="/dati/"]', (nodes) =>
     [...new Set(nodes.map((node) => node.getAttribute("href")))].filter(Boolean),
   );
   assert.equal(links.length, 79);
-  await screenshot(page, directory, "catalog.png");
+  await screenshot(page, directory, "catalog-tutti.png");
 
   actions.push(await goto(
     page,

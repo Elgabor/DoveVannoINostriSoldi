@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { DatasetInsightPanel } from "@/components/dataset-insight-panel";
 import { integer } from "@/lib/format";
 import {
   getIntegratedDataOverview,
   selectIntegratedDataset,
   type IntegratedDatasetResult,
 } from "@/lib/integrated-public-view";
+import { isInsightCapable, loadDatasetInsights } from "@/lib/integrated-dataset-insights";
 import type { EditorialDatasetPreview, EditorialTopic } from "@/lib/integrated-editorial";
 import styles from "./editorial-topic-page.module.css";
 
@@ -50,6 +52,15 @@ export default async function EditorialTopicPage({ topic }: { topic: EditorialTo
       selectIntegratedDataset({ datasetId: dataset.id, limit: 3 }),
     ),
   );
+  const insightSource = results.find(
+    (result) =>
+      result.dataset.queryable &&
+      isInsightCapable(result.dataset.headers, true) &&
+      result.dataset.publicRows > 0,
+  );
+  const insights = insightSource
+    ? await loadDatasetInsights(insightSource.dataset.id)
+    : null;
   const sourceRows = results.reduce((sum, result) => sum + result.dataset.sourceRows, 0);
   const publicRows = results.reduce((sum, result) => sum + result.dataset.publicRows, 0);
   const sourceLinkedRows = results.reduce(
@@ -71,6 +82,10 @@ export default async function EditorialTopicPage({ topic }: { topic: EditorialTo
         </div>
       </header>
 
+      {insights?.capable && insights.topRecipients.length > 0 ? (
+        <DatasetInsightPanel insights={insights} />
+      ) : null}
+
       <section className="stat-strip" aria-label={`Copertura di ${topic.title}`}>
         <div>
           <span className="stat-label">Insiemi collegati</span>
@@ -78,14 +93,14 @@ export default async function EditorialTopicPage({ topic }: { topic: EditorialTo
           <span className="stat-note">ognuno conserva il proprio perimetro</span>
         </div>
         <div>
-          <span className="stat-label">Righe sorgente</span>
-          <span className="stat-value">{integer(sourceRows)}</span>
-          <span className="stat-note">contate senza omissioni silenziose</span>
-        </div>
-        <div>
           <span className="stat-label">Righe interrogabili</span>
           <span className="stat-value">{integer(publicRows)}</span>
           <span className="stat-note">con ricerca e paginazione limitata</span>
+        </div>
+        <div>
+          <span className="stat-label">Righe sorgente</span>
+          <span className="stat-value">{integer(sourceRows)}</span>
+          <span className="stat-note">contate senza omissioni silenziose</span>
         </div>
         <div>
           <span className="stat-label">Con fonte puntuale</span>
@@ -95,7 +110,7 @@ export default async function EditorialTopicPage({ topic }: { topic: EditorialTo
       </section>
 
       <section className={styles.findings} aria-labelledby="risultati-documentati">
-        <h2 id="risultati-documentati">Che cosa emerge dai file</h2>
+        <h2 id="risultati-documentati">Sintesi dai file</h2>
         <dl>
           {topic.facts.map((fact) => (
             <div key={`${fact.value}-${fact.label}`}>
@@ -109,18 +124,18 @@ export default async function EditorialTopicPage({ topic }: { topic: EditorialTo
         </dl>
       </section>
 
-      <aside className={`notice ${styles.boundary}`} aria-labelledby="limiti-lettura">
-        <h2 id="limiti-lettura">Che cosa non dimostra da solo</h2>
+      <details className={styles.limitsDetails}>
+        <summary>Che cosa non dimostra da solo</summary>
         <ul>
           {topic.readingNotes.map((note) => <li key={note}>{note}</li>)}
         </ul>
-      </aside>
+      </details>
 
       <section className={styles.records} aria-labelledby="anteprima-record">
         <div className={styles.sectionHeading}>
           <div>
             <h2 id="anteprima-record">Anteprima dei record</h2>
-            <p>Una selezione breve per orientarsi; il collegamento apre la scheda, le fonti, i caveat e, quando disponibile, la ricerca nelle righe.</p>
+            <p>Selezione breve; il collegamento apre grafico, fonti e tutte le righe.</p>
           </div>
           <Link className={styles.action} href="/dati">Apri il registro completo</Link>
         </div>
@@ -203,13 +218,13 @@ export default async function EditorialTopicPage({ topic }: { topic: EditorialTo
                   </div>
                 ) : (
                   <p className={styles.empty}>
-                    Il materiale è integrato nel registro, ma questa proiezione non espone record puntuali.
+                    Materiale nel registro, senza record puntuali in questa proiezione.
                   </p>
                 )}
                 <Link className={styles.action} href={`/dati/${result.dataset.id}`}>
                   {result.dataset.queryable
-                    ? "Vedi tutte le righe, le fonti e i limiti"
-                    : "Apri scheda, fonti e limiti"}
+                    ? "Vedi destinatari, importi e tutte le righe"
+                    : "Apri scheda (senza numeri)"}
                 </Link>
               </div>
             </details>

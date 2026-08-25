@@ -72,9 +72,11 @@ jobs:
         run: python3 scripts/ci/check-action-pins.py
 
   security:
+    name: Zizmor security scan
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
+      # contents: read — required for checkout.
       contents: read
     steps:
       - name: Checkout
@@ -86,6 +88,13 @@ jobs:
         uses: zizmorcore/zizmor-action@3dc1ecc9bcb9e94e9b2c709687979e1298497054 # v0.6.2
         with:
           persona: auditor
+          # advanced-security: false — blocking mode. Findings cause job failure
+          # instead of being uploaded as non-blocking SARIF to Code Scanning.
+          advanced-security: false
+          # annotations: true — emit GitHub annotations for findings (console output).
+          annotations: true
+          # version — pin the zizmor CLI version, not just the wrapper action.
+          version: "1.29.0"
 
   node:
     runs-on: ubuntu-24.04

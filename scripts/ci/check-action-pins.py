@@ -138,7 +138,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Verify that all GitHub Actions uses are SHA-pinned."
     )
-    args = parser.parse_args()
+    parser.parse_args()
 
     if not PINS_FILE.exists():
         print(f"ERROR: Pin file not found: {PINS_FILE}", file=sys.stderr)

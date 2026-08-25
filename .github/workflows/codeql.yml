@@ -8,11 +8,6 @@ on:
     - cron: "22 4 * * 1"
   workflow_dispatch:
 
-permissions:
-  contents: read
-  security-events: write
-  actions: read
-
 concurrency:
   group: codeql-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
@@ -22,6 +17,12 @@ jobs:
     name: Analyze
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    permissions:
+      contents: read
+      # security-events: write — required for CodeQL to upload SARIF findings.
+      security-events: write
+      # actions: read — required by CodeQL to read workflow run metadata.
+      actions: read
     strategy:
       fail-fast: false
       matrix:
@@ -34,15 +35,13 @@ jobs:
           persist-credentials: false
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@42947a340483f03ba47bb1a039b2c519aab3df85 # v3
+        uses: github/codeql-action/init@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4
         with:
           languages: ${{ matrix.language }}
           queries: +security-and-quality
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@42947a340483f03ba47bb1a039b2c519aab3df85 # v3
+          build-mode: none
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@42947a340483f03ba47bb1a039b2c519aab3df85 # v3
+        uses: github/codeql-action/analyze@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4
         with:
           category: "/language:${{ matrix.language }}"

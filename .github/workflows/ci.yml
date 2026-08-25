@@ -26,13 +26,13 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Setup Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -50,24 +50,54 @@ jobs:
       - name: Lint, typecheck, design and brand checks
         run: npm run ci:static
 
-      - name: Actionlint
+      - name: Actionlint (checksum-verified)
+        shell: bash
         run: |
-          curl -sSL -o /tmp/actionlint.tar.gz \
-            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          set -euo pipefail
+          EXPECTED_SHA256="8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
+          URL="https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz"
+          curl -sSL -o /tmp/actionlint.tar.gz "$URL"
+          ACTUAL_SHA256="$(sha256sum /tmp/actionlint.tar.gz | awk '{print $1}')"
+          if [[ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]]; then
+            echo "ERROR: actionlint checksum mismatch" >&2
+            echo "  expected: $EXPECTED_SHA256" >&2
+            echo "  actual:   $ACTUAL_SHA256" >&2
+            exit 1
+          fi
+          echo "actionlint checksum verified ✓"
           tar -xzf /tmp/actionlint.tar.gz -C /tmp
           /tmp/actionlint -color
+
+      - name: Check action SHA pins
+        run: python3 scripts/ci/check-action-pins.py
+
+  security:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Zizmor workflow security scan
+        uses: zizmorcore/zizmor-action@3dc1ecc9bcb9e94e9b2c709687979e1298497054 # v0.6.2
+        with:
+          persona: auditor
 
   node:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
       - name: Setup Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -88,12 +118,12 @@ jobs:
       PYTHONPATH: scripts/etl:scripts/ci
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
       - name: Setup Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.12"
 
@@ -132,12 +162,12 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
       - name: Setup Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -153,7 +183,7 @@ jobs:
 
       - name: Upload browser diagnostics on failure
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: browser-diagnostics
           path: artifacts/browser/
@@ -162,7 +192,7 @@ jobs:
 
       - name: Upload Lighthouse reports
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: lighthouse-irpef
           path: .lighthouseci/
@@ -171,7 +201,7 @@ jobs:
 
       - name: Upload production server log on failure
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: production-server-log
           path: /tmp/dvns-next.log
@@ -180,15 +210,16 @@ jobs:
 
   required:
     name: required
-    needs: [static, node, etl, production]
+    needs: [static, security, node, etl, production]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 2
     steps:
       - name: Aggregate gate results
         shell: bash
         env:
           STATIC_RESULT: ${{ needs.static.result }}
+          SECURITY_RESULT: ${{ needs.security.result }}
           NODE_RESULT: ${{ needs.node.result }}
           ETL_RESULT: ${{ needs.etl.result }}
           PRODUCTION_RESULT: ${{ needs.production.result }}
@@ -197,12 +228,13 @@ jobs:
             echo "| Gate | Result |"
             echo "|------|--------|"
             echo "| static | ${STATIC_RESULT} |"
+            echo "| security | ${SECURITY_RESULT} |"
             echo "| node | ${NODE_RESULT} |"
             echo "| etl | ${ETL_RESULT} |"
             echo "| production | ${PRODUCTION_RESULT} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-          for result in "$STATIC_RESULT" "$NODE_RESULT" "$ETL_RESULT" "$PRODUCTION_RESULT"; do
+          for result in "$STATIC_RESULT" "$SECURITY_RESULT" "$NODE_RESULT" "$ETL_RESULT" "$PRODUCTION_RESULT"; do
             if [[ "$result" != "success" ]]; then
               echo "ERROR: gate result '${result}' is not success — CI / required fails." >&2
               exit 1

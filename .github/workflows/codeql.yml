@@ -8,6 +8,9 @@ on:
     - cron: "22 4 * * 1"
   workflow_dispatch:
 
+# No workflow-level permissions — each job declares its own minimum scope.
+permissions: {}
+
 concurrency:
   group: codeql-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
@@ -17,6 +20,8 @@ jobs:
     name: Analyze
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    # Job-level permissions: CodeQL requires security-events: write for SARIF
+    # upload and actions: read for workflow run metadata.
     permissions:
       contents: read
       # security-events: write — required for CodeQL to upload SARIF findings.

@@ -19,6 +19,7 @@ on:
         required: true
         type: string
 
+# contents: read — least-privilege: only read repository contents.
 permissions:
   contents: read
 

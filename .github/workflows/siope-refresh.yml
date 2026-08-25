@@ -23,7 +23,8 @@ on:
         type: boolean
 
 permissions:
-  contents: write
+  # contents: read — default. Write permission is scoped to the job below.
+  contents: read
 
 concurrency:
   group: siope-municipal-snapshot-${{ github.ref }}
@@ -33,6 +34,10 @@ jobs:
   refresh:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+    # contents: write — required to push the refreshed snapshot commit directly.
+    # PR4 will replace this direct-push pattern with bot PRs.
+    permissions:
+      contents: write
     env:
       TARGET_BRANCH: ${{ github.ref_name }}
       PYTHONPATH: scripts/etl

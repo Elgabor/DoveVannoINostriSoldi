@@ -154,14 +154,21 @@ jobs:
       - name: ETL gate summary
         if: always()
         shell: bash
+        env:
+          JOB_STATUS: ${{ job.status }}
         run: |
+          if [[ "$JOB_STATUS" == "success" ]]; then
+            RESULT="✅ PASS"
+          else
+            RESULT="❌ FAIL"
+          fi
           {
             echo "## ETL gate"
             echo ""
             echo "| Check | Result |"
             echo "|-------|--------|"
-            echo "| ETL test suite (offline) | ${{ job.status == 'success' && '✅ PASS' || '❌ FAIL' }} |"
-            echo "| Generated-artifact registry + offline checks | ${{ job.status == 'success' && '✅ PASS' || '❌ FAIL' }} |"
+            echo "| ETL test suite (offline) | $RESULT |"
+            echo "| Generated-artifact registry + offline checks | $RESULT |"
             echo "| Application-level network guard | active (loopback only) |"
             echo ""
           } >> "$GITHUB_STEP_SUMMARY"

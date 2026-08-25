@@ -16,6 +16,7 @@ on:
     - cron: "37 */6 * * *"
   workflow_dispatch:
 
+# contents: read — least-privilege: only read repository contents.
 permissions:
   contents: read
 

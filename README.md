@@ -1,12 +1,10 @@
 # DoveVannoINostriSoldi
 
-DoveVannoINostriSoldi è un progetto civico open source per capire come vengono usati i soldi pubblici italiani.
+Progetto civico open source per capire come vengono usati i soldi pubblici italiani.
 
-Riunisce dati ufficiali che oggi si trovano in portali diversi. Ogni numero mostra la fonte, il periodo a cui si riferisce e i limiti da conoscere. Un valore insolito può indicare dove controllare meglio, ma non dimostra da solo uno spreco o un illecito.
+Riunisce dati ufficiali sparsi su portali diversi. Ogni numero mostra **fonte**, **periodo** e **limiti**. Un valore insolito indica dove controllare meglio: non dimostra da solo uno spreco o un illecito.
 
-L'AI serve a confrontare dati omogenei, trovare scostamenti e ordinare i casi da verificare. Non decide se esiste uno spreco e non attribuisce responsabilità.
-
-Il sito pubblico è [dovevannoinostrisoldi.com](https://www.dovevannoinostrisoldi.com).
+**Sito:** [dovevannoinostrisoldi.com](https://www.dovevannoinostrisoldi.com)
 
 ![Home: pagamenti dei Comuni, mappa regionale e composizione della spesa](docs/readme/home.jpg)
 
@@ -14,203 +12,51 @@ Il sito pubblico è [dovevannoinostrisoldi.com](https://www.dovevannoinostrisold
 | --- | --- |
 | ![Territori: pagamenti comunali per regione e per Comune](docs/readme/territori.jpg) | ![Cosa controllare: segnali da fonti ufficiali, con limiti visibili](docs/readme/controlli.jpg) |
 
-## Cosa puoi consultare
+## Cosa trovi sul sito
 
-| Sezione | Che cosa mostra | Fonte |
-| --- | --- | --- |
-| Home | Pagamenti dei Comuni, mappa regionale, andamento mensile e dati OpenCoesione | SIOPE, IPA, OpenCoesione |
-| Soldi | Pagamenti effettuati dai Comuni: voci di uscita e flusso mese per mese, distinti dalle tasse dei residenti | SIOPE |
-| Invalidità civile | Spesa nazionale, prestazioni vigenti e nuove pensioni per regione | INPS |
-| Sanità | Conto Economico consuntivo 2024 degli enti SSN: personale, servizi e voci di prestazioni di lavoro | OpenBDAP |
-| Territori | Pagamenti comunali, conti territoriali e redditi/IRPEF dichiarati, con perimetri separati | SIOPE, IPA, CPT, MEF |
-| Fondi e progetti | Costo previsto e pagamenti OpenCoesione; traccia PNRR per asili con CUP, gare e aggiudicatari | OpenCoesione, Italia Domani |
-| Enti e società | Ministeri, enti pubblici, uffici e contatti; per i Comuni riconosciuti, pagamenti, dati fiscali e approfondimenti disponibili | IPA, SIOPE, MEF, OpenCivitas, Italia Domani |
-| Spese dello Stato | Pagamenti per funzione, amministrazione e tipo di spesa | RGS, OpenBDAP |
-| Dettaglio integrato | 79 insiemi organizzati in 21 percorsi su appalti, incarichi, spese, trasparenza e benchmark | Anteprime editoriali, 338.782 righe interrogabili e registro completo di stato e provenienza |
-| Fabbisogni comunali | Spesa storica, spesa standard e servizi dei Comuni nel 2022 | OpenCivitas |
-| Partecipazioni | Società e organizzazioni partecipate dichiarate dalle amministrazioni | MEF |
-| Parlamento | Consuntivo e bilancio della Camera | Camera dei deputati |
-| Controlli | Dati che meritano verifiche più approfondite, con spiegazioni e fonti | ANAC, MEF, Corte dei conti e altre fonti ufficiali |
-| Fonti | Stato dei collegamenti e date di aggiornamento | Registro interno delle fonti |
+| Sezione | In sintesi |
+| --- | --- |
+| [Home](https://www.dovevannoinostrisoldi.com/) | Pagamenti dei Comuni, mappa regionale, andamento mensile |
+| [Soldi](https://www.dovevannoinostrisoldi.com/spese) | Uscite di cassa comunali (SIOPE), mese per mese |
+| [Territori](https://www.dovevannoinostrisoldi.com/territori) | Confronti per regione/Comune, CPT e IRPEF MEF |
+| [Fondi e progetti](https://www.dovevannoinostrisoldi.com/coesione) | OpenCoesione e traccia PNRR asili (Italia Domani) |
+| [Spese dello Stato](https://www.dovevannoinostrisoldi.com/stato) | Pagamenti per funzione e amministrazione (OpenBDAP/RGS) |
+| [Enti e società](https://www.dovevannoinostrisoldi.com/enti) | Indice PA, schede enti, partecipazioni MEF |
+| [Istituzioni](https://www.dovevannoinostrisoldi.com/istituzioni) | Parlamento, sanità, invalidità e altri dossier |
+| [Cosa controllare](https://www.dovevannoinostrisoldi.com/controlli) | Segnali da fonti ufficiali, con limiti espliciti |
+| [Fonti](https://www.dovevannoinostrisoldi.com/fonti) | Stato dei collegamenti e date di aggiornamento |
+| [Dati](https://www.dovevannoinostrisoldi.com/dati) | Catalogo integrato interrogabile |
 
-Il [registro integrato](docs/INTEGRATED_SOURCE_LEDGER.md) contabilizza 51.303 elementi,
-34.071 identità di fonte e 13.321.128 righe sorgente. Le 338.782 righe della proiezione
-pubblica sono accessibili da `/dati`; i materiali `catalog-only` e `derived-only`
-restano visibili con conteggio e motivo. Lo stato di licenza non dichiarata viene
-mostrato come caveat e non rimuove le righe sorgente.
+Altre viste utili: [sanità](https://www.dovevannoinostrisoldi.com/spese/sanita), [invalidità civile](https://www.dovevannoinostrisoldi.com/spese/invalidita), [partecipazioni](https://www.dovevannoinostrisoldi.com/partecipazioni), [assistente](https://www.dovevannoinostrisoldi.com/assistente).
 
-Le due viste RGS già verificate sono ora raggiungibili da
-`/spese/consulenze` (268 righe di rendiconto dal 2024 al 2025) e
-`/spese/territoriale` (5.067 combinazioni dimensionali 2023, con quattro
-misure mantenute separate).
-
-Le pagine principali di appalti, incarichi, spese, controlli e confronti
-mostrano anteprime brevi di non più di tre percorsi pertinenti. I quattro hub
-tematici sono le pagine di espansione: organizzano tutti i risultati e lasciano
-il registro tecnico in una sezione espandibile. Ciascuna delle 21 pagine di
-approfondimento arriva al dataset completo, alle fonti e alle cautele
-probatorie; la pagina Partecipazioni aggiunge una preview dedicata senza
-sostituire il censimento nazionale MEF. Tutti i 79 insiemi compaiono in un
-percorso canonico. Ogni scheda dichiara inoltre titolare, periodo, data di
-pubblicazione e acquisizione quando disponibili, ultimo controllo e frequenza
-attesa. La UI apre la fonte puntuale o il portale canonico quando sono presenti;
-altrimenti dichiara esplicitamente che l’URL non è disponibile. Ricevute e hash
-restano consultabili nel registro di copertura.
-
-Per ANAC è disponibile uno snapshot verificato sui dodici file mensili CIG 2025; non è ancora una ricerca live per singolo CIG o fornitore. Per il PNRR è operativo il perimetro asili e prima infanzia di Italia Domani: non include i pagamenti ReGiS e non viene esteso artificialmente al resto del Piano. Il sito dichiara questi limiti e non usa numeri dimostrativi per riempire gli spazi mancanti.
-
-Il backend espone inoltre:
-
-- `GET /api/enti/c_a783`, con la scheda IPA invariata e il campo additivo `municipalityProfile` quando codice fiscale, Codice IPA e codici territoriali permettono collegamenti esatti; copertura, regole e limiti sono in [docs/MUNICIPALITY_PROFILE.md](docs/MUNICIPALITY_PROFILE.md);
-- `GET /api/incarichi`, con statistiche nazionali ufficiali di Consulenti Pubblici dal 2023;
-- `GET /api/spese/comuni/fabbisogni?anno=2022`, con il confronto OpenCivitas per 6.557 Comuni delle Regioni a statuto ordinario;
-- `GET /api/spese/stato?anno=2024`, con il consuntivo annuale OpenBDAP quando disponibile; in sua assenza, l'ultimo rilascio mensile dell'anno;
-- `GET /api/spese/stato/amministrazioni/2?anno=2024`, con missioni e categorie di una singola amministrazione;
-- `GET /api/opere?cup=I39B05000060005`, con stato, date, costi e finanziamenti di un'opera pubblica OpenBDAP;
-- `GET /api/pnrr/asili?region=Lazio&limit=20`, con progetti Italia Domani, localizzazioni, finanziamenti, gare e aggiudicatari; la ricerca esatta usa `cup`;
-- `GET /api/parlamento`, con i dati strutturati verificati della Camera; il monitor segue anche i nuovi documenti del Senato senza pubblicare valori non ancora estraibili in modo affidabile;
-- `GET /api/controlli`, con indicatori classificati, scenari separati e regole per il loro uso.
-- `GET /api/controlli/spesa-comuni?anno=2022`, con screening derivato OpenCivitas paginato per la differenza di spesa per abitante; formula e limiti sono in [docs/CONTROLLI_SPESE_COMUNI.md](docs/CONTROLLI_SPESE_COMUNI.md).
-- `GET /api/spese/invalidita?anno=2024&regione=Calabria`, con spesa nazionale e nuove pensioni di invalidità civile per la granularità pubblica verificata.
-- `GET /api/spese/sanita?anno=2024&regione=Calabria`, con aggregati del Conto Economico consuntivo OpenBDAP SSN e dettaglio paginato per ente; le voci contabili restano distinte dai pagamenti SIOPE.
-- `GET /api/spese/comuni/distribuzione?anno=2026`, con quote e quantili compatti soltanto dopo un refresh raw SIOPE completo verificato; non restituisce righe comunali.
-- `GET /api/territori/fisco?anno=2023&regione=Calabria`, con entrate, spese e saldo contabile CPT nello stesso perimetro PA consolidato.
-- `GET /api/territori/irpef?anno=2024&livello=regione`, con contribuenti, redditi, imposta netta dichiarata e addizionali MEF; Province e Comuni sono filtrati e paginati.
-- `GET /api/dati/consulenze-legali?q=2024&limit=20`, esempio del selettore comune per le 57 proiezioni interrogabili integrate.
-- `GET /api/fonti/catalogo?disposition=quarantined&limit=20`, con ricevute opache e motivi delle identità non pubblicabili, senza esporne il valore.
-
-## MCP per assistenti AI
-
-Il sito include un server [Model Context Protocol](https://modelcontextprotocol.io/) pubblico e in sola lettura. Un client MCP compatibile può scoprire e interrogare i dataset del portale senza dover conoscere ogni API separatamente.
-
-Endpoint di produzione:
-
-```text
-https://<dominio-del-sito>/api/mcp
-```
-
-In locale è `http://localhost:3000/api/mcp`. La pagina `/mcp` mostra l'indirizzo corretto del deployment e il catalogo corrente.
-
-Il server espone:
-
-- `list_datasets`, per elencare dataset, filtri, freschezza e cautele interpretative;
-- `query_dataset`, per interrogare snapshot verificati e fonti ufficiali live; filtri e paginazione
-  sono disponibili soltanto quando dichiarati dal dataset;
-- la risorsa `dvns://datasets`, che contiene il catalogo machine-readable.
-- la risorsa `dvns://related-mcp-services`, che segnala servizi pubblici complementari senza
-  confonderli con gli adapter gestiti dal portale.
-
-Tra i dataset c'è `anac_cig_snapshot`: espone copertura annuale, conteggi, procedure, fasce di importo, hash degli input e cautele della replica CIG 2025. `pnrr_asili` restituisce progetti Italia Domani per CUP con localizzazioni, quadro finanziario, gare e aggiudicatari collegati per chiavi esatte. `inps_invalidita_civile` tiene separate spesa nazionale, stock di prestazioni e nuove decorrenze regionali, senza inferire dati comunali o responsabilità individuali. `cpt_finanza_regionale` espone entrate, spese e saldo territoriale 2000-2023, con valori pro capite solo dove il denominatore ISTAT è coerente. `mef_irpef_comunale` espone il rilascio comunale 2024 come dato dichiarativo, conserva celle soppresse e riga non attribuita e non lo tratta come gettito o saldo di cassa. `opencoesione_progetti` include anche quota del costo pubblico, rapporto pagamenti/costo e costo medio per progetto per tema, natura e stato.
-
-`spesa_pa_dettaglio` espone via MCP lo stesso catalogo di 79 insiemi integrati:
-`code` seleziona l'ID, mentre `query`, `limit` e `offset` usano gli stessi limiti
-di pagina e API. Le 57 proiezioni interrogabili restituiscono righe; i 22
-materiali `catalog-only` o `derived-only` restituiscono metadati e conteggi
-senza inventare né pubblicare record puntuali.
-
-Per il dettaglio civico per singolo Comune segnaliamo anche il MCP pubblico di
-[Cruscotto Italia](https://cruscotto-italia.dati.gov.it/about.html#accesso-mcp), gestito da AgID:
-
-```text
-https://cruscotto-italia-mcp.agid.workers.dev/mcp
-```
-
-È un servizio esterno pubblico, al momento senza autenticazione o tariffa dichiarata, da collegare
-direttamente al proprio client. DVNS non ne inoltra le chiamate, non ne duplica le pipeline e non
-ne presenta gli aggregati come dati validati localmente. Il percorso consigliato è
-`search_comune`, poi `comune_kpi`; `comune_dashboard` va usato solo quando servono serie o elenchi
-di dettaglio. Codice e architettura sono nel
-[repository ufficiale AgID](https://github.com/AgID/cruscotto-italia).
-
-Esempio di configurazione per un client che accetta server HTTP remoti:
-
-```json
-{
-  "mcpServers": {
-    "dove-vanno-i-nostri-soldi": {
-      "type": "http",
-      "url": "https://<dominio-del-sito>/api/mcp"
-    }
-  }
-}
-```
-
-Verifica rapida del protocollo:
-
-```bash
-curl -X POST http://localhost:3000/api/mcp \
-  -H 'Content-Type: application/json' \
-  -H 'Accept: application/json, text/event-stream' \
-  --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
-```
-
-L'accesso senza account o autenticazione è intenzionale perché il server espone esclusivamente dati pubblici e operazioni read-only. Le richieste hanno input limitati, paginazione massima dove prevista e controlli sugli header `Origin` e `Host`; eventuali origini browser aggiuntive si configurano con `MCP_ALLOWED_ORIGINS`, mentre i domini pubblici ammessi si dichiarano in `MCP_ALLOWED_HOSTS`. I filtri estranei al dataset vengono rifiutati esplicitamente, senza produrre risultati che sembrino filtrati ma non lo siano. Non vengono esposte credenziali di ingestione.
-
-Il repository non simula un rate limit distribuito con memoria locale: sul deployment la regola edge
-per `/api/mcp` va attivata e verificata separatamente. Finché non è attiva, questa protezione non va
-considerata presente; la configurazione proposta è documentata in [docs/MCP.md](docs/MCP.md).
-
-Per aggiungere una fonte all'MCP si registra la descrizione in `src/lib/mcp/catalog.ts` e l'adapter in `src/lib/mcp/datasets.ts`. Gli strumenti restano gli stessi, quindi i client non devono essere riconfigurati quando il catalogo cresce. Dettagli e checklist sono in [docs/MCP.md](docs/MCP.md).
-
-Per Manufact, ChatGPT e Claude si collega lo stesso endpoint pubblico: non si effettua un secondo
-deploy del server. Challenge di dominio, pagine pubbliche, starter prompt e test di submission sono
-documentati in [docs/MCP_DISTRIBUTION.md](docs/MCP_DISTRIBUTION.md).
-
-### Assistente testuale deterministico
-
-La pagina [/assistente](/assistente) offre una prima interfaccia testuale in sola lettura. Risponde
-soltanto a pochi intenti allowlisted in italiano e richiama direttamente gli adapter pubblici già
-verificati; non usa provider LLM o voce, non salva il prompt e non accetta URL, SQL o dataset scelti
-dal testo. Il contratto, i limiti HTTP e la roadmap sono in [docs/ASSISTENTE.md](docs/ASSISTENTE.md).
-
-Per OpenCivitas, la differenza tra spesa storica e spesa standard non viene chiamata spreco. L'API restituisce anche i valori per abitante, il confronto sui servizi e i limiti territoriali della fonte.
-
-Per le opere pubbliche, l'API può segnalare date da controllare, crescita dei costi, finanziamenti ancora da trovare o problemi di qualità del dato. Sono indicazioni per scegliere cosa approfondire, non prove automatiche di spreco.
-
-La sezione Controlli tiene separate sette letture: esiti di controlli ufficiali, concorrenza ridotta, ritardi, debiti, crediti difficili da riscuotere, misure da valutare e ipotesi di miglioramento. Gli scenari non vengono sommati ai dati osservati.
-
-Non confrontiamo come prezzi unitari gli importi totali di contratti con lo stesso codice CPV. Per parlare di anomalia di prezzo servono anche quantità, unità di misura, specifiche, durata e perimetro compatibili. Finché questi campi non sono disponibili, il sito non pubblica classifiche basate sul solo rapporto tra importo minimo e massimo.
-
-La replica sui microdati CIG 2025, con formula, filtri e limiti, è documentata in [docs/research/ANAC_2025_REPLICATION.md](docs/research/ANAC_2025_REPLICATION.md). Quando il risultato ricalcolato non coincide con l'aggregato della relazione ANAC, mostriamo la differenza invece di correggere il dato a mano.
-
-Per l'invalidità civile, fonti, riconciliazioni e limiti territoriali sono documentati in [docs/INPS_INVALIDITA.md](docs/INPS_INVALIDITA.md). La voce ufficiale più recente è 23,616 miliardi di euro nel 2025 per l'insieme delle prestazioni di invalidità civile, non per le sole pensioni.
-
-Per la sanità, `openbdap_ssn_conto_economico` espone il consuntivo 2024 del Conto Economico
-degli enti SSN. Il nazionale e le Regioni sono letti dai rispettivi dataset ufficiali; il dettaglio
-espone 232 enti e non le 21 righe aggregate `codeSsn=999`, usate solo per una verifica
-anti-doppio-conteggio. `BA2080` è `Totale Costo del personale`; `BA1350` e `BA1750` mantengono
-le descrizioni ufficiali di consulenze, collaborazioni, interinale e altre prestazioni di lavoro,
-rispettivamente sanitarie/sociosanitarie e non sanitarie. Non sono sinonimi di “gettonisti” o
-“cooperative”, non misurano organico o qualità e non sono pagamenti di cassa.
-
-## Scegliere l'anno
-
-La home e le pagine Soldi e Territori permettono di scegliere il 2024, 2025 o 2026. La scelta resta nell'indirizzo della pagina, per esempio:
-
-```text
-/?anno=2025
-/spese?anno=2025
-/territori?anno=2025
-```
-
-I dati SIOPE, OpenBDAP e la serie annuale OpenCoesione cambiano con l'anno scelto. Per OpenBDAP una query annuale senza mese preferisce il consuntivo ufficiale `PBS_SPE_RND_*`; una query con mese e lo storico usano esclusivamente i rilasci mensili `PBS_SPE_Mxx_*`. Se un indicatore non esiste per quel periodo, viene mostrato come non disponibile. Non riutilizziamo un dato di un altro anno o di un'altra serie contabile.
-
-Le classifiche territoriali usano il valore per abitante come default e conservano il totale come confronto. Le due graduatorie comunali sono calcolate separatamente sull'intero insieme osservato, non riordinando una lista già tagliata per volume. Provincia e Regione mostrate accanto al Comune provengono rispettivamente dall'anagrafica SIOPE e dalla sede legale pubblicata in IPA.
-
-## Regole del progetto
+## Regole in breve
 
 - Nessun numero senza fonte e data.
 - Nessun dato inventato o dimostrativo nelle pagine pubbliche.
 - Pagamenti, costi previsti, debiti e ipotesi restano separati.
-- Un segnale non viene presentato come una colpa.
-- I confronti usano solo casi e misure compatibili.
+- Un segnale non è una colpa.
+- I confronti usano solo misure compatibili.
 - Se una fonte non risponde, il problema resta visibile.
 
-Le regole complete sono in [docs/LEGAL_AND_ETHICS.md](docs/LEGAL_AND_ETHICS.md) e [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Dettaglio: [docs/LEGAL_AND_ETHICS.md](docs/LEGAL_AND_ETHICS.md) e [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## Avvio locale
+## Anno e limiti
 
-Richiede Node.js 22.19 o successivo.
+Su Home, Soldi e Territori puoi scegliere `2024`, `2025` o `2026` (resta nell’URL, es. `/?anno=2025`).
+
+Limiti importanti:
+
+- ANAC CIG 2025: snapshot mensile verificato, non ricerca live per CIG o fornitore.
+- PNRR: perimetro asili e prima infanzia; non include i pagamenti ReGiS né tutto il Piano.
+- Contabilità diverse non si sommano (SIOPE, IRPEF, CPT, costi previsti, debiti).
+
+Registro integrato, copertura e caveat: [docs/INTEGRATED_SOURCE_LEDGER.md](docs/INTEGRATED_SOURCE_LEDGER.md).
+
+## Per chi sviluppa
+
+### Avvio locale
+
+Node.js **22.19+**.
 
 ```bash
 npm ci
@@ -219,7 +65,47 @@ npm run dev
 
 Apri [http://localhost:3000](http://localhost:3000).
 
-## Controlli prima di una modifica
+### MCP (assistenti AI)
+
+Server [Model Context Protocol](https://modelcontextprotocol.io/) pubblico, sola lettura:
+
+```text
+https://www.dovevannoinostrisoldi.com/api/mcp
+```
+
+In locale: `http://localhost:3000/api/mcp`. Pagina catalogo: [/mcp](https://www.dovevannoinostrisoldi.com/mcp).
+
+Strumenti principali: `list_datasets`, `query_dataset`.
+
+```json
+{
+  "mcpServers": {
+    "dove-vanno-i-nostri-soldi": {
+      "type": "http",
+      "url": "https://www.dovevannoinostrisoldi.com/api/mcp"
+    }
+  }
+}
+```
+
+Guida completa: [docs/MCP.md](docs/MCP.md). Distribuzione su client esterni: [docs/MCP_DISTRIBUTION.md](docs/MCP_DISTRIBUTION.md).
+
+Il MCP pubblico di [Cruscotto Italia](https://cruscotto-italia.dati.gov.it/about.html#accesso-mcp) (AgID) è un servizio esterno complementare: DVNS non lo inoltra e non lo tratta come dato validato localmente.
+
+### API HTTP
+
+Esempi:
+
+```text
+GET /api/spese/comuni
+GET /api/territori/irpef?anno=2024&livello=regione
+GET /api/controlli
+GET /api/dati/consulenze-legali?q=2024&limit=20
+```
+
+Elenco e contratti: documentazione in `docs/` e catalogo su [/mcp](https://www.dovevannoinostrisoldi.com/mcp).
+
+### Controlli prima di una modifica
 
 ```bash
 npm run lint
@@ -231,65 +117,42 @@ npm run test:browser:e2e
 npm run test:lighthouse
 ```
 
-Gli ultimi due comandi richiedono il build di produzione in esecuzione su
-`http://127.0.0.1:3000`. La CI li esegue su quattro viewport responsive e conserva il report
-Lighthouse come artefatto privato del job. Le metriche Lighthouse sono misure di laboratorio e
-proxy dei Core Web Vitals, non dati real-user. La verifica automatica deve terminare senza avvisi
-ESLint, errori TypeScript, regressioni Browser o budget Lighthouse falliti.
+Gli ultimi due richiedono il build di produzione su `http://127.0.0.1:3000`. Dettagli in [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Aggiornamento dei dati
+### Aggiornamento dati
 
-Gli script in `scripts/etl/` scaricano le fonti ufficiali, controllano il formato e producono file piccoli usati dal sito.
+Gli script in `scripts/etl/` scaricano le fonti ufficiali e producono gli snapshot usati dal sito. Esempio:
 
 ```bash
 python3 scripts/etl/siope_municipal_snapshot.py --year 2025 \
   --output src/data/generated/siope-municipal-2025.json
 python3 scripts/etl/opencoesione_snapshot.py --check
-python3 scripts/etl/mef_participations_snapshot.py --check
-python3 scripts/etl/consulenti_snapshot.py --check
-python3 scripts/etl/opencivitas_snapshot.py --check
-python3 scripts/etl/parliament_sources.py --check
-python3 scripts/etl/mef_irpef_municipal_snapshot.py --check \
-  --spec scripts/etl/specs/mef-irpef-2024.source.json \
-  --meta-output src/data/generated/mef-irpef-2024.meta.json \
-  --data-output src/data/generated/mef-irpef-2024.data.json
-python3 scripts/etl/pnrr_childcare_snapshot.py --check
 ```
 
-Le attività automatiche controllano periodicamente la presenza di nuovi dati. Un'interruzione di una fonte esterna non viene confusa con un errore del codice.
+Politica di freschezza: [docs/FRESHNESS_AND_REFRESH.md](docs/FRESHNESS_AND_REFRESH.md).
 
-Dettagli generali: [docs/FRESHNESS_AND_REFRESH.md](docs/FRESHNESS_AND_REFRESH.md). Contratto, join e limiti del tracciato PNRR: [docs/PNRR_CHILDCARE.md](docs/PNRR_CHILDCARE.md).
-
-## Struttura essenziale
+### Struttura del repository
 
 ```text
-src/app/                 pagine e servizi web
-src/components/          grafici, mappa e controlli dell'interfaccia
-src/lib/                 lettura, controllo e collegamento dei dati
-src/lib/mcp/             catalogo e adapter del server MCP
-src/data/generated/      copie ridotte e verificate usate dal sito
-scripts/etl/             aggiornamento delle fonti
-tests/                   controlli automatici
-docs/                    metodo, architettura e note legali
+src/app/            pagine e API
+src/components/     interfaccia
+src/lib/            lettura e collegamento dati
+src/lib/mcp/        catalogo MCP
+src/data/generated/ snapshot verificati
+scripts/etl/        aggiornamento fonti
+tests/              controlli automatici
+docs/               metodo, architettura, note legali
 ```
-
-Il registro delle fonti è in [src/lib/sources.ts](src/lib/sources.ts). Le regole operative sono in [src/lib/data/source-policy.ts](src/lib/data/source-policy.ts).
-
-Le richieste arrivate dopo il lancio, con fonte, limite e stato di lavorazione, sono raccolte in [docs/COMMUNITY_FEEDBACK.md](docs/COMMUNITY_FEEDBACK.md).
 
 ## Contribuire
 
-Sono utili segnalazioni di fonti mancanti, correzioni alle spiegazioni, controlli sulla qualità dei dati e miglioramenti di accessibilità.
+Segnalazioni utili: fonti mancanti, correzioni alle spiegazioni, qualità dei dati, accessibilità.
 
-Prima di aprire una pull request, leggi [CONTRIBUTING.md](CONTRIBUTING.md): contiene i contratti minimi per fonti, claim, UI, API e MCP e i gate locali richiesti.
+Prima di una PR leggi [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Per proporre una nuova fonte, apri una issue con:
+Per una nuova fonte, in issue indica: ente, URL ufficiale, licenza, formato, frequenza, identificativi (IPA, CF, CIG, CUP) e cosa il dato **non** misura.
 
-- ente che pubblica il dato;
-- collegamento ufficiale;
-- licenza;
-- formato e frequenza di aggiornamento;
-- identificativi utili, come Codice IPA, codice fiscale, CIG o CUP.
+Richieste della community: [docs/COMMUNITY_FEEDBACK.md](docs/COMMUNITY_FEEDBACK.md).
 
 ## Contributori
 
@@ -298,13 +161,8 @@ Per proporre una nuova fonte, apri una issue con:
 
 ## Licenza
 
-Il codice è disponibile sotto [GNU Affero GPL v3](LICENSE).
+Il codice è sotto [GNU Affero GPL v3](LICENSE).
 
-In sintesi: puoi usare, studiare e migliorare il progetto se rispetti
-l'AGPL (incluso, quando richiesto, rendere disponibile il codice sorgente
-corrispondente). Se invece vuoi sviluppare su questa base un prodotto o
-un servizio da vendere in forma proprietaria, senza gli obblighi AGPL,
-serve una [licenza commerciale](COMMERCIAL.md) concordata con i maintainer.
+Puoi usare, studiare e migliorare il progetto rispettando l’AGPL (incluso, quando richiesto, il codice sorgente corrispondente). Per un prodotto o servizio proprietario da vendere senza obblighi AGPL serve una [licenza commerciale](COMMERCIAL.md).
 
-I dati e gli elementi di terze parti mantengono le licenze indicate dalle
-rispettive fonti. Le attribuzioni sono in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+I dati di terzi restano sotto le loro licenze: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

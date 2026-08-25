@@ -19,6 +19,7 @@
     "typecheck": "tsc --noEmit",
     "design:check": "impeccable detect src/",
     "ci:static": "npm run lint && npm run typecheck && npm run design:check && npm run brand:check",
+    "ci:action-pins": "python3 scripts/ci/check-action-pins.py",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "test:node": "node --experimental-strip-types --test tests/*.test.mjs",
     "test:etl": "python3 -m unittest discover -s tests/etl -p 'test_*.py'",

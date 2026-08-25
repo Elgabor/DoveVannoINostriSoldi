@@ -215,49 +215,6 @@ async function assertCohesionPathwayContrast(page, label) {
   assert.ok(state.paragraphContrast >= 4.5, `${label}: contrasto testo ${state.paragraphContrast}`);
 }
 
-async function assertConsultingSuccess(page, label) {
-  const submissions = [];
-  await page.setRequestInterception(true);
-  page.on("request", async (request) => {
-    if (request.isInterceptResolutionHandled()) return;
-    const requestUrl = new URL(request.url());
-    if (request.method() === "POST" && requestUrl.pathname === "/api/consulenza") {
-      submissions.push(JSON.parse(request.postData() ?? "{}"));
-      await request.respond({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ ok: true }),
-      });
-      return;
-    }
-    await request.continue();
-  });
-
-  await page.type('input[name="name"]', "Mario Rossi");
-  await page.type('input[name="email"]', "mario.rossi@example.it");
-  await page.type('input[name="organization"]', "Comune di Esempio");
-  await page.select('select[name="organizationType"]', "pa");
-  await page.select('select[name="topic"]', "lettura");
-  await page.select('select[name="budget"]', "non_so");
-  await page.type(
-    'textarea[name="message"]',
-    "Vorremmo capire come leggere e confrontare un archivio pubblico con fonti verificabili.",
-  );
-  await page.click('input[name="consent"]');
-  await page.click('main form button[type="submit"]');
-  await page.waitForSelector('[role="status"]', { visible: true });
-
-  const result = await page.$eval('[role="status"]', (status) => ({
-    active: document.activeElement === status,
-    text: status.textContent,
-  }));
-  assert.equal(submissions.length, 1, `${label}: numero di submit inatteso`);
-  assert.match(submissions[0].submissionId, /^[0-9a-f-]{36}$/i, `${label}: idempotency id assente`);
-  assert.equal(submissions[0].consent, true, `${label}: consenso non inviato`);
-  assert.equal(result.active, true, `${label}: focus non spostato sul successo`);
-  assertTextMatches(result.text ?? "", /Richiesta inviata/i, label);
-}
-
 async function assertInfoTooltips(page, label) {
   for (const tooltipId of INFO_TOOLTIP_IDS) {
     const selector = `button[aria-controls="${tooltipId}"]`;

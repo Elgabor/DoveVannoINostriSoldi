@@ -12,7 +12,7 @@ export default function TermsPage() {
     <main className={`shell page ${styles.page}`}>
       <div className="page-intro">
         <h1>Termini di utilizzo</h1>
-        <p>Condizioni essenziali per il sito e per l&apos;endpoint MCP pubblico. Aggiornate il 21 agosto 2026.</p>
+        <p>Condizioni essenziali per il sito e per l&apos;endpoint MCP pubblico. Aggiornate il 25 agosto 2026.</p>
       </div>
 
       <section className="panel">
@@ -48,10 +48,12 @@ export default function TermsPage() {
       <section className="panel">
         <h2 className="panel-title">Licenze e modifiche</h2>
         <p>
-          Il <a href={REPO_URL}>codice del progetto</a> è distribuito con licenza MIT. I dataset
-          e gli elementi di terze parti conservano le licenze e attribuzioni indicate nelle
-          rispettive fonti. Questi termini possono essere aggiornati quando cambiano servizio o
-          requisiti; la data in apertura identifica la versione pubblicata.
+          Il <a href={REPO_URL}>codice del progetto</a> è disponibile sotto GNU Affero
+          GPL v3, con possibilità di licenza commerciale separata per usi
+          proprietari. I dataset e gli elementi di terze parti conservano le
+          licenze e attribuzioni indicate nelle rispettive fonti. Questi termini
+          possono essere aggiornati quando cambiano servizio o requisiti; la data
+          in apertura identifica la versione pubblicata.
         </p>
       </section>
     </main>

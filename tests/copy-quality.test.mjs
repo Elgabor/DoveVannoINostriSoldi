@@ -27,6 +27,28 @@ test("readme shows live UI screenshots of home, territories and controls", async
   }
 });
 
+test("project code is dual-licensed AGPL with optional commercial terms", async () => {
+  const [license, commercial, readme, contributing, notices, termini, llms] = await Promise.all([
+    readFile(new URL("../LICENSE", import.meta.url), "utf8"),
+    readFile(new URL("../COMMERCIAL.md", import.meta.url), "utf8"),
+    readFile(new URL("../README.md", import.meta.url), "utf8"),
+    readFile(new URL("../CONTRIBUTING.md", import.meta.url), "utf8"),
+    readFile(new URL("../THIRD_PARTY_NOTICES.md", import.meta.url), "utf8"),
+    readFile(new URL("../src/app/termini/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../public/llms.txt", import.meta.url), "utf8"),
+  ]);
+  assert.match(license, /GNU AFFERO GENERAL PUBLIC LICENSE/);
+  assert.match(license, /COMMERCIAL\.md/);
+  assert.match(commercial, /licenza commerciale/i);
+  assert.match(readme, /COMMERCIAL\.md/);
+  assert.match(readme, /Affero GPL/);
+  assert.match(contributing, /Affero GPL v3/);
+  assert.match(notices, /AGPL-3\.0/);
+  assert.match(termini, /Affero/);
+  assert.match(llms, /AGPL-3\.0/);
+  assert.doesNotMatch(`${readme}\n${termini}\n${llms}\n${notices}`, /licenza MIT|MIT License/i);
+});
+
 test("public copy avoids old branding, dash separators and known filler phrases", async () => {
   const files = ["README.md", ...(await Promise.all(uiRoots.map(filesBelow))).flat()];
   const forbidden = [

@@ -1,6 +1,8 @@
 # Third-party data notices
 
-The MIT license in `LICENSE` applies to the project code. Embedded or linked datasets keep their original licenses and attribution requirements.
+The AGPL-3.0 license in `LICENSE` applies to the project code, with optional
+commercial terms described in `COMMERCIAL.md`. Embedded or linked datasets keep
+their original licenses and attribution requirements.
 
 ## Consip participation and awardee data 2024–2026
 

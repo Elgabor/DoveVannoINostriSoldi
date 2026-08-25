@@ -298,4 +298,13 @@ Per proporre una nuova fonte, apri una issue con:
 
 ## Licenza
 
-Il codice è distribuito con licenza MIT. I dati e gli elementi di terze parti mantengono le licenze indicate dalle rispettive fonti. Le attribuzioni sono raccolte in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Il codice è disponibile sotto [GNU Affero GPL v3](LICENSE).
+
+In sintesi: puoi usare, studiare e migliorare il progetto se rispetti
+l'AGPL (incluso, quando richiesto, rendere disponibile il codice sorgente
+corrispondente). Se invece vuoi sviluppare su questa base un prodotto o
+un servizio da vendere in forma proprietaria, senza gli obblighi AGPL,
+serve una [licenza commerciale](COMMERCIAL.md) concordata con i maintainer.
+
+I dati e gli elementi di terze parti mantengono le licenze indicate dalle
+rispettive fonti. Le attribuzioni sono in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

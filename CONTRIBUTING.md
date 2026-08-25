@@ -50,6 +50,12 @@ focus, stati di errore/caricamento/vuoto, console e overflow. Una modifica MCP
 richiede smoke test sul server HTTP reale e casi negativi. Specifica sempre ciò
 che non hai potuto eseguire.
 
+## Licenza dei contributi
+
+Inviando una pull request accetti che il tuo contributo sia incluso nel progetto
+sotto GNU Affero GPL v3 (vedi `LICENSE`). Per usi proprietari o commerciali
+senza obblighi AGPL vale quanto descritto in `COMMERCIAL.md`.
+
 ## Review e merge
 
 La CI verde è necessaria ma non sufficiente. La review valuta separatamente

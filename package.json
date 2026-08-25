@@ -10,6 +10,7 @@
   "scripts": {
     "brand:generate": "node scripts/brand/generate-icons.mjs",
     "brand:check": "node scripts/brand/generate-icons.mjs --check",
+    "readme:screenshots": "node scripts/brand/capture-readme.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

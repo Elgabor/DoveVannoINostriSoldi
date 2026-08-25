@@ -18,6 +18,15 @@ async function filesBelow(relativePath) {
   return files;
 }
 
+test("readme shows live UI screenshots of home, territories and controls", async () => {
+  const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
+  assert.match(readme, /https:\/\/www\.dovevannoinostrisoldi\.com/);
+  for (const file of ["home.jpg", "territori.jpg", "controlli.jpg"]) {
+    assert.match(readme, new RegExp(`docs/readme/${file}`));
+    await readFile(new URL(`../docs/readme/${file}`, import.meta.url));
+  }
+});
+
 test("public copy avoids old branding, dash separators and known filler phrases", async () => {
   const files = ["README.md", ...(await Promise.all(uiRoots.map(filesBelow))).flat()];
   const forbidden = [

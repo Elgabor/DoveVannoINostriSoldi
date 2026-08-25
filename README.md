@@ -6,6 +6,14 @@ Riunisce dati ufficiali che oggi si trovano in portali diversi. Ogni numero most
 
 L'AI serve a confrontare dati omogenei, trovare scostamenti e ordinare i casi da verificare. Non decide se esiste uno spreco e non attribuisce responsabilità.
 
+Il sito pubblico è [dovevannoinostrisoldi.com](https://www.dovevannoinostrisoldi.com).
+
+![Home: pagamenti dei Comuni, mappa regionale e composizione della spesa](docs/readme/home.jpg)
+
+| Territori | Cosa controllare |
+| --- | --- |
+| ![Territori: pagamenti comunali per regione e per Comune](docs/readme/territori.jpg) | ![Cosa controllare: segnali da fonti ufficiali, con limiti visibili](docs/readme/controlli.jpg) |
+
 ## Cosa puoi consultare
 
 | Sezione | Che cosa mostra | Fonte |

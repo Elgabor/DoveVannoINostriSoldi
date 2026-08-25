@@ -74,8 +74,7 @@ test("CI verifies every main commit and uses the current artifact runtime", asyn
 
   assert.match(ci, /github\.event\.pull_request\.number \|\| github\.sha/);
   assert.doesNotMatch(ci, /github\.event\.pull_request\.number \|\| github\.ref/);
-  // upload-artifact must be SHA-pinned (no tag refs) and appear exactly 4
-  // times across ci.yml and mef-irpef-refresh.yml.
+  // upload-artifact must be SHA-pinned (supply-chain security).
   assert.doesNotMatch(`${ci}\n${mefRefresh}`, /actions\/upload-artifact@v\d/);
   assert.equal((`${ci}\n${mefRefresh}`.match(/actions\/upload-artifact@[0-9a-f]{40}/g) ?? []).length, 4);
   assert.match(harness, /const BROWSER_LAUNCH_TIMEOUT_MS = 60_000;/);
@@ -179,8 +178,11 @@ test("municipality rankings expose province and region as visible context", asyn
   ]);
 
   assert.match(contract, /province: string;/);
-  assert.match(page, /data-municipality-ranking="per-capita"/);
+  assert.match(page, /data-municipality-ranking=\{metric\}/);
+  assert.match(page, /"per-abitante", "per-km2", "totale"/);
   assert.match(page, /\{municipality\.province\} · \{municipality\.region\}/);
+  assert.match(page, /const isPartialYear = partialMonth\(data\) !== null/);
+  assert.doesNotMatch(page, /latestMonth < 12/);
 });
 
 test("the narrow mobile header never collapses the wordmark into a text column", async () => {

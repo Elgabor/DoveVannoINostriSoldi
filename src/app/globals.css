@@ -616,6 +616,11 @@ main { display: block; }
    competes with it for the same line steps aside. */
 @media (max-width: 1260px) {
   .nav-note { display: none; }
+  .nav-row[data-menu-open="true"] {
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+  .nav-row[data-menu-open="true"] .nav-scroll-hint { display: none; }
   .primary-nav {
     overflow-x: auto;
     scrollbar-width: none;

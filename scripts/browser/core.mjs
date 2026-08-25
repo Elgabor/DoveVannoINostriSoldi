@@ -514,17 +514,14 @@ async function assertPrimaryDropdownTap(page, label, { sectionLabel, childLabel 
   const toggle = await itemElement.$(".nav-item-toggle");
   assert.ok(toggle, `${label}: pulsante tendina assente`);
 
-  await toggle.evaluate((button) => {
-    button.click();
-  });
+  await toggle.click();
   await assertSubmenuVisible(itemElement, page, label, childLabel);
 
   const navRowOpen = await page.$eval(".nav-row", (row) => row.getAttribute("data-menu-open"));
   assert.equal(navRowOpen, "true", `${label}: data-menu-open non attivo`);
+  await assertResponsiveShell(page, `${label} aperto`, 390);
 
-  await toggle.evaluate((button) => {
-    button.click();
-  });
+  await page.keyboard.press("Escape");
   await page.waitForFunction(
     (element) => {
       const submenu = element.querySelector(".nav-submenu");

@@ -337,8 +337,9 @@ nav li a { text-decoration: none; }
   color: var(--color-text);
   background: var(--color-neutral-100);
 }
-.nav-item-has-menu:hover .nav-submenu,
-.nav-item-has-menu:focus-within .nav-submenu,
+/* Visibility is owned by React data-open alone. Opening also via :hover or
+   :focus-within let two panels stay visible when focus/data-open lagged behind
+   the pointer moving to the next section. */
 .nav-item-has-menu[data-open="true"] .nav-submenu {
   display: block;
 }

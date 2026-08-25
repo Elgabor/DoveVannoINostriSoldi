@@ -612,6 +612,41 @@ async function assertPrimaryDropdownOnly(page, label, { sectionLabel, childLabel
   await assertSubmenuVisible(itemElement, page, label, childLabel);
 }
 
+async function assertPrimaryDropdownExclusive(page, label, { fromLabel, toLabel }) {
+  const fromItem = await findPrimaryNavSection(page, fromLabel);
+  const toItem = await findPrimaryNavSection(page, toLabel);
+  assert.ok(fromItem, `${label}: sezione ${fromLabel} assente`);
+  assert.ok(toItem, `${label}: sezione ${toLabel} assente`);
+
+  await fromItem.hover();
+  await page.waitForFunction(
+    (element) =>
+      element.getAttribute("data-open") === "true" &&
+      window.getComputedStyle(element.querySelector(".nav-submenu")).display !== "none",
+    { timeout: 3_000 },
+    fromItem,
+  );
+
+  await toItem.hover();
+  await page.waitForFunction(
+    (from, to) => {
+      if (to.getAttribute("data-open") !== "true") return false;
+      if (from.getAttribute("data-open") === "true") return false;
+      const fromDisplay = window.getComputedStyle(from.querySelector(".nav-submenu")).display;
+      const toDisplay = window.getComputedStyle(to.querySelector(".nav-submenu")).display;
+      return fromDisplay === "none" && toDisplay !== "none";
+    },
+    { timeout: 3_000 },
+    fromItem,
+    toItem,
+  );
+
+  const visibleCount = await page.$$eval("nav.primary-nav .nav-submenu", (menus) =>
+    menus.filter((menu) => window.getComputedStyle(menu).display !== "none").length,
+  );
+  assert.equal(visibleCount, 1, `${label}: atteso un solo sottomenu visibile, trovati ${visibleCount}`);
+}
+
 async function assertPrimaryDropdownTap(page, label, { sectionLabel, childLabel }) {
   const itemElement = await findPrimaryNavSection(page, sectionLabel);
   assert.ok(itemElement, `${label}: sezione ${sectionLabel} assente`);
@@ -888,6 +923,19 @@ try {
       completed.push(label);
     }
   }
+
+  await runScenario(browser, {
+    label: "Menu tendina esclusivo 1280px",
+    pathname: "/istituzioni",
+    width: 1280,
+    validate: async (page) => {
+      await assertPrimaryDropdownExclusive(page, "Menu tendina esclusivo 1280px", {
+        fromLabel: "Istituzioni",
+        toLabel: "Enti e società",
+      });
+    },
+  });
+  completed.push("Menu tendina esclusivo 1280px");
 
   await runScenario(browser, {
     label: "Controlli leggibilità 390px",

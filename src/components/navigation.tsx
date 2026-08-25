@@ -19,8 +19,9 @@ export function Navigation() {
   const navigationRef = useRef<HTMLElement>(null);
   const activeLinkRef = useRef<HTMLAnchorElement>(null);
   /**
-   * Which submenu a tap has opened. Hover alone cannot reach these on a touch
-   * screen, so the caret is a real control and this is the state it drives.
+   * Exactly one submenu may be open. Hover, focus and the caret all write the
+   * same state so CSS never opens a second panel through :hover/:focus-within
+   * while another is still held open.
    *
    * The path it was opened on travels with it: a completed navigation has
    * already answered the menu, so the open state simply stops applying rather
@@ -30,6 +31,10 @@ export function Navigation() {
   const openHref = openMenu?.pathname === pathname ? openMenu.href : null;
 
   const closeMenu = useCallback(() => setOpenMenu(null), []);
+  const openItem = useCallback(
+    (href: string) => setOpenMenu({ href, pathname }),
+    [pathname],
+  );
 
   useEffect(() => {
     const navigation = navigationRef.current;
@@ -98,7 +103,21 @@ export function Navigation() {
       </div>
 
       <div className="shell nav-row" data-menu-open={openHref ? "true" : undefined}>
-        <nav className="primary-nav" aria-label="Navigazione principale" ref={navigationRef}>
+        <nav
+          className="primary-nav"
+          aria-label="Navigazione principale"
+          ref={navigationRef}
+          onPointerLeave={(event) => {
+            // Touch opens via the caret and must stay open after the finger lifts.
+            if (event.pointerType === "touch") return;
+            if (navigationRef.current?.contains(event.relatedTarget as Node | null)) return;
+            closeMenu();
+          }}
+          onBlur={(event) => {
+            if (navigationRef.current?.contains(event.relatedTarget as Node | null)) return;
+            closeMenu();
+          }}
+        >
           <ul className="primary-nav-list">
             {PRIMARY_NAV.map((item) => {
               const active = isNavSectionActive(pathname, item);
@@ -111,6 +130,15 @@ export function Navigation() {
                   className={hasChildren ? "nav-item nav-item-has-menu" : "nav-item"}
                   data-section-active={active ? "true" : undefined}
                   data-open={open ? "true" : undefined}
+                  onPointerEnter={(event) => {
+                    // Touch uses the caret; hover/pen transfer the single open slot.
+                    if (event.pointerType === "touch") return;
+                    if (hasChildren) openItem(item.href);
+                    else closeMenu();
+                  }}
+                  onFocusCapture={() => {
+                    if (hasChildren) openItem(item.href);
+                  }}
                 >
                   <Link
                     href={item.href}

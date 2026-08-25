@@ -51,6 +51,14 @@ test("a submenu can be opened without a pointer that can hover", async () => {
   // Open state carries the path it was opened on, so a completed navigation
   // closes the menu without a setState in an effect.
   assert.match(navigationComponent, /openMenu\?\.pathname === pathname/);
+  // Hover, focus and caret share one open slot so two panels cannot overlap.
+  assert.match(navigationComponent, /onPointerEnter=/);
+  assert.match(navigationComponent, /pointerType === "touch"/);
+  assert.match(navigationComponent, /onFocusCapture=/);
+  assert.doesNotMatch(
+    globalsCss,
+    /\.nav-item-has-menu:hover \.nav-submenu|\.nav-item-has-menu:focus-within \.nav-submenu/,
+  );
 
   assert.match(globalsCss, /\.nav-item-has-menu\[data-open="true"\] \.nav-submenu/);
   assert.match(globalsCss, /\.nav-item-toggle \{/);

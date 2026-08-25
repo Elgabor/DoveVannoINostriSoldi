@@ -95,6 +95,11 @@
   --chart-quaternary: var(--color-neutral-400);
   --chart-quinary: var(--color-accent-300);
   --chart-negative: var(--color-accent-700);
+  --chart-family-services: #cfc2f2;
+  --chart-family-investment: #f2bdc7;
+  --chart-family-pass-through: #f2d071;
+  --chart-family-financing: #efb36d;
+  --chart-family-other: #bdd8e5;
 
   /* Additive part-to-whole charts only. Red stays for CTA and warnings. */
   --chart-category-blue: #2855a5;

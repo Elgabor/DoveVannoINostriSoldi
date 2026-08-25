@@ -128,7 +128,13 @@ Header su una riga: marchio con firma tricolore, ricerca, azione. Sotto, la barr
 
 ### Dashboard
 
-La home è una griglia a tre colonne (`288px | 1fr | 300px`). A 1320px la colonna destra diventa una banda di card a piena larghezza; a 900px tutto è in colonna singola.
+La home è una griglia a tre colonne (`360px | 1fr | 300px`): lettura/composizione, geografia, dettaglio. A 1320px la colonna destra diventa una banda di moduli a piena larghezza; a 900px tutto segue lo stesso ordine DOM in colonna singola. La classifica dei Comuni non precede mai la mappa.
+
+### Composizione della spesa
+
+`SpendingComposition` riceve valori assoluti, totale canonico, periodo, perimetro, denominatore e fonte. Lo stato `ready` deve riconciliare la somma al centesimo; `partial` mostra residuo e categorie mancanti senza simulare copertura completa. L'area è proporzionale al valore. Le celle sotto la soglia di leggibilità usano un indice e restano spiegate nella lista; sotto 620px il treemap collassa in lista con barre. Tooltip da tastiera e tabella equivalente non sostituiscono i dati essenziali già visibili.
+
+Use: fotografia additiva dello stesso totale, categorie mutuamente esclusive, copertura verificata. Avoid: trend, ranking preciso, benchmark, categorie sovrapposte, denominatori o periodi diversi.
 
 ### Panels
 

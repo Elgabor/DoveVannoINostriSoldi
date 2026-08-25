@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  NAVIGATION_TIMEOUT_MS,
   closeBrowser,
   createPage,
   defaultBaseUrl,
@@ -514,7 +515,12 @@ async function assertPrimaryDropdownTap(page, label, { sectionLabel, childLabel 
   const toggle = await itemElement.$(".nav-item-toggle");
   assert.ok(toggle, `${label}: pulsante tendina assente`);
 
-  await toggle.click();
+  const toggleBox = await toggle.boundingBox();
+  assert.ok(toggleBox, `${label}: pulsante tendina non visibile`);
+  await page.touchscreen.tap(
+    toggleBox.x + toggleBox.width / 2,
+    toggleBox.y + toggleBox.height / 2,
+  );
   await assertSubmenuVisible(itemElement, page, label, childLabel);
 
   const navRowOpen = await page.$eval(".nav-row", (row) => row.getAttribute("data-menu-open"));
@@ -874,7 +880,10 @@ try {
       await page.setJavaScriptEnabled(false);
       await page.setCacheEnabled(false);
       await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 1, hasTouch: true, isMobile: true });
-      const response = await page.goto(pageUrl("/debito"), { waitUntil: "domcontentloaded", timeout: NAVIGATION_TIMEOUT_MS });
+      const response = await page.goto(new URL("/debito", baseUrl).toString(), {
+        waitUntil: "domcontentloaded",
+        timeout: NAVIGATION_TIMEOUT_MS,
+      });
       assert.equal(response?.status(), 200);
       const text = await page.$eval("body", (body) => body.innerText);
       assertTextMatches(text, /Quanto debito c’è/i, label);

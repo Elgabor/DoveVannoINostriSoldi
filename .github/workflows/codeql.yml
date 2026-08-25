@@ -24,10 +24,8 @@ jobs:
     # upload and actions: read for workflow run metadata.
     permissions:
       contents: read
-      # security-events: write — required for CodeQL to upload SARIF findings.
-      security-events: write
-      # actions: read — required by CodeQL to read workflow run metadata.
-      actions: read
+      security-events: write # Required for CodeQL SARIF upload
+      actions: read # Required by CodeQL for workflow run metadata
     strategy:
       fail-fast: false
       matrix:

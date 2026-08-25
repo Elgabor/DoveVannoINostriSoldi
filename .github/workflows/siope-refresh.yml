@@ -34,10 +34,9 @@ jobs:
   refresh:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
-    # contents: write — required to push the refreshed snapshot commit directly.
-    # PR4 will replace this direct-push pattern with bot PRs.
+    # Direct-push data workflow: PR4 will replace with bot PRs.
     permissions:
-      contents: write
+      contents: write # Required to push the refreshed snapshot commit directly
     env:
       TARGET_BRANCH: ${{ github.ref_name }}
       PYTHONPATH: scripts/etl

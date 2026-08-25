@@ -175,6 +175,46 @@ async function assertCohesionStatusLayout(page, label) {
   }
 }
 
+async function assertCohesionPathwayContrast(page, label) {
+  const state = await page.$eval("main", (main) => {
+    const heading = [...main.querySelectorAll("h2")].find((candidate) =>
+      candidate.textContent?.includes("Segui un progetto fino alla gara"),
+    );
+    const panel = heading?.closest("section");
+    const paragraph = panel?.querySelector("p");
+    if (!panel || !heading || !paragraph) return null;
+
+    function luminance(color) {
+      const channels = color.match(/[\d.]+/g)?.slice(0, 3).map(Number);
+      if (!channels || channels.length !== 3) return null;
+      const linear = channels.map((channel) => {
+        const value = channel / 255;
+        return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+    }
+
+    function ratio(foreground, background) {
+      const first = luminance(foreground);
+      const second = luminance(background);
+      if (first === null || second === null) return null;
+      return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
+    }
+
+    const background = getComputedStyle(panel).backgroundColor;
+    const headingColor = getComputedStyle(heading).color;
+    const paragraphColor = getComputedStyle(paragraph).color;
+    return {
+      headingContrast: ratio(headingColor, background),
+      paragraphContrast: ratio(paragraphColor, background),
+    };
+  });
+
+  assert.ok(state, `${label}: percorso PNRR non trovato`);
+  assert.ok(state.headingContrast >= 4.5, `${label}: contrasto titolo ${state.headingContrast}`);
+  assert.ok(state.paragraphContrast >= 4.5, `${label}: contrasto testo ${state.paragraphContrast}`);
+}
+
 async function assertInfoTooltips(page, label) {
   for (const tooltipId of INFO_TOOLTIP_IDS) {
     const selector = `button[aria-controls="${tooltipId}"]`;
@@ -1172,6 +1212,7 @@ try {
         assertTextMatches(await bodyText(page), /A che punto sono i progetti/i, label);
         await assertCohesionTracePanelContrast(page, label);
         await assertCohesionStatusLayout(page, label);
+        await assertCohesionPathwayContrast(page, label);
       },
     });
     completed.push(label);

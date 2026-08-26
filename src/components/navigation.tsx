@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { HeaderSearch } from "@/components/header-search";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { GithubIcon } from "@hugeicons/core-free-icons";
@@ -16,12 +16,12 @@ import { REPO_URL } from "@/lib/site";
 
 type NavigationContentProps = Readonly<{
   pathname: string;
-  currentSearch: string;
+  currentSearch: string | null;
 }>;
 
 export function Navigation() {
   const pathname = usePathname();
-  const [currentSearch, setCurrentSearch] = useState("");
+  const [currentSearch, setCurrentSearch] = useState<string | null>(null);
   return (
     <>
       <Suspense fallback={null}>
@@ -38,7 +38,7 @@ function NavigationSearchSync({
   const searchParams = useSearchParams();
   const currentSearch = searchParams.toString();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     onChange(currentSearch);
   }, [currentSearch, onChange]);
 
@@ -60,10 +60,11 @@ function NavigationContent({ pathname, currentSearch }: NavigationContentProps) 
   const [openMenu, setOpenMenu] = useState<{
     href: string;
     pathname: string;
-    search: string;
+    search: string | null;
   } | null>(null);
   const openHref =
-    openMenu?.pathname === pathname && openMenu.search === currentSearch
+    openMenu?.pathname === pathname &&
+    (openMenu.search === null || currentSearch === null || openMenu.search === currentSearch)
       ? openMenu.href
       : null;
 
@@ -187,7 +188,7 @@ function NavigationContent({ pathname, currentSearch }: NavigationContentProps) 
                   <Link
                     href={item.href}
                     aria-current={
-                      pathname === item.href && currentSearch.length === 0 ? "page" : undefined
+                      pathname === item.href && currentSearch === "" ? "page" : undefined
                     }
                     data-section-active={active ? "true" : undefined}
                     ref={active ? activeLinkRef : undefined}
@@ -225,6 +226,7 @@ function NavigationContent({ pathname, currentSearch }: NavigationContentProps) 
                               <Link
                                 href={child.href}
                                 aria-current={
+                                  currentSearch !== null &&
                                   isNavChildActive(
                                     pathname,
                                     child.href,

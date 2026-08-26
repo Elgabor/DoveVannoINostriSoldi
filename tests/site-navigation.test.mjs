@@ -128,6 +128,9 @@ test("menu links close the open submenu and the business panels expose headings"
   assert.match(navigationComponent, /onClick=\{closeMenu\}/);
   assert.match(navigationComponent, /useSearchParams/);
   assert.match(navigationComponent, /currentSearch/);
+  assert.match(navigationComponent, /useState<string \| null>\(null\)/);
+  assert.match(navigationComponent, /useLayoutEffect/);
+  assert.match(navigationComponent, /openMenu\.search === null/);
   assert.match(navigationComponent, /<Suspense fallback=\{null\}>/);
   assert.match(navigationComponent, /<NavigationSearchSync onChange=\{setCurrentSearch\} \/>/);
   assert.equal(
@@ -137,6 +140,8 @@ test("menu links close the open submenu and the business panels expose headings"
   );
   assert.match(sectionComponent, /useSearchParams/);
   assert.match(sectionComponent, /currentSearch/);
+  assert.match(sectionComponent, /currentSearch=\{null\}/);
+  assert.match(sectionComponent, /currentSearch !== null/);
   assert.match(sectionComponent, /<Suspense fallback=/);
   assert.match(businessPage, /aria-labelledby="scope-title"/);
   assert.match(businessPage, /<h2 id="scope-title" className="panel-title">Perimetro selezionato<\/h2>/);

@@ -16,7 +16,7 @@ import styles from "./section-nav.module.css";
 export function SectionNav() {
   const pathname = usePathname();
   return (
-    <Suspense fallback={<SectionNavContent pathname={pathname} currentSearch="" />}>
+    <Suspense fallback={<SectionNavContent pathname={pathname} currentSearch={null} />}>
       <SectionNavWithSearchParams pathname={pathname} />
     </Suspense>
   );
@@ -30,7 +30,7 @@ function SectionNavWithSearchParams({ pathname }: Readonly<{ pathname: string }>
 function SectionNavContent({
   pathname,
   currentSearch,
-}: Readonly<{ pathname: string; currentSearch: string }>) {
+}: Readonly<{ pathname: string; currentSearch: string | null }>) {
   const section = activeNavSection(pathname);
   const pages = section?.children ?? [];
   if (pages.length < 2) return null;
@@ -45,7 +45,8 @@ function SectionNavContent({
       </p>
       <ul className={styles.links}>
         {pages.map((page) => {
-          const current = isNavChildActive(pathname, page.href, pages, currentSearch);
+          const current = currentSearch !== null
+            && isNavChildActive(pathname, page.href, pages, currentSearch);
           return (
             <li key={page.href}>
               {current ? (

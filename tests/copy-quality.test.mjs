@@ -23,6 +23,7 @@ test("readme shows live UI screenshots of home, territories and controls", async
   assert.match(readme, /https:\/\/www\.dovevannoinostrisoldi\.com/);
   assert.match(readme, /https:\/\/www\.buymeacoffee\.com\/dovevannoinostrisoldi/);
   assert.match(readme, /Buy me an AI compute/);
+  assert.match(readme, /height="32"/);
   for (const file of ["home.jpg", "territori.jpg", "controlli.jpg"]) {
     assert.match(readme, new RegExp(`docs/readme/${file}`));
     await readFile(new URL(`../docs/readme/${file}`, import.meta.url));

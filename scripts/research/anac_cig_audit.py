@@ -16,7 +16,7 @@ import sys
 import zipfile
 from collections import Counter
 from dataclasses import dataclass
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 from typing import Iterable, TextIO
 
@@ -126,6 +126,10 @@ def percentage(numerator: int, denominator: int) -> float | None:
     return round((numerator / denominator) * 100, 6)
 
 
+def euro_to_cents(amount: Decimal) -> int:
+    return int((amount * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as source:
@@ -161,12 +165,17 @@ def audit(
 
     counts = Counts()
     choice_counts: Counter[str] = Counter()
+    choice_amount_cents: Counter[str] = Counter()
     exact_amounts: Counter[Decimal] = Counter()
     seen_cigs: set[str] = set()
     all_cigs: set[str] = set()
     active_cigs: set[str] = set()
     observed_months: set[int] = set()
     inputs: list[dict[str, object]] = []
+    total_positive_amount_cents = 0
+    direct_award_amount_cents = 0
+    direct_award_family_amount_cents = 0
+    open_procedure_amount_cents = 0
 
     for path in sorted(paths):
         if not path.is_file():
@@ -264,8 +273,19 @@ def audit(
                 counts.anac_scope_non_direct_above += int(
                     is_anac_scope and not is_direct_family and amount >= UPPER_THRESHOLD
                 )
-                choice_counts[choice or "NON INDICATA"] += 1
+                label = choice or "NON INDICATA"
+                choice_counts[label] += 1
                 exact_amounts[amount] += 1
+                if amount > 0:
+                    cents = euro_to_cents(amount)
+                    choice_amount_cents[label] += cents
+                    total_positive_amount_cents += cents
+                    if is_direct:
+                        direct_award_amount_cents += cents
+                    if is_direct_family:
+                        direct_award_family_amount_cents += cents
+                    if choice == OPEN_PROCEDURE:
+                        open_procedure_amount_cents += cents
         finally:
             stream.close()
             if archive is not None:
@@ -315,17 +335,40 @@ def audit(
             "directAward": {
                 "records": counts.direct_awards,
                 "sharePercent": percentage(counts.direct_awards, counts.rows),
+                "amountEuroCents": direct_award_amount_cents,
+                "amountSharePercent": percentage(
+                    direct_award_amount_cents,
+                    total_positive_amount_cents,
+                ),
             },
             "directAwardFamily": {
                 "records": counts.direct_award_family,
                 "sharePercent": percentage(counts.direct_award_family, counts.rows),
+                "amountEuroCents": direct_award_family_amount_cents,
+                "amountSharePercent": percentage(
+                    direct_award_family_amount_cents,
+                    total_positive_amount_cents,
+                ),
                 "meaning": "Etichette che iniziano con AFFIDAMENTO DIRETTO; non sono tutte equivalenti.",
             },
             "openProcedure": {
                 "records": counts.open_procedures,
                 "sharePercent": percentage(counts.open_procedures, counts.rows),
+                "amountEuroCents": open_procedure_amount_cents,
+                "amountSharePercent": percentage(
+                    open_procedure_amount_cents,
+                    total_positive_amount_cents,
+                ),
             },
             "allLabels": dict(choice_counts.most_common()),
+            "allLabelsAmountEuroCents": {
+                label: choice_amount_cents[label] for label, _ in choice_counts.most_common()
+            },
+            "totalPositiveAmountEuroCents": total_positive_amount_cents,
+            "amountMeaning": (
+                "Somma di importo_lotto > 0 per etichetta; i CIG con importo non positivo "
+                "restano nel conteggio ma non nel totale euro."
+            ),
         },
         "servicesAndSuppliesBelow140000": {
             "records": counts.services_and_supplies_below_threshold,

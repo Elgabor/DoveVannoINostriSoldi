@@ -43,6 +43,27 @@
   align-items: end;
 }
 
+.leadMeasurePair {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.leadMeasure[data-emphasis="value"] {
+  border-top-color: var(--chart-primary);
+}
+
+.barAmount {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-neutral-700);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.barAmount small {
+  font-weight: 500;
+}
+
 .leadCopy p,
 .sectionHeading p,
 .sourcePanel > p,
@@ -362,6 +383,10 @@
   }
 
   .leadMeasure {
+    max-width: 22rem;
+  }
+
+  .leadMeasurePair {
     max-width: 22rem;
   }
 

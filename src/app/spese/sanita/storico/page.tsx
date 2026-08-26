@@ -1,20 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { compactEuro, percent } from "@/lib/format";
-import { getSsnNationalHistory, type SsnNationalHistory } from "@/lib/ssn-national-history";
+import { compactEuro, longDate, percent } from "@/lib/format";
+import {
+  getSsnNationalHistory,
+  SSN_NATIONAL_HISTORY_DEADLINE_MS,
+  type SsnNationalHistory,
+} from "@/lib/ssn-national-history";
 import type { SsnCceMetricId } from "@/lib/data/ssn-cce-contract";
 import styles from "./storico.module.css";
 
 export const dynamic = "force-dynamic";
-
-// 14 sequential OpenBDAP calls (1 discovery + 13 years); a single retry on any one of them
-// (up to ~30s per the openbdap source policy) can already push the total well past 30s. The
-// analogous /stato/legislature page (7 calls) hit its own tighter 20s budget during review;
-// this page does nearly twice the calls, so it gets the same treatment. This is about giving
-// the sequential fetch a fair chance, not a guarantee: vercel.json declares no
-// functions.maxDuration, so the real ceiling on the hosting platform is unverified and may
-// itself be lower than this value.
-const PAGE_DATA_BUDGET_MS = 60_000;
+export const maxDuration = 60;
 
 export const metadata: Metadata = {
   title: "Serie storica della spesa sanitaria",
@@ -85,12 +81,45 @@ function HistoryTable({ history }: { history: SsnNationalHistory }) {
   );
 }
 
+function ProvenanceList({ history }: { history: SsnNationalHistory }) {
+  return (
+    <section className={`panel ${styles.provenance}`}>
+      <h2 className="panel-title">Fonti verificate per annualità</h2>
+      <p className={styles.provenanceIntro}>
+        Ogni riga usa il package CKAN e il CSV ufficiale dell’anno indicato. Il controllo del
+        portale è osservato in <time dateTime={history.source.observedAt}>{history.source.observedAt}</time>;
+        la licenza dichiarata dalla fonte è {history.source.license}.
+      </p>
+      <ul className={styles.provenanceList}>
+        {history.years.map((entry) => (
+          <li className={styles.provenanceRow} key={entry.year}>
+            <strong>{entry.year}</strong>
+            <span>
+              Package: <a href={entry.provenance.packageUrl} target="_blank" rel="noreferrer">{entry.provenance.packageId}</a>
+            </span>
+            <span>
+              CSV: <a href={entry.provenance.csvUrl} target="_blank" rel="noreferrer">download ufficiale</a>
+            </span>
+            <span>
+              Aggiornamento fonte: <time dateTime={entry.provenance.dataUpdatedAt}>{longDate(entry.provenance.dataUpdatedAt)}</time>
+              {" · "}catalogo: <time dateTime={entry.provenance.metadataModified}>{longDate(entry.provenance.metadataModified)}</time>
+            </span>
+            <span>
+              <a href={entry.provenance.licenseUrl} target="_blank" rel="noreferrer">{entry.provenance.license}</a>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export default async function HealthSpendingHistoryPage() {
   let history: SsnNationalHistory | null = null;
   let errorMessage: string | null = null;
 
   try {
-    history = await getSsnNationalHistory({ signal: AbortSignal.timeout(PAGE_DATA_BUDGET_MS) });
+    history = await getSsnNationalHistory({ signal: AbortSignal.timeout(SSN_NATIONAL_HISTORY_DEADLINE_MS) });
   } catch (error) {
     errorMessage = error instanceof Error ? error.message : "Errore sconosciuto";
   }
@@ -119,10 +148,13 @@ export default async function HealthSpendingHistoryPage() {
           Dati OpenBDAP non raggiungibili in questo momento: {errorMessage}
         </p>
       ) : (
-        <section className="panel">
-          <h2 className="panel-title">2012-2024, valori di competenza economica</h2>
-          <HistoryTable history={history!} />
-        </section>
+        <>
+          <section className="panel">
+            <h2 className="panel-title">2012-2024, valori di competenza economica</h2>
+            <HistoryTable history={history!} />
+          </section>
+          <ProvenanceList history={history!} />
+        </>
       )}
 
       <div className="notice">
@@ -135,8 +167,8 @@ export default async function HealthSpendingHistoryPage() {
           perimetro contabile e denominatori compatibili, che questa pagina non fornisce.
         </p>
         <p>
-          Fonte: <a href="https://bdap-opendata.rgs.mef.gov.it" target="_blank" rel="noreferrer">OpenBDAP RGS</a>,
-          Modello di rilevazione del Conto Economico degli enti del SSN a livello nazionale.
+          Fonte: <a href={history?.source.landingUrl ?? "https://bdap-opendata.rgs.mef.gov.it"} target="_blank" rel="noreferrer">{history?.source.platform ?? "OpenBDAP RGS"}</a>,
+          Modello di rilevazione del Conto Economico degli enti del SSN a livello nazionale. Licenza: {history?.source.license ?? "Creative Commons Attribution"}.
         </p>
       </div>
     </main>

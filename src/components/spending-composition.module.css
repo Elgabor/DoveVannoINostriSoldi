@@ -1,0 +1,124 @@
+.composition {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  container-type: inline-size;
+  container-name: composition;
+}
+.visual {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 100 / 62;
+  min-height: 250px;
+  background: var(--color-neutral-100);
+  border: 1px solid var(--color-neutral-400);
+  contain: layout paint;
+}
+.tile {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--space-2);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-text) 42%, transparent);
+  color: var(--color-text);
+  cursor: pointer;
+}
+.tile:hover,
+.tile[data-active="true"] { z-index: 1; outline: 3px solid var(--color-text); outline-offset: -3px; }
+.tileCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 16ch;
+  text-align: center;
+  line-height: 1.2;
+}
+.tileCopy b { font-size: clamp(11px, 1.1vw, 15px); line-height: 1.2; }
+.tileCopy strong { font-size: clamp(13px, 1.4vw, 19px); line-height: 1.15; font-variant-numeric: tabular-nums; }
+.tileIndex { font-weight: 800; line-height: 1; }
+.services { background: var(--chart-family-services); }
+.investment { background: var(--chart-family-investment); }
+.pass-through { background: var(--chart-family-pass-through); }
+.financing { background: var(--chart-family-financing); }
+.other { background: var(--chart-family-other); }
+
+/* Single column in the home rail (~360px); two columns only when the
+   composition surface itself is wide enough for readable labels. */
+.legend {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@container composition (min-width: 420px) {
+  .legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.legend li { min-width: 0; }
+.legend button {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 48px;
+  padding: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+}
+.legend button:hover,
+.legend button[aria-pressed="true"] { border-color: var(--color-neutral-400); background: var(--color-neutral-100); }
+.legendSwatch {
+  width: 10px;
+  align-self: stretch;
+  min-height: 28px;
+  margin-block: 2px;
+}
+/* Flex stack avoids Safari collapsing blockified phrasing inside <button>. */
+.legendCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-block: 1px;
+}
+.legendLabel {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.legendAmount {
+  color: var(--color-neutral-600);
+  font-size: 11px;
+  line-height: 1.3;
+}
+.legendShare {
+  padding-top: 1px;
+  font-size: 12px;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+}
+.mobileBar { display: none; }
+.tooltip { padding: var(--space-3); background: var(--color-neutral-900); color: var(--color-on-strong); }
+.tooltip span { display: block; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.tooltip p { margin: 6px 0 0; color: var(--color-on-strong-muted); font-size: 12px; }
+.meta { margin: 0; color: var(--color-neutral-700); font-size: 11px; }
+.partial { margin: 0; padding: var(--space-3); border: 1px solid var(--color-warning-border); background: var(--color-warning-bg); font-size: 12px; }
+.tableDetails summary { min-height: 44px; padding-block: 12px; font-weight: 600; cursor: pointer; }
+
+@media (max-width: 620px) {
+  .visual { display: none; }
+  .legend { grid-template-columns: minmax(0, 1fr); }
+  .legend button { min-height: 52px; }
+  .mobileBar { display: block; height: 4px; margin: 0 8px; background: var(--color-neutral-200); }
+  .mobileBar span { display: block; height: 100%; }
+}

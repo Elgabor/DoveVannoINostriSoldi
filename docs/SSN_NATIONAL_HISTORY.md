@@ -19,6 +19,15 @@ fonte per il dettaglio regionale e per ente.
 - **Aggiornamento**: nessuno schedulato lato progetto; i dati sono richiesti in diretta a
   OpenBDAP a ogni richiesta (`freshness: "live"`), non congelati in uno snapshot.
 
+## Budget e annullamento
+
+La lettura dei 13 CSV annuali usa al massimo tre richieste concorrenti e un’unica deadline
+globale di 50 secondi. Il route handler API dichiara un `maxDuration` di 60 secondi: il
+margine residuo serve a serializzare la risposta e a chiudere la richiesta senza lasciare
+il lavoro live oltre il limite della piattaforma. La deadline è stata estesa rispetto al
+budget iniziale perché OpenBDAP può superare 25 secondi su una lettura completa; il segnale
+della richiesta API o MCP annulla anche i fetch già in corso.
+
 ## Perché live e non uno snapshot come il 2024
 
 Lo snapshot 2024 esistente copre nazionale, regionale e 232 enti (76.124 righe sorgente),

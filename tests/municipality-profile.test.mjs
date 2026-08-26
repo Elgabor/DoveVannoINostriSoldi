@@ -96,6 +96,11 @@ test("ordinary-statute municipality joins every available source by exact identi
   assert.equal(profile.irpef.status, "available");
   assert.equal(profile.openCivitas.status, "available");
   assert.equal(profile.pnrrChildcare.data.totalProjects, 3);
+  assert.ok(profile.siope.peerBenchmark);
+  assert.equal(
+    profile.siope.peerBenchmark.populationYear,
+    profile.siope.data.years[0].geography.populationYear,
+  );
   assert.ok(
     Buffer.byteLength(JSON.stringify(profile)) < 100_000,
     "municipalityProfile deve restare sotto il budget di 100 kB",

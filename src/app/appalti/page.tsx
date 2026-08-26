@@ -478,9 +478,9 @@ export default function AppaltiPage() {
               per soggetto.
             </li>
             <li>
-              L&apos;importo del lotto è il valore dichiarato nella banca dati. Per verificare un caso
-              servono l&apos;atto originale, la procedura completa e le informazioni collegate
-              pubblicate dalle fonti ufficiali.
+              Il campo <strong>importo_lotto</strong> è il valore dichiarato del lotto nella banca dati.
+              Per verificare un caso servono l&apos;atto originale, la procedura completa e le
+              informazioni collegate pubblicate dalle fonti ufficiali.
             </li>
           </ul>
         </details>

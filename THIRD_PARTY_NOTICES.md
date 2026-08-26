@@ -170,7 +170,7 @@ Attribution: `Camera di Commercio delle Marche / InfoCamere, aggregate enterpris
 
 - **Work:** `Stima anticipata dei dati economici delle imprese a livello territoriale - Il Registro Frame Territoriale Anticipato - Anno 2024` (Tavola 1 e Tavola 2);
 - **Publisher:** Istituto Nazionale di Statistica (ISTAT);
-- **Source:** https://www.istat.it/wp-content/uploads/2026/03/Tavole20marzo2026.zip, landing page https://www.istat.it/tavole-di-dati/stima-anticipata-dei-dati-economici-delle-imprese-a-livello-territoriale-il-registro-frame-territoriale-anticipato-anno-2024/;
+- **Source:** https://www.istat.it/wp-content/uploads/2026/03/Tavole20marzo2026.zip, landing page https://www.istat.it/tavole-di-dati/stima-anticipata-dei-dati-economici-delle-imprese-a-livello-territoriale-il-registro-frame-territoriale-anticipato-anno-2024/; verified archive: 393392 bytes, SHA-256 `d774bcd5862467aa0a7529b8b972f3fd80f85f14f7993aaf355362596960ad04`;
 - **License:** Creative Commons Attribution 4.0 International (CC BY 4.0), https://www.istat.it/dati/open-data/;
 - **Changes:** official release tables are extracted and normalized into structured aggregate regional observations and macro-sectors (`ALL`, `INDUSTRIA`, `SERVIZI`) classified under ATECO 2007 agg. 2022. Monetary amounts remain in thousands of euro. Total and macro-sector tables are published separately; small differences between their sums and the total are preserved and may reflect source rounding. The dataset covers local units of enterprises with at least 1 employee (Frame Territoriale Anticipato) and is not the complete universe of active business seats. No company names, identifiers, tax codes, VAT numbers or nominal turnovers are included.
 

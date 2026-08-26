@@ -80,6 +80,7 @@ ricavi esatti e non li usa per identificare o ordinare singole società.
 - pubblicatore: Istituto Nazionale di Statistica (ISTAT);
 - lavoro: Stima anticipata dei dati economici delle imprese a livello territoriale - Registro Frame Territoriale Anticipato - Anno 2024 (Tavola 1 e Tavola 2);
 - licenza: Creative Commons Attribution 4.0 International (CC BY 4.0);
+- integrità archivio: ZIP ufficiale verificato con 393.392 byte e SHA-256 `d774bcd5862467aa0a7529b8b972f3fd80f85f14f7993aaf355362596960ad04`;
 - periodo: `2024`;
 - classificazione: `ATECO 2007 agg. 2022` (mantenuta rigorosamente distinta da `ATECO 2025` delle fonti camerali);
 - unità di misura: `migliaia di euro`;

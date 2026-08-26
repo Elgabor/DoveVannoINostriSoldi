@@ -13,6 +13,8 @@ from scripts.etl.istat_enterprise_turnover import (
     MACRO_SECTORS,
     OUTPUT_PATH,
     PERIOD,
+    RESOURCE_BYTES,
+    RESOURCE_SHA256,
     UNIT,
     parse_int,
     validate_snapshot,
@@ -99,6 +101,7 @@ class IstatEnterpriseTurnoverETLTests(unittest.TestCase):
         source = snapshot["source"]
 
         self.assertEqual(source["id"], "istat-frame-territoriale-2024")
+        self.assertEqual(source["archive"], {"bytes": RESOURCE_BYTES, "sha256": RESOURCE_SHA256})
         self.assertEqual(source["license"], "CC BY 4.0")
         self.assertEqual(source["publisher"], "Istituto Nazionale di Statistica (ISTAT)")
         self.assertTrue(source["url"].startswith("https://www.istat.it/"))

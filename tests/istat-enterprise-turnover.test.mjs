@@ -32,6 +32,10 @@ test("the generated ISTAT turnover snapshot is valid under Zod contract", () => 
   assert.equal(snapshot.atecoVersion, "ATECO 2007 agg. 2022");
   assert.equal(snapshot.period, "2024");
   assert.equal(snapshot.unit, "migliaia di euro");
+  assert.deepEqual(snapshot.source.archive, {
+    bytes: 393392,
+    sha256: "d774bcd5862467aa0a7529b8b972f3fd80f85f14f7993aaf355362596960ad04",
+  });
   assert.equal(snapshot.regions.length, 20);
   assert.equal(snapshot.macroSectors.length, 3);
   assert.equal(snapshot.observations.length, 60);

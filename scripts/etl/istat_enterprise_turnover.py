@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import io
 import json
 import re
@@ -21,6 +22,8 @@ LANDING_URL = (
     "-territoriale-il-registro-frame-territoriale-anticipato-anno-2024/"
 )
 RESOURCE_URL = "https://www.istat.it/wp-content/uploads/2026/03/Tavole20marzo2026.zip"
+RESOURCE_BYTES = 393392
+RESOURCE_SHA256 = "d774bcd5862467aa0a7529b8b972f3fd80f85f14f7993aaf355362596960ad04"
 LICENSE = "CC BY 4.0"
 LICENSE_URL = "https://www.istat.it/dati/open-data/"
 ATECO_VERSION = "ATECO 2007 agg. 2022"
@@ -174,12 +177,18 @@ def fetch() -> bytes:
         return response.read()
 
 
+def sha256_bytes(payload: bytes) -> str:
+    return hashlib.sha256(payload).hexdigest()
+
+
 def build_snapshot(payload: bytes, observed_at: str | None = None) -> dict:
     if observed_at is None:
         observed_at = "2026-08-26T00:00:00+02:00"
 
     if not payload.startswith(b"PK"):
         raise ValueError("L'archivio ISTAT non è un file ZIP valido")
+    if len(payload) != RESOURCE_BYTES or sha256_bytes(payload) != RESOURCE_SHA256:
+        raise ValueError("L'archivio ISTAT non coincide con l'archivio ufficiale verificato (bytes/SHA-256)")
 
     with zipfile.ZipFile(io.BytesIO(payload)) as outer_zip:
         namelist = outer_zip.namelist()
@@ -329,6 +338,7 @@ def build_snapshot(payload: bytes, observed_at: str | None = None) -> dict:
             "label": "Stima anticipata dei dati economici delle imprese · Frame Territoriale 2024",
             "publisher": "Istituto Nazionale di Statistica (ISTAT)",
             "url": RESOURCE_URL,
+            "archive": {"bytes": RESOURCE_BYTES, "sha256": RESOURCE_SHA256},
             "landingUrl": LANDING_URL,
             "license": LICENSE,
             "licenseUrl": LICENSE_URL,
@@ -406,6 +416,8 @@ def validate_snapshot(snapshot: dict) -> None:
         raise ValueError("Licenza fonte inattesa")
     if source.get("id") != "istat-frame-territoriale-2024":
         raise ValueError("Identificativo fonte inatteso")
+    if source.get("archive") != {"bytes": RESOURCE_BYTES, "sha256": RESOURCE_SHA256}:
+        raise ValueError("Provenienza archivio ISTAT inattesa (bytes/SHA-256)")
 
     regions = snapshot.get("regions", [])
     if len(regions) != 20:

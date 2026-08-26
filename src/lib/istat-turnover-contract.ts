@@ -29,6 +29,10 @@ export const istatTurnoverSourceSchema = z.object({
   label: z.string().min(1),
   publisher: z.string().min(1),
   url: z.string().url(),
+  archive: z.object({
+    bytes: z.number().int().positive(),
+    sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  }).strict(),
   landingUrl: z.string().url(),
   license: z.literal("CC BY 4.0"),
   licenseUrl: z.string().url(),

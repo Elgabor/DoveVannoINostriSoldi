@@ -111,9 +111,9 @@ export default async function ImpresePage({
 
       <div className={styles.dashboardGrid}>
         <div className={styles.column}>
-          <section className="panel">
+          <section className="panel" aria-labelledby="scope-title">
             <div className={styles.panelHead}>
-              <span className="panel-title">Perimetro selezionato</span>
+              <h2 id="scope-title" className="panel-title">Perimetro selezionato</h2>
               <span className="status status-attiva">Snapshot</span>
             </div>
             <strong className={styles.headline}>{compactCount(view.nationalValue)}</strong>
@@ -171,10 +171,10 @@ export default async function ImpresePage({
 
           <section className="panel" aria-labelledby="ranking-title">
             <div className={styles.panelHead}>
-              <h2 id="ranking-title" className="panel-title">Classifica regionale</h2>
+              <h2 id="ranking-title" className="panel-title">Prime 10 regioni</h2>
               <span className={styles.headNote}>valore assoluto</span>
             </div>
-            <div className="table-scroll" role="region" aria-label="Classifica delle regioni" tabIndex={0}>
+            <div className="table-scroll" role="region" aria-label="Prime 10 regioni ordinate per valore assoluto" tabIndex={0}>
               <table className="table">
                 <thead><tr><th scope="col">#</th><th scope="col">Regione</th><th scope="col" className="num">Valore</th></tr></thead>
                 <tbody>
@@ -188,7 +188,7 @@ export default async function ImpresePage({
                 </tbody>
               </table>
             </div>
-            <p className={styles.note}>Clicca una regione per fissarla nella mappa e nel perimetro.</p>
+            <p className={styles.note}>Sono mostrate le prime 10 regioni per valore assoluto. Clicca una regione per fissarla nella mappa e nel perimetro.</p>
           </section>
         </div>
 

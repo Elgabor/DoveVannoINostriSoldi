@@ -8,15 +8,20 @@ fonti né una promessa sulla disponibilità futura degli URL.
 
 - generato: `2026-08-26T00:00:00+02:00`;
 - schema: `1`;
-- osservazioni: `12.748`;
+- osservazioni: `12.880`;
 - geografie: `20` regioni;
 - classificazione: `ATECO 2025`;
 - tipologia ammessa: `aggregate`;
 - licenza dichiarata dalle tre fonti: `CC BY 4.0`.
 
+La copertura workforce comprende `118.673` righe sorgente, `437` celle
+regione × sezione osservate e `23` celle senza bucket, mantenute come `null`.
+I totali riconciliati della release sono `19.490.025` addetti e `6.394.474`
+localizzazioni attive.
+
 Il file generato è `src/data/generated/company-atlas-snapshot.json`. Il comando
 `npm run company-atlas:refresh` scarica le fonti in parallelo, normalizza i dati,
-controlla la cardinalità minima e valida lo snapshot con
+controlla cardinalità, valori null, copertura e riconciliazioni e valida lo snapshot con
 `src/lib/company-atlas-contract.ts`. `--check` valida il file committato senza
 rete.
 
@@ -42,16 +47,18 @@ singola impresa.
 - periodo acquisito: `2026-Q2`;
 - righe lette: `118.673`;
 - colonne: `Regione`, `Provincia`, `Settore`, `Divisione`, `Classe`, `Sottocategoria`, `Addetti`, `Localizzazioni Attive`.
+- metadati e caveat ufficiali: <https://opendata.marche.camcom.it/pivot-table.htm?indic=Addetti%26geo%3DItalia>.
 
-Il CSV contiene livelli gerarchici annidati. Per ogni combinazione regione,
-provincia, settore e divisione la pipeline conserva una sola riga: quella con il
-punteggio minimo `len(Classe) + len(Sottocategoria)`, cioè il livello più alto
-disponibile per quella divisione. Le righe canoniche vengono poi sommate a
-regione × sezione ATECO per evitare di sommare insieme divisione e
-classi/sottocategorie.
+Ogni riga del CSV è un bucket ATECO osservato distinto, anche quando condivide
+regione, provincia, settore e divisione con righe a maggiore specificità. La
+pipeline non sceglie una riga canonica e non scarta classi o sottocategorie:
+somma tutti i bucket provinciali a regione × sezione ATECO. Le celle prive di
+righe sorgente restano `null`, non vengono trasformate in zero.
 
 Il risultato non è un elenco di lavoratori o di imprese: è un aggregato
-regionale per sezione.
+regionale per sezione. Le posizioni previdenziali attive sono riferite al
+trimestre precedente a quello indicato; non rappresentano il livello di
+occupazione nel territorio e non sono direttamente comparabili con ISTAT/ASIA.
 
 ### Fasce di valore della produzione
 

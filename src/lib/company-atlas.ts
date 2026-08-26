@@ -1,3 +1,5 @@
+import "server-only";
+
 import rawSnapshot from "@/data/generated/company-atlas-snapshot.json";
 import {
   validateCompanyAtlasSnapshot,
@@ -6,6 +8,7 @@ import {
   type CompanyAtlasSnapshot,
   type CompanyAtlasSource,
 } from "@/lib/company-atlas-contract";
+import { createCompanyAtlasObservationIndex } from "@/lib/company-atlas-index";
 
 export const COMPANY_ATLAS_ALL = "all" as const;
 export type CompanyAtlasSelection = typeof COMPANY_ATLAS_ALL;
@@ -122,6 +125,11 @@ const metricById = new Map(COMPANY_ATLAS_METRICS.map((metric) => [metric.id, met
 const regionByCode = new Map(companyAtlasSnapshot.regions.map((region) => [region.code, region]));
 const sectorByCode = new Map(companyAtlasSnapshot.sectors.map((sector) => [sector.code, sector]));
 const bandByCode = new Map(companyAtlasSnapshot.productionBands.map((band) => [band.code, band]));
+let observationIndex: ReturnType<typeof createCompanyAtlasObservationIndex> | undefined;
+
+function getObservationIndex() {
+  return observationIndex ??= createCompanyAtlasObservationIndex(companyAtlasSnapshot.observations);
+}
 
 function metricDefinition(metric: string | undefined) {
   return metricById.get(metric as CompanyAtlasMetricId) ?? metricById.get("active_enterprises")!;
@@ -163,29 +171,50 @@ function normalizePeriod(metric: CompanyAtlasMetricId, value: string | undefined
   return options.some((period) => period.id === value) ? value! : options[options.length - 1]!.id;
 }
 
-function sumNullable(values: Array<number | null>): number | null {
-  const present = values.filter((value): value is number => value !== null);
-  return present.length > 0 ? present.reduce((sum, value) => sum + value, 0) : null;
-}
-
 function observationsFor(
   metric: CompanyAtlasMetricId,
   period: string,
   region: string,
   sector: string,
   band: string,
-): CompanyAtlasObservation[] {
-  return companyAtlasSnapshot.observations.filter((observation) =>
-    observation.metric === metric
-    && observation.period === period
-    && (region === COMPANY_ATLAS_ALL || observation.geographyCode === region)
-    && (sector === COMPANY_ATLAS_ALL || observation.sectorCode === sector)
-    && (band === COMPANY_ATLAS_ALL || observation.bandCode === band),
-  );
+): readonly CompanyAtlasObservation[] {
+  return getObservationIndex().select(metric, period, region, sector, band);
 }
 
-function valueForObservations(observations: CompanyAtlasObservation[]): number | null {
-  return sumNullable(observations.map((observation) => observation.value));
+function observationsForMetrics(
+  metrics: readonly CompanyAtlasMetric[],
+  period: string,
+  region: string,
+  sector: string,
+  band: string,
+): readonly CompanyAtlasObservation[] {
+  return getObservationIndex().selectMany(metrics, period, region, sector, band);
+}
+
+function valueForObservations(observations: readonly CompanyAtlasObservation[]): number | null {
+  let total = 0;
+  let hasValue = false;
+  for (const observation of observations) {
+    if (observation.value === null) continue;
+    total += observation.value;
+    hasValue = true;
+  }
+  return hasValue ? total : null;
+}
+
+function valuesByCode(
+  observations: readonly CompanyAtlasObservation[],
+  codeKey: "geographyCode" | "sectorCode",
+): Map<string, number | null> {
+  const values = new Map<string, number | null>();
+  for (const observation of observations) {
+    const code = observation[codeKey];
+    if (!values.has(code)) values.set(code, null);
+    if (observation.value !== null) {
+      values.set(code, (values.get(code) ?? 0) + observation.value);
+    }
+  }
+  return values;
 }
 
 function periodLabel(metric: CompanyAtlasMetricId, period: string): string {
@@ -241,17 +270,19 @@ export function getCompanyAtlasView(filters: CompanyAtlasFilters = {}): CompanyA
     normalized.sector,
     normalized.band,
   );
+  const valuesByRegion = valuesByCode(mapMatching, "geographyCode");
+  const valuesBySector = valuesByCode(sectorMatching, "sectorCode");
   const regionPoints = companyAtlasSnapshot.regions.map((region) => ({
     code: region.code,
     name: region.name,
-    value: valueForObservations(mapMatching.filter((observation) => observation.geographyCode === region.code)),
+    value: valuesByRegion.get(region.code) ?? null,
   }));
   const ranking = [...regionPoints].sort((left, right) => (right.value ?? -1) - (left.value ?? -1));
   const sectorBreakdown = companyAtlasSnapshot.sectors
     .map((sector) => ({
       code: sector.code,
       label: sector.label,
-      value: valueForObservations(sectorMatching.filter((observation) => observation.sectorCode === sector.code)),
+      value: valuesBySector.get(sector.code) ?? null,
     }))
     .sort((left, right) => (right.value ?? -1) - (left.value ?? -1));
   const selectedRegion = normalized.region === COMPANY_ATLAS_ALL
@@ -350,12 +381,12 @@ export function queryCompanyAtlasDataset(query: CompanyAtlasDatasetQuery) {
     band: query.band,
   });
   validateCompanyAtlasQueryFilters(query, metric, normalized);
-  const observations = companyAtlasSnapshot.observations.filter((observation) =>
-    metrics.includes(observation.metric)
-    && observation.period === normalized.period
-    && (normalized.region === COMPANY_ATLAS_ALL || observation.geographyCode === normalized.region)
-    && (normalized.sector === COMPANY_ATLAS_ALL || observation.sectorCode === normalized.sector)
-    && (normalized.band === COMPANY_ATLAS_ALL || observation.bandCode === normalized.band),
+  const observations = observationsForMetrics(
+    metrics,
+    normalized.period,
+    normalized.region,
+    normalized.sector,
+    normalized.band,
   );
   const limit = Math.min(100, Math.max(1, Math.trunc(query.limit ?? 50)));
   const offset = Math.min(100_000, Math.max(0, Math.trunc(query.offset ?? 0)));

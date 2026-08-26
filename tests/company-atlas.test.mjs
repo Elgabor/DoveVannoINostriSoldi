@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import "./helpers/register-ts-alias.mjs";
 
+const { normalizeWorkforce } = await import("../scripts/etl/company_atlas_snapshot.mjs");
+
 const {
   companyAtlasBandOptions,
   companyAtlasMetricOptions,
@@ -31,7 +33,8 @@ test("the generated company atlas snapshot is aggregate-only and schema-valid", 
   assert.equal(parsed.regions.length, 20);
   assert.ok(parsed.sectors.length >= 10);
   assert.equal(parsed.productionBands.length, 10);
-  assert.ok(parsed.observations.length >= 10_000);
+  assert.equal(parsed.observations.length, 12_880);
+  assert.equal(parsed.generatedAt, "2026-08-26T00:00:00+02:00");
 
   // Assert every region has valid 2-digit code and name
   for (const region of parsed.regions) {
@@ -66,6 +69,73 @@ test("the generated company atlas snapshot is aggregate-only and schema-valid", 
     assert.ok(source.caveat.length > 0);
     assert.ok(source.cadence.length > 0);
   }
+  assert.match(parsed.sources.workforce.caveat, /posizioni previdenziali attive/i);
+  assert.match(parsed.sources.workforce.caveat, /trimestre precedente/i);
+  assert.match(parsed.sources.workforce.caveat, /occupazione/i);
+  assert.match(parsed.sources.workforce.caveat, /ISTAT\/ASIA/i);
+});
+
+test("workforce coverage reconciles every region and preserves explicit source nulls", async () => {
+  const snapshot = (await import("../src/data/generated/company-atlas-snapshot.json", { with: { type: "json" } })).default;
+  const workforce = snapshot.observations.filter((row) => row.sourceId === "workforce");
+  assert.equal(workforce.length, 920);
+  assert.equal(new Set(workforce.map((row) => row.geographyCode)).size, 20);
+  assert.equal(new Set(workforce.map((row) => row.sectorCode)).size, 23);
+  assert.equal(workforce.filter((row) => row.value === null).length, 46);
+  assert.equal(snapshot.coverage.workforceRowsRead, 118_673);
+  assert.equal(snapshot.coverage.workforceRowsAccepted, snapshot.coverage.workforceRowsRead);
+  assert.equal(snapshot.coverage.workforceObservedCells, 437);
+  assert.equal(snapshot.coverage.workforceMissingCells, 23);
+  assert.equal(snapshot.coverage.workforceEmployeesTotal, 19_490_025);
+  assert.equal(snapshot.coverage.workforceLocalUnitsTotal, 6_394_474);
+  assert.equal(
+    workforce.filter((row) => row.metric === "employees" && row.value !== null).reduce((sum, row) => sum + row.value, 0),
+    19_490_025,
+  );
+  assert.equal(
+    workforce.filter((row) => row.metric === "active_local_units" && row.value !== null).reduce((sum, row) => sum + row.value, 0),
+    6_394_474,
+  );
+});
+
+test("workforce ETL sums distinct ATECO buckets and normalizes regional spelling variants", () => {
+  const header = "Regione;Provincia;Settore;Divisione;Classe;Sottocategoria;Addetti;Localizzazioni Attive";
+  const csv = [
+    header,
+    "EMILIA ROMAGNA;BOLOGNA;A;01;01;01;2;3",
+    "EMILIA–ROMAGNA;BOLOGNA;A;01;011;011;5;7",
+    "TRENTINO - ALTO ADIGE;TRENTO;A;01;01;01;11;13",
+  ].join("\n");
+  const result = normalizeWorkforce(csv, new Map([["A", "Agricoltura"]]), {
+    expectedRegionCodes: ["04", "08"],
+    expectedSectorCodes: ["A"],
+    expectedRows: 3,
+    expectedTotals: { employees: 18, localUnits: 23 },
+  });
+  assert.equal(result.observations.length, 4);
+  assert.equal(result.observations.find((row) => row.geographyCode === "08" && row.metric === "employees")?.value, 7);
+  assert.equal(result.observations.find((row) => row.geographyCode === "08" && row.metric === "active_local_units")?.value, 10);
+  assert.equal(result.observations.find((row) => row.geographyCode === "04" && row.metric === "employees")?.value, 11);
+  assert.equal(result.observations.find((row) => row.geographyCode === "04" && row.metric === "active_local_units")?.value, 13);
+});
+
+test("workforce ETL fails closed on unknown regions and sectors", () => {
+  const header = "Regione;Provincia;Settore;Divisione;Classe;Sottocategoria;Addetti;Localizzazioni Attive";
+  const row = "ABRUZZO;CHIETI;A;01;01;01;1;1";
+  const options = {
+    expectedRegionCodes: ["13"],
+    expectedSectorCodes: ["A"],
+    expectedRows: 1,
+    expectedTotals: { employees: 1, localUnits: 1 },
+  };
+  assert.throws(
+    () => normalizeWorkforce(`${header}\nATLANTIDE;CHIETI;A;01;01;01;1;1`, new Map(), options),
+    /Regione CSV non mappata/,
+  );
+  assert.throws(
+    () => normalizeWorkforce(`${header}\n${row.replace(";A;", ";Z;")}`, new Map(), options),
+    /Settore ATECO CSV inatteso/,
+  );
 });
 
 test("metric definitions and filter options are populated and consistent", () => {

@@ -16,7 +16,8 @@ superficie civica esistente.
 4. Un adapter read-only con paginazione limitata, query normalizzata,
    provenienza e caveat.
 5. Test dedicati per schema, aggregazione, filtri, paginazione e invarianti
-   aggregate-only.
+   aggregate-only, con riconciliazione della release workforce a `19.490.025`
+   addetti e `6.394.474` localizzazioni attive.
 
 La navigazione civica, il catalogo esistente, le risorse MCP e le rotte già
 presenti restano intatti: il modulo è un nuovo ramo, non una sostituzione della
@@ -28,8 +29,13 @@ missione originaria del sito.
   codice fiscale o indirizzo.
 - Le fasce di valore della produzione non sono fatturato, ricavi esatti o una
   classifica di società.
-- Il CSV degli addetti è gerarchico: la pipeline seleziona una riga canonica per
-  divisione e provincia prima di aggregare, per evitare doppi conteggi.
+- Il CSV degli addetti contiene bucket ATECO osservati distinti: la pipeline
+  somma tutte le righe, incluse quelle a maggiore specificità, a regione ×
+  sezione senza selezionare una riga canonica. Le celle senza bucket restano
+  `null`.
+- Gli addetti sono posizioni previdenziali attive del trimestre precedente a
+  quello indicato: non rappresentano il livello occupazionale territoriale e
+  non sono direttamente comparabili con ISTAT/ASIA.
 - Ogni risposta conserva editore, URL ufficiale, licenza, periodo e caveat.
 
 ## Perché in questa forma
@@ -50,6 +56,7 @@ MCP.
 
 ## Verifica prevista
 
-La PR include test del contratto e dell'adapter; prima del merge vanno eseguiti
+La PR include test del contratto, dell'adapter, della cardinalità e della
+riconciliazione workforce; prima del merge vanno eseguiti
 anche i gate standard del repository, la verifica browser responsive della
 nuova rotta e lo smoke test HTTP del server MCP reale.

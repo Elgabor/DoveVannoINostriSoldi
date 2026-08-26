@@ -1,6 +1,7 @@
 import type { SourceId } from "@/lib/data/source-policy";
 import { MEF_IRPEF_SOURCE } from "@/lib/data/mef-irpef-source";
 import { INTEGRATED_CORPUS_CONTRACT } from "@/lib/integrated-source-contract";
+import { companyAtlasSources } from "@/lib/company-atlas-metadata";
 import { publicSources } from "@/lib/sources";
 
 export const DATASET_IDS = [
@@ -141,32 +142,14 @@ const exampleQueries = {
   },
 } as const satisfies Record<DatasetId, DatasetQuery>;
 
-const COMPANY_ATLAS_SOURCES: DatasetDescriptor["sources"] = [
-  {
-    id: "active-stock",
-    name: "Stock imprese attive",
-    owner: "CCIAA Marche · InfoCamere",
-    url: "https://opendata.marche.camcom.it/data/Stock-Imprese-Attive-Italia.json",
-    cadence: "mensile",
-    license: "CC BY 4.0",
-  },
-  {
-    id: "workforce",
-    name: "Addetti e localizzazioni attive",
-    owner: "CCIAA Marche · InfoCamere",
-    url: "https://opendata.marche.camcom.it/data/2026-Q2-Addetti-Localizzazioni-Attive-Italia.csv",
-    cadence: "trimestrale",
-    license: "CC BY 4.0",
-  },
-  {
-    id: "production-value",
-    name: "Fasce di valore della produzione",
-    owner: "CCIAA Marche · InfoCamere",
-    url: "https://opendata.marche.camcom.it/data/Stock-Imprese-Attive-Italia-Valore-Produzione.json",
-    cadence: "annuale",
-    license: "CC BY 4.0",
-  },
-];
+const COMPANY_ATLAS_SOURCES: DatasetDescriptor["sources"] = Object.values(companyAtlasSources).map((source) => ({
+  id: source.id,
+  name: source.label,
+  owner: source.publisher,
+  url: source.url,
+  cadence: source.cadence,
+  license: source.license,
+}));
 
 const datasetDescriptors: DatasetDescriptorInput[] = [
   { id: "siope_comuni", title: "Pagamenti dei Comuni", summary: "Pagamenti di cassa SIOPE, serie mensile, titoli, regioni e principali Comuni, con normalizzazione territoriale ISTAT.", sourceIds: ["siope", "ipa", "istat"], freshness: "snapshot", filters: ["year", "region"], caveat: "I totali nazionali includono gli enti riconosciuti come Comuni in SIOPE; gli aggregati regionali coprono soltanto quelli abbinati tramite IPA e dichiarano conteggi e importi non regionalizzabili. Il campo distribution completo è disponibile solo nella risposta nazionale; le liste comunali contengono i primi 100 nazionali per totale, pro capite o km². Le normalizzazioni sono descrittive e non misurano efficienza, qualità o fabbisogno." },
@@ -210,7 +193,7 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
     customSources: [COMPANY_ATLAS_SOURCES[0]!],
     freshness: "snapshot",
     filters: ["period", "region", "sector", "limit", "offset"],
-    caveat: "Sono aggregati regionali di sedi attive, non un registro di aziende con nome, identificativo o ricavi.",
+    caveat: `${companyAtlasSources["active-stock"].caveat} Non è un registro di aziende con nome, identificativo o ricavi.`,
   },
   {
     id: "company_workforce",
@@ -220,7 +203,7 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
     customSources: [COMPANY_ATLAS_SOURCES[1]!],
     freshness: "snapshot",
     filters: ["period", "region", "sector", "limit", "offset"],
-    caveat: "Il CSV sorgente è gerarchico; il refresh seleziona una riga canonica per divisione e provincia per evitare doppio conteggio.",
+    caveat: `${companyAtlasSources.workforce.caveat} Le righe risultanti sono aggregati regionali per sezione ATECO e non un elenco di aziende.`,
   },
   {
     id: "company_production_value_bands",
@@ -230,7 +213,7 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
     customSources: [COMPANY_ATLAS_SOURCES[2]!],
     freshness: "snapshot",
     filters: ["period", "region", "sector", "band", "limit", "offset"],
-    caveat: "Le fasce non sono fatturato o ricavi esatti e non identificano singole aziende.",
+    caveat: `${companyAtlasSources["production-value"].caveat} Le fasce non identificano singole aziende.`,
   },
 ];
 

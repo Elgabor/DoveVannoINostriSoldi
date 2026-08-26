@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { shortDate } from "@/lib/format";
-import { companyAtlasSnapshot } from "@/lib/company-atlas";
+import { companyAtlasSourceList } from "@/lib/company-atlas-metadata";
 import { REPO_URL } from "@/lib/site";
 import { latestDataBySlug } from "@/lib/source-latest-data";
 import { publicSources, sourceCounts } from "@/lib/sources";
@@ -84,7 +84,16 @@ export default function SourcesPage() {
           Sono registrate qui con periodo osservato e licenza; non fanno ancora parte del
           registry operativo delle fonti civiche.
         </p>
-        <div className="table-scroll" role="region" aria-label="Fonti dell'Atlante Imprese" tabIndex={0}>
+        <p id="company-atlas-sources-scroll-hint" className={styles.scrollHint}>
+          Scorri orizzontalmente per leggere tutte le colonne della tabella.
+        </p>
+        <div
+          className="table-scroll"
+          role="region"
+          aria-label="Fonti dell'Atlante Imprese"
+          aria-describedby="company-atlas-sources-scroll-hint"
+          tabIndex={0}
+        >
           <table className="table">
             <thead>
               <tr>
@@ -95,7 +104,7 @@ export default function SourcesPage() {
               </tr>
             </thead>
             <tbody>
-              {Object.values(companyAtlasSnapshot.sources).map((source) => (
+              {companyAtlasSourceList.map((source) => (
                 <tr key={source.id}>
                   <th scope="row">
                     <a href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>

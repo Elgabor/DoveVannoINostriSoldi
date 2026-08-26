@@ -57,27 +57,54 @@ const REGION_NAMES = Object.freeze({
   "20": "Sardegna",
 });
 
+const EXPECTED_REGION_CODES = Object.freeze(Object.keys(REGION_NAMES).sort());
+const EXPECTED_SECTOR_CODES = Object.freeze([
+  "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L",
+  "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "X",
+]);
+
+const WORKFORCE_RELEASE = Object.freeze({
+  period: "2026-Q2",
+  updatedAt: "2026-08-04",
+  rows: 118_673,
+  employees: 19_490_025,
+  localUnits: 6_394_474,
+});
+
+function normalizeRegionLabel(value) {
+  return String(value)
+    .normalize("NFKC")
+    .replace(/[‐‑‒–—−]/g, "-")
+    .replace(/[’‘]/g, "'")
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/\s*-\s*/g, "-")
+    .toLocaleUpperCase("it-IT");
+}
+
 const REGION_SOURCE_NAMES = Object.freeze({
-  ABRUZZO: "13",
-  BASILICATA: "17",
-  CALABRIA: "18",
-  CAMPANIA: "15",
-  "EMILIA-ROMAGNA": "08",
-  "FRIULI-VENEZIA GIULIA": "06",
-  LAZIO: "12",
-  LIGURIA: "07",
-  LOMBARDIA: "03",
-  MARCHE: "11",
-  MOLISE: "14",
-  PIEMONTE: "01",
-  PUGLIA: "16",
-  SARDEGNA: "20",
-  SICILIA: "19",
-  TOSCANA: "09",
-  "TRENTINO-ALTO ADIGE": "04",
-  UMBRIA: "10",
-  "VALLE D'AOSTA": "02",
-  VENETO: "05",
+  [normalizeRegionLabel("ABRUZZO")]: "13",
+  [normalizeRegionLabel("BASILICATA")]: "17",
+  [normalizeRegionLabel("CALABRIA")]: "18",
+  [normalizeRegionLabel("CAMPANIA")]: "15",
+  [normalizeRegionLabel("EMILIA ROMAGNA")]: "08",
+  [normalizeRegionLabel("EMILIA-ROMAGNA")]: "08",
+  [normalizeRegionLabel("FRIULI-VENEZIA GIULIA")]: "06",
+  [normalizeRegionLabel("LAZIO")]: "12",
+  [normalizeRegionLabel("LIGURIA")]: "07",
+  [normalizeRegionLabel("LOMBARDIA")]: "03",
+  [normalizeRegionLabel("MARCHE")]: "11",
+  [normalizeRegionLabel("MOLISE")]: "14",
+  [normalizeRegionLabel("PIEMONTE")]: "01",
+  [normalizeRegionLabel("PUGLIA")]: "16",
+  [normalizeRegionLabel("SARDEGNA")]: "20",
+  [normalizeRegionLabel("SICILIA")]: "19",
+  [normalizeRegionLabel("TOSCANA")]: "09",
+  [normalizeRegionLabel("TRENTINO ALTO ADIGE")]: "04",
+  [normalizeRegionLabel("TRENTINO-ALTO ADIGE")]: "04",
+  [normalizeRegionLabel("UMBRIA")]: "10",
+  [normalizeRegionLabel("VALLE D'AOSTA")]: "02",
+  [normalizeRegionLabel("VENETO")]: "05",
 });
 
 const LICENSE = "CC BY 4.0";
@@ -122,9 +149,20 @@ function numericValue(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function addNullable(target, value) {
-  if (value === null) return target;
-  return (target ?? 0) + value;
+function assertExactSet(actualValues, expectedValues, label) {
+  const actual = [...new Set(actualValues)].sort();
+  const expected = [...new Set(expectedValues)].sort();
+  if (actual.length !== actualValues.length || actual.join("|") !== expected.join("|")) {
+    throw new Error(`${label} inattesi: attesi ${expected.join(", ")}; ricevuti ${actual.join(", ")}`);
+  }
+}
+
+function workforceValue(value, field, lineNumber) {
+  const parsed = numericValue(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 0) {
+    throw new Error(`Valore ${field} non valido alla riga CSV ${lineNumber}: ${value}`);
+  }
+  return parsed;
 }
 
 async function fetchJson(url) {
@@ -155,8 +193,11 @@ function sourceRecord({ id, label, url, updatedAt, cadence, coverage, caveat }) 
 }
 
 function normalizeActiveStock(dataset) {
-  const sourceRegions = dataset.dimension.geo.category.child.IT;
+  const sourceRegions = dataset.dimension?.geo?.category?.child?.IT;
+  if (!Array.isArray(sourceRegions)) throw new Error("Copertura regionale JSON-stat assente o non valida");
+  assertExactSet(sourceRegions, Object.keys(REGION_CODES), "Regioni JSON-stat");
   const sectors = categoryCodes(dataset, "ateco2025").filter((code) => code !== "TOTAL");
+  assertExactSet(sectors, EXPECTED_SECTOR_CODES, "Sezioni ATECO JSON-stat");
   const periods = categoryCodes(dataset, "time").map((code) => ({
     id: categoryLabel(dataset, "time", code),
     label: categoryLabel(dataset, "time", code),
@@ -205,21 +246,55 @@ function normalizeActiveStock(dataset) {
   };
 }
 
-function workforceLevelScore(row) {
-  return (row.classe?.length ?? 0) + (row.sottocategoria?.length ?? 0);
-}
-
-function normalizeWorkforce(csv, sectorLabels = new Map()) {
-  const [header, ...lines] = csv.trim().split(/\r?\n/);
+export function normalizeWorkforce(csv, sectorLabels = new Map(), options = {}) {
   const expectedHeader = "Regione;Provincia;Settore;Divisione;Classe;Sottocategoria;Addetti;Localizzazioni Attive";
+  const expectedRegionCodes = options.expectedRegionCodes ?? EXPECTED_REGION_CODES;
+  const expectedSectorCodes = options.expectedSectorCodes ?? EXPECTED_SECTOR_CODES;
+  const expectedRows = options.expectedRows ?? WORKFORCE_RELEASE.rows;
+  const expectedTotals = options.expectedTotals ?? {
+    employees: WORKFORCE_RELEASE.employees,
+    localUnits: WORKFORCE_RELEASE.localUnits,
+  };
+  const period = options.period ?? WORKFORCE_RELEASE.period;
+  const expectedRegionSet = new Set(expectedRegionCodes);
+  const expectedSectorSet = new Set(expectedSectorCodes);
+  const lines = csv.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n").trimEnd().split("\n");
+  const header = lines.shift()?.trim();
   if (header !== expectedHeader) throw new Error(`Intestazione CSV inattesa: ${header}`);
 
-  const canonicalByDivision = new Map();
-  for (const line of lines) {
-    if (!line.trim()) continue;
-    const [sourceRegion, province, sectorCode, division, classe, sottocategoria, employees, localUnits] = line.split(";");
-    const regionCode = REGION_SOURCE_NAMES[sourceRegion];
-    if (!regionCode || !/^[A-Z]$/.test(sectorCode) || !division || !province) continue;
+  const dataLines = lines.filter((line) => line.trim());
+  const sourceRegions = new Set();
+  const sourceSectors = new Set();
+  const sourceRows = [];
+  const sourceRowKeys = new Set();
+  let employeesTotal = 0;
+  let localUnitsTotal = 0;
+
+  for (const [index, line] of dataLines.entries()) {
+    const lineNumber = index + 2;
+    const fields = line.split(";").map((field) => field.trim());
+    if (fields.length !== 8) {
+      throw new Error(`Riga CSV ${lineNumber} con ${fields.length} colonne, attese 8`);
+    }
+    const [rawRegion, province, rawSectorCode, division, classe, sottocategoria, employees, localUnits] = fields;
+    if (!rawRegion || !province || !rawSectorCode || !division || !classe || !sottocategoria) {
+      throw new Error(`Dimensione CSV vuota alla riga ${lineNumber}`);
+    }
+    const normalizedRegion = normalizeRegionLabel(rawRegion);
+    const regionCode = REGION_SOURCE_NAMES[normalizedRegion];
+    if (!regionCode || !expectedRegionSet.has(regionCode)) {
+      throw new Error(`Regione CSV non mappata alla riga ${lineNumber}: ${rawRegion}`);
+    }
+    const sectorCode = rawSectorCode.toLocaleUpperCase("it-IT");
+    if (!/^[A-Z]$/.test(sectorCode) || !expectedSectorSet.has(sectorCode)) {
+      throw new Error(`Settore ATECO CSV inatteso alla riga ${lineNumber}: ${rawSectorCode}`);
+    }
+    if (!/^\d{2}$/.test(division) || !/^\d{2,4}$/.test(classe) || !/^\d{2,6}$/.test(sottocategoria)) {
+      throw new Error(`Codice ATECO CSV non valido alla riga ${lineNumber}`);
+    }
+    const sourceRowKey = [regionCode, province, sectorCode, division, classe, sottocategoria].join("|");
+    if (sourceRowKeys.has(sourceRowKey)) throw new Error(`Riga CSV duplicata alla riga ${lineNumber}: ${sourceRowKey}`);
+    sourceRowKeys.add(sourceRowKey);
     const row = {
       regionCode,
       province,
@@ -227,55 +302,96 @@ function normalizeWorkforce(csv, sectorLabels = new Map()) {
       division,
       classe,
       sottocategoria,
-      employees: numericValue(employees),
-      localUnits: numericValue(localUnits),
+      employees: workforceValue(employees, "Addetti", lineNumber),
+      localUnits: workforceValue(localUnits, "Localizzazioni Attive", lineNumber),
     };
-    const key = [regionCode, province, sectorCode, division].join("|");
-    const previous = canonicalByDivision.get(key);
-    if (!previous || workforceLevelScore(row) < workforceLevelScore(previous)) {
-      canonicalByDivision.set(key, row);
-    }
+    sourceRows.push(row);
+    sourceRegions.add(regionCode);
+    sourceSectors.add(sectorCode);
+    employeesTotal += row.employees;
+    localUnitsTotal += row.localUnits;
+  }
+
+  if (sourceRows.length !== expectedRows) {
+    throw new Error(`Righe workforce inattese: attese ${expectedRows}, ricevute ${sourceRows.length}`);
+  }
+  assertExactSet([...sourceRegions], expectedRegionCodes, "Regioni CSV");
+  assertExactSet([...sourceSectors], expectedSectorCodes, "Sezioni ATECO CSV");
+  if (employeesTotal !== expectedTotals.employees || localUnitsTotal !== expectedTotals.localUnits) {
+    throw new Error(
+      `Totali workforce non riconciliati: attesi ${expectedTotals.employees}/${expectedTotals.localUnits}, `
+      + `ricevuti ${employeesTotal}/${localUnitsTotal}`,
+    );
   }
 
   const aggregate = new Map();
-  for (const row of canonicalByDivision.values()) {
+  for (const row of sourceRows) {
     const key = [row.regionCode, row.sectorCode].join("|");
     const current = aggregate.get(key) ?? {
       regionCode: row.regionCode,
       sectorCode: row.sectorCode,
-      employees: null,
-      localUnits: null,
+      employees: 0,
+      localUnits: 0,
+      rows: 0,
     };
-    current.employees = addNullable(current.employees, row.employees);
-    current.localUnits = addNullable(current.localUnits, row.localUnits);
+    current.employees += row.employees;
+    current.localUnits += row.localUnits;
+    current.rows += 1;
     aggregate.set(key, current);
   }
 
   const observations = [];
-  for (const row of aggregate.values()) {
-    const sectorLabel = sectorLabels.get(row.sectorCode) ?? row.sectorCode;
-    for (const [metric, value] of [["employees", row.employees], ["active_local_units", row.localUnits]]) {
-      observations.push({
-        observationType: "aggregate",
-        geographyLevel: "region",
-        geographyCode: row.regionCode,
-        geographyName: REGION_NAMES[row.regionCode],
-        atecoVersion: ATECO_VERSION,
-        sectorCode: row.sectorCode,
-        sectorLabel,
-        metric,
-        period: "2026-Q2",
-        value,
-        sourceId: "workforce",
-      });
+  let observedCells = 0;
+  let missingCells = 0;
+  for (const regionCode of expectedRegionCodes) {
+    for (const sectorCode of expectedSectorCodes) {
+      const row = aggregate.get([regionCode, sectorCode].join("|"));
+      if (row) observedCells += 1;
+      else missingCells += 1;
+      const sectorLabel = sectorLabels.get(sectorCode) ?? sectorCode;
+      for (const [metric, value] of [
+        ["employees", row?.employees ?? null],
+        ["active_local_units", row?.localUnits ?? null],
+      ]) {
+        observations.push({
+          observationType: "aggregate",
+          geographyLevel: "region",
+          geographyCode: regionCode,
+          geographyName: REGION_NAMES[regionCode],
+          atecoVersion: ATECO_VERSION,
+          sectorCode,
+          sectorLabel,
+          metric,
+          period,
+          value,
+          sourceId: "workforce",
+        });
+      }
     }
   }
-  return { observations, updatedAt: "2026-08-04", rowsRead: lines.length };
+  return {
+    observations,
+    updatedAt: WORKFORCE_RELEASE.updatedAt,
+    period,
+    rowsRead: sourceRows.length,
+    rowsAccepted: sourceRows.length,
+    regionCount: expectedRegionCodes.length,
+    sectorCount: expectedSectorCodes.length,
+    regionSectorCells: expectedRegionCodes.length * expectedSectorCodes.length,
+    observedCells,
+    missingCells,
+    nullObservations: missingCells * 2,
+    employeesTotal,
+    localUnitsTotal,
+  };
 }
 
 function normalizeProductionValue(dataset) {
-  const sourceRegions = dataset.dimension.geo.category.child.IT;
+  const sourceRegions = dataset.dimension?.geo?.category?.child?.IT;
+  if (!Array.isArray(sourceRegions)) throw new Error("Copertura regionale JSON-stat assente o non valida");
+  assertExactSet(sourceRegions, Object.keys(REGION_CODES), "Regioni JSON-stat");
   const sectors = categoryCodes(dataset, "ateco2025").filter((code) => code !== "TOTAL");
+  assertExactSet(sectors, EXPECTED_SECTOR_CODES, "Sezioni ATECO JSON-stat");
   const bands = categoryCodes(dataset, "productionvalue").map((code) => ({
     code,
     label: categoryLabel(dataset, "productionvalue", code),
@@ -317,25 +433,139 @@ function normalizeProductionValue(dataset) {
   return { observations, bands, period, updatedAt: dataset.updated };
 }
 
-function validateSnapshot(snapshot) {
+export function validateSnapshot(snapshot) {
   if (snapshot.schemaVersion !== 1) throw new Error("schemaVersion non supportata");
   if (snapshot.observationType !== "aggregate") throw new Error("Il POC accetta soltanto aggregati");
-  if (snapshot.observations.length < 10_000) throw new Error("Snapshot troppo piccolo: possibile perdita di righe");
+  if (!Array.isArray(snapshot.regions) || snapshot.regions.length !== EXPECTED_REGION_CODES.length) {
+    throw new Error("Lo snapshot deve coprire esattamente le 20 regioni");
+  }
+  assertExactSet(snapshot.regions.map((region) => region.code), EXPECTED_REGION_CODES, "Regioni snapshot");
+  if (!Array.isArray(snapshot.sectors)) throw new Error("Sezioni ATECO snapshot assenti");
+  assertExactSet(snapshot.sectors.map((sector) => sector.code), EXPECTED_SECTOR_CODES, "Sezioni ATECO snapshot");
+  if (!Array.isArray(snapshot.productionBands) || snapshot.productionBands.length !== 10) {
+    throw new Error("Fasce di valore della produzione inattese");
+  }
   const sourceIds = new Set(snapshot.observations.map((row) => row.sourceId));
-  if (sourceIds.size !== 3 || !["active-stock", "workforce", "production-value"].every((id) => sourceIds.has(id))) {
+  const expectedSourceIds = ["active-stock", "workforce", "production-value"];
+  if (sourceIds.size !== expectedSourceIds.length || !expectedSourceIds.every((id) => sourceIds.has(id))) {
     throw new Error("Lo snapshot deve contenere esattamente le tre fonti dichiarate");
   }
+  if (!snapshot.sources?.workforce?.caveat
+    || !/posizioni previdenziali attive/i.test(snapshot.sources.workforce.caveat)
+    || !/trimestre precedente/i.test(snapshot.sources.workforce.caveat)
+    || !/occupazione/i.test(snapshot.sources.workforce.caveat)
+    || !/istat.*asia/i.test(snapshot.sources.workforce.caveat)) {
+    throw new Error("Caveat workforce ufficiale assente o incompleto");
+  }
+
   const observationKeys = new Set();
+  const counts = new Map();
+  const workforceCells = new Map();
+  let activeStockNullValues = 0;
+  let productionValueNullValues = 0;
   for (const row of snapshot.observations) {
     if (row.observationType !== "aggregate" || row.geographyLevel !== "region") {
       throw new Error("Trovata un’osservazione fuori dal perimetro aggregato regionale");
     }
-    if (row.value !== null && (!Number.isInteger(row.value) || row.value < 0)) {
+    if (!EXPECTED_REGION_CODES.includes(row.geographyCode) || !EXPECTED_SECTOR_CODES.includes(row.sectorCode)) {
+      throw new Error(`Geografia o sezione inattesa nell’osservazione: ${row.geographyCode}/${row.sectorCode}`);
+    }
+    if (row.value !== null && (!Number.isSafeInteger(row.value) || row.value < 0)) {
       throw new Error("Valore osservazione non intero o negativo");
     }
     const key = [row.sourceId, row.metric, row.period, row.geographyCode, row.sectorCode, row.bandCode ?? ""].join("|");
     if (observationKeys.has(key)) throw new Error(`Osservazione duplicata: ${key}`);
     observationKeys.add(key);
+    const groupKey = [row.sourceId, row.metric, row.period].join("|");
+    counts.set(groupKey, (counts.get(groupKey) ?? 0) + 1);
+    if (row.sourceId === "active-stock" && row.value === null) activeStockNullValues += 1;
+    if (row.sourceId === "production-value" && row.value === null) productionValueNullValues += 1;
+    if (row.sourceId === "workforce") {
+      if (row.bandCode !== undefined) throw new Error("Il workforce non può contenere fasce di produzione");
+      const cellKey = [row.geographyCode, row.sectorCode].join("|");
+      const cell = workforceCells.get(cellKey) ?? {};
+      cell[row.metric] = row.value;
+      workforceCells.set(cellKey, cell);
+    }
+  }
+
+  const activePeriods = snapshot.periods?.activeStock ?? [];
+  const workforcePeriods = snapshot.periods?.workforce ?? [];
+  const productionPeriods = snapshot.periods?.productionValue ?? [];
+  if (activePeriods.length < 1 || new Set(activePeriods.map((period) => period.id)).size !== activePeriods.length) {
+    throw new Error("Periodi stock imprese attive assenti o duplicati");
+  }
+  if (workforcePeriods.length !== 1 || workforcePeriods[0]?.id !== WORKFORCE_RELEASE.period) {
+    throw new Error("Periodo workforce inatteso");
+  }
+  if (productionPeriods.length !== 1) throw new Error("Periodo production-value inatteso");
+  const expectedActiveCount = activePeriods.length * EXPECTED_REGION_CODES.length * EXPECTED_SECTOR_CODES.length;
+  const expectedWorkforceCount = EXPECTED_REGION_CODES.length * EXPECTED_SECTOR_CODES.length;
+  const expectedProductionCount = expectedWorkforceCount * snapshot.productionBands.length;
+  const expectedPerPeriodCount = EXPECTED_REGION_CODES.length * EXPECTED_SECTOR_CODES.length;
+  for (const period of activePeriods) {
+    if ((counts.get(`active-stock|active_enterprises|${period.id}`) ?? 0) !== expectedPerPeriodCount) {
+      throw new Error(`Cardinalità stock imprese attive non riconciliata per ${period.id}`);
+    }
+  }
+  if ((counts.get(`workforce|employees|${WORKFORCE_RELEASE.period}`) ?? 0) !== expectedWorkforceCount
+    || (counts.get(`workforce|active_local_units|${WORKFORCE_RELEASE.period}`) ?? 0) !== expectedWorkforceCount) {
+    throw new Error("Cardinalità workforce non riconciliata");
+  }
+  if ((counts.get(`production-value|production_value_band_count|${productionPeriods[0]?.id}`) ?? 0) !== expectedProductionCount) {
+    throw new Error("Cardinalità fasce di produzione non riconciliata");
+  }
+  if (snapshot.observations.length !== expectedActiveCount + expectedWorkforceCount * 2 + expectedProductionCount) {
+    throw new Error("Cardinalità complessiva snapshot inattesa");
+  }
+
+  let workforceObservedCells = 0;
+  let workforceMissingCells = 0;
+  let workforceNullObservations = 0;
+  let workforceEmployeesTotal = 0;
+  let workforceLocalUnitsTotal = 0;
+  for (const regionCode of EXPECTED_REGION_CODES) {
+    for (const sectorCode of EXPECTED_SECTOR_CODES) {
+      const cell = workforceCells.get([regionCode, sectorCode].join("|"));
+      if (!cell || !Object.hasOwn(cell, "employees") || !Object.hasOwn(cell, "active_local_units")) {
+        throw new Error(`Cella workforce mancante: ${regionCode}/${sectorCode}`);
+      }
+      const bothNull = cell.employees === null && cell.active_local_units === null;
+      const oneNull = cell.employees === null || cell.active_local_units === null;
+      if (oneNull && !bothNull) throw new Error(`Null workforce parziale: ${regionCode}/${sectorCode}`);
+      if (bothNull) {
+        workforceMissingCells += 1;
+        workforceNullObservations += 2;
+      } else {
+        workforceObservedCells += 1;
+        workforceEmployeesTotal += cell.employees;
+        workforceLocalUnitsTotal += cell.active_local_units;
+      }
+    }
+  }
+  const coverage = snapshot.coverage;
+  const expectedCoverage = {
+    activeStockObservations: expectedActiveCount,
+    activeStockNullValues,
+    workforceRowsRead: WORKFORCE_RELEASE.rows,
+    workforceRowsAccepted: WORKFORCE_RELEASE.rows,
+    workforceRegionCount: EXPECTED_REGION_CODES.length,
+    workforceSectorCount: EXPECTED_SECTOR_CODES.length,
+    workforceRegionSectorCells: expectedWorkforceCount,
+    workforceObservedCells,
+    workforceMissingCells,
+    workforceNullObservations,
+    workforceEmployeesTotal: WORKFORCE_RELEASE.employees,
+    workforceLocalUnitsTotal: WORKFORCE_RELEASE.localUnits,
+    workforceObservations: expectedWorkforceCount * 2,
+    productionValueObservations: expectedProductionCount,
+    productionValueNullValues,
+  };
+  for (const [key, value] of Object.entries(expectedCoverage)) {
+    if (coverage?.[key] !== value) throw new Error(`Copertura snapshot divergente in ${key}: atteso ${value}, ricevuto ${coverage?.[key]}`);
+  }
+  if (workforceEmployeesTotal !== WORKFORCE_RELEASE.employees || workforceLocalUnitsTotal !== WORKFORCE_RELEASE.localUnits) {
+    throw new Error("Totali workforce nello snapshot non riconciliati con la fonte ufficiale");
   }
 }
 
@@ -347,7 +577,10 @@ export async function buildSnapshot() {
   ]);
   const active = normalizeActiveStock(activeStock);
   const sectorLabels = new Map(active.sectors.map((sector) => [sector.code, sector.label]));
-  const workforce = normalizeWorkforce(workforceCsv, sectorLabels);
+  const workforce = normalizeWorkforce(workforceCsv, sectorLabels, {
+    expectedRegionCodes: active.regions.map((region) => region.code),
+    expectedSectorCodes: active.sectors.map((sector) => sector.code),
+  });
   const production = normalizeProductionValue(productionValue);
   const snapshot = {
     schemaVersion: 1,
@@ -369,10 +602,10 @@ export async function buildSnapshot() {
         id: "workforce",
         label: "Addetti e localizzazioni attive · trimestre",
         url: SOURCE_URLS.workforce,
-        updatedAt: "2026-08-04",
+        updatedAt: workforce.updatedAt,
         cadence: "trimestrale",
-        coverage: "Addetti e localizzazioni attive aggregati dalle righe provinciali al livello regionale e di sezione ATECO.",
-        caveat: "Il CSV è gerarchico: il refresh seleziona una sola riga canonica per divisione e provincia per evitare doppio conteggio.",
+        coverage: "Tutte le righe sono bucket ATECO osservati distinti; la pipeline somma i bucket provinciali a regione × sezione ATECO senza scartare i livelli più specifici.",
+        caveat: "Le posizioni previdenziali attive sono conteggiate nel trimestre precedente a quello indicato, a partire dalla fornitura INPS: il dato non rappresenta il livello di occupazione nel territorio e non è direttamente comparabile con ISTAT/ASIA. Le localizzazioni attive comprendono sedi di impresa e unità locali non cessate.",
       }),
       "production-value": sourceRecord({
         id: "production-value",
@@ -386,7 +619,7 @@ export async function buildSnapshot() {
     },
     periods: {
       activeStock: active.periods,
-      workforce: [{ id: "2026-Q2", label: "2° trimestre 2026" }],
+      workforce: [{ id: workforce.period, label: "2° trimestre 2026" }],
       productionValue: [{ id: production.period, label: production.period }],
     },
     regions: active.regions.map(({ code, name }) => ({ code, name })),
@@ -395,9 +628,20 @@ export async function buildSnapshot() {
     observations: [...active.observations, ...workforce.observations, ...production.observations],
     coverage: {
       activeStockObservations: active.observations.length,
+      activeStockNullValues: active.observations.filter((observation) => observation.value === null).length,
       workforceRowsRead: workforce.rowsRead,
+      workforceRowsAccepted: workforce.rowsAccepted,
+      workforceRegionCount: workforce.regionCount,
+      workforceSectorCount: workforce.sectorCount,
+      workforceRegionSectorCells: workforce.regionSectorCells,
+      workforceObservedCells: workforce.observedCells,
+      workforceMissingCells: workforce.missingCells,
+      workforceNullObservations: workforce.nullObservations,
+      workforceEmployeesTotal: workforce.employeesTotal,
+      workforceLocalUnitsTotal: workforce.localUnitsTotal,
       workforceObservations: workforce.observations.length,
       productionValueObservations: production.observations.length,
+      productionValueNullValues: production.observations.filter((observation) => observation.value === null).length,
     },
   };
   validateSnapshot(snapshot);

@@ -267,6 +267,15 @@ export default function HealthSpendingPage() {
           ai dati <Link href="/spese/invalidita">INPS</Link>. Fonti e ambiti diversi.
         </p>
       </div>
+
+      <div className="notice">
+        <strong>Serie storica nazionale, dal 2012</strong>
+        <p>
+          Questa pagina mostra solo il 2024. Il totale nazionale delle stesse voci contabili è
+          disponibile dal 2012 al 2024.{" "}
+          <Link href="/spese/sanita/storico">Apri la serie storica →</Link>
+        </p>
+      </div>
     </main>
   );
 }

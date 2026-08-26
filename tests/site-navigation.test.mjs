@@ -117,9 +117,17 @@ test("supporters page lists the current acknowledgements", async () => {
   assert.match(supporters, /INDIVIDUAL_SUPPORTERS/);
   assert.match(supporters, /Clodo76/);
   assert.match(supporters, /github\.com\/Clodo76/);
+  assert.match(supporters, /500 ai compute/);
+  assert.match(supporters, /Aldo Colamartino/);
+  assert.match(supporters, /Francesco Cecchetti/);
+  assert.match(supporters, /HyDrogu/);
+  assert.match(supporters, /chochoichoy/);
+  assert.match(supporters, /Sostegni anonimi/);
   assert.match(page, /SITE_SUPPORTERS/);
   assert.match(page, /INDIVIDUAL_SUPPORTERS/);
   assert.match(page, /BUY_ME_A_COFFEE_URL/);
+  assert.match(page, /supporter\.href \?/);
+  assert.match(page, /contributi pubblici ricevuti/);
   assert.match(footer, /href="\/supporter"/);
   assert.match(footer, /BUY_ME_A_COFFEE_URL/);
   assert.match(footer, /Buy me an AI compute/);

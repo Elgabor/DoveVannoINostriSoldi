@@ -27,16 +27,21 @@ export default function SupportersPage() {
           <a href={BUY_ME_A_COFFEE_URL} target="_blank" rel="noreferrer">
             Buy Me a Coffee
           </a>{" "}
-          aiuta a pagare compute e hosting. Il contributo resta volontario e non influenza i dati
-          pubblicati.
+          aiuta a pagare compute e hosting. Elenco aggiornato dai contributi pubblici ricevuti
+          finora ({INDIVIDUAL_SUPPORTERS.length} nomi, inclusi i sostegni anonimi aggregati). Il
+          contributo resta volontario e non influenza i dati pubblicati.
         </p>
         <ul>
           {INDIVIDUAL_SUPPORTERS.map((supporter) => (
-            <li key={supporter.href}>
+            <li key={supporter.name}>
               <strong>
-                <a href={supporter.href} target="_blank" rel="noreferrer">
-                  {supporter.name}
-                </a>
+                {supporter.href ? (
+                  <a href={supporter.href} target="_blank" rel="noreferrer">
+                    {supporter.name}
+                  </a>
+                ) : (
+                  supporter.name
+                )}
               </strong>
               {": "}
               {supporter.contribution}
@@ -51,14 +56,16 @@ export default function SupportersPage() {
       </section>
 
       {SITE_SUPPORTERS.map((supporter) => (
-        <section className="panel" key={supporter.href}>
+        <section className="panel" key={supporter.href ?? supporter.name}>
           <h2 className="panel-title">{supporter.name}</h2>
           <p>{supporter.contribution}</p>
-          <p>
-            <a href={supporter.href} target="_blank" rel="noreferrer">
-              {new URL(supporter.href).hostname} ↗
-            </a>
-          </p>
+          {supporter.href ? (
+            <p>
+              <a href={supporter.href} target="_blank" rel="noreferrer">
+                {new URL(supporter.href).hostname} ↗
+              </a>
+            </p>
+          ) : null}
         </section>
       ))}
     </main>

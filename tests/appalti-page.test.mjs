@@ -44,6 +44,19 @@ test("appalti page makes the chart/table equivalence and denominator explicit", 
   assert.equal(anacCigSnapshot.provenance.license, "CC BY-SA 4.0");
 });
 
+test("appalti page separates CIG euro sums from the Relazione ANAC perimeter", () => {
+  assert.match(pageSource, /Come leggere questi numeri/);
+  assert.match(pageSource, /stesso snapshot CIG 2025/);
+  assert.match(pageSource, /Non confondere con la Relazione ANAC/);
+  assert.match(pageSource, /Non sostituisce i numeri della tabella/);
+  assert.match(pageSource, /40\.000 € in su/);
+  assert.doesNotMatch(pageSource, /Sul valore in euro la storia cambia/);
+  const tableMarker = pageSource.indexOf("procedure-breakdown-title");
+  const relazioneMarker = pageSource.indexOf("value-share-title");
+  assert.ok(tableMarker >= 0);
+  assert.ok(relazioneMarker > tableMarker);
+});
+
 test("appalti page treats threshold concentrations as screening signals, not findings", () => {
   assert.match(pageSource, /indicano dove guardare\s*\n?\s*meglio negli atti/);
   assert.match(pageSource, /serve a scegliere cosa verificare negli atti/);

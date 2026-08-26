@@ -114,11 +114,10 @@ export default function AppaltiPage() {
       <section className={`notice scope-notice ${styles.readingNotice}`} aria-labelledby="appalti-reading-title">
         <h2 id="appalti-reading-title">Come leggere questi numeri</h2>
         <p>
-          Contare i CIG e sommare <strong>importo_lotto</strong> sono due letture diverse sullo
-          stesso snapshot. Sotto, ogni etichetta mostra quante volte compare e quanto vale in euro
-          dichiarati. La Relazione ANAC sulle procedure da 40.000 € in su resta un perimetro a parte
-          (circa {marketComparison ? percent(marketComparison.byValue) : "n.d."} sul valore di quel
-          mercato).
+          Qui sotto tutto parla dello <strong>stesso snapshot CIG 2025</strong>: conteggio dei CIG e
+          somma di <strong>importo_lotto</strong> (valore dichiarato del lotto). Sono due letture
+          diverse dello stesso file, non due mercati diversi. I grandi numeri in euro della tabella
+          (centinaia di miliardi) sono proprio quella somma.
         </p>
       </section>
 
@@ -129,9 +128,10 @@ export default function AppaltiPage() {
             La voce <strong>AFFIDAMENTO DIRETTO</strong> è l&apos;etichetta più frequente:{" "}
             {share(directAward.records, totalCigs)} dei {integer(totalCigs)} CIG, ma solo{" "}
             {percent(directAward.amountSharePercent ?? 0)} della somma di{" "}
-            <strong>importo_lotto</strong> nello snapshot. La famiglia di etichette che iniziano con
-            “AFFIDAMENTO DIRETTO” arriva a {share(directAwardFamily.records, totalCigs)} dei CIG e a{" "}
-            {percent(directAwardFamily.amountSharePercent ?? 0)} del valore dichiarato.
+            <strong>importo_lotto</strong> nello snapshot
+            ({exactEuro((directAward.amountEuroCents ?? 0) / 100)}). La famiglia di etichette che
+            iniziano con “AFFIDAMENTO DIRETTO” arriva a {share(directAwardFamily.records, totalCigs)}{" "}
+            dei CIG e a {percent(directAwardFamily.amountSharePercent ?? 0)} del valore dichiarato.
           </p>
         </div>
         <div className={styles.leadMeasurePair}>
@@ -149,58 +149,6 @@ export default function AppaltiPage() {
           </div>
         </div>
       </section>
-
-      {marketComparison && marketValueBillion !== null ? (
-        <section className={`panel ${styles.valuePanel}`} aria-labelledby="value-share-title">
-          <div className={styles.sectionHeading}>
-            <div>
-              <h2 id="value-share-title" className="panel-title">
-                Sul valore in euro la storia cambia
-              </h2>
-              <p>
-                Nella Relazione annuale ANAC sul mercato delle procedure da 40.000 € in su, gli
-                affidamenti diretti sono il {percent(marketComparison.byNumber)} del numero e solo il{" "}
-                {percent(marketComparison.byValue)} del valore. È un altro perimetro rispetto alla
-                somma di importo_lotto sui CIG sopra ({percent(directAward.amountSharePercent ?? 0)}{" "}
-                sul valore dello snapshot).
-              </p>
-            </div>
-            <span className="tag tag-neutral">Fonte: Relazione ANAC {marketComparison.year}</span>
-          </div>
-
-          <div className={styles.valuePair} aria-label="Confronto quota sul numero e sul valore">
-            <div className={styles.valueCard}>
-              <span>Quota sul numero</span>
-              <strong>{percent(marketComparison.byNumber)}</strong>
-              <small>
-                {integer(marketComparison.procedureCount)} procedure da 40.000 € in su
-              </small>
-            </div>
-            <div className={styles.valueCard} data-emphasis="value">
-              <span>Quota sul valore</span>
-              <strong>{percent(marketComparison.byValue)}</strong>
-              <small>
-                circa {marketValueBillion.toLocaleString("it-IT", {
-                  maximumFractionDigits: 1,
-                })}{" "}
-                mld € su {marketComparison.totalValueBillion.toLocaleString("it-IT", {
-                  maximumFractionDigits: 1,
-                })}{" "}
-                mld €
-              </small>
-            </div>
-          </div>
-
-          <p className={styles.note}>
-            {marketComparison.caveat}{" "}
-            <a href={marketComparison.sourceUrl} target="_blank" rel="noreferrer">
-              {marketComparison.sourceTitle} ↗
-            </a>
-            {" · "}
-            <Link href="/controlli">Serie e confronti in Controlli →</Link>
-          </p>
-        </section>
-      ) : null}
 
       <section className={`panel ${styles.procedurePanel}`} aria-labelledby="procedure-breakdown-title">
         <div className={styles.sectionHeading}>
@@ -297,6 +245,33 @@ export default function AppaltiPage() {
           </ScrollRegion>
         </details>
       </section>
+
+      {marketComparison && marketValueBillion !== null ? (
+        <section className={`notice scope-notice ${styles.asideNotice}`} aria-labelledby="value-share-title">
+          <h2 id="value-share-title">Non confondere con la Relazione ANAC</h2>
+          <p>
+            I {exactEuro((directAward.amountEuroCents ?? 0) / 100)} e il{" "}
+            {percent(directAward.amountSharePercent ?? 0)} sopra sono la somma di{" "}
+            <strong>importo_lotto</strong> su tutti i CIG dello snapshot. La Relazione annuale ANAC
+            parla invece solo del mercato delle procedure da <strong>40.000 € in su</strong>: lì gli
+            affidamenti diretti sono il {percent(marketComparison.byNumber)} del numero e il{" "}
+            {percent(marketComparison.byValue)} del valore (circa{" "}
+            {marketValueBillion.toLocaleString("it-IT", { maximumFractionDigits: 1 })} mld € su{" "}
+            {marketComparison.totalValueBillion.toLocaleString("it-IT", {
+              maximumFractionDigits: 1,
+            })}{" "}
+            mld €). Non sostituisce i numeri della tabella.
+          </p>
+          <p className={styles.note}>
+            {marketComparison.caveat}{" "}
+            <a href={marketComparison.sourceUrl} target="_blank" rel="noreferrer">
+              {marketComparison.sourceTitle} ↗
+            </a>
+            {" · "}
+            <Link href="/controlli">Serie e confronti in Controlli →</Link>
+          </p>
+        </section>
+      ) : null}
 
       <section className={`panel ${styles.subsetPanel}`} aria-labelledby="subset-title">
         <div className={styles.sectionHeading}>

@@ -28,12 +28,21 @@
   border-color: var(--color-neutral-400);
 }
 
-.readingNotice strong {
+.readingNotice strong,
+.asideNotice strong {
   display: inline;
   color: var(--color-text);
   font-size: inherit;
   letter-spacing: normal;
   text-transform: none;
+}
+
+.asideNotice {
+  border-color: var(--color-neutral-400);
+}
+
+.asideNotice .note {
+  margin: var(--space-3) 0 0;
 }
 
 .leadPanel {

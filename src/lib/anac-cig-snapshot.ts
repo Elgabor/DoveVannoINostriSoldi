@@ -103,7 +103,7 @@ export const anacCigSnapshot = {
     freshness:
       "Snapshot annuale verificato sui dodici file mensili CIG 2025; non è una query live BDNCP.",
     screeningOnly:
-      "Concentrazioni, procedure e importi vicini alle soglie indicano cosa verificare: non provano spreco, illecito, corruzione o frazionamento.",
+      "Concentrazioni, procedure e importi vicini alle soglie indicano dove guardare meglio negli atti: non provano spreco, illecito, corruzione o frazionamento.",
     supplierLimitation:
       "I file CIG non bastano per attribuire importi o concentrazione a un fornitore; servono aggiudicazioni e aggiudicatari collegati con identificativi ufficiali.",
   },

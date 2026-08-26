@@ -78,6 +78,7 @@ export type MunicipalityProfile = Readonly<{
 
 export type MunicipalityPeerBenchmark = Readonly<{
   year: number;
+  populationYear: number | null;
   peers: number;
   criteria: readonly string[];
   fallbackLevel: number;
@@ -128,6 +129,7 @@ function peerBenchmark(taxCode: string, geography: MunicipalityGeography): Munic
     const perCapita = peers.flatMap((item) => item.perCapitaCents === null ? [] : [item.perCapitaCents]);
     return {
       year: geography.year,
+      populationYear: geography.populationYear,
       peers: peers.length,
       criteria: stage.criteria,
       fallbackLevel,

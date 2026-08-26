@@ -260,6 +260,51 @@ export type SiopeMunicipalityPeerObservation = Readonly<{
   geography: MunicipalityGeography;
 }>;
 
+export type SiopeMunicipalityPeerCoverage = Readonly<{
+  activeMunicipalities: number;
+  withMovements: number;
+  withoutMovements: number;
+  withGeography: number;
+  withMovementsAndGeography: number;
+  withMovementsWithoutGeography: number;
+}>;
+
+export function getSiopeMunicipalityPeerCoverage(year: number): SiopeMunicipalityPeerCoverage {
+  const artifact = artifacts.find((item) => item.year === year);
+  if (!artifact) {
+    return {
+      activeMunicipalities: 0,
+      withMovements: 0,
+      withoutMovements: 0,
+      withGeography: 0,
+      withMovementsAndGeography: 0,
+      withMovementsWithoutGeography: 0,
+    };
+  }
+
+  let withMovements = 0;
+  let withGeography = 0;
+  let withMovementsAndGeography = 0;
+  for (const row of artifact.rows) {
+    const hasMovements = row[6] !== null;
+    const geography = getMunicipalityGeographyByTaxCode(year, row[0]);
+    const hasGeography = geography !== null;
+    if (hasMovements) withMovements += 1;
+    if (hasGeography) withGeography += 1;
+    if (hasMovements && eurosPerSquareKilometreCents(row[6], geography?.surfaceSquareMetres ?? null) !== null) {
+      withMovementsAndGeography += 1;
+    }
+  }
+  return {
+    activeMunicipalities: artifact.rows.length,
+    withMovements,
+    withoutMovements: artifact.rows.length - withMovements,
+    withGeography,
+    withMovementsAndGeography,
+    withMovementsWithoutGeography: withMovements - withMovementsAndGeography,
+  };
+}
+
 export function getSiopeMunicipalityPeerObservations(year: number): readonly SiopeMunicipalityPeerObservation[] {
   const artifact = artifacts.find((item) => item.year === year);
   if (!artifact) return [];

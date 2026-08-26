@@ -8,7 +8,7 @@ import styles from "./fisco.module.css";
 export const metadata: Metadata = {
   title: "Entrate e spese pubbliche per territorio",
   description:
-    "Entrate, spese e saldo contabile territorializzato della Pubblica Amministrazione consolidata, con valori pro capite CPT 2023.",
+    "Entrate, spese e saldo contabile territorializzato della Pubblica Amministrazione consolidata, con valori totali, pro capite e per km² CPT 2023.",
 };
 
 type Measure = "per-abitante" | "per-km2" | "totale";
@@ -53,26 +53,33 @@ export default async function RegionalFiscalPage({
 }) {
   const measure = selectedMeasure((await searchParams).misura);
   const data = queryCptRegionalFiscal();
+  const metricValue = (row: typeof data.rows[number], kind: "revenue" | "expenditure" | "balance"): number | null => {
+    if (measure === "totale") return row[`${kind}Cents`];
+    if (measure === "per-km2") return row[`${kind}PerSquareKmCents`];
+    return row[`${kind}PerCapitaCents`];
+  };
   const rows = [...data.rows].sort(
     (left, right) => {
-      const value = (row: typeof left) => measure === "totale"
-        ? row.balanceCents
-        : measure === "per-km2"
-          ? row.balancePerSquareKmCents ?? 0
-          : row.balancePerCapitaCents ?? 0;
-      return value(right) - value(left);
+      const leftValue = metricValue(left, "balance");
+      const rightValue = metricValue(right, "balance");
+      if (leftValue === null) return rightValue === null ? left.region.localeCompare(right.region, "it-IT") : 1;
+      if (rightValue === null) return -1;
+      return rightValue - leftValue || left.region.localeCompare(right.region, "it-IT");
     },
   );
-  const metricValue = (row: typeof rows[number], kind: "revenue" | "expenditure" | "balance") => {
-    if (measure === "totale") return row[`${kind}Cents`];
-    if (measure === "per-km2") return row[`${kind}PerSquareKmCents`] ?? 0;
-    return row[`${kind}PerCapitaCents`] ?? 0;
-  };
-  const formatMetric = (value: number, signed = false) => measure === "totale"
+  const formatMetric = (value: number | null, signed = false) => value === null
+    ? "n.d."
+    : measure === "totale"
     ? signed ? signedFromCents(value) : compactFromCents(value)
     : signed ? signedFromCents(value) : exactFromCents(value);
   const measureLabel = measure === "totale" ? "totale" : measure === "per-km2" ? "per km²" : "per abitante";
-  const maxBalance = Math.max(...rows.map((row) => Math.abs(metricValue(row, "balance"))), 1);
+  const maxBalance = Math.max(
+    ...rows
+      .map((row) => metricValue(row, "balance"))
+      .filter((value): value is number => value !== null)
+      .map((value) => Math.abs(value)),
+    1,
+  );
 
   return (
     <main className="shell page">
@@ -80,7 +87,7 @@ export default async function RegionalFiscalPage({
         <h1>Entrate e spese pubbliche, regione per regione</h1>
         <p>
           Confronto {data.year} della Pubblica Amministrazione consolidata nei Conti Pubblici
-          Territoriali. La vista è ordinata per saldo pro capite; i totali assoluti restano nella
+          Territoriali. La vista è ordinata per saldo {measureLabel}; i totali assoluti restano nella
           tabella. Entrate e spese sono flussi di cassa attribuiti al territorio nel perimetro CPT.
           Le entrate territorializzate includono le componenti definite da quel perimetro.
         </p>
@@ -119,21 +126,21 @@ export default async function RegionalFiscalPage({
           </div>
         </div>
 
-        <ol className={styles.balanceChart} aria-label="Territori ordinati per saldo contabile pro capite">
+        <ol className={styles.balanceChart} aria-label={`Territori ordinati per saldo ${measureLabel}`}>
           {rows.map((row) => {
             const balance = metricValue(row, "balance");
-            const width = `${Math.max((Math.abs(balance) / maxBalance) * 100, 1)}%`;
+            const width = balance === null ? "0%" : `${Math.max((Math.abs(balance) / maxBalance) * 100, 1)}%`;
             return (
               <li key={row.regionCode}>
                 <span className={styles.regionName}>{row.region}</span>
                 <span className={styles.axis} aria-hidden="true">
                   <span
-                    className={balance >= 0 ? styles.positiveBar : styles.negativeBar}
+                    className={balance === null ? styles.emptyBar : balance >= 0 ? styles.positiveBar : styles.negativeBar}
                     style={{ "--bar-width": width } as CSSProperties}
                   />
                 </span>
                 <strong className={styles.balanceValue}>
-                  <span className={styles.visuallyHidden}>{balance >= 0 ? "positivo" : "negativo"}: </span>
+                  <span className={styles.visuallyHidden}>{balance === null ? "non disponibile" : balance >= 0 ? "positivo" : "negativo"}: </span>
                   {formatMetric(balance, true)}
                 </strong>
               </li>
@@ -152,7 +159,7 @@ export default async function RegionalFiscalPage({
           tabIndex={0}
         >
           <table className="table">
-            <caption className={styles.visuallyHidden}>Valori CPT PA consolidati {data.year}, ordinati per saldo pro capite</caption>
+            <caption className={styles.visuallyHidden}>Valori CPT PA consolidati {data.year}, ordinati per saldo {measureLabel}</caption>
             <thead>
               <tr>
                 <th scope="col">Territorio</th>

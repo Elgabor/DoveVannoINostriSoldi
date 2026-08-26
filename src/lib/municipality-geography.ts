@@ -159,6 +159,29 @@ export function eurosPerSquareKilometreCents(
   return sign * Math.floor((Math.abs(amountCents) / surfaceSquareMetres) * 1_000_000 + 0.5);
 }
 
+/**
+ * Calculate one aggregate €/km² value only when every amount has a valid
+ * geography denominator. A partial numerator/denominator pair is not a
+ * national metric: returning null keeps the coverage boundary visible.
+ */
+export function aggregateEurosPerSquareKilometreCents(
+  rows: ReadonlyArray<Readonly<{ amountCents: number; surfaceSquareMetres: number | null }>>,
+): number | null {
+  if (rows.length === 0) return null;
+  if (rows.some((row) =>
+    !Number.isSafeInteger(row.amountCents) ||
+    row.surfaceSquareMetres === null ||
+    !Number.isSafeInteger(row.surfaceSquareMetres) ||
+    row.surfaceSquareMetres <= 0,
+  )) {
+    return null;
+  }
+  const amountCents = rows.reduce((total, row) => total + row.amountCents, 0);
+  const surfaceSquareMetres = rows.reduce((total, row) => total + (row.surfaceSquareMetres ?? 0), 0);
+  if (!Number.isSafeInteger(amountCents) || !Number.isSafeInteger(surfaceSquareMetres)) return null;
+  return eurosPerSquareKilometreCents(amountCents, surfaceSquareMetres);
+}
+
 export function populationBand(population: number | null): string | null {
   if (population === null) return null;
   if (population < 1_000) return "Meno di 1.000 abitanti";

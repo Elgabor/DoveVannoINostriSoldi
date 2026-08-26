@@ -83,6 +83,7 @@
 
 .positiveBar { left: 50%; }
 .negativeBar { right: 50%; }
+.emptyBar { display: none; }
 
 .balanceValue {
   text-align: right;

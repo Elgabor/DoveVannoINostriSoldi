@@ -10,8 +10,12 @@ import {
   partialMonth,
   regionsByPerCapita,
 } from "@/lib/siope-snapshot";
-import { getSiopeMunicipalityPeerObservations } from "@/lib/siope-municipality-detail";
 import {
+  getSiopeMunicipalityPeerCoverage,
+  getSiopeMunicipalityPeerObservations,
+} from "@/lib/siope-municipality-detail";
+import {
+  aggregateEurosPerSquareKilometreCents,
   eurosPerSquareKilometreCents,
   getRegionGeography,
 } from "@/lib/municipality-geography";
@@ -22,7 +26,7 @@ import styles from "./territori.module.css";
 export const metadata: Metadata = {
   title: "Territori",
   description:
-    "Pagamenti effettuati dai Comuni, regione per regione: classifiche pro capite, totali e copertura della popolazione.",
+    "Pagamenti effettuati dai Comuni, regione per regione: totali, valori per abitante, valori per km² e copertura dei Comuni con dati SIOPE e superficie ISTAT.",
 };
 
 function selectedYear(value: string | string[] | undefined): number {
@@ -87,6 +91,10 @@ function compactMetric(value: number | null, metric: Metric): string {
 function tableMetric(value: number | null, metric: Metric): string {
   if (value === null) return "n.d.";
   return metric === "totale" ? compactEuro(value) : compactMetric(value, metric);
+}
+
+function exactMetricValue(value: number | null): string {
+  return value === null ? "n.d." : exactEuro(value);
 }
 
 function populationMatches(population: number | null, filter: PopulationFilter): boolean {
@@ -168,14 +176,15 @@ export default async function TerritoriesPage({
       return (right[value] ?? -1) - (left[value] ?? -1);
     });
   const regionsByArea = groupRegionsByMacroArea(regions);
-  const regionalSurfaceSquareKilometres = regions.reduce(
-    (total, region) => total + (region.geography?.surfaceSquareKilometres ?? 0),
-    0,
+  const nationalPerSquareKmCents = aggregateEurosPerSquareKilometreCents(
+    regions.map((region) => ({
+      amountCents: Math.round(region.value * 100),
+      surfaceSquareMetres: region.geography?.surfaceSquareMetres ?? null,
+    })),
   );
-  const regionalPayments = regions.reduce((total, region) => total + region.value, 0);
-  const nationalPerSquareKm = regionalSurfaceSquareKilometres > 0
-    ? regionalPayments / regionalSurfaceSquareKilometres
-    : null;
+  const nationalPerSquareKm = nationalPerSquareKmCents === null
+    ? null
+    : nationalPerSquareKmCents / 100;
   const metricValue = (region: typeof regions[number]): number | null => metric === "totale"
     ? region.value
     : metric === "per-km2"
@@ -187,12 +196,18 @@ export default async function TerritoriesPage({
     : metric === "per-km2"
       ? nationalPerSquareKm
       : data.nationalPerCapita;
+  const nationalMetricLabel = metric === "per-km2"
+    ? "Valore nazionale regionalizzato"
+    : metric === "totale" ? "Totale Italia" : "Valore nazionale";
+  const nationalMetricNote = metric === "per-km2"
+    ? `Esclusi ${integer(data.coverage.withoutRegion)} Comuni senza regione e circa ${compactEuro(data.coverage.paymentsWithoutRegion)} di pagamenti.`
+    : METRIC_LABELS[metric];
   const regionalMedian = median(regions.flatMap((region) => {
     const value = metricValue(region);
     return value === null ? [] : [value];
   }));
   const denominatorCoverage = metric === "per-km2"
-    ? `${integer(regions.filter((region) => region.geography !== null).length)} / ${integer(regions.length)} regioni`
+    ? `${integer(regions.filter((region) => region.perSquareKm !== null).length)} / ${integer(regions.length)} regioni`
     : metric === "per-abitante"
       ? `${integer(data.coverage.withPopulation)} / ${integer(data.coverage.activeSiopeMunicipalities)} Comuni`
       : `${integer(data.coverage.withMovements)} / ${integer(data.coverage.activeSiopeMunicipalities)} Comuni`;
@@ -244,6 +259,7 @@ export default async function TerritoriesPage({
     }];
   });
   const observations = getSiopeMunicipalityPeerObservations(year);
+  const municipalityCoverage = getSiopeMunicipalityPeerCoverage(year);
   const municipalityRegions = [...new Set(observations.flatMap((item) => item.region ? [item.region] : []))]
     .sort((left, right) => left.localeCompare(right, "it-IT"));
   const normalizedMunicipalityQuery = municipalityQuery.toLocaleLowerCase("it-IT");
@@ -307,9 +323,9 @@ export default async function TerritoriesPage({
 
       <dl className="stat-strip" aria-label={`Sintesi ${METRIC_LABELS[metric].toLocaleLowerCase("it-IT")}`}>
         <div>
-          <dt>{metric === "totale" ? "Totale Italia" : "Valore nazionale"}</dt>
+          <dt>{nationalMetricLabel}</dt>
           <dd>{formatMetric(nationalMetric)}</dd>
-          <small className="stat-note">{METRIC_LABELS[metric]}</small>
+          <small className="stat-note">{nationalMetricNote}</small>
         </div>
         <div>
           <dt>Mediana regionale</dt>
@@ -337,7 +353,7 @@ export default async function TerritoriesPage({
           title={`Confronto tra regioni · ${METRIC_LABELS[metric]}`}
           description="Una barra più lunga indica un valore maggiore nella misura selezionata. Non rappresenta qualità dei servizi, fabbisogno o merito amministrativo."
           reference={metric === "totale" || nationalMetric === null ? null : {
-            label: "Valore nazionale",
+            label: nationalMetricLabel,
             value: nationalMetric,
             formattedValue: formatMetric(nationalMetric),
           }}
@@ -359,11 +375,14 @@ export default async function TerritoriesPage({
                 </tr>
               </thead>
               {regionsByArea.map(({ area, regions: areaRegions, summary }) => {
-                const areaSurfaceSquareKilometres = areaRegions.reduce(
-                  (total, region) => total + (region.geography?.surfaceSquareKilometres ?? 0),
-                  0,
-                );
-                const areaPerSquareKm = areaSurfaceSquareKilometres > 0
+                const hasCompleteAreaGeography = areaRegions.every((region) => region.geography !== null);
+                const areaSurfaceSquareKilometres = hasCompleteAreaGeography
+                  ? areaRegions.reduce(
+                    (total, region) => total + region.geography!.surfaceSquareKilometres,
+                    0,
+                  )
+                  : null;
+                const areaPerSquareKm = areaSurfaceSquareKilometres !== null && areaSurfaceSquareKilometres > 0
                   ? summary.value / areaSurfaceSquareKilometres
                   : null;
                 return <tbody key={area}>
@@ -373,13 +392,15 @@ export default async function TerritoriesPage({
                       {metric === "totale"
                         ? compactEuro(summary.value)
                         : metric === "per-km2"
-                          ? formatMetric(areaPerSquareKm)
+                          ? tableMetric(areaPerSquareKm, metric)
                           : tableMetric(summary.perCapita, metric)}
                     </td>
                     <td className="num">{compactEuroLike(summary.value, regionScale)}</td>
                     <td className="num">
                       {metric === "per-km2"
-                        ? `${areaSurfaceSquareKilometres.toLocaleString("it-IT", { maximumFractionDigits: 1 })} km²`
+                        ? areaSurfaceSquareKilometres === null
+                          ? "n.d."
+                          : `${areaSurfaceSquareKilometres.toLocaleString("it-IT", { maximumFractionDigits: 1 })} km²`
                         : summary.population === null ? "n.d." : integer(summary.population)}
                     </td>
                     <td className="num">
@@ -449,8 +470,10 @@ export default async function TerritoriesPage({
             <span className={styles.eyebrow}>Esplora i Comuni</span>
             <h2 className="panel-title">Valori più alti · {METRIC_LABELS[metric].toLocaleLowerCase("it-IT")}</h2>
             <p>
-              Non è una classifica di efficienza. I filtri aiutano a confrontare territori più omogenei;
-              superficie ridotta, investimenti e servizi sovracomunali possono produrre valori molto distanti.
+              Non è una classifica di efficienza. Un totale alto può dipendere da turismo,
+              ricostruzione o servizi offerti a non residenti; superficie ridotta, investimenti e
+              servizi sovracomunali possono produrre valori molto distanti. I filtri aiutano a
+              confrontare territori più omogenei.
             </p>
           </div>
           <Link href="/territori/confronto">Confronta Comuni simili →</Link>
@@ -501,7 +524,12 @@ export default async function TerritoriesPage({
 
         <div className={styles.resultsSummary} aria-live="polite">
           <strong>{integer(filteredMunicipalities.length)} Comuni trovati</strong>
-          <span>{topMunicipalities.length > 0 ? `Mostriamo i primi ${topMunicipalities.length} per ${METRIC_LABELS[metric].toLocaleLowerCase("it-IT")}.` : "Modifica i filtri per ampliare il confronto."}</span>
+          <span>
+            {topMunicipalities.length > 0
+              ? `Mostriamo i primi ${topMunicipalities.length} per ${METRIC_LABELS[metric].toLocaleLowerCase("it-IT")}.`
+              : "Modifica i filtri per ampliare il confronto."} {" "}
+            {`Il perimetro comprende ${integer(municipalityCoverage.withMovementsAndGeography)} Comuni con movimenti e superficie ISTAT disponibile; esclude ${integer(municipalityCoverage.withoutMovements)} senza movimenti e ${integer(municipalityCoverage.withMovementsWithoutGeography)} senza superficie ISTAT abbinata.`}
+          </span>
         </div>
 
         <div className="table-scroll" role="region" aria-label={`Comuni ordinati ${METRIC_LABELS[metric]}; scorri orizzontalmente per vedere tutte le colonne`} tabIndex={0}>
@@ -518,20 +546,23 @@ export default async function TerritoriesPage({
             <tbody>
               {topMunicipalities.length === 0 ? (
                 <tr><td colSpan={5} className={styles.emptyState}>Nessun Comune corrisponde ai filtri selezionati.</td></tr>
-              ) : topMunicipalities.map((municipality) => (
-                <tr key={municipality.codiceFiscale}>
+              ) : topMunicipalities.map((municipality) => {
+                const selectedMunicipalityValue = metric === "totale"
+                  ? municipality.value
+                  : metric === "per-km2" ? municipality.perSquareKm : municipality.perCapita;
+                return <tr key={municipality.codiceFiscale}>
                   <th scope="row">
                     {municipalityName(municipality.name)}
                     <small>{municipality.province} · {municipality.region}</small>
                   </th>
-                  <td className="num" title={metric === "totale" ? exactEuro(municipality.value) : exactEuro(metric === "per-km2" ? municipality.perSquareKm : municipality.perCapita ?? 0)}>
+                  <td className="num" title={exactMetricValue(selectedMunicipalityValue)}>
                     {tableMetric(metric === "totale" ? municipality.value : metric === "per-km2" ? municipality.perSquareKm : municipality.perCapita, metric)}
                   </td>
                   <td className="num">{compactEuro(municipality.value)}</td>
                   <td className="num">{municipality.population === null ? "n.d." : integer(municipality.population)}</td>
                   <td className="num">{municipality.geography.surfaceSquareKilometres.toLocaleString("it-IT", { maximumFractionDigits: 1 })} km²</td>
-                </tr>
-              ))}
+                </tr>;
+              })}
             </tbody>
           </table>
         </div>
@@ -547,30 +578,26 @@ export default async function TerritoriesPage({
       </div>
 
       <div className="notice">
-        <strong>Quanto entra e quanto viene speso sul territorio?</strong>
+        <strong>Entrate e spese sul territorio</strong>
         <p>
-          I Conti Pubblici Territoriali permettono di confrontare entrate e spese della Pubblica
-          Amministrazione consolidata su una base contabile coerente, con il pro capite come vista
-          iniziale. <Link href="/territori/fisco">Apri entrate, spese e saldo per regione →</Link>
+          Confronta entrate e spese della PA sul territorio.{" "}
+          <Link href="/territori/fisco">Apri i Conti Pubblici Territoriali →</Link>
         </p>
       </div>
 
       <div className="notice">
-        <strong>Redditi e imposta netta dichiarata</strong>
+        <strong>Redditi e imposte dichiarate</strong>
         <p>
-          Il MEF pubblica contribuenti, redditi, imposta netta dichiarata e addizionali per Comune.
-          Sono dati dichiarativi di imposta netta e restano separati dal saldo CPT.{" "}
-          <Link href="/territori/irpef">Apri i dati IRPEF per Regione, Provincia e Comune →</Link>
+          Dati MEF su contribuenti, redditi e imposta netta per Comune.{" "}
+          <Link href="/territori/irpef">Apri IRPEF →</Link>
         </p>
       </div>
 
       <div className="notice">
-        <strong>Confronta spesa e fabbisogno standard</strong>
+        <strong>Spesa e fabbisogno standard</strong>
         <p>
-          Per i Comuni delle Regioni a statuto ordinario puoi confrontare la spesa storica con il
-          fabbisogno calcolato da OpenCivitas. Il confronto include importo totale, valore per
-          abitante, percentuale e livello dei servizi.{" "}
-          <Link href="/territori/confronto">Apri il confronto tra Comuni →</Link>
+          Per i Comuni in Regioni a statuto ordinario: spesa storica vs fabbisogno OpenCivitas.{" "}
+          <Link href="/territori/confronto">Apri il confronto →</Link>
         </p>
       </div>
 

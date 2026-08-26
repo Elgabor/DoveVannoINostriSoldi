@@ -137,7 +137,12 @@ export function MunicipalityEconomics({ profile }: { profile: MunicipalityProfil
             <div className={styles.sectionHeading}>
               <div>
                 <h3 id="peer-benchmark-title">Confronto con Comuni simili</h3>
-                <p>{peer.peers} Comuni confrontabili · {peer.criteria.join(", ")}.</p>
+                <p>
+                  {peer.peers} Comuni confrontabili · {peer.criteria.join(", ")} · dati SIOPE {peer.year};{" "}
+                  {peer.populationYear === null
+                    ? "ultima popolazione ISTAT disponibile, anno non dichiarato"
+                    : `popolazione ISTAT ${peer.populationYear}`}.
+                </p>
               </div>
               <span className="tag tag-neutral">{peer.year}</span>
             </div>

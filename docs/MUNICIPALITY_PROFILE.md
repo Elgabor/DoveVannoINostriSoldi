@@ -68,7 +68,7 @@ il valore osservato è realmente zero. Questa distinzione viene conservata fino 
 - finanziamenti PNRR, importi di gara e pagamenti sono misure differenti; la prima release mostra i
   finanziamenti noti senza chiamarli spesa realizzata.
 - SIOPE 2026 può essere parziale: mese finale, data del dato e completezza sono visibili.
-- La scheda mostra totale, valore per abitante e valore per km² dello stesso importo SIOPE. Il benchmark tra pari usa almeno dieci osservazioni, esclude il Comune corrente e pubblica criteri e livello di fallback; superficie e fattori geografici restano visibili come contesto, non come punteggio di complessità o efficienza.
+- La scheda mostra totale, valore per abitante e valore per km² dello stesso importo SIOPE. Il benchmark tra pari usa almeno dieci osservazioni, esclude il Comune corrente e pubblica criteri, livello di fallback, anno SIOPE e anno della popolazione ISTAT; superficie e fattori geografici restano visibili come contesto, non come punteggio di complessità o efficienza.
 
 La prima release non include confronti diretti tra Comuni, serie mensili comunali o dettaglio
 comunale ANAC e consulenze.

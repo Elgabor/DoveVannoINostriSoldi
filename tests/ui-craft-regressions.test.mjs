@@ -74,8 +74,10 @@ test("CI verifies every main commit and uses the current artifact runtime", asyn
 
   assert.match(ci, /github\.event\.pull_request\.number \|\| github\.sha/);
   assert.doesNotMatch(ci, /github\.event\.pull_request\.number \|\| github\.ref/);
-  assert.doesNotMatch(`${ci}\n${mefRefresh}`, /actions\/upload-artifact@v4/);
-  assert.equal((`${ci}\n${mefRefresh}`.match(/actions\/upload-artifact@v7/g) ?? []).length, 4);
+  // upload-artifact must be SHA-pinned (no tag refs) and appear exactly 4
+  // times across ci.yml and mef-irpef-refresh.yml.
+  assert.doesNotMatch(`${ci}\n${mefRefresh}`, /actions\/upload-artifact@v\d/);
+  assert.equal((`${ci}\n${mefRefresh}`.match(/actions\/upload-artifact@[0-9a-f]{40}/g) ?? []).length, 4);
   assert.match(harness, /const BROWSER_LAUNCH_TIMEOUT_MS = 60_000;/);
   assert.match(harness, /timeoutMs = BROWSER_LAUNCH_TIMEOUT_MS/);
 });
@@ -145,6 +147,20 @@ test("reported chart styles stay within the registry design tokens", async () =>
     assert.doesNotMatch(chart, /radius=\{\[[^\]]*3/);
     assert.match(chart, /radius=\{0\}/);
   }
+});
+
+test("strong civic surfaces use defined foreground tokens", async () => {
+  const [tokens, cohesionCss] = await Promise.all([
+    source("../src/app/design-system.css"),
+    source("../src/app/coesione/coesione.module.css"),
+  ]);
+
+  assert.match(tokens, /--color-on-strong:\s*#[0-9a-f]{6};/i);
+  assert.match(tokens, /--color-on-strong-muted:\s*#[0-9a-f]{6};/i);
+  assert.match(tokens, /--space-5:\s*20px;/);
+  assert.match(cohesionCss, /color:\s*var\(--color-on-strong\);/);
+  assert.match(cohesionCss, /color:\s*var\(--color-on-strong-muted\);/);
+  assert.doesNotMatch(cohesionCss, /var\(--color-neutral-0\)/);
 });
 
 test("the fiscal layout uses only defined spacing tokens", async () => {

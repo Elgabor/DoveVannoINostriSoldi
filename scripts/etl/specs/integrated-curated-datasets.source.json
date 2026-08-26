@@ -1300,7 +1300,7 @@
     },
     {
       "id": "vincitori",
-      "title": "Fornitori per settore e importo",
+      "title": "Aggregati fornitori e settori",
       "domain": "procurement",
       "relativePath": "dashboard/vincitori.tsv",
       "dataKind": "delimited",

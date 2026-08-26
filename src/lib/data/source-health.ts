@@ -24,6 +24,7 @@ import { cptRegionalFiscalSnapshot } from "@/lib/cpt-regional-fiscal-snapshot";
 import { MEF_IRPEF_SOURCE } from "@/lib/data/mef-irpef-source";
 import { PNRR_CHILDCARE_SOURCE } from "@/lib/data/pnrr-childcare-source";
 import { getSsnCceSourceHealth, type SsnCceSourceHealth } from "@/lib/ssn-cce-snapshot";
+import { getPublicDebtSnapshot } from "@/lib/public-debt";
 
 export type SourceIntegrationState = "active";
 export type SourceReachability = "up" | "down" | "not-probed";
@@ -479,6 +480,21 @@ function snapshotManagedPcm(): SourceHealth {
   };
 }
 
+function snapshotManagedPublicDebt(sourceId: "bancaditalia" | "eurostat"): SourceHealth {
+  const snapshot = getPublicDebtSnapshot();
+  const isBank = sourceId === "bancaditalia";
+  return {
+    ...baseHealth(sourceId),
+    reachability: "not-probed",
+    freshness: freshnessFor(sourceId, isBank ? snapshot.stock.referenceDate : `${snapshot.annualInterest.referenceYear}-12-31`),
+    latencyMs: null,
+    detail: isBank
+      ? `Snapshot ETL attivo · stock al ${snapshot.stock.referenceDate} · quattro cubi BDS riconciliati.`
+      : `Snapshot ETL attivo · interessi e spesa totale ${snapshot.annualInterest.referenceYear} riconciliati.`,
+    recordCount: isBank ? snapshot.stock.history.length : snapshot.annualInterest.history.length,
+  };
+}
+
 export function getSnapshotManagedSourceHealth(): SourceHealth[] {
   return [
     snapshotManagedAnac(),
@@ -493,6 +509,8 @@ export function getSnapshotManagedSourceHealth(): SourceHealth[] {
     snapshotManagedCamera(),
     snapshotManagedSenate(),
     snapshotManagedPcm(),
+    snapshotManagedPublicDebt("bancaditalia"),
+    snapshotManagedPublicDebt("eurostat"),
   ];
 }
 

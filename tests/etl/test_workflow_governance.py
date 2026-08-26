@@ -12,6 +12,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
         "opencivitas-refresh.yml": "opencivitas-2022",
         "opencoesione-refresh.yml": "opencoesione",
         "mef-participations-refresh.yml": "mef-participations",
+        "public-debt-refresh.yml": "public-debt",
         "siope-refresh.yml": "siope-municipal",
     }
 

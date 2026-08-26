@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  NAVIGATION_TIMEOUT_MS,
   closeBrowser,
   createPage,
   defaultBaseUrl,
@@ -595,17 +596,19 @@ async function assertPrimaryDropdownTap(page, label, { sectionLabel, childLabel 
   const toggle = await itemElement.$(".nav-item-toggle");
   assert.ok(toggle, `${label}: pulsante tendina assente`);
 
-  await toggle.evaluate((button) => {
-    button.click();
-  });
+  const toggleBox = await toggle.boundingBox();
+  assert.ok(toggleBox, `${label}: pulsante tendina non visibile`);
+  await page.touchscreen.tap(
+    toggleBox.x + toggleBox.width / 2,
+    toggleBox.y + toggleBox.height / 2,
+  );
   await assertSubmenuVisible(itemElement, page, label, childLabel);
 
   const navRowOpen = await page.$eval(".nav-row", (row) => row.getAttribute("data-menu-open"));
   assert.equal(navRowOpen, "true", `${label}: data-menu-open non attivo`);
+  await assertResponsiveShell(page, `${label} aperto`, 390);
 
-  await toggle.evaluate((button) => {
-    button.click();
-  });
+  await page.keyboard.press("Escape");
   await page.waitForFunction(
     (element) => {
       const submenu = element.querySelector(".nav-submenu");
@@ -624,6 +627,7 @@ async function activeLevel(page) {
 async function runScenario(browser, {
   expectedFailure = () => false,
   label,
+  mediaFeatures,
   pathname,
   validate,
   width,
@@ -634,6 +638,7 @@ async function runScenario(browser, {
   let thrown;
 
   try {
+    if (mediaFeatures) await page.emulateMediaFeatures(mediaFeatures);
     await navigate(page, { url: requestedUrl, label });
     await assertResponsiveShell(page, label, width);
     await validate(page);
@@ -657,6 +662,20 @@ async function runScenario(browser, {
 }
 
 await waitForServer(baseUrl);
+
+const debtApiResponse = await fetch(new URL("/api/debito", baseUrl));
+assert.equal(debtApiResponse.status, 200, "Debito API: risposta iniziale non valida");
+const debtApi = await debtApiResponse.json();
+const debtSourceMillions = new Intl.NumberFormat("it-IT", {
+  maximumFractionDigits: 3,
+  useGrouping: "always",
+}).format(debtApi.stock.totalCents / 100_000_000);
+const debtReferenceDate = new Intl.DateTimeFormat("it-IT", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  timeZone: "Europe/Rome",
+}).format(new Date(debtApi.stock.referenceDate));
 
 let browser;
 const completed = [];
@@ -815,6 +834,12 @@ try {
       sectionLabel: "Istituzioni",
       childLabel: "Parlamento",
     },
+    {
+      pathname: "/debito",
+      label: "Debito pubblico",
+      sectionLabel: "Soldi",
+      childLabel: "Debito pubblico",
+    },
   ];
 
   for (const route of dropdownRoutes) {
@@ -843,6 +868,112 @@ try {
       });
       completed.push(label);
     }
+  }
+
+  for (const width of [320, 390, 768, 1024, 1280, 1600]) {
+    const label = `Debito pubblico ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/debito",
+      width,
+      validate: async (page) => {
+        const text = await bodyText(page);
+        assertTextMatches(text, /Quanto debito c’è/i, label);
+        assertTextMatches(text, /Come può incidere sulla tua vita/i, label);
+        assertTextMatches(text, new RegExp(`${debtSourceMillions.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} milioni di euro nella fonte`), label);
+        assertTextMatches(text, new RegExp(debtReferenceDate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"), label);
+        assertTextMatches(text, /Netto significa emissioni meno rimborsi/i, label);
+        assert.equal(await page.$$eval("h1", (items) => items.length), 1);
+        const headings = await page.$$eval("main section > h2", (items) => items.map((item) => item.textContent?.trim()));
+        assert.deepEqual(headings, [
+          "1. Quanto debito c’è?",
+          "2. Perché è cambiato?",
+          "3. A cosa serve e come viene rimborsato?",
+          "4. Da cosa è composto?",
+          "5. Chi lo detiene?",
+          "6. Quando deve essere rifinanziato?",
+          "7. Come può incidere sulla tua vita?",
+        ]);
+        const externalDataRequests = await page.evaluate(() => performance.getEntriesByType("resource")
+          .map((entry) => entry.name)
+          .filter((url) => /a2a\.bancaditalia\.it|ec\.europa\.eu\/eurostat\/api/.test(url)));
+        assert.deepEqual(externalDataRequests, [], `${label}: fetch runtime verso le fonti dati`);
+        if (width === 390) {
+          const externalLinks = await page.$$eval('a[target="_blank"]', (links) => links.map((link) => ({ href: link.href, rel: link.rel, target: link.target })));
+          for (const expected of ["bancaditalia.it", "ec.europa.eu/eurostat/databrowser", "dt.mef.gov.it/it/debito_pubblico"]) {
+            assert.ok(externalLinks.some((link) => link.href.includes(expected) && link.target === "_blank" && link.rel.includes("noreferrer")), `${label}: link ufficiale mancante ${expected}`);
+          }
+          const chartSummary = await page.$("details.chart-data > summary");
+          assert.ok(chartSummary, `${label}: tabella del grafico assente`);
+          await chartSummary.focus();
+          await page.keyboard.press("Enter");
+          assert.equal(await chartSummary.evaluate((element) => element.parentElement?.open), true);
+          assert.match(await chartSummary.evaluate((element) => element.parentElement?.innerText ?? ""), /Debito convertito in euro/i);
+          const session = await page.createCDPSession();
+          try {
+            await session.send("Accessibility.enable");
+            const { nodes } = await session.send("Accessibility.getFullAXTree");
+            const headingNames = nodes.filter((node) => node.role?.value === "heading").map((node) => node.name?.value);
+            assert.ok(headingNames.includes("1. Quanto debito c’è?"), `${label}: primo titolo assente dall'albero accessibile`);
+            assert.ok(headingNames.includes("7. Come può incidere sulla tua vita?"), `${label}: settimo titolo assente dall'albero accessibile`);
+            assert.ok(nodes.filter((node) => node.role?.value === "table").length >= 5, `${label}: tabelle assenti dall'albero accessibile`);
+          } finally {
+            await session.detach();
+          }
+        }
+      },
+    });
+    completed.push(label);
+  }
+
+  await runScenario(browser, {
+    label: "Debito zoom 200% equivalente 640px",
+    mediaFeatures: [{ name: "prefers-reduced-motion", value: "reduce" }],
+    pathname: "/debito",
+    width: 640,
+    validate: async (page) => {
+      const tableRegions = await page.$$eval('[role="region"][tabindex="0"]', (regions) => regions.map((region) => ({
+        hasTable: Boolean(region.querySelector("table")),
+        tabIndex: region.tabIndex,
+      })));
+      assert.ok(tableRegions.length >= 5, "Debito: tabelle accessibili non trovate");
+      assert.ok(tableRegions.every((region) => region.hasTable && region.tabIndex === 0));
+      const focusState = await page.$$eval('[role="region"][tabindex="0"]', (regions) => {
+        const visible = regions.find((region) => region.getClientRects().length > 0 && !region.closest("details:not([open])"));
+        visible?.focus();
+        const style = visible ? getComputedStyle(visible) : null;
+        return { role: document.activeElement?.getAttribute("role"), outlineStyle: style?.outlineStyle, outlineWidth: style?.outlineWidth };
+      });
+      assert.equal(focusState.role, "region");
+      assert.notEqual(focusState.outlineStyle, "none");
+      assert.notEqual(focusState.outlineWidth, "0px");
+    },
+  });
+  completed.push("Debito zoom 200% equivalente 640px");
+
+  {
+    const label = "Debito JavaScript disabilitato 390px";
+    const page = await browser.newPage();
+    try {
+      await page.setJavaScriptEnabled(false);
+      await page.setCacheEnabled(false);
+      await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 1, hasTouch: true, isMobile: true });
+      const response = await page.goto(new URL("/debito", baseUrl).toString(), {
+        waitUntil: "domcontentloaded",
+        timeout: NAVIGATION_TIMEOUT_MS,
+      });
+      assert.equal(response?.status(), 200);
+      const text = await page.$eval("body", (body) => body.innerText);
+      assertTextMatches(text, /Quanto debito c’è/i, label);
+      assertTextMatches(text, /Come può incidere sulla tua vita/i, label);
+      assertTextMatches(text, /Netto significa emissioni meno rimborsi/i, label);
+      assertTextMatches(text, /D41PAY \/ TE × 100/i, label);
+      const shell = await viewportState(page);
+      assert.ok(shell.rootScrollWidth <= shell.clientWidth + 1, `${label}: overflow globale`);
+    } finally {
+      await page.close();
+    }
+    completed.push(label);
   }
 
   await runScenario(browser, {

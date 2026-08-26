@@ -12,6 +12,7 @@ import { siopeMunicipalSnapshot } from "@/lib/siope-snapshot";
 import { MEF_IRPEF_SOURCE } from "@/lib/data/mef-irpef-source";
 import { PNRR_CHILDCARE_SOURCE } from "@/lib/data/pnrr-childcare-source";
 import type { SourceId } from "@/lib/data/source-policy";
+import { getPublicDebtSnapshot } from "@/lib/public-debt";
 
 export type SourceLatestData =
   | { kind: "date"; value: string }
@@ -26,6 +27,8 @@ function dated(value: string | null): SourceLatestData {
    time. Annual periods remain periods: they must not be converted into an
    invented day just to reuse date formatting. */
 const exhaustiveLatestDataBySlug = {
+  bancaditalia: { kind: "date", value: getPublicDebtSnapshot().stock.referenceDate },
+  eurostat: { kind: "period", label: String(getPublicDebtSnapshot().annualInterest.referenceYear) },
   siope: dated(siopeMunicipalSnapshot.source.siopeMovementsLastModified),
   ipa: dated(siopeMunicipalSnapshot.source.ipaLastModified),
   "ipa-struttura": null,

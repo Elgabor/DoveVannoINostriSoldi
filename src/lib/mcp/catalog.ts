@@ -24,6 +24,7 @@ export const DATASET_IDS = [
   "consulenti_incarichi",
   "parlamento_bilanci",
   "controlli_segnali",
+  "debito_pubblico_italiano",
   "registro_fonti",
   "spesa_pa_dettaglio",
 ] as const;
@@ -96,6 +97,7 @@ const exampleQueries = {
   consulenti_incarichi: { dataset: "consulenti_incarichi", year: 2024 },
   parlamento_bilanci: { dataset: "parlamento_bilanci", chamber: "camera", year: 2024 },
   controlli_segnali: { dataset: "controlli_segnali", area: "spesa-comuni", year: 2022, limit: 20 },
+  debito_pubblico_italiano: { dataset: "debito_pubblico_italiano" },
   registro_fonti: { dataset: "registro_fonti", query: "SIOPE" },
   spesa_pa_dettaglio: {
     dataset: "spesa_pa_dettaglio",
@@ -125,6 +127,7 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
   { id: "consulenti_incarichi", title: "Incarichi e consulenze", summary: "Statistiche nazionali ufficiali su incarichi esterni e a dipendenti pubblici.", sourceIds: ["consulenti"], freshness: "snapshot", filters: ["year"] },
   { id: "parlamento_bilanci", title: "Bilanci del Parlamento", summary: "Documenti e valori strutturati verificati per Camera e Senato quando disponibili.", sourceIds: ["camera"], freshness: "snapshot", filters: ["chamber", "year"] },
   { id: "controlli_segnali", title: "Segnali da controllare", summary: "Indicatori, classificazioni e screening derivati che orientano verifiche ulteriori.", sourceIds: ["opencivitas"], freshness: "snapshot", filters: ["area", "year", "region", "limit", "offset"], caveat: "Un segnale, compreso lo screening OpenCivitas, non attribuisce responsabilità e non dimostra da solo spreco o illecito." },
+  { id: "debito_pubblico_italiano", title: "Debito pubblico italiano", summary: "Stock Maastricht, variazioni mensili, composizione, detentori, vita residua e interessi annuali.", sourceIds: ["bancaditalia", "eurostat"], freshness: "snapshot", filters: [], caveat: "Stock, flussi netti, detentori e interessi hanno periodi diversi. Le fonti pubblicano importi in milioni di euro: la conversione in centesimi interi non aggiunge precisione alla misura originaria. Gli indicatori per il cittadino descrivono esposizioni e meccanismi, non previsioni né effetti individuali." },
   { id: "registro_fonti", title: "Registro delle fonti", summary: "Proprietari, copertura, formati, cadenza e stato di integrazione delle fonti censite.", sourceIds: [], freshness: "snapshot", filters: ["query"] },
   {
     id: "spesa_pa_dettaglio",

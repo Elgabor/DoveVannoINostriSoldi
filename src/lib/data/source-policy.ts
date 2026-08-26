@@ -18,7 +18,9 @@ export type SourceId =
   | "camera"
   | "senato"
   | "pcm"
-  | "partecipazioni-pubbliche";
+  | "partecipazioni-pubbliche"
+  | "bancaditalia"
+  | "eurostat";
 
 export type SourceCadence =
   | "giornaliera"
@@ -290,6 +292,34 @@ export const SOURCE_POLICIES: Readonly<Record<SourceId, SourcePolicy>> = {
     timeoutMs: 60_000,
     maxRetries: 1,
     tags: ["source:partecipazioni-pubbliche", "domain:public-holdings"],
+  },
+  bancaditalia: {
+    id: "bancaditalia",
+    label: "Banca d'Italia · debito pubblico",
+    owner: "Banca d'Italia",
+    sourceUrl: "https://www.bancaditalia.it/pubblicazioni/finanza-pubblica/index.html",
+    cadence: "mensile",
+    cadenceNote: "Stock, flussi, detentori e vita residua sono pubblicati mensilmente con ritardo atteso di circa 45 giorni.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 75 * DAY,
+    timeoutMs: 20_000,
+    maxRetries: 2,
+    tags: ["source:bancaditalia", "domain:public-debt"],
+  },
+  eurostat: {
+    id: "eurostat",
+    label: "Eurostat · interessi sul debito",
+    owner: "Eurostat",
+    sourceUrl: "https://ec.europa.eu/eurostat/databrowser/view/gov_10a_main/default/table?lang=en",
+    cadence: "annuale",
+    cadenceNote: "Interessi e spesa pubblica totale sono dati annuali di contabilità nazionale.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 540 * DAY,
+    timeoutMs: 20_000,
+    maxRetries: 2,
+    tags: ["source:eurostat", "domain:public-debt"],
   },
 };
 

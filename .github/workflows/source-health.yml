@@ -5,6 +5,7 @@ on:
     - cron: "41 */6 * * *"
   workflow_dispatch:
 
+# contents: read — least-privilege: only read repository contents.
 permissions:
   contents: read
 
@@ -14,7 +15,9 @@ concurrency:
 
 jobs:
   probe:
-    runs-on: ubuntu-latest
+    name: probe
+    runs-on: ubuntu-24.04
+    environment: source-operations
     timeout-minutes: 5
     env:
       REFRESH_URL: ${{ secrets.REFRESH_URL }}

@@ -31,6 +31,7 @@ export const PRIMARY_NAV: readonly NavSection[] = [
       { href: "/spese/operative", label: "Spese operative" },
       { href: "/stato", label: "Amministrazioni centrali" },
       { href: "/debito", label: "Debito pubblico" },
+      { href: "/stato/legislature", label: "Spesa per legislatura" },
     ],
   },
   {
@@ -115,6 +116,7 @@ export const SITE_MAP_GROUPS: readonly { title: string; links: readonly NavLink[
       { href: "/spese/operative", label: "Spese operative" },
       { href: "/stato", label: "Amministrazioni centrali" },
       { href: "/debito", label: "Debito pubblico" },
+      { href: "/stato/legislature", label: "Spesa per legislatura" },
     ],
   },
   {

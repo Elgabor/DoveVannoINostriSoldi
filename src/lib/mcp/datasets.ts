@@ -165,6 +165,10 @@ export async function queryPublicDataset(
       const { getSsnNationalHistory } = await import("@/lib/ssn-national-history");
       return jsonSafe(await getSsnNationalHistory({ signal: options.signal }));
     }
+    case "openbdap_spesa_legislature": {
+      const { getLegislatureSpendingCycles } = await import("@/lib/state-spending-legislature");
+      return jsonSafe({ cycles: await getLegislatureSpendingCycles({ signal: options.signal }) });
+    }
     case "opencivitas_fabbisogni": {
       const { openCivitasSnapshot } = await import("@/lib/opencivitas-snapshot");
       if (query.year && query.year !== openCivitasSnapshot.referenceYear) {

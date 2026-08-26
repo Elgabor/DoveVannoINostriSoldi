@@ -136,8 +136,15 @@ export function Navigation() {
                     if (hasChildren) openItem(item.href);
                     else closeMenu();
                   }}
-                  onFocusCapture={() => {
-                    if (hasChildren) openItem(item.href);
+                  onFocusCapture={(event) => {
+                    // The caret owns its toggle action. Opening here as well would
+                    // make a real pointer click open on focus and close on click.
+                    if (
+                      hasChildren &&
+                      !(event.target as HTMLElement).matches(".nav-item-toggle")
+                    ) {
+                      openItem(item.href);
+                    }
                   }}
                 >
                   <Link

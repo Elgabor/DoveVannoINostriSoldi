@@ -131,7 +131,12 @@ Gli script in `scripts/etl/` scaricano le fonti ufficiali e producono gli snapsh
 python3 scripts/etl/siope_municipal_snapshot.py --year 2025 \
   --output src/data/generated/siope-municipal-2025.json
 python3 scripts/etl/opencoesione_snapshot.py --check
+python3 scripts/etl/public_debt_snapshot.py --check
 ```
+
+La route `/debito`, `GET /api/debito` e il dataset MCP `debito_pubblico_italiano`
+usano lo stesso snapshot verificato di Banca d'Italia ed Eurostat. Il refresh
+live è atomico; la CI delle pull request usa esclusivamente fixture offline.
 
 Politica di freschezza: [docs/FRESHNESS_AND_REFRESH.md](docs/FRESHNESS_AND_REFRESH.md).
 

@@ -405,3 +405,29 @@ Altre fonti da valutare nella fase 2:
 - dati regionali e comunali con maggiore granularità;
 - serie storica OpenCivitas 2015-2022 e singole funzioni comunali;
 - Corte dei conti per contesto e referti, senza confondere contestazioni, sentenze e dati di spesa.
+
+### Debito pubblico italiano
+
+La pagina `/debito` usa esclusivamente i cubi BDS di Banca d'Italia
+`TCCE0125`, `TCCE0175`, `TCCE0200`, `TCCE0325` e il dataset Eurostat
+`gov_10a_main`, limitato a `D41PAY` e `TE` per l'Italia. Gli importi sono
+convertiti da milioni di euro a centesimi interi sicuri e riconciliati prima
+della pubblicazione. Stock mensile, detentori, vita residua e interessi annuali
+mantengono date distinte; non vengono prodotti valori pro capite o previsioni.
+
+Il primo snapshot, acquisito il 24 agosto 2026, è stato confrontato con le
+Tavole 2, 4, 5 e 7 della [pubblicazione Banca d'Italia del 14 agosto
+2026](https://www.bancaditalia.it/pubblicazioni/finanza-pubblica/2026-finanza-pubblica/statistiche_FPI_20260814.pdf). I
+valori BDS di giugno coincidono con il PDF, tenendo conto dell'arrotondamento
+del PDF al milione: debito 3.207.247,3 milioni di euro, variazione mensile
+26.183,9 milioni, fabbisogno 13.259,2 milioni, transazioni 23.035,2 milioni,
+variazione della liquidità −9.776,0 milioni e vita media residua 7,9 anni. I
+detentori completi restano correttamente riferiti a maggio 2026.
+
+Nello stesso controllo, il Data Browser e la Statistics API Eurostat
+`gov_10a_main` esponevano per il 2025 interessi `D41PAY` pari a 87.146 milioni
+di euro e spesa totale `TE` pari a 1.155.309 milioni, da cui la quota half-up
+del 7,54%. La versione upstream dichiarata era
+`2026-07-21T11:00:00+0200`. Questi numeri documentano la caratterizzazione del
+primo rilascio: il runtime continua a leggere lo snapshot aggiornabile e non li
+usa come costanti dell'interfaccia.

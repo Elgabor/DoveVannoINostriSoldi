@@ -133,3 +133,25 @@ Attribution: `Sistema Conti Pubblici Territoriali, consolidated PA revenue and e
 - **Changes:** the 21 regional and autonomous-province population values were manually normalized, fingerprinted and used only as 2023 per-capita denominators for the CPT snapshot.
 
 Attribution: `Istituto Nazionale di Statistica, Censimento e dinamica della popolazione 2023. Selected aggregate values normalized by DoveVannoINostriSoldi; source-specific reuse terms apply.`
+
+## Banca d'Italia public-debt data
+
+- **Works:** BDS cubes `TCCE0125`, `TCCE0175`, `TCCE0200` and `TCCE0325`;
+- **Publisher:** Banca d'Italia;
+- **Source:** https://www.bancaditalia.it/pubblicazioni/finanza-pubblica/index.html;
+- **Reuse terms:** https://www.bancaditalia.it/statistiche/condizioni-utilizzo/;
+- **Accessed:** 2026-08-24 (snapshot timestamp retained in `src/data/generated/public-debt.json`);
+- **Changes:** selected monthly series are converted from millions of euro to integer cents and reconciled into stock, flows, holders and residual maturity. The conversion preserves the published value but does not add cent-level measurement precision.
+
+Attribution: `Banca d'Italia, Finanza pubblica: fabbisogno e debito. Selected series adapted by DoveVannoINostriSoldi under the source terms.`
+
+## Eurostat government aggregates
+
+- **Work:** `gov_10a_main`, items `D41PAY` and `TE`, Italy;
+- **Publisher:** Eurostat;
+- **Source:** https://ec.europa.eu/eurostat/databrowser/view/gov_10a_main/default/table?lang=en;
+- **Reuse terms:** https://ec.europa.eu/eurostat/web/main/help/copyright-notice;
+- **Accessed:** 2026-08-24 (snapshot timestamp retained in `src/data/generated/public-debt.json`);
+- **Changes:** five annual observations are converted from millions of euro to integer cents; the conversion does not add cent-level measurement precision and the interest share is derived with half-up rounding.
+
+Attribution: `Eurostat, Government revenue, expenditure and main aggregates. Data adapted by DoveVannoINostriSoldi.`

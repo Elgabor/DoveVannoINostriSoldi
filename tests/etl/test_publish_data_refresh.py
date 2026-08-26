@@ -20,7 +20,7 @@ SPEC.loader.exec_module(publisher)
 
 
 class PublishDataRefreshTests(TestCase):
-    def test_registry_has_exact_five_source_publications(self) -> None:
+    def test_registry_has_only_managed_source_publications(self) -> None:
         registry = json.loads((ROOT / "scripts/ci/generated-artifacts.json").read_text())
         publications = {
             artifact["id"]: artifact["publication"]
@@ -34,6 +34,7 @@ class PublishDataRefreshTests(TestCase):
                 "mef-participations",
                 "opencivitas-2022",
                 "opencoesione",
+                "public-debt",
                 "siope-municipal",
             },
         )
@@ -44,6 +45,7 @@ class PublishDataRefreshTests(TestCase):
                 "automation/data/mef-participations",
                 "automation/data/opencivitas",
                 "automation/data/opencoesione",
+                "automation/data/public-debt",
                 "automation/data/siope",
             },
         )

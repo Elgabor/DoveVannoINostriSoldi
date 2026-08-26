@@ -46,6 +46,7 @@ PUBLICATION_IDS = frozenset(
         "mef-participations",
         "opencivitas-2022",
         "opencoesione",
+        "public-debt",
         "siope-municipal",
     }
 )
@@ -225,7 +226,7 @@ def validate_schema(registry: dict) -> list[str]:
                     f"{art_id}: publication is allowed only for eligible source-only refresh artifacts."
                 )
         elif art_id in PUBLICATION_IDS:
-            errors.append(f"{art_id}: publication metadata is required for the five source publishers.")
+            errors.append(f"{art_id}: publication metadata is required for the source publishers.")
 
         # sourceSpec required for source-lock mode
         spec = art.get("sourceSpec")

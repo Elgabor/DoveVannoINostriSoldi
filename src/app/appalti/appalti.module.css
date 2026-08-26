@@ -28,7 +28,8 @@
   border-color: var(--color-neutral-400);
 }
 
-.readingNotice strong {
+.readingNotice strong,
+.asideNotice strong {
   display: inline;
   color: var(--color-text);
   font-size: inherit;
@@ -36,11 +37,40 @@
   text-transform: none;
 }
 
+.asideNotice {
+  border-color: var(--color-neutral-400);
+}
+
+.asideNotice .note {
+  margin: var(--space-3) 0 0;
+}
+
 .leadPanel {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(220px, .65fr);
   gap: var(--space-8);
   align-items: end;
+}
+
+.leadMeasurePair {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.leadMeasure[data-emphasis="value"] {
+  border-top-color: var(--chart-primary);
+}
+
+.barAmount {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-neutral-700);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.barAmount small {
+  font-weight: 500;
 }
 
 .leadCopy p,
@@ -362,6 +392,10 @@
   }
 
   .leadMeasure {
+    max-width: 22rem;
+  }
+
+  .leadMeasurePair {
     max-width: 22rem;
   }
 

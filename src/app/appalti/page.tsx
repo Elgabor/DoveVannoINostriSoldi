@@ -3,7 +3,7 @@ import Link from "next/link";
 import IntegratedSectionPreview from "@/components/integrated-section-preview";
 import { getProcurementComparisonForYear } from "@/lib/audit-data";
 import { anacCigSnapshot } from "@/lib/anac-cig-snapshot";
-import { exactEuro, integer, longDate, percent } from "@/lib/format";
+import { compactEuro, exactEuro, integer, longDate, percent } from "@/lib/format";
 import styles from "./appalti.module.css";
 import { ScrollRegion } from "./scroll-region";
 
@@ -15,15 +15,32 @@ export const metadata: Metadata = {
 
 const data = anacCigSnapshot;
 const totalCigs = data.population.records;
-const procedureEntries = Object.entries(data.procedureChoice.allLabels)
-  .map(([label, records]) => ({ label, records }))
+const labelAmounts = data.procedureChoice.allLabelsAmountEuroCents;
+const totalAmountCents = data.procedureChoice.totalPositiveAmountEuroCents;
+type ProcedureLabel = keyof typeof labelAmounts;
+const procedureEntries = (
+  Object.entries(data.procedureChoice.allLabels) as Array<[ProcedureLabel, number]>
+)
+  .map(([label, records]) => ({
+    label,
+    records,
+    amountEuroCents: labelAmounts[label],
+  }))
   .sort((left, right) => right.records - left.records);
 const featuredProcedureEntries = procedureEntries.slice(0, 6);
 const otherProcedureEntries = procedureEntries.slice(6);
 const otherProcedureCount = otherProcedureEntries.reduce((sum, row) => sum + row.records, 0);
+const otherProcedureAmount = otherProcedureEntries.reduce(
+  (sum, row) => sum + row.amountEuroCents,
+  0,
+);
 const procedureRows = [
   ...featuredProcedureEntries,
-  { label: `Altre ${otherProcedureEntries.length} etichette`, records: otherProcedureCount },
+  {
+    label: `Altre ${otherProcedureEntries.length} etichette`,
+    records: otherProcedureCount,
+    amountEuroCents: otherProcedureAmount,
+  },
 ];
 
 const directAward = data.procedureChoice.directAward;
@@ -37,8 +54,12 @@ const marketValueBillion =
     ? null
     : (marketComparison.totalValueBillion * marketComparison.byValue) / 100;
 
-function share(records: number, denominator: number): string {
-  return percent((records / denominator) * 100);
+function share(part: number, denominator: number): string {
+  return percent((part / denominator) * 100);
+}
+
+function amountShare(amountEuroCents: number): string {
+  return share(amountEuroCents, totalAmountCents);
 }
 
 const exactAmountRows = Object.entries(data.exactContractAmounts)
@@ -77,14 +98,10 @@ export default function AppaltiPage() {
           <span className="stat-note">{integer(directAward.records)} su {integer(totalCigs)} CIG · quota sul numero di CIG</span>
         </div>
         <div>
-          <span className="stat-label">Affidamenti diretti · sul valore</span>
-          <span className="stat-value">
-            {marketComparison ? percent(marketComparison.byValue) : "Non disponibile"}
-          </span>
+          <span className="stat-label">Affidamento diretto · sul valore CIG</span>
+          <span className="stat-value">{percent(directAward.amountSharePercent ?? 0)}</span>
           <span className="stat-note">
-            {marketComparison
-              ? `Relazione ANAC ${marketComparison.year} · procedure da 40.000 € in su`
-              : "manca la serie ANAC sul valore"}
+            somma di importo_lotto · quota sul totale euro dello snapshot
           </span>
         </div>
         <div>
@@ -97,10 +114,10 @@ export default function AppaltiPage() {
       <section className={`notice scope-notice ${styles.readingNotice}`} aria-labelledby="appalti-reading-title">
         <h2 id="appalti-reading-title">Come leggere questi numeri</h2>
         <p>
-          Contare i CIG e pesare il valore in euro sono due letture diverse. Qui lo snapshot CIG
-          misura quante etichette ricorrono; la Relazione ANAC sul mercato da 40.000 € in su misura
-          anche quanto pesano in euro. Il campo <strong>importo_lotto</strong> è il valore dichiarato
-          del lotto nella banca dati.
+          Qui sotto tutto parla dello <strong>stesso snapshot CIG 2025</strong>: conteggio dei CIG e
+          somma di <strong>importo_lotto</strong> (valore dichiarato del lotto). Sono due letture
+          diverse dello stesso file, non due mercati diversi. I grandi numeri in euro della tabella
+          (centinaia di miliardi) sono proprio quella somma.
         </p>
       </section>
 
@@ -108,69 +125,30 @@ export default function AppaltiPage() {
         <div className={styles.leadCopy}>
           <h2 id="procedure-title" className="panel-title">Le procedure che ricorrono di più</h2>
           <p>
-            La voce <strong>AFFIDAMENTO DIRETTO</strong> è l&apos;etichetta più frequente: rappresenta
-            {" "}{share(directAward.records, totalCigs)} dei {integer(totalCigs)} CIG unici osservati.
-            La famiglia più ampia delle etichette che iniziano con “AFFIDAMENTO DIRETTO” arriva a
-            {" "}{share(directAwardFamily.records, totalCigs)} e raccoglie etichette diverse.
+            La voce <strong>AFFIDAMENTO DIRETTO</strong> è l&apos;etichetta più frequente:{" "}
+            {share(directAward.records, totalCigs)} dei {integer(totalCigs)} CIG, ma solo{" "}
+            {percent(directAward.amountSharePercent ?? 0)} della somma di{" "}
+            <strong>importo_lotto</strong> nello snapshot
+            ({exactEuro((directAward.amountEuroCents ?? 0) / 100)}). La famiglia di etichette che
+            iniziano con “AFFIDAMENTO DIRETTO” arriva a {share(directAwardFamily.records, totalCigs)}{" "}
+            dei CIG e a {percent(directAwardFamily.amountSharePercent ?? 0)} del valore dichiarato.
           </p>
         </div>
-        <div className={styles.leadMeasure}>
-          <span>Etichetta più frequente</span>
-          <strong>{share(directAward.records, totalCigs)}</strong>
-          <small>del totale CIG · denominatore: {integer(totalCigs)}</small>
+        <div className={styles.leadMeasurePair}>
+          <div className={styles.leadMeasure}>
+            <span>Sul numero di CIG</span>
+            <strong>{share(directAward.records, totalCigs)}</strong>
+            <small>etichetta esatta · {integer(directAward.records)} CIG</small>
+          </div>
+          <div className={styles.leadMeasure} data-emphasis="value">
+            <span>Sul valore dichiarato</span>
+            <strong>{percent(directAward.amountSharePercent ?? 0)}</strong>
+            <small>
+              {exactEuro((directAward.amountEuroCents ?? 0) / 100)} · importo_lotto &gt; 0
+            </small>
+          </div>
         </div>
       </section>
-
-      {marketComparison && marketValueBillion !== null ? (
-        <section className={`panel ${styles.valuePanel}`} aria-labelledby="value-share-title">
-          <div className={styles.sectionHeading}>
-            <div>
-              <h2 id="value-share-title" className="panel-title">
-                Sul valore in euro la storia cambia
-              </h2>
-              <p>
-                Nella Relazione annuale ANAC sul mercato delle procedure da 40.000 € in su, gli
-                affidamenti diretti sono il {percent(marketComparison.byNumber)} del numero e solo il{" "}
-                {percent(marketComparison.byValue)} del valore. Non è lo stesso perimetro dei CIG
-                sopra: qui conta quanto pesano i soldi, non quante etichette compaiono.
-              </p>
-            </div>
-            <span className="tag tag-neutral">Fonte: Relazione ANAC {marketComparison.year}</span>
-          </div>
-
-          <div className={styles.valuePair} aria-label="Confronto quota sul numero e sul valore">
-            <div className={styles.valueCard}>
-              <span>Quota sul numero</span>
-              <strong>{percent(marketComparison.byNumber)}</strong>
-              <small>
-                {integer(marketComparison.procedureCount)} procedure da 40.000 € in su
-              </small>
-            </div>
-            <div className={styles.valueCard} data-emphasis="value">
-              <span>Quota sul valore</span>
-              <strong>{percent(marketComparison.byValue)}</strong>
-              <small>
-                circa {marketValueBillion.toLocaleString("it-IT", {
-                  maximumFractionDigits: 1,
-                })}{" "}
-                mld € su {marketComparison.totalValueBillion.toLocaleString("it-IT", {
-                  maximumFractionDigits: 1,
-                })}{" "}
-                mld €
-              </small>
-            </div>
-          </div>
-
-          <p className={styles.note}>
-            {marketComparison.caveat}{" "}
-            <a href={marketComparison.sourceUrl} target="_blank" rel="noreferrer">
-              {marketComparison.sourceTitle} ↗
-            </a>
-            {" · "}
-            <Link href="/controlli">Serie e confronti in Controlli →</Link>
-          </p>
-        </section>
-      ) : null}
 
       <section className={`panel ${styles.procedurePanel}`} aria-labelledby="procedure-breakdown-title">
         <div className={styles.sectionHeading}>
@@ -180,11 +158,12 @@ export default function AppaltiPage() {
               Le prime sei voci coprono {share(
                 featuredProcedureEntries.reduce((sum, row) => sum + row.records, 0),
                 totalCigs,
-              )} dei CIG. Le altre sono accorpate solo nel grafico e nella tabella equivalente qui
-              sotto; il dettaglio delle 32 etichette resta apribile più avanti.
+              )} dei CIG e {amountShare(
+                featuredProcedureEntries.reduce((sum, row) => sum + row.amountEuroCents, 0),
+              )} del valore dichiarato (importo_lotto &gt; 0). Per ogni riga vedi conteggio e euro.
             </p>
           </div>
-          <span className="tag tag-neutral">Denominatore: tutti i CIG unici 2025</span>
+          <span className="tag tag-neutral">CIG e somma importo_lotto · 2025</span>
         </div>
 
         <ol className={styles.barList} aria-label="Le sei etichette di procedura più frequenti e le altre etichette">
@@ -194,6 +173,10 @@ export default function AppaltiPage() {
                 <span>{row.label}</span>
                 <strong>
                   {integer(row.records)} <small>· {share(row.records, totalCigs)}</small>
+                  <span className={styles.barAmount}>
+                    {compactEuro(row.amountEuroCents / 100)}
+                    <small> · {amountShare(row.amountEuroCents)}</small>
+                  </span>
                 </strong>
               </div>
               <div className={styles.barTrack} aria-hidden="true">
@@ -206,12 +189,16 @@ export default function AppaltiPage() {
 
         <ScrollRegion className="table-scroll" role="region" aria-label="Tabella esatta della distribuzione delle procedure" tabIndex={0}>
           <table className="table">
-            <caption>Le stesse categorie rappresentate nel grafico, con conteggio e quota sul totale dei CIG unici 2025</caption>
+            <caption>
+              Stesse categorie del grafico: conteggio CIG e somma di importo_lotto positivo
+            </caption>
             <thead>
               <tr>
                 <th scope="col">Etichetta</th>
                 <th scope="col" className="num">CIG</th>
-                <th scope="col" className="num">Quota</th>
+                <th scope="col" className="num">Quota CIG</th>
+                <th scope="col" className="num">Valore dichiarato</th>
+                <th scope="col" className="num">Quota valore</th>
               </tr>
             </thead>
             <tbody>
@@ -220,6 +207,8 @@ export default function AppaltiPage() {
                   <th scope="row">{row.label}</th>
                   <td className="num">{integer(row.records)}</td>
                   <td className="num">{share(row.records, totalCigs)}</td>
+                  <td className="num">{exactEuro(row.amountEuroCents / 100)}</td>
+                  <td className="num">{amountShare(row.amountEuroCents)}</td>
                 </tr>
               ))}
             </tbody>
@@ -236,7 +225,9 @@ export default function AppaltiPage() {
                 <tr>
                   <th scope="col">Etichetta originale</th>
                   <th scope="col" className="num">CIG</th>
-                  <th scope="col" className="num">Quota</th>
+                  <th scope="col" className="num">Quota CIG</th>
+                  <th scope="col" className="num">Valore dichiarato</th>
+                  <th scope="col" className="num">Quota valore</th>
                 </tr>
               </thead>
               <tbody>
@@ -245,6 +236,8 @@ export default function AppaltiPage() {
                     <th scope="row">{row.label}</th>
                     <td className="num">{integer(row.records)}</td>
                     <td className="num">{share(row.records, totalCigs)}</td>
+                    <td className="num">{exactEuro(row.amountEuroCents / 100)}</td>
+                    <td className="num">{amountShare(row.amountEuroCents)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -252,6 +245,33 @@ export default function AppaltiPage() {
           </ScrollRegion>
         </details>
       </section>
+
+      {marketComparison && marketValueBillion !== null ? (
+        <section className={`notice scope-notice ${styles.asideNotice}`} aria-labelledby="value-share-title">
+          <h2 id="value-share-title">Non confondere con la Relazione ANAC</h2>
+          <p>
+            I {exactEuro((directAward.amountEuroCents ?? 0) / 100)} e il{" "}
+            {percent(directAward.amountSharePercent ?? 0)} sopra sono la somma di{" "}
+            <strong>importo_lotto</strong> su tutti i CIG dello snapshot. La Relazione annuale ANAC
+            parla invece solo del mercato delle procedure da <strong>40.000 € in su</strong>: lì gli
+            affidamenti diretti sono il {percent(marketComparison.byNumber)} del numero e il{" "}
+            {percent(marketComparison.byValue)} del valore (circa{" "}
+            {marketValueBillion.toLocaleString("it-IT", { maximumFractionDigits: 1 })} mld € su{" "}
+            {marketComparison.totalValueBillion.toLocaleString("it-IT", {
+              maximumFractionDigits: 1,
+            })}{" "}
+            mld €). Non sostituisce i numeri della tabella.
+          </p>
+          <p className={styles.note}>
+            {marketComparison.caveat}{" "}
+            <a href={marketComparison.sourceUrl} target="_blank" rel="noreferrer">
+              {marketComparison.sourceTitle} ↗
+            </a>
+            {" · "}
+            <Link href="/controlli">Serie e confronti in Controlli →</Link>
+          </p>
+        </section>
+      ) : null}
 
       <section className={`panel ${styles.subsetPanel}`} aria-labelledby="subset-title">
         <div className={styles.sectionHeading}>

@@ -68,4 +68,8 @@ test("ANAC manifest fails closed when page aggregates drift", () => {
   const amountDrift = freshManifest();
   amountDrift.exactContractAmounts["39900"] = -1;
   assert.throws(() => assertAnacCigManifest(amountDrift), /conteggio importo negativo/);
+
+  const labelAmountDrift = freshManifest();
+  labelAmountDrift.procedureChoice.allLabelsAmountEuroCents["AFFIDAMENTO DIRETTO"] += 1;
+  assert.throws(() => assertAnacCigManifest(labelAmountDrift), /somma degli importi/);
 });

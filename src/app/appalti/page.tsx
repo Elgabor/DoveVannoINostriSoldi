@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import IntegratedSectionPreview from "@/components/integrated-section-preview";
+import { getProcurementComparisonForYear } from "@/lib/audit-data";
 import { anacCigSnapshot } from "@/lib/anac-cig-snapshot";
 import { exactEuro, integer, longDate, percent } from "@/lib/format";
 import styles from "./appalti.module.css";
@@ -30,6 +31,11 @@ const directAwardFamily = data.procedureChoice.directAwardFamily;
 const servicesAndSupplies = data.population.servicesAndSupplies;
 const below140000 = data.servicesAndSuppliesBelow140000;
 const thresholdBand = data.thresholdBand135000To140000;
+const marketComparison = getProcurementComparisonForYear(data.referenceYear);
+const marketValueBillion =
+  marketComparison === null
+    ? null
+    : (marketComparison.totalValueBillion * marketComparison.byValue) / 100;
 
 function share(records: number, denominator: number): string {
   return percent((records / denominator) * 100);
@@ -71,12 +77,18 @@ export default function AppaltiPage() {
           <span className="stat-note">{integer(directAward.records)} su {integer(totalCigs)} CIG · quota sul numero di CIG</span>
         </div>
         <div>
-          <span className="stat-label">Servizi e forniture</span>
-          <span className="stat-value">{integer(servicesAndSupplies)}</span>
-          <span className="stat-note">{share(servicesAndSupplies, totalCigs)} del totale CIG</span>
+          <span className="stat-label">Affidamenti diretti · sul valore</span>
+          <span className="stat-value">
+            {marketComparison ? percent(marketComparison.byValue) : "Non disponibile"}
+          </span>
+          <span className="stat-note">
+            {marketComparison
+              ? `Relazione ANAC ${marketComparison.year} · procedure da 40.000 € in su`
+              : "manca la serie ANAC sul valore"}
+          </span>
         </div>
         <div>
-          <span className="stat-label">Copertura</span>
+          <span className="stat-label">Copertura CIG</span>
           <span className="stat-value">12/12</span>
           <span className="stat-note">file mensili presenti nello snapshot</span>
         </div>
@@ -85,8 +97,10 @@ export default function AppaltiPage() {
       <section className={`notice scope-notice ${styles.readingNotice}`} aria-labelledby="appalti-reading-title">
         <h2 id="appalti-reading-title">Come leggere questi numeri</h2>
         <p>
-          Contano come sono etichettati i CIG pubblicati. Il campo <strong>importo_lotto</strong> è
-          il valore dichiarato del lotto nella banca dati.
+          Contare i CIG e pesare il valore in euro sono due letture diverse. Qui lo snapshot CIG
+          misura quante etichette ricorrono; la Relazione ANAC sul mercato da 40.000 € in su misura
+          anche quanto pesano in euro. Il campo <strong>importo_lotto</strong> è il valore dichiarato
+          del lotto nella banca dati.
         </p>
       </section>
 
@@ -106,6 +120,57 @@ export default function AppaltiPage() {
           <small>del totale CIG · denominatore: {integer(totalCigs)}</small>
         </div>
       </section>
+
+      {marketComparison && marketValueBillion !== null ? (
+        <section className={`panel ${styles.valuePanel}`} aria-labelledby="value-share-title">
+          <div className={styles.sectionHeading}>
+            <div>
+              <h2 id="value-share-title" className="panel-title">
+                Sul valore in euro la storia cambia
+              </h2>
+              <p>
+                Nella Relazione annuale ANAC sul mercato delle procedure da 40.000 € in su, gli
+                affidamenti diretti sono il {percent(marketComparison.byNumber)} del numero e solo il{" "}
+                {percent(marketComparison.byValue)} del valore. Non è lo stesso perimetro dei CIG
+                sopra: qui conta quanto pesano i soldi, non quante etichette compaiono.
+              </p>
+            </div>
+            <span className="tag tag-neutral">Fonte: Relazione ANAC {marketComparison.year}</span>
+          </div>
+
+          <div className={styles.valuePair} aria-label="Confronto quota sul numero e sul valore">
+            <div className={styles.valueCard}>
+              <span>Quota sul numero</span>
+              <strong>{percent(marketComparison.byNumber)}</strong>
+              <small>
+                {integer(marketComparison.procedureCount)} procedure da 40.000 € in su
+              </small>
+            </div>
+            <div className={styles.valueCard} data-emphasis="value">
+              <span>Quota sul valore</span>
+              <strong>{percent(marketComparison.byValue)}</strong>
+              <small>
+                circa {marketValueBillion.toLocaleString("it-IT", {
+                  maximumFractionDigits: 1,
+                })}{" "}
+                mld € su {marketComparison.totalValueBillion.toLocaleString("it-IT", {
+                  maximumFractionDigits: 1,
+                })}{" "}
+                mld €
+              </small>
+            </div>
+          </div>
+
+          <p className={styles.note}>
+            {marketComparison.caveat}{" "}
+            <a href={marketComparison.sourceUrl} target="_blank" rel="noreferrer">
+              {marketComparison.sourceTitle} ↗
+            </a>
+            {" · "}
+            <Link href="/controlli">Serie e confronti in Controlli →</Link>
+          </p>
+        </section>
+      ) : null}
 
       <section className={`panel ${styles.procedurePanel}`} aria-labelledby="procedure-breakdown-title">
         <div className={styles.sectionHeading}>

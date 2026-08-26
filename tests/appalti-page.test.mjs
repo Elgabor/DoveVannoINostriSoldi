@@ -20,6 +20,10 @@ test("appalti page keeps the verified 2025 denominators and scope visible", () =
   assert.equal(anacCigSnapshot.servicesAndSuppliesBelow140000.records, 1_159_940);
   assert.equal(anacCigSnapshot.thresholdBand135000To140000.strictContractRecords, 13_393);
   assert.match(pageSource, /quota sul numero di CIG/);
+  assert.match(pageSource, /Affidamenti diretti · sul valore/);
+  assert.match(pageSource, /getProcurementComparisonForYear/);
+  assert.match(pageSource, /Sul valore in euro la storia cambia/);
+  assert.match(pageSource, /Quota sul valore/);
   assert.match(controlsPageSource, /href="\/appalti"/);
 });
 
@@ -41,11 +45,12 @@ test("appalti page makes the chart/table equivalence and denominator explicit", 
 test("appalti page treats threshold concentrations as screening signals, not findings", () => {
   assert.match(pageSource, /indicano dove guardare\s*\n?\s*meglio negli atti/);
   assert.match(pageSource, /serve a scegliere cosa verificare negli atti/);
-  assert.match(pageSource, /valore dichiarato del lotto nella banca dati/);
+  assert.match(pageSource, /valore dichiarato\s*\n?\s*del lotto nella banca dati/);
   assert.match(pageSource, /Definizione stretta/);
   assert.match(pageSource, /thresholdBand\.strictContractDefinition/);
   assert.match(pageSource, /135\.000 €/);
   assert.match(stylesSource, /\.detailTable\s*\{[^}]*min-width:\s*0/);
+  assert.match(stylesSource, /\.valuePair/);
   assert.doesNotMatch(pageSource, /93%|quasi 95%|sprechi accertati|fornitori?\s*:/i);
 });
 

@@ -24,6 +24,7 @@ export const PRIMARY_NAV: readonly NavSection[] = [
     children: [
       { href: "/spese", label: "Pagamenti comunali" },
       { href: "/spese/sanita", label: "Sanità" },
+      { href: "/spese/sanita/storico", label: "Sanità · serie storica" },
       { href: "/spese/invalidita", label: "Invalidità INPS" },
       { href: "/spese/consulenze", label: "Consulenze ministeriali" },
       { href: "/spese/territoriale", label: "Spesa statale per territorio" },
@@ -106,6 +107,7 @@ export const SITE_MAP_GROUPS: readonly { title: string; links: readonly NavLink[
     links: [
       { href: "/spese", label: "Pagamenti comunali" },
       { href: "/spese/sanita", label: "Sanità" },
+      { href: "/spese/sanita/storico", label: "Sanità · serie storica" },
       { href: "/spese/invalidita", label: "Invalidità INPS" },
       { href: "/spese/consulenze", label: "Consulenze ministeriali" },
       { href: "/spese/territoriale", label: "Spesa statale per territorio" },

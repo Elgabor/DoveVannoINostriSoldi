@@ -359,6 +359,16 @@ export async function queryPublicDataset(
         offset,
       }));
     }
+    case "company_turnover_istat": {
+      const { queryIstatTurnoverDataset } = await import("@/lib/istat-turnover");
+      return jsonSafe(queryIstatTurnoverDataset({
+        period: query.period,
+        region: query.region,
+        sector: query.sector,
+        limit,
+        offset,
+      }));
+    }
     default: {
       const unsupported: never = query.dataset;
       throw new Error(`Dataset non supportato: ${String(unsupported)}.`);

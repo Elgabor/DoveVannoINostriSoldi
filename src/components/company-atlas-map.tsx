@@ -12,6 +12,7 @@ type CompanyAtlasMapProps = Readonly<{
   regions: RegionPoint[];
   selectedRegion: string;
   metricUnit: string;
+  valueFormat?: "thousand-euro";
 }>;
 
 function quantile(values: number[], fraction: number): number {
@@ -23,6 +24,7 @@ export function CompanyAtlasMap({
   regions,
   selectedRegion,
   metricUnit,
+  valueFormat,
 }: CompanyAtlasMapProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -80,6 +82,20 @@ export function CompanyAtlasMap({
     (code, index, all): code is string => Boolean(code) && all.indexOf(code) === index,
   );
 
+  function displayValue(value: number): string {
+    if (valueFormat === "thousand-euro") {
+      const absolute = Math.abs(value);
+      if (absolute >= 1_000_000) {
+        return `${(value / 1_000_000).toLocaleString("it-IT", { maximumFractionDigits: 1, useGrouping: "always" })} mld €`;
+      }
+      if (absolute >= 1_000) {
+        return `${(value / 1_000).toLocaleString("it-IT", { maximumFractionDigits: 1, useGrouping: "always" })} mln €`;
+      }
+      return `${integer(value)} mila €`;
+    }
+    return integer(value);
+  }
+
   return (
     <div className={styles.layout}>
       <div className={styles.mapColumn}>
@@ -113,7 +129,7 @@ export function CompanyAtlasMap({
                 tabIndex={focusable ? 0 : -1}
                 role="button"
                 aria-pressed={selected}
-                aria-label={`${region?.name ?? geometry.name}: ${region?.value === null || region?.value === undefined ? "dato non disponibile" : `${integer(region.value)} ${metricUnit}`}`}
+                aria-label={`${region?.name ?? geometry.name}: ${region?.value === null || region?.value === undefined ? "dato non disponibile" : `${displayValue(region.value)}${valueFormat ? ` (unità fonte: ${metricUnit})` : ` ${metricUnit}`}`}`}
                 data-hovered={hovered ? "true" : undefined}
                 data-selected={selected ? "true" : undefined}
                 onPointerEnter={() => setHoveredCode(geometry.code)}
@@ -153,7 +169,7 @@ export function CompanyAtlasMap({
 
         <div className={styles.detail} aria-live="polite">
           <strong>{displayedRegion?.name ?? "Seleziona una regione"}</strong>
-          <span>{displayedRegion?.value === null || displayedRegion?.value === undefined ? "n.d." : integer(displayedRegion.value)}</span>
+          <span>{displayedRegion?.value === null || displayedRegion?.value === undefined ? "n.d." : displayValue(displayedRegion.value)}</span>
           <small>{displayedRegion ? metricUnit : "valore regionale"}</small>
         </div>
       </div>

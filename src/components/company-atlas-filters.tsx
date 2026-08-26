@@ -14,6 +14,7 @@ type CompanyAtlasFiltersProps = Readonly<{
   sectors: SelectOption[];
   bands: SelectOption[];
   showBand: boolean;
+  sectorLabel?: string;
 }>;
 
 export function CompanyAtlasFilters({
@@ -24,6 +25,7 @@ export function CompanyAtlasFilters({
   sectors,
   bands,
   showBand,
+  sectorLabel = "Settore ATECO 2025",
 }: CompanyAtlasFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -36,6 +38,8 @@ export function CompanyAtlasFilters({
     if (key === "metric") {
       params.delete("period");
       params.delete("band");
+      // ATECO 2025 sections and ISTAT macro-sectors are different domains.
+      if (value === "turnover" || filters.metric === "turnover") params.delete("sector");
     }
 
     const query = params.toString();
@@ -82,14 +86,18 @@ export function CompanyAtlasFilters({
           </select>
         </label>
         <label>
-          <span>Settore ATECO 2025</span>
+          <span>{sectorLabel}</span>
           <select
             value={filters.sector}
             onChange={(event) => updateFilter("sector", event.target.value)}
             data-atlas-filter="sector"
           >
             <option value="all">Tutti i settori</option>
-            {sectors.map((option) => <option key={option.id} value={option.id}>{option.id} · {option.label}</option>)}
+            {sectors.filter((option) => option.id.toLowerCase() !== "all").map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.id === "all" ? option.label : `${option.id} · ${option.label}`}
+              </option>
+            ))}
           </select>
         </label>
         {showBand ? (

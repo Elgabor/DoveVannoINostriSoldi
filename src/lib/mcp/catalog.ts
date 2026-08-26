@@ -31,6 +31,7 @@ export const DATASET_IDS = [
   "company_active_enterprises",
   "company_workforce",
   "company_production_value_bands",
+  "company_turnover_istat",
 ] as const;
 
 export type DatasetId = (typeof DATASET_IDS)[number];
@@ -39,6 +40,7 @@ export const BUSINESS_DATASET_IDS = [
   "company_active_enterprises",
   "company_workforce",
   "company_production_value_bands",
+  "company_turnover_istat",
 ] as const;
 
 export type DatasetQuery = {
@@ -140,6 +142,13 @@ const exampleQueries = {
     band: "50M_OVER",
     limit: 20,
   },
+  company_turnover_istat: {
+    dataset: "company_turnover_istat",
+    period: "2024",
+    region: "15",
+    sector: "INDUSTRIA",
+    limit: 20,
+  },
 } as const satisfies Record<DatasetId, DatasetQuery>;
 
 const COMPANY_ATLAS_SOURCES: DatasetDescriptor["sources"] = Object.values(companyAtlasSources).map((source) => ({
@@ -214,6 +223,23 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
     freshness: "snapshot",
     filters: ["period", "region", "sector", "band", "limit", "offset"],
     caveat: `${companyAtlasSources["production-value"].caveat} Le fasce non identificano singole aziende.`,
+  },
+  {
+    id: "company_turnover_istat",
+    title: "Atlante fatturato aggregato delle imprese (ISTAT)",
+    summary: "Fatturato aggregato delle imprese per regione e macro-settore economico (Industria e Servizi), in migliaia di euro (Stima anticipata ISTAT 2024).",
+    sourceIds: [],
+    customSources: [{
+      id: "istat-frame-territoriale-2024",
+      name: "Stima anticipata dei dati economici delle imprese · Frame Territoriale 2024",
+      owner: "Istituto Nazionale di Statistica (ISTAT)",
+      url: "https://www.istat.it/wp-content/uploads/2026/03/Tavole20marzo2026.zip",
+      cadence: "annuale",
+      license: "CC BY 4.0",
+    }],
+    freshness: "snapshot",
+    filters: ["period", "region", "sector", "limit", "offset"],
+    caveat: "Dati aggregati per territorio e macro-settore ATECO 2007 agg. 2022 dal Registro Frame Territoriale Anticipato ISTAT 2024. Il perimetro copre le unità locali con almeno un dipendente (non l'universo delle sedi attive). I valori sono espressi in migliaia di euro; totale e macro-settori provengono da tavole pubblicate separatamente e piccole differenze tra somme e totale possono riflettere gli arrotondamenti della fonte. Non contiene dati nominativi, partite IVA o fatturati di singole aziende.",
   },
 ];
 

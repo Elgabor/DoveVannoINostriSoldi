@@ -73,21 +73,44 @@ La fonte tratta il valore della produzione derivato dai bilanci depositati. Il
 modulo mostra i conteggi per fascia. Non li chiama fatturato, non li chiama
 ricavi esatti e non li usa per identificare o ordinare singole società.
 
+### Fatturato aggregato delle imprese (ISTAT)
+
+- URL: <https://www.istat.it/wp-content/uploads/2026/03/Tavole20marzo2026.zip>
+- landing page: <https://www.istat.it/tavole-di-dati/stima-anticipata-dei-dati-economici-delle-imprese-a-livello-territoriale-il-registro-frame-territoriale-anticipato-anno-2024/>
+- pubblicatore: Istituto Nazionale di Statistica (ISTAT);
+- lavoro: Stima anticipata dei dati economici delle imprese a livello territoriale - Registro Frame Territoriale Anticipato - Anno 2024 (Tavola 1 e Tavola 2);
+- licenza: Creative Commons Attribution 4.0 International (CC BY 4.0);
+- periodo: `2024`;
+- classificazione: `ATECO 2007 agg. 2022` (mantenuta rigorosamente distinta da `ATECO 2025` delle fonti camerali);
+- unità di misura: `migliaia di euro`;
+- perimetro e copertura: unità locali di imprese con almeno un dipendente (Registro Frame Territoriale Anticipato 2024); non è l'universo completo delle sedi attive;
+- granularità: 20 regioni italiane e macro-settori economici (`ALL`, `INDUSTRIA`, `SERVIZI`);
+- riconciliazione: Totale e macro-settori sono letti dalle tavole ufficiali pubblicate separatamente; differenze di pochi migliaia di euro tra somme e totale sono mantenute e possono riflettere gli arrotondamenti della fonte;
+- garanzia non-nominativa: nessun dato a livello di singola azienda, nessuna partita IVA o codice fiscale, nessun fatturato individuale.
+
+Il file generato è `src/data/generated/istat-enterprise-turnover-2024.json`. Il comando
+`python3 scripts/etl/istat_enterprise_turnover.py` genera lo snapshot, e con `--check`
+ne valida offline l'integrità matematica, la copertura e le riconciliazioni formali.
+
 ## Contratto UI e MCP
 
-Le quattro metriche disponibili sono:
+Le metriche territoriali disponibili sono:
 
-- `active_enterprises`;
-- `employees`;
-- `active_local_units`;
-- `production_value_band_count`.
+- `active_enterprises` (CCIAA Marche / InfoCamere, ATECO 2025);
+- `employees` (CCIAA Marche / InfoCamere, ATECO 2025);
+- `active_local_units` (CCIAA Marche / InfoCamere, ATECO 2025);
+- `production_value_band_count` (CCIAA Marche / InfoCamere, ATECO 2025);
+- `turnover` (ISTAT Frame Territoriale Anticipato, ATECO 2007 agg. 2022, migliaia di euro).
 
-La pagina principale usa gli stessi filtri per mappa, classifica e dettaglio.
-Il catalogo MCP espone tre dataset business:
+La pagina principale `/imprese` adatta automaticamente filtri, classificazione e metadati
+in base alla fonte selezionata.
+
+Il catalogo MCP espone quattro dataset business:
 
 - `company_active_enterprises`;
 - `company_workforce`;
-- `company_production_value_bands`.
+- `company_production_value_bands`;
+- `company_turnover_istat`.
 
 Le risposte MCP sono limitate a 100 righe per pagina e contengono dati, periodo,
 query normalizzata, provenienza e caveat. Il server è read-only e non espone

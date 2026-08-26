@@ -19,6 +19,22 @@ function normalizeVisibleText(value) {
   return value.normalize("NFKC").replace(/\s+/gu, " ").trim().toLocaleLowerCase("it-IT");
 }
 
+async function waitForInteractiveHydration(page) {
+  // A native <details> can be toggled before React finishes hydrating and then
+  // reconciled back to its server state between Puppeteer input commands.
+  await page.evaluate(() => new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if ("requestIdleCallback" in window) {
+          window.requestIdleCallback(resolve, { timeout: 1_000 });
+          return;
+        }
+        setTimeout(resolve, 0);
+      });
+    });
+  }));
+}
+
 assert.ok(
   ["http:", "https:"].includes(baseUrl.protocol),
   "DVNS_BASE_URL non valido",
@@ -38,6 +54,7 @@ async function inspectRoute(browser, pathname, title, width) {
     // Use DOMContentLoaded + specific selector readiness instead of
     // networkidle0 (PR1.8): wait for the h1 that carries the title.
     await navigate(page, { url, label: `${pathname} ${width}px`, readySelector: "h1" });
+    await waitForInteractiveHydration(page);
 
     const label = `${pathname} ${width}px`;
     const expectedSummary = "che cosa non dimostra da solo";

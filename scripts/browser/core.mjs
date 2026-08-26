@@ -684,6 +684,104 @@ try {
   browser = await launchBrowser();
 
   for (const width of [390, 768, 1280]) {
+    const label = `Atlante Imprese ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/imprese",
+      width,
+      validate: async (page) => {
+        const text = await bodyText(page);
+        assertTextMatches(text, /Atlante Imprese Italia/i, label);
+        assertTextMatches(text, /Solo dati aggregati/i, label);
+        assertTextMatches(text, /Fonte del numero/i, label);
+        assert.equal(
+          (await page.$$('[data-region-map="true"] path[role="button"]')).length,
+          20,
+          `${label}: mappa regionale incompleta`,
+        );
+
+        const metricFilter = '[data-atlas-filter="metric"]';
+        await page.focus(metricFilter);
+        assert.equal(
+          await page.$eval(metricFilter, (element) => document.activeElement === element),
+          true,
+          `${label}: il filtro metrica non riceve focus`,
+        );
+        await page.select(metricFilter, "employees");
+        await page.waitForFunction(
+          () => new URL(window.location.href).searchParams.get("metric") === "employees",
+          { timeout: 3_000 },
+        );
+        assertTextMatches(await bodyText(page), /Addetti per regione/i, label);
+
+        const firstRegion = '[data-region-map="true"] path[role="button"]';
+        await page.$eval(firstRegion, (element) => element.focus());
+        await page.keyboard.press("Enter");
+        await page.waitForFunction(
+          () => new URL(window.location.href).searchParams.has("region"),
+          { timeout: 3_000 },
+        );
+        await assertResponsiveShell(page, `${label} filtro regione`, width);
+      },
+    });
+    completed.push(label);
+  }
+
+  await runScenario(browser, {
+    label: "Atlante Imprese query navigation 390px",
+    pathname: "/imprese?metric=employees",
+    width: 390,
+    validate: async (page) => {
+      const currentLabels = await page.$$eval(
+        'nav.primary-nav a[aria-current="page"]',
+        (links) => links.map((link) => link.textContent?.trim()),
+      );
+      assert.deepEqual(currentLabels, ["Addetti"]);
+
+      await assertPrimaryDropdownTap(page, "Atlante Imprese query navigation 390px", {
+        sectionLabel: "Imprese",
+        childLabel: "Localizzazioni attive",
+      });
+
+      const itemElement = await findPrimaryNavSection(page, "Imprese");
+      assert.ok(itemElement, "Atlante Imprese query navigation 390px: sezione Imprese assente");
+      const toggle = await itemElement.$(".nav-item-toggle");
+      assert.ok(toggle, "Atlante Imprese query navigation 390px: pulsante tendina assente");
+      await toggle.click();
+      await assertSubmenuVisible(
+        itemElement,
+        page,
+        "Atlante Imprese query navigation 390px",
+        "Localizzazioni attive",
+      );
+      const localUnitsLink = await itemElement.$(
+        'a[href="/imprese?metric=active_local_units"]',
+      );
+      assert.ok(localUnitsLink, "Atlante Imprese query navigation 390px: link metrica assente");
+      await localUnitsLink.click();
+      await page.waitForFunction(
+        () => new URL(window.location.href).searchParams.get("metric") === "active_local_units",
+        { timeout: 3_000 },
+      );
+      await page.waitForFunction(
+        () => {
+          const current = document.querySelector(
+            'nav.primary-nav a[aria-current="page"]',
+          );
+          return current?.textContent?.trim() === "Localizzazioni attive";
+        },
+        { timeout: 3_000 },
+      );
+      assert.equal(
+        await page.$eval(".nav-row", (row) => row.hasAttribute("data-menu-open")),
+        false,
+        "Atlante Imprese query navigation 390px: menu rimasto aperto dopo la query",
+      );
+    },
+  });
+  completed.push("Atlante Imprese query navigation 390px");
+
+  for (const width of [390, 768, 1280]) {
     const label = `Scheda economica Benevento ${width}px`;
     await runScenario(browser, {
       label,
@@ -1165,12 +1263,13 @@ try {
         const sitemap = await page.$(".footer-sitemap");
         assert.ok(sitemap, `${label}: mappa del sito assente`);
         const rowCount = await page.$$eval(".footer-sitemap-grid", (rows) => rows.length);
-        assert.equal(rowCount, 2, `${label}: attese 2 righe nella mappa`);
+        assert.equal(rowCount, 3, `${label}: attese 3 righe nella mappa`);
         const groupCount = await page.$$eval(".footer-sitemap-group", (groups) => groups.length);
-        assert.equal(groupCount, 8, `${label}: attesi 8 gruppi nella mappa`);
+        assert.equal(groupCount, 9, `${label}: attesi 9 gruppi nella mappa`);
         const headings = await page.$$eval(".footer-sitemap-group h3", (items) =>
           items.map((item) => item.textContent?.trim() ?? ""),
         );
+        assert.ok(headings.includes("Imprese"), `${label}: sezione Imprese assente`);
         assert.ok(headings.includes("Istituzioni"), `${label}: sezione Istituzioni assente`);
         assert.ok(headings.includes("Fonti e metodo"), `${label}: sezione Fonti e metodo assente`);
         assert.ok(!headings.includes("Legale"), `${label}: sezione Legale non attesa in mappa`);

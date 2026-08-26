@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { shortDate } from "@/lib/format";
+import { companyAtlasSourceList } from "@/lib/company-atlas-metadata";
 import { REPO_URL } from "@/lib/site";
 import { latestDataBySlug } from "@/lib/source-latest-data";
 import { publicSources, sourceCounts } from "@/lib/sources";
@@ -74,6 +75,52 @@ export default function SourcesPage() {
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section className="panel" aria-labelledby="company-atlas-sources-title">
+        <h2 id="company-atlas-sources-title" className="panel-title">Fonti del modulo Imprese</h2>
+        <p>
+          L&apos;Atlante Imprese usa tre release aggregate di CCIAA Marche su dati InfoCamere.
+          Sono registrate qui con periodo osservato e licenza; non fanno ancora parte del
+          registry operativo delle fonti civiche.
+        </p>
+        <p id="company-atlas-sources-scroll-hint" className={styles.scrollHint}>
+          Scorri orizzontalmente per leggere tutte le colonne della tabella.
+        </p>
+        <div
+          className="table-scroll"
+          role="region"
+          aria-label="Fonti dell'Atlante Imprese"
+          aria-describedby="company-atlas-sources-scroll-hint"
+          tabIndex={0}
+        >
+          <table className="table">
+            <thead>
+              <tr>
+                <th scope="col">Fonte</th>
+                <th scope="col">Copertura</th>
+                <th scope="col">Ultimo aggiornamento</th>
+                <th scope="col">Licenza</th>
+              </tr>
+            </thead>
+            <tbody>
+              {companyAtlasSourceList.map((source) => (
+                <tr key={source.id}>
+                  <th scope="row">
+                    <a href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>
+                  </th>
+                  <td>{source.coverage}</td>
+                  <td>{shortDate(source.updatedAt)} · osservato {shortDate(source.observedAt)}</td>
+                  <td>{source.license}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Il modulo mostra soltanto aggregati regionali per sezione ATECO 2025: non nomi di
+          aziende, identificativi o fatturato esatto. <Link href="/imprese">Apri Atlante Imprese →</Link>
+        </p>
       </section>
 
       <div className={styles.principles}>

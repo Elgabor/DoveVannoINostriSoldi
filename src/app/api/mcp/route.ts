@@ -51,13 +51,27 @@ function allowedOrigins(request: Request): Set<string> {
   const validatedHostOrigin = requestHost && requestHostAllowed(request)
     ? `${requestUrl.protocol}//${requestHost}`
     : null;
+  const requestOrigin = normalizedOrigin(request.headers.get("origin") ?? "");
+  const requestOriginUrl = requestOrigin ? new URL(requestOrigin) : null;
+  const requestUrlHost = normalizedHost(requestUrl.host);
+  const requestOriginHost = requestOriginUrl ? normalizedHost(requestOriginUrl.host) : null;
+  const equivalentLoopbackOrigin =
+    requestOriginUrl
+    && requestUrlHost
+    && requestOriginHost
+    && requestOriginUrl.protocol === requestUrl.protocol
+    && requestOriginUrl.port === requestUrl.port
+    && isLoopbackHost(requestUrlHost)
+    && isLoopbackHost(requestOriginHost)
+      ? requestOrigin
+      : null;
   const configured = (process.env.MCP_ALLOWED_ORIGINS ?? "")
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean)
     .map(normalizedOrigin)
     .filter((value): value is string => value !== null);
-  return new Set([requestUrl.origin, validatedHostOrigin, ...configured].filter(
+  return new Set([requestUrl.origin, validatedHostOrigin, equivalentLoopbackOrigin, ...configured].filter(
     (value): value is string => value !== null,
   ));
 }

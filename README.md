@@ -77,7 +77,7 @@ Server [Model Context Protocol](https://modelcontextprotocol.io/) pubblico, sola
 https://www.dovevannoinostrisoldi.com/api/mcp
 ```
 
-In locale: `http://localhost:3000/api/mcp`. Pagina catalogo: [/mcp](https://www.dovevannoinostrisoldi.com/mcp).
+In locale: `http://localhost:3000/api/mcp`. Pagina catalogo: [/mcp](https://www.dovevannoinostrisoldi.com/mcp). Per evitare errori di configurazione, `POST /mcp` e `OPTIONS /mcp` sono alias compatibili dell'endpoint canonico; `GET /mcp` resta la pagina informativa.
 
 Strumenti principali: `list_datasets`, `query_dataset`.
 

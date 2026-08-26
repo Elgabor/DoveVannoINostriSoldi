@@ -7,7 +7,7 @@ Il server MCP espone i dati pubblici già disponibili nel portale attraverso un 
 La prima interfaccia testuale deterministica del portale è documentata separatamente in
 [ASSISTENTE.md](ASSISTENTE.md): non è un provider LLM e non inoltra prompt al server MCP.
 
-L'endpoint Streamable HTTP è `/api/mcp`. L'implementazione usa l'SDK TypeScript ufficiale e mantiene compatibilità stateless con i client MCP della generazione precedente.
+L'endpoint Streamable HTTP canonico è `/api/mcp`. `POST /mcp` e `OPTIONS /mcp` sono alias compatibili, mentre `GET /mcp` resta la pagina di presentazione: un client configurato con il percorso breve non riceve quindi un 405. L'implementazione usa l'SDK TypeScript ufficiale e mantiene compatibilità stateless con i client MCP della generazione precedente.
 
 Le procedure per collegare l'endpoint esistente a Manufact, ChatGPT e Claude, insieme a starter
 prompt e casi di review, sono in [MCP_DISTRIBUTION.md](MCP_DISTRIBUTION.md). L'endpoint canonico non

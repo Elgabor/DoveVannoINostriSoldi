@@ -36,8 +36,13 @@ async function waitForServer() {
   throw new Error(`Server non pronto: ${lastError instanceof Error ? lastError.message : "errore"}`);
 }
 
-async function mcpRequest(body, headers = {}) {
-  const response = await fetch(new URL("/api/mcp", baseUrl), {
+async function mcpRequest(
+  body,
+  headers = {},
+  pathname = "/api/mcp",
+  expectedContentType = /(?:application\/json|text\/event-stream)/,
+) {
+  const response = await fetch(new URL(pathname, baseUrl), {
     method: "POST",
     headers: {
       Accept: "application/json, text/event-stream",
@@ -49,7 +54,10 @@ async function mcpRequest(body, headers = {}) {
   });
   const text = await responseText(response, `MCP ${body.method}`);
   assert.equal(response.status, 200, text.slice(0, 500));
+  assert.match(response.headers.get("content-type") ?? "", expectedContentType);
   assert.equal(response.headers.get("cache-control"), "private, no-store");
+  assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(response.url, new URL(pathname, baseUrl).href, "MCP alias must not redirect");
   return text;
 }
 
@@ -61,6 +69,62 @@ const pageResponse = await fetch(new URL("/territori/irpef", baseUrl), {
 const page = await responseText(pageResponse, "pagina IRPEF");
 assert.equal(pageResponse.status, 200);
 assert.match(page, /Imposta netta dichiarata/i);
+
+const mcpPageResponse = await fetch(new URL("/mcp", baseUrl), {
+  signal: AbortSignal.timeout(10_000),
+});
+const mcpPage = await responseText(mcpPageResponse, "pagina MCP");
+assert.equal(mcpPageResponse.status, 200);
+assert.match(mcpPageResponse.headers.get("content-type") ?? "", /text\/html/);
+assert.match(mcpPage, /Endpoint Streamable HTTP/i);
+assert.match(mcpPage, /\/api\/mcp/);
+
+const sseGetResponse = await fetch(new URL("/mcp", baseUrl), {
+  headers: { Accept: "text/event-stream" },
+  signal: AbortSignal.timeout(10_000),
+});
+assert.equal(sseGetResponse.status, 405);
+assert.equal(sseGetResponse.headers.get("allow"), "POST, OPTIONS");
+assert.equal(sseGetResponse.headers.get("cache-control"), "private, no-store");
+assert.match(sseGetResponse.headers.get("content-type") ?? "", /application\/json/);
+
+const allowedPreflight = await fetch(new URL("/mcp", baseUrl), {
+  method: "OPTIONS",
+  headers: {
+    Origin: baseUrl.origin,
+    "Access-Control-Request-Method": "POST",
+    "Access-Control-Request-Headers": "content-type,mcp-protocol-version",
+  },
+  signal: AbortSignal.timeout(10_000),
+});
+assert.equal(allowedPreflight.status, 204);
+assert.equal(allowedPreflight.headers.get("cache-control"), "private, no-store");
+assert.equal(allowedPreflight.headers.get("access-control-allow-origin"), baseUrl.origin);
+assert.match(allowedPreflight.headers.get("access-control-allow-methods") ?? "", /POST/);
+assert.match(
+  allowedPreflight.headers.get("access-control-allow-headers") ?? "",
+  /MCP-Protocol-Version/i,
+);
+
+const rejectedPreflight = await fetch(new URL("/mcp", baseUrl), {
+  method: "OPTIONS",
+  headers: { Origin: "https://attacker.invalid" },
+  signal: AbortSignal.timeout(10_000),
+});
+assert.equal(rejectedPreflight.status, 403);
+assert.equal(rejectedPreflight.headers.get("access-control-allow-origin"), null);
+
+const oversizedAlias = await fetch(new URL("/mcp", baseUrl), {
+  method: "POST",
+  headers: {
+    Accept: "application/json, text/event-stream",
+    "Content-Type": "application/json",
+  },
+  body: "x".repeat(1_000_001),
+  signal: AbortSignal.timeout(10_000),
+});
+assert.equal(oversizedAlias.status, 413);
+assert.equal(oversizedAlias.headers.get("cache-control"), "private, no-store");
 
 const apiResponse = await fetch(new URL("/api/territori/irpef?anno=2024&livello=regione", baseUrl), {
   signal: AbortSignal.timeout(10_000),
@@ -81,6 +145,15 @@ assert.match(pnrrApi, /"cup":"B11B21001610005"/);
 const legacyTools = await mcpRequest({ jsonrpc: "2.0", id: 1, method: "tools/list" });
 assert.match(legacyTools, /list_datasets/);
 assert.match(legacyTools, /query_dataset/);
+
+const compatibilityTools = await mcpRequest(
+  { jsonrpc: "2.0", id: 11, method: "tools/list" },
+  {},
+  "/mcp",
+  /text\/event-stream/,
+);
+assert.match(compatibilityTools, /list_datasets/);
+assert.match(compatibilityTools, /query_dataset/);
 
 const legacyDataset = await mcpRequest({
   jsonrpc: "2.0",
@@ -151,6 +224,19 @@ const modernDiscovery = await mcpRequest(
 assert.match(modernDiscovery, /2026-07-28/);
 assert.match(modernDiscovery, /"resultType":"complete"/);
 
+const compatibilityDiscovery = await mcpRequest(
+  {
+    jsonrpc: "2.0",
+    id: 31,
+    method: "server/discover",
+    params: { _meta: meta },
+  },
+  { "MCP-Protocol-Version": "2026-07-28", "MCP-Method": "server/discover" },
+  "/mcp",
+);
+assert.match(compatibilityDiscovery, /2026-07-28/);
+assert.match(compatibilityDiscovery, /"resultType":"complete"/);
+
 const modernDataset = await mcpRequest(
   {
     jsonrpc: "2.0",
@@ -181,11 +267,17 @@ console.log(JSON.stringify({
   baseUrl: baseUrl.origin,
   checks: [
     "page",
+    "mcp-page",
+    "mcp-sse-get",
     "api",
+    "mcp-alias-preflight",
+    "mcp-alias-security",
     "legacy-tools",
+    "compatibility-tools",
     "legacy-query",
     "integrated-query",
     "modern-discovery",
+    "compatibility-modern-discovery",
     "modern-query",
   ],
 }));

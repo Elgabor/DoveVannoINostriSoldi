@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "generatedAt": "2026-08-25T03:28:04+00:00",
+  "generatedAt": "2026-08-26T03:35:05+00:00",
   "scope": "municipalities",
   "year": 2024,
   "latestMonth": 12,
@@ -3761,14 +3761,14 @@
       "ipaUrl": "https://indicepa.gov.it/ipa-dati/dataset/502ff370-1b2c-4310-94c7-f39ceb7500e3/resource/3ed63523-ff9c-41f6-a6fe-980f3d9e501f/download/amministrazioni.txt",
       "siopeMovementsLastModified": "Thu, 20 Aug 2026 18:53:54 GMT",
       "siopeRegistryLastModified": "Thu, 20 Aug 2026 18:53:54 GMT",
-      "ipaLastModified": "Tue, 25 Aug 2026 03:14:28 GMT",
+      "ipaLastModified": "Wed, 26 Aug 2026 03:14:32 GMT",
       "siopeMovementsEtag": "\"47315ab-6597f0aa5f51e\"",
       "siopeRegistryEtag": "\"d17de-6597f0a9fafa7\"",
-      "ipaEtag": "\"1787627668.480965-8585750-185014459\"",
+      "ipaEtag": "\"1787714072.6728263-8586112-185014459\"",
       "siopeMovementsSha256": "a64d21a7c42159e6b463841b9835fbaddae30d3475bc1b1f4c41bb7c95b5e446",
       "siopeRegistrySha256": "bf5ec3331ce62be671d5d2789e22e18009ab48526cec30f9ae31e649195244c3",
-      "ipaSha256": "b5380d5a461177cfe0709259bf6ac485d868203a077a9516eaa3cac95324d7bc",
-      "observedAt": "2026-08-25T03:28:04+00:00"
+      "ipaSha256": "a30125a5403f2698e74bb4ef9f88a868e22c3a4438c4c4e09f4b09ee34fa1d44",
+      "observedAt": "2026-08-26T03:35:05+00:00"
     }
   },
   "source": {
@@ -3778,14 +3778,14 @@
     "ipaUrl": "https://indicepa.gov.it/ipa-dati/dataset/502ff370-1b2c-4310-94c7-f39ceb7500e3/resource/3ed63523-ff9c-41f6-a6fe-980f3d9e501f/download/amministrazioni.txt",
     "siopeMovementsLastModified": "Thu, 20 Aug 2026 18:53:54 GMT",
     "siopeRegistryLastModified": "Thu, 20 Aug 2026 18:53:54 GMT",
-    "ipaLastModified": "Tue, 25 Aug 2026 03:14:28 GMT",
+    "ipaLastModified": "Wed, 26 Aug 2026 03:14:32 GMT",
     "siopeMovementsEtag": "\"47315ab-6597f0aa5f51e\"",
     "siopeRegistryEtag": "\"d17de-6597f0a9fafa7\"",
-    "ipaEtag": "\"1787627668.480965-8585750-185014459\"",
+    "ipaEtag": "\"1787714072.6728263-8586112-185014459\"",
     "siopeMovementsSha256": "a64d21a7c42159e6b463841b9835fbaddae30d3475bc1b1f4c41bb7c95b5e446",
     "siopeRegistrySha256": "bf5ec3331ce62be671d5d2789e22e18009ab48526cec30f9ae31e649195244c3",
-    "ipaSha256": "b5380d5a461177cfe0709259bf6ac485d868203a077a9516eaa3cac95324d7bc",
-    "observedAt": "2026-08-25T03:28:04+00:00"
+    "ipaSha256": "a30125a5403f2698e74bb4ef9f88a868e22c3a4438c4c4e09f4b09ee34fa1d44",
+    "observedAt": "2026-08-26T03:35:05+00:00"
   },
   "methodology": {
     "measure": "pagamenti di cassa SIOPE dei Comuni",

@@ -78,6 +78,7 @@ export type MunicipalityProfile = Readonly<{
 
 export type MunicipalityPeerBenchmark = Readonly<{
   year: number;
+  populationYear: number | null;
   peers: number;
   criteria: readonly string[];
   fallbackLevel: number;
@@ -93,7 +94,9 @@ function quantiles(values: number[]): { p25: number; median: number; p75: number
 
 function peerBenchmark(taxCode: string, geography: MunicipalityGeography): MunicipalityPeerBenchmark | null {
   const observations = getSiopeMunicipalityPeerObservations(geography.year)
-    .filter((item) => item.taxCode !== taxCode);
+    .filter((item) =>
+      item.taxCode !== taxCode && item.geography.populationYear === geography.populationYear,
+    );
   const samePopulation = (item: typeof observations[number]) =>
     populationBand(item.geography.residentPopulation) === populationBand(geography.residentPopulation);
   const sameSurface = (item: typeof observations[number]) =>
@@ -128,6 +131,7 @@ function peerBenchmark(taxCode: string, geography: MunicipalityGeography): Munic
     const perCapita = peers.flatMap((item) => item.perCapitaCents === null ? [] : [item.perCapitaCents]);
     return {
       year: geography.year,
+      populationYear: geography.populationYear,
       peers: peers.length,
       criteria: stage.criteria,
       fallbackLevel,

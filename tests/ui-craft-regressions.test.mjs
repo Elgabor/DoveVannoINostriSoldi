@@ -185,6 +185,19 @@ test("municipality rankings expose province and region as visible context", asyn
   assert.doesNotMatch(page, /latestMonth < 12/);
 });
 
+test("territorial comparisons disclose denominator coverage and population reference", async () => {
+  const [territories, economics] = await Promise.all([
+    source("../src/app/territori/page.tsx"),
+    source("../src/app/enti/[codice]/municipality-economics.tsx"),
+  ]);
+
+  assert.match(territories, /Comuni trovati nel perimetro/);
+  assert.match(territories, /Comuni con movimenti SIOPE e superficie ISTAT valida/);
+  assert.match(territories, /valori per abitante, per km², totali/);
+  assert.match(economics, /peer\.populationYear/);
+  assert.match(economics, /Popolazione ISTAT/);
+});
+
 test("the narrow mobile header never collapses the wordmark into a text column", async () => {
   const [globalsCss, navigation] = await Promise.all([
     source("../src/app/globals.css"),

@@ -4,6 +4,7 @@ import "./helpers/register-ts-alias.mjs";
 
 const {
   availableMunicipalityGeographyYears,
+  centsPerSquareKilometreForCompleteCoverage,
   eurosPerSquareKilometreCents,
   getMunicipalityGeographyByIstatCode,
   getMunicipalityGeographyByTaxCode,
@@ -36,6 +37,18 @@ test("per-square-kilometre cents reconcile with signed half-up rounding", () => 
   assert.equal(eurosPerSquareKilometreCents(-1, 2_000_000), -1);
   assert.equal(eurosPerSquareKilometreCents(100, null), null);
   assert.equal(eurosPerSquareKilometreCents(100, 0), null);
+});
+
+test("national per-square-kilometre value is null when one Region lacks geography", () => {
+  assert.equal(centsPerSquareKilometreForCompleteCoverage([
+    { amountCents: 100, surfaceSquareMetres: 1_000_000 },
+    { amountCents: 300, surfaceSquareMetres: 1_000_000 },
+  ]), 200);
+  assert.equal(centsPerSquareKilometreForCompleteCoverage([
+    { amountCents: 100, surfaceSquareMetres: 1_000_000 },
+    { amountCents: 300, surfaceSquareMetres: null },
+  ]), null);
+  assert.equal(centsPerSquareKilometreForCompleteCoverage([]), null);
 });
 
 test("regional geography reconciles municipality denominators", () => {

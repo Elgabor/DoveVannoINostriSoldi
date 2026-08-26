@@ -159,6 +159,16 @@ export function eurosPerSquareKilometreCents(
   return sign * Math.floor((Math.abs(amountCents) / surfaceSquareMetres) * 1_000_000 + 0.5);
 }
 
+export function centsPerSquareKilometreForCompleteCoverage(
+  rows: readonly Readonly<{ amountCents: number; surfaceSquareMetres: number | null }>[],
+): number | null {
+  if (rows.length === 0 || rows.some((row) => row.surfaceSquareMetres === null)) return null;
+  return eurosPerSquareKilometreCents(
+    rows.reduce((sum, row) => sum + row.amountCents, 0),
+    rows.reduce((sum, row) => sum + (row.surfaceSquareMetres ?? 0), 0),
+  );
+}
+
 export function populationBand(population: number | null): string | null {
   if (population === null) return null;
   if (population < 1_000) return "Meno di 1.000 abitanti";

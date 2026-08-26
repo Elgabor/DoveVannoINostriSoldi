@@ -12,6 +12,7 @@ import {
 } from "@/lib/siope-snapshot";
 import { getSiopeMunicipalityPeerObservations } from "@/lib/siope-municipality-detail";
 import {
+  centsPerSquareKilometreForCompleteCoverage,
   eurosPerSquareKilometreCents,
   getRegionGeography,
 } from "@/lib/municipality-geography";
@@ -22,7 +23,7 @@ import styles from "./territori.module.css";
 export const metadata: Metadata = {
   title: "Territori",
   description:
-    "Pagamenti effettuati dai Comuni, regione per regione: classifiche pro capite, totali e copertura della popolazione.",
+    "Pagamenti effettuati dai Comuni, regione per regione: valori per abitante, per km², totali e copertura dei denominatori.",
 };
 
 function selectedYear(value: string | string[] | undefined): number {
@@ -168,14 +169,13 @@ export default async function TerritoriesPage({
       return (right[value] ?? -1) - (left[value] ?? -1);
     });
   const regionsByArea = groupRegionsByMacroArea(regions);
-  const regionalSurfaceSquareKilometres = regions.reduce(
-    (total, region) => total + (region.geography?.surfaceSquareKilometres ?? 0),
-    0,
+  const nationalPerSquareKmCents = centsPerSquareKilometreForCompleteCoverage(
+    regions.map((region) => ({
+      amountCents: Math.round(region.value * 100),
+      surfaceSquareMetres: region.geography?.surfaceSquareMetres ?? null,
+    })),
   );
-  const regionalPayments = regions.reduce((total, region) => total + region.value, 0);
-  const nationalPerSquareKm = regionalSurfaceSquareKilometres > 0
-    ? regionalPayments / regionalSurfaceSquareKilometres
-    : null;
+  const nationalPerSquareKm = nationalPerSquareKmCents === null ? null : nationalPerSquareKmCents / 100;
   const metricValue = (region: typeof regions[number]): number | null => metric === "totale"
     ? region.value
     : metric === "per-km2"
@@ -359,13 +359,19 @@ export default async function TerritoriesPage({
                 </tr>
               </thead>
               {regionsByArea.map(({ area, regions: areaRegions, summary }) => {
-                const areaSurfaceSquareKilometres = areaRegions.reduce(
-                  (total, region) => total + (region.geography?.surfaceSquareKilometres ?? 0),
-                  0,
-                );
-                const areaPerSquareKm = areaSurfaceSquareKilometres > 0
-                  ? summary.value / areaSurfaceSquareKilometres
+                const areaSurfaceSquareKilometres = areaRegions.every((region) => region.geography !== null)
+                  ? areaRegions.reduce(
+                      (total, region) => total + (region.geography?.surfaceSquareKilometres ?? 0),
+                      0,
+                    )
                   : null;
+                const areaPerSquareKmCents = centsPerSquareKilometreForCompleteCoverage(
+                  areaRegions.map((region) => ({
+                    amountCents: Math.round(region.value * 100),
+                    surfaceSquareMetres: region.geography?.surfaceSquareMetres ?? null,
+                  })),
+                );
+                const areaPerSquareKm = areaPerSquareKmCents === null ? null : areaPerSquareKmCents / 100;
                 return <tbody key={area}>
                   <tr className={styles.areaRow}>
                     <th scope="rowgroup">{area}</th>
@@ -379,7 +385,9 @@ export default async function TerritoriesPage({
                     <td className="num">{compactEuroLike(summary.value, regionScale)}</td>
                     <td className="num">
                       {metric === "per-km2"
-                        ? `${areaSurfaceSquareKilometres.toLocaleString("it-IT", { maximumFractionDigits: 1 })} km²`
+                        ? areaSurfaceSquareKilometres === null
+                          ? "n.d."
+                          : `${areaSurfaceSquareKilometres.toLocaleString("it-IT", { maximumFractionDigits: 1 })} km²`
                         : summary.population === null ? "n.d." : integer(summary.population)}
                     </td>
                     <td className="num">
@@ -431,7 +439,7 @@ export default async function TerritoriesPage({
         <p className={styles.note}>Nota di metodo: {data.methodology.warning}</p>
         <p className={styles.note}>
           {metric === "per-km2"
-            ? "La superficie viene dallo snapshot annuale ISTAT SITUAS e deve essere positiva. Il totale SIOPE resta sempre visibile per permettere la riconciliazione."
+            ? "La superficie viene dallo snapshot annuale ISTAT SITUAS e deve essere positiva. I valori aggregati per km² sono disponibili soltanto quando ogni Regione del totale ha una geografia compatibile, così numeratore e denominatore mantengono la stessa copertura."
             : metric === "per-abitante"
               ? `Copertura pro capite: ${data.methodology.perCapitaCoverage}.`
               : "Il totale non usa un denominatore; comprende i pagamenti osservati nel periodo selezionato."}
@@ -500,7 +508,11 @@ export default async function TerritoriesPage({
         </form>
 
         <div className={styles.resultsSummary} aria-live="polite">
-          <strong>{integer(filteredMunicipalities.length)} Comuni trovati</strong>
+          <strong>{integer(filteredMunicipalities.length)} Comuni trovati nel perimetro</strong>
+          <span>
+            Il perimetro comprende {integer(observations.length)} Comuni con movimenti SIOPE e superficie ISTAT valida;
+            {` `}{integer(Math.max(0, data.coverage.withMovements - observations.length))} Comuni con movimenti sono esclusi perché privi di geografia compatibile.
+          </span>
           <span>{topMunicipalities.length > 0 ? `Mostriamo i primi ${topMunicipalities.length} per ${METRIC_LABELS[metric].toLocaleLowerCase("it-IT")}.` : "Modifica i filtri per ampliare il confronto."}</span>
         </div>
 

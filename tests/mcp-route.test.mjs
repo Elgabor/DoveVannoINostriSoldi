@@ -63,13 +63,34 @@ test("MCP endpoint preserves CORS across an internal same-origin rewrite", () =>
   const response = OPTIONS(new Request("http://localhost:3210/api/mcp", {
     method: "OPTIONS",
     headers: {
-      Host: "127.0.0.1:3210",
       Origin: "http://127.0.0.1:3210",
       "Access-Control-Request-Method": "POST",
     },
   }));
   assert.equal(response.status, 204);
   assert.equal(response.headers.get("access-control-allow-origin"), "http://127.0.0.1:3210");
+
+  const differentPort = OPTIONS(new Request("http://localhost:3210/api/mcp", {
+    method: "OPTIONS",
+    headers: {
+      Origin: "http://127.0.0.1:3211",
+      "Access-Control-Request-Method": "POST",
+    },
+  }));
+  assert.equal(differentPort.status, 403);
+  assert.equal(differentPort.headers.get("access-control-allow-origin"), null);
+
+  for (const origin of ["https://127.0.0.1:3210", "http://attacker.invalid"]) {
+    const rejected = OPTIONS(new Request("http://localhost:3210/api/mcp", {
+      method: "OPTIONS",
+      headers: {
+        Origin: origin,
+        "Access-Control-Request-Method": "POST",
+      },
+    }));
+    assert.equal(rejected.status, 403, origin);
+    assert.equal(rejected.headers.get("access-control-allow-origin"), null, origin);
+  }
 });
 
 test("MCP endpoint rejects optional SSE GET without returning cacheable HTML", async () => {

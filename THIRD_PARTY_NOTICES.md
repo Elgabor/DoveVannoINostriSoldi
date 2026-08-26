@@ -155,3 +155,13 @@ Attribution: `Banca d'Italia, Finanza pubblica: fabbisogno e debito. Selected se
 - **Changes:** five annual observations are converted from millions of euro to integer cents; the conversion does not add cent-level measurement precision and the interest share is derived with half-up rounding.
 
 Attribution: `Eurostat, Government revenue, expenditure and main aggregates. Data adapted by DoveVannoINostriSoldi.`
+
+## Atlante Imprese Italia aggregate data
+
+- **Works:** stock of active enterprises, active employees and local units, and production-value bands;
+- **Publisher:** Camera di Commercio delle Marche, using InfoCamere data;
+- **Sources:** [active enterprises](https://opendata.marche.camcom.it/data/Stock-Imprese-Attive-Italia.json), [employees and active local units](https://opendata.marche.camcom.it/data/2026-Q2-Addetti-Localizzazioni-Attive-Italia.csv), and [production-value bands](https://opendata.marche.camcom.it/data/Stock-Imprese-Attive-Italia-Valore-Produzione.json);
+- **License:** CC BY 4.0 as declared by the source pages;
+- **Changes:** JSON-stat and CSV releases are normalized to aggregate region × ATECO 2025 observations. The hierarchical workforce file is reduced to one canonical division row per province before regional aggregation. Production values remain bands. No names, company identifiers, addresses or exact turnover are included.
+
+Attribution: `Camera di Commercio delle Marche / InfoCamere, aggregate enterprise data, CC BY 4.0. Adapted by DoveVannoINostriSoldi.`

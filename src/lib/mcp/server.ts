@@ -40,6 +40,15 @@ const querySchema = z.object({
   chamber: z.enum(["camera", "senato"])
     .describe("Ramo del Parlamento: camera oppure senato.")
     .optional(),
+  period: z.string().max(20)
+    .describe("Periodo dichiarato dal dataset, per esempio 2026-07-31 o 2026-Q2.")
+    .optional(),
+  sector: z.string().max(20)
+    .describe("Codice della sezione ATECO accettato dal dataset selezionato.")
+    .optional(),
+  band: z.string().max(30)
+    .describe("Codice della fascia di valore della produzione, solo per il dataset che la dichiara.")
+    .optional(),
   limit: z.number().int().min(1).max(100)
     .describe("Numero massimo di record da restituire, da 1 a 100, solo per dataset che supportano limit.")
     .optional(),

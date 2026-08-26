@@ -18,6 +18,17 @@ export type NavSection = Readonly<{
 export const PRIMARY_NAV: readonly NavSection[] = [
   { href: "/", label: "Home" },
   {
+    href: "/imprese",
+    label: "Imprese",
+    children: [
+      { href: "/imprese", label: "Panoramica" },
+      { href: "/imprese?metric=active_enterprises", label: "Imprese attive" },
+      { href: "/imprese?metric=employees", label: "Addetti" },
+      { href: "/imprese?metric=active_local_units", label: "Localizzazioni attive" },
+      { href: "/imprese?metric=production_value_band_count", label: "Valore della produzione" },
+    ],
+  },
+  {
     href: "/spese",
     label: "Soldi",
     aliases: ["/stato"],
@@ -104,6 +115,16 @@ export const PRIMARY_NAV: readonly NavSection[] = [
 
 export const SITE_MAP_GROUPS: readonly { title: string; links: readonly NavLink[] }[] = [
   { title: "Home", links: [{ href: "/", label: "Home" }] },
+  {
+    title: "Imprese",
+    links: [
+      { href: "/imprese", label: "Panoramica" },
+      { href: "/imprese?metric=active_enterprises", label: "Imprese attive" },
+      { href: "/imprese?metric=employees", label: "Addetti" },
+      { href: "/imprese?metric=active_local_units", label: "Localizzazioni attive" },
+      { href: "/imprese?metric=production_value_band_count", label: "Valore della produzione" },
+    ],
+  },
   {
     title: "Soldi",
     links: [

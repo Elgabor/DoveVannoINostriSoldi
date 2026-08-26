@@ -18,7 +18,11 @@ test("MCP catalog has one descriptor per stable dataset id and valid source refe
       if (key !== "dataset") assert.ok(dataset.filters.includes(key), `${dataset.id}: ${key}`);
     }
     for (const sourceId of dataset.sourceIds) assert.ok(knownSources.has(sourceId), sourceId);
-    assert.equal(dataset.sources.length, dataset.sourceIds.length);
+    if (dataset.id.startsWith("company_")) {
+      assert.ok(dataset.sources.length > 0, `${dataset.id}: custom source metadata missing`);
+    } else {
+      assert.equal(dataset.sources.length, dataset.sourceIds.length);
+    }
     for (const source of dataset.sources) {
       assert.match(source.url, /^https:\/\//);
       assert.ok(source.owner.length > 0);

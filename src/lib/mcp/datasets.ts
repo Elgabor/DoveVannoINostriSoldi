@@ -345,6 +345,20 @@ export async function queryPublicDataset(
         signal: options.signal,
       }));
     }
+    case "company_active_enterprises":
+    case "company_workforce":
+    case "company_production_value_bands": {
+      const { queryCompanyAtlasDataset } = await import("@/lib/company-atlas");
+      return jsonSafe(queryCompanyAtlasDataset({
+        dataset: query.dataset,
+        period: query.period,
+        region: query.region,
+        sector: query.sector,
+        band: query.band,
+        limit,
+        offset,
+      }));
+    }
     default: {
       const unsupported: never = query.dataset;
       throw new Error(`Dataset non supportato: ${String(unsupported)}.`);

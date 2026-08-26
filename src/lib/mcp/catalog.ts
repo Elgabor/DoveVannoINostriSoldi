@@ -27,9 +27,18 @@ export const DATASET_IDS = [
   "debito_pubblico_italiano",
   "registro_fonti",
   "spesa_pa_dettaglio",
+  "company_active_enterprises",
+  "company_workforce",
+  "company_production_value_bands",
 ] as const;
 
 export type DatasetId = (typeof DATASET_IDS)[number];
+
+export const BUSINESS_DATASET_IDS = [
+  "company_active_enterprises",
+  "company_workforce",
+  "company_production_value_bands",
+] as const;
 
 export type DatasetQuery = {
   dataset: DatasetId;
@@ -43,6 +52,9 @@ export type DatasetQuery = {
   cup?: string;
   area?: string;
   chamber?: "camera" | "senato";
+  period?: string;
+  sector?: string;
+  band?: string;
   limit?: number;
   offset?: number;
   cursor?: string;
@@ -54,11 +66,12 @@ export type DatasetDescriptor = {
   summary: string;
   sourceIds: SourceId[];
   sources: Array<{
-    id: SourceId;
+    id: string;
     name: string;
     owner: string;
     url: string;
     cadence: string;
+    license?: string;
   }>;
   freshness: "snapshot" | "live";
   filters: string[];
@@ -66,7 +79,9 @@ export type DatasetDescriptor = {
   caveat?: string;
 };
 
-type DatasetDescriptorInput = Omit<DatasetDescriptor, "sources" | "exampleQuery">;
+type DatasetDescriptorInput = Omit<DatasetDescriptor, "sources" | "exampleQuery"> & {
+  customSources?: DatasetDescriptor["sources"];
+};
 
 const sourceById = new Map(publicSources.map((source) => [source.slug, source]));
 
@@ -104,7 +119,54 @@ const exampleQueries = {
     code: "consulenze-legali",
     limit: 20,
   },
+  company_active_enterprises: {
+    dataset: "company_active_enterprises",
+    period: "2026-07-31",
+    region: "03",
+    sector: "G",
+    limit: 20,
+  },
+  company_workforce: {
+    dataset: "company_workforce",
+    period: "2026-Q2",
+    region: "03",
+    sector: "C",
+    limit: 20,
+  },
+  company_production_value_bands: {
+    dataset: "company_production_value_bands",
+    period: "2025-12-31",
+    band: "50M_OVER",
+    limit: 20,
+  },
 } as const satisfies Record<DatasetId, DatasetQuery>;
+
+const COMPANY_ATLAS_SOURCES: DatasetDescriptor["sources"] = [
+  {
+    id: "active-stock",
+    name: "Stock imprese attive",
+    owner: "CCIAA Marche · InfoCamere",
+    url: "https://opendata.marche.camcom.it/data/Stock-Imprese-Attive-Italia.json",
+    cadence: "mensile",
+    license: "CC BY 4.0",
+  },
+  {
+    id: "workforce",
+    name: "Addetti e localizzazioni attive",
+    owner: "CCIAA Marche · InfoCamere",
+    url: "https://opendata.marche.camcom.it/data/2026-Q2-Addetti-Localizzazioni-Attive-Italia.csv",
+    cadence: "trimestrale",
+    license: "CC BY 4.0",
+  },
+  {
+    id: "production-value",
+    name: "Fasce di valore della produzione",
+    owner: "CCIAA Marche · InfoCamere",
+    url: "https://opendata.marche.camcom.it/data/Stock-Imprese-Attive-Italia-Valore-Produzione.json",
+    cadence: "annuale",
+    license: "CC BY 4.0",
+  },
+];
 
 const datasetDescriptors: DatasetDescriptorInput[] = [
   { id: "siope_comuni", title: "Pagamenti dei Comuni", summary: "Pagamenti di cassa SIOPE, serie mensile, titoli, regioni e principali Comuni, con normalizzazione territoriale ISTAT.", sourceIds: ["siope", "ipa", "istat"], freshness: "snapshot", filters: ["year", "region"], caveat: "I totali nazionali includono gli enti riconosciuti come Comuni in SIOPE; gli aggregati regionali coprono soltanto quelli abbinati tramite IPA e dichiarano conteggi e importi non regionalizzabili. Il campo distribution completo è disponibile solo nella risposta nazionale; le liste comunali contengono i primi 100 nazionali per totale, pro capite o km². Le normalizzazioni sono descrittive e non misurano efficienza, qualità o fabbisogno." },
@@ -140,20 +202,59 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
     caveat:
       "code è l’identificativo restituito dal catalogo /dati. cursor continua una scansione limitata ed è legato a dataset, rilascio e ricerca; offset resta compatibile soltanto senza ricerca testuale. Importi mancanti e zero restano distinti; segnali, confronti e documenti mancanti non dimostrano automaticamente spreco o illecito.",
   },
+  {
+    id: "company_active_enterprises",
+    title: "Atlante imprese attive",
+    summary: "Stock mensile delle sedi di impresa attive per regione e sezione ATECO 2025.",
+    sourceIds: [],
+    customSources: [COMPANY_ATLAS_SOURCES[0]!],
+    freshness: "snapshot",
+    filters: ["period", "region", "sector", "limit", "offset"],
+    caveat: "Sono aggregati regionali di sedi attive, non un registro di aziende con nome, identificativo o ricavi.",
+  },
+  {
+    id: "company_workforce",
+    title: "Atlante addetti e localizzazioni",
+    summary: "Addetti e localizzazioni attive aggregati per regione e sezione ATECO 2025.",
+    sourceIds: [],
+    customSources: [COMPANY_ATLAS_SOURCES[1]!],
+    freshness: "snapshot",
+    filters: ["period", "region", "sector", "limit", "offset"],
+    caveat: "Il CSV sorgente è gerarchico; il refresh seleziona una riga canonica per divisione e provincia per evitare doppio conteggio.",
+  },
+  {
+    id: "company_production_value_bands",
+    title: "Atlante per fasce di valore della produzione",
+    summary: "Conteggi per fascia di valore della produzione dichiarata nei bilanci, per regione e settore.",
+    sourceIds: [],
+    customSources: [COMPANY_ATLAS_SOURCES[2]!],
+    freshness: "snapshot",
+    filters: ["period", "region", "sector", "band", "limit", "offset"],
+    caveat: "Le fasce non sono fatturato o ricavi esatti e non identificano singole aziende.",
+  },
 ];
 
-export const datasetCatalog: DatasetDescriptor[] = datasetDescriptors.map((dataset) => ({
-  ...dataset,
-  exampleQuery: exampleQueries[dataset.id],
-  sources: dataset.sourceIds.map((sourceId) => {
-    const source = sourceById.get(sourceId);
-    if (!source) throw new Error(`Fonte MCP non registrata: ${sourceId}`);
-    return {
-      id: sourceId,
-      name: source.name,
-      owner: source.owner,
-      url: source.url,
-      cadence: source.cadence,
-    };
-  }),
-}));
+export const datasetCatalog: DatasetDescriptor[] = datasetDescriptors.map((dataset) => {
+  const { customSources, ...descriptor } = dataset;
+  return {
+    ...descriptor,
+    exampleQuery: exampleQueries[dataset.id],
+    sources: customSources ?? dataset.sourceIds.map((sourceId) => {
+      const source = sourceById.get(sourceId);
+      if (!source) throw new Error(`Fonte MCP non registrata: ${sourceId}`);
+      return {
+        id: sourceId,
+        name: source.name,
+        owner: source.owner,
+        url: source.url,
+        cadence: source.cadence,
+      };
+    }),
+  };
+});
+
+const businessDatasetIdSet = new Set<string>(BUSINESS_DATASET_IDS);
+
+export const businessDatasetCatalog = datasetCatalog.filter((dataset) =>
+  businessDatasetIdSet.has(dataset.id),
+);

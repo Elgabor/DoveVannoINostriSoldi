@@ -666,12 +666,10 @@ await waitForServer(baseUrl);
 const debtApiResponse = await fetch(new URL("/api/debito", baseUrl));
 assert.equal(debtApiResponse.status, 200, "Debito API: risposta iniziale non valida");
 const debtApi = await debtApiResponse.json();
-const debtExact = new Intl.NumberFormat("it-IT", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 2,
+const debtSourceMillions = new Intl.NumberFormat("it-IT", {
+  maximumFractionDigits: 3,
   useGrouping: "always",
-}).format(debtApi.stock.totalCents / 100);
+}).format(debtApi.stock.totalCents / 100_000_000);
 const debtReferenceDate = new Intl.DateTimeFormat("it-IT", {
   day: "numeric",
   month: "long",
@@ -882,7 +880,7 @@ try {
         const text = await bodyText(page);
         assertTextMatches(text, /Quanto debito c’è/i, label);
         assertTextMatches(text, /Come può incidere sulla tua vita/i, label);
-        assertTextMatches(text, new RegExp(debtExact.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), label);
+        assertTextMatches(text, new RegExp(`${debtSourceMillions.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} milioni di euro nella fonte`), label);
         assertTextMatches(text, new RegExp(debtReferenceDate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"), label);
         assertTextMatches(text, /Netto significa emissioni meno rimborsi/i, label);
         assert.equal(await page.$$eval("h1", (items) => items.length), 1);
@@ -910,7 +908,7 @@ try {
           await chartSummary.focus();
           await page.keyboard.press("Enter");
           assert.equal(await chartSummary.evaluate((element) => element.parentElement?.open), true);
-          assert.match(await chartSummary.evaluate((element) => element.parentElement?.innerText ?? ""), /Debito esatto/i);
+          assert.match(await chartSummary.evaluate((element) => element.parentElement?.innerText ?? ""), /Debito convertito in euro/i);
           const session = await page.createCDPSession();
           try {
             await session.send("Accessibility.enable");
@@ -919,7 +917,6 @@ try {
             assert.ok(headingNames.includes("1. Quanto debito c’è?"), `${label}: primo titolo assente dall'albero accessibile`);
             assert.ok(headingNames.includes("7. Come può incidere sulla tua vita?"), `${label}: settimo titolo assente dall'albero accessibile`);
             assert.ok(nodes.filter((node) => node.role?.value === "table").length >= 5, `${label}: tabelle assenti dall'albero accessibile`);
-            assert.ok(nodes.some((node) => node.name?.value === debtExact), `${label}: totale esatto assente dall'albero accessibile`);
           } finally {
             await session.detach();
           }

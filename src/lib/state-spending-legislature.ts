@@ -154,8 +154,14 @@ export async function getLegislatureSpendingCycles(
   if (!Number.isFinite(requestedDeadline) || requestedDeadline <= 0) {
     throw new Error("Budget temporale OpenBDAP non valido");
   }
-  const deadline = AbortSignal.timeout(Math.trunc(requestedDeadline));
-  const signal = options.signal ? AbortSignal.any([options.signal, deadline]) : deadline;
+  const deadlineController = new AbortController();
+  const deadlineTimer = setTimeout(
+    () => deadlineController.abort(new DOMException("Budget temporale OpenBDAP esaurito", "TimeoutError")),
+    Math.trunc(requestedDeadline),
+  );
+  const signal = options.signal
+    ? AbortSignal.any([options.signal, deadlineController.signal])
+    : deadlineController.signal;
   const plans = LEGISLATURES.map((legislature, index) => {
     const next = LEGISLATURES[index + 1];
     const nextElectionYear = next ? Number(next.electionDate.slice(0, 4)) : null;
@@ -167,15 +173,20 @@ export async function getLegislatureSpendingCycles(
     };
   });
   const allYears = plans.flatMap((plan) => plan.candidateYears);
-  const totals = await withAbort(
-    Promise.resolve().then(() =>
-      (options.loadTotals ?? getStateSpendingTotalsForYears)(allYears, {
-        signal,
-        concurrency: STATE_SPENDING_HISTORY_MAX_CONCURRENCY,
-      }),
-    ),
-    signal,
-  );
+  let totals: Map<number, StateAnnualSpendingTotal>;
+  try {
+    totals = await withAbort(
+      Promise.resolve().then(() =>
+        (options.loadTotals ?? getStateSpendingTotalsForYears)(allYears, {
+          signal,
+          concurrency: STATE_SPENDING_HISTORY_MAX_CONCURRENCY,
+        }),
+      ),
+      signal,
+    );
+  } finally {
+    clearTimeout(deadlineTimer);
+  }
 
   return plans.map(({ legislature, candidateYears }) => {
     // Only a truly empty range skips the fetch entirely (nothing to show). A legislature

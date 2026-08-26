@@ -6,7 +6,7 @@ process.env.MCP_ALLOWED_HOSTS = [process.env.MCP_ALLOWED_HOSTS, "example.test"]
   .filter(Boolean)
   .join(",");
 
-const { OPTIONS, POST } = await import("../src/app/api/mcp/route.ts");
+const { GET, OPTIONS, POST } = await import("../src/app/api/mcp/route.ts");
 const loader = await import("../src/lib/integrated-sources.ts");
 
 const requestBody = JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" });
@@ -57,6 +57,30 @@ test("MCP endpoint answers browser preflight only for an allowed origin", async 
   }));
   assert.equal(rejected.status, 403);
   assert.equal(rejected.headers.get("access-control-allow-origin"), null);
+});
+
+test("MCP endpoint preserves CORS across an internal same-origin rewrite", () => {
+  const response = OPTIONS(new Request("http://localhost:3210/api/mcp", {
+    method: "OPTIONS",
+    headers: {
+      Host: "127.0.0.1:3210",
+      Origin: "http://127.0.0.1:3210",
+      "Access-Control-Request-Method": "POST",
+    },
+  }));
+  assert.equal(response.status, 204);
+  assert.equal(response.headers.get("access-control-allow-origin"), "http://127.0.0.1:3210");
+});
+
+test("MCP endpoint rejects optional SSE GET without returning cacheable HTML", async () => {
+  const response = GET(new Request("https://example.test/api/mcp", {
+    headers: { Accept: "text/event-stream" },
+  }));
+  assert.equal(response.status, 405);
+  assert.equal(response.headers.get("allow"), "POST, OPTIONS");
+  assert.equal(response.headers.get("cache-control"), "private, no-store");
+  assert.equal(response.headers.get("content-type"), "application/json");
+  assert.match(await response.text(), /Streamable HTTP tramite POST/);
 });
 
 test("MCP endpoint enforces an explicit host allowlist", async () => {

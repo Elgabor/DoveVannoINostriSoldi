@@ -87,7 +87,7 @@ export function Navigation() {
 
         <div className="header-actions">
           <Link className="header-action header-action-accent" href="/mcp">
-            MCP
+            Istruzioni MCP
           </Link>
           <a
             className="header-action header-action-icon"

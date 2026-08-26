@@ -75,7 +75,7 @@ export function SiteFooter({ latestTerritorialCheckLabel }: SiteFooterProps) {
           Codice su GitHub ↗
         </a>
         <Link className="footer-link" href="/mcp">
-          MCP
+          Istruzioni MCP
         </Link>
       </div>
       <div className="footer-row">

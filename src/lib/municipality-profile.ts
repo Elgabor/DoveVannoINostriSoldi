@@ -94,7 +94,9 @@ function quantiles(values: number[]): { p25: number; median: number; p75: number
 
 function peerBenchmark(taxCode: string, geography: MunicipalityGeography): MunicipalityPeerBenchmark | null {
   const observations = getSiopeMunicipalityPeerObservations(geography.year)
-    .filter((item) => item.taxCode !== taxCode);
+    .filter((item) =>
+      item.taxCode !== taxCode && item.geography.populationYear === geography.populationYear,
+    );
   const samePopulation = (item: typeof observations[number]) =>
     populationBand(item.geography.residentPopulation) === populationBand(geography.residentPopulation);
   const sameSurface = (item: typeof observations[number]) =>

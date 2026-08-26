@@ -182,6 +182,16 @@ export function aggregateEurosPerSquareKilometreCents(
   return eurosPerSquareKilometreCents(amountCents, surfaceSquareMetres);
 }
 
+/**
+ * Backwards-compatible name used by the first territorial UI implementation.
+ * Keep the same fail-closed validation as the canonical aggregate helper.
+ */
+export function centsPerSquareKilometreForCompleteCoverage(
+  rows: readonly Readonly<{ amountCents: number; surfaceSquareMetres: number | null }>[],
+): number | null {
+  return aggregateEurosPerSquareKilometreCents(rows);
+}
+
 export function populationBand(population: number | null): string | null {
   if (population === null) return null;
   if (population < 1_000) return "Meno di 1.000 abitanti";

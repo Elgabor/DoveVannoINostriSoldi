@@ -141,7 +141,7 @@ export function MunicipalityEconomics({ profile }: { profile: MunicipalityProfil
                   {peer.peers} Comuni confrontabili · {peer.criteria.join(", ")} · dati SIOPE {peer.year};{" "}
                   {peer.populationYear === null
                     ? "ultima popolazione ISTAT disponibile, anno non dichiarato"
-                    : `popolazione ISTAT ${peer.populationYear}`}.
+                    : `Popolazione ISTAT ${peer.populationYear}`}.
                 </p>
               </div>
               <span className="tag tag-neutral">{peer.year}</span>

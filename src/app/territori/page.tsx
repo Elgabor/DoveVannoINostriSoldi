@@ -16,6 +16,7 @@ import {
 } from "@/lib/siope-municipality-detail";
 import {
   aggregateEurosPerSquareKilometreCents,
+  centsPerSquareKilometreForCompleteCoverage,
   eurosPerSquareKilometreCents,
   getRegionGeography,
 } from "@/lib/municipality-geography";
@@ -26,7 +27,7 @@ import styles from "./territori.module.css";
 export const metadata: Metadata = {
   title: "Territori",
   description:
-    "Pagamenti effettuati dai Comuni, regione per regione: totali, valori per abitante, valori per km² e copertura dei Comuni con dati SIOPE e superficie ISTAT.",
+    "Pagamenti effettuati dai Comuni, regione per regione: valori per abitante, per km², totali. La pagina espone anche valori per km² e copertura dei Comuni con dati SIOPE e superficie ISTAT.",
 };
 
 function selectedYear(value: string | string[] | undefined): number {
@@ -375,16 +376,19 @@ export default async function TerritoriesPage({
                 </tr>
               </thead>
               {regionsByArea.map(({ area, regions: areaRegions, summary }) => {
-                const hasCompleteAreaGeography = areaRegions.every((region) => region.geography !== null);
-                const areaSurfaceSquareKilometres = hasCompleteAreaGeography
+                const areaSurfaceSquareKilometres = areaRegions.every((region) => region.geography !== null)
                   ? areaRegions.reduce(
-                    (total, region) => total + region.geography!.surfaceSquareKilometres,
-                    0,
-                  )
+                      (total, region) => total + region.geography!.surfaceSquareKilometres,
+                      0,
+                    )
                   : null;
-                const areaPerSquareKm = areaSurfaceSquareKilometres !== null && areaSurfaceSquareKilometres > 0
-                  ? summary.value / areaSurfaceSquareKilometres
-                  : null;
+                const areaPerSquareKmCents = centsPerSquareKilometreForCompleteCoverage(
+                  areaRegions.map((region) => ({
+                    amountCents: Math.round(region.value * 100),
+                    surfaceSquareMetres: region.geography?.surfaceSquareMetres ?? null,
+                  })),
+                );
+                const areaPerSquareKm = areaPerSquareKmCents === null ? null : areaPerSquareKmCents / 100;
                 return <tbody key={area}>
                   <tr className={styles.areaRow}>
                     <th scope="rowgroup">{area}</th>
@@ -452,7 +456,7 @@ export default async function TerritoriesPage({
         <p className={styles.note}>Nota di metodo: {data.methodology.warning}</p>
         <p className={styles.note}>
           {metric === "per-km2"
-            ? "La superficie viene dallo snapshot annuale ISTAT SITUAS e deve essere positiva. Il totale SIOPE resta sempre visibile per permettere la riconciliazione."
+            ? "La superficie viene dallo snapshot annuale ISTAT SITUAS e deve essere positiva. I valori aggregati per km² sono disponibili soltanto quando ogni Regione del totale ha una geografia compatibile, così numeratore e denominatore mantengono la stessa copertura; il totale SIOPE resta sempre visibile per permettere la riconciliazione."
             : metric === "per-abitante"
               ? `Copertura pro capite: ${data.methodology.perCapitaCoverage}.`
               : "Il totale non usa un denominatore; comprende i pagamenti osservati nel periodo selezionato."}
@@ -523,13 +527,12 @@ export default async function TerritoriesPage({
         </form>
 
         <div className={styles.resultsSummary} aria-live="polite">
-          <strong>{integer(filteredMunicipalities.length)} Comuni trovati</strong>
+          <strong>{integer(filteredMunicipalities.length)} Comuni trovati nel perimetro</strong>
           <span>
-            {topMunicipalities.length > 0
-              ? `Mostriamo i primi ${topMunicipalities.length} per ${METRIC_LABELS[metric].toLocaleLowerCase("it-IT")}.`
-              : "Modifica i filtri per ampliare il confronto."} {" "}
-            {`Il perimetro comprende ${integer(municipalityCoverage.withMovementsAndGeography)} Comuni con movimenti e superficie ISTAT disponibile; esclude ${integer(municipalityCoverage.withoutMovements)} senza movimenti e ${integer(municipalityCoverage.withMovementsWithoutGeography)} senza superficie ISTAT abbinata.`}
+            Il perimetro comprende {integer(municipalityCoverage.withMovementsAndGeography)} Comuni con movimenti e superficie ISTAT disponibile: sono i Comuni con movimenti SIOPE e superficie ISTAT valida;
+            {` `}esclude {integer(municipalityCoverage.withoutMovements)} senza movimenti e {integer(municipalityCoverage.withMovementsWithoutGeography)} senza superficie ISTAT abbinata.
           </span>
+          <span>{topMunicipalities.length > 0 ? `Mostriamo i primi ${topMunicipalities.length} per ${METRIC_LABELS[metric].toLocaleLowerCase("it-IT")}.` : "Modifica i filtri per ampliare il confronto."}</span>
         </div>
 
         <div className="table-scroll" role="region" aria-label={`Comuni ordinati ${METRIC_LABELS[metric]}; scorri orizzontalmente per vedere tutte le colonne`} tabIndex={0}>

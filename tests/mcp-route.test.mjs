@@ -346,6 +346,22 @@ test("MCP list tool declares no-auth access and a structured output contract", a
   );
 });
 
+test("MCP tools declare consistent read-only annotations (Manufact tool-hints-present)", async () => {
+  const response = await POST(request({ Origin: "https://example.test" }));
+  const rpcEvent = parseRpcEvent(await response.text());
+  for (const name of ["list_datasets", "query_dataset"]) {
+    const tool = rpcEvent.result.tools.find((entry) => entry.name === name);
+    assert.ok(tool, `${name} tool missing`);
+    assert.equal(tool.annotations?.readOnlyHint, true, `${name} must remain read-only`);
+    assert.equal(
+      tool.annotations?.openWorldHint,
+      false,
+      `${name} reads internal sources only: openWorldHint true contradicts readOnlyHint`,
+    );
+    assert.equal(tool.annotations?.destructiveHint, false, `${name} must not be destructive`);
+  }
+});
+
 test("MCP endpoint exposes the machine-readable dataset catalog resource", async () => {
   const response = await POST(request({}, JSON.stringify({
     jsonrpc: "2.0",

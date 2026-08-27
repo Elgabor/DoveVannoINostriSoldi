@@ -654,6 +654,28 @@
       "trustModel": "The committed snapshot is derived from the official ISTAT Frame Territoriale Anticipato 2024 release (CC BY 4.0). The offline check validates exact 20-region coverage, macro-sector totals and reconciliations, strict ATECO 2007 agg. 2022 taxonomy, unit invariants in thousands of euros, official Campania and national turnover parity, and zero nominal/company-level data."
     },
     {
+      "id": "education-atlas",
+      "owner": "Atlante Istruzione MIM aggregate snapshot",
+      "files": [
+        "src/data/generated/education-atlas-snapshot.json"
+      ],
+      "verificationMode": "online-refresh",
+      "offlineCheck": {
+        "command": "python3 scripts/etl/education_atlas_snapshot.py --check",
+        "coveredBy": "standalone"
+      },
+      "reconciliationTests": [],
+      "nodeTests": [
+        "tests/education-atlas.test.mjs"
+      ],
+      "generator": {
+        "command": "python3 scripts/etl/education_atlas_snapshot.py",
+        "requiresNetworkInput": true
+      },
+      "refreshWorkflow": null,
+      "trustModel": "The committed snapshot is derived from official MIM IODL 2.0 CSV releases. The offline check validates source hashes, schema, duplicate protection, school-code joins, regional coverage gaps, student/gender reconciliations and the aggregate-only boundary; a future refresh must be reviewed before publication."
+    },
+    {
       "id": "source-ledger-proofs",
       "owner": "Source ledger integrity proofs",
       "files": [

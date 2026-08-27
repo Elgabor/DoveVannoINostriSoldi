@@ -1,5 +1,6 @@
 import type { SourceId } from "@/lib/data/source-policy";
 import { MEF_IRPEF_SOURCE } from "@/lib/data/mef-irpef-source";
+import { educationAtlasSources } from "@/lib/education-atlas-metadata";
 import { INTEGRATED_CORPUS_CONTRACT } from "@/lib/integrated-source-contract";
 import { companyAtlasSources } from "@/lib/company-atlas-metadata";
 import { publicSources } from "@/lib/sources";
@@ -33,6 +34,7 @@ export const DATASET_IDS = [
   "company_workforce",
   "company_production_value_bands",
   "company_turnover_istat",
+  "education_students_by_pathway",
 ] as const;
 
 export type DatasetId = (typeof DATASET_IDS)[number];
@@ -42,6 +44,10 @@ export const BUSINESS_DATASET_IDS = [
   "company_workforce",
   "company_production_value_bands",
   "company_turnover_istat",
+] as const;
+
+export const EDUCATION_DATASET_IDS = [
+  "education_students_by_pathway",
 ] as const;
 
 export type DatasetQuery = {
@@ -60,6 +66,8 @@ export type DatasetQuery = {
   sector?: string;
   band?: string;
   years?: number;
+  schoolType?: string;
+  pathway?: string;
   limit?: number;
   offset?: number;
   cursor?: string;
@@ -150,6 +158,14 @@ const exampleQueries = {
     period: "2024",
     region: "15",
     sector: "INDUSTRIA",
+    limit: 20,
+  },
+  education_students_by_pathway: {
+    dataset: "education_students_by_pathway",
+    period: "202425",
+    region: "15",
+    schoolType: "state",
+    pathway: "SCIENTIFICO",
     limit: 20,
   },
 } as const satisfies Record<DatasetId, DatasetQuery>;
@@ -245,6 +261,23 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
     filters: ["period", "region", "sector", "limit", "offset"],
     caveat: "Dati aggregati per territorio e macro-settore ATECO 2007 agg. 2022 dal Registro Frame Territoriale Anticipato ISTAT 2024. Il perimetro copre le unità locali con almeno un dipendente (non l'universo delle sedi attive). I valori sono espressi in migliaia di euro; totale e macro-settori provengono da tavole pubblicate separatamente e piccole differenze tra somme e totale possono riflettere gli arrotondamenti della fonte. Non contiene dati nominativi, partite IVA o fatturati di singole aziende.",
   },
+  {
+    id: "education_students_by_pathway",
+    title: "Atlante istruzione: studenti per percorso",
+    summary: "Studenti aggregati della scuola secondaria di II grado per Regione, tipo di scuola, percorso e anno scolastico.",
+    sourceIds: [],
+    customSources: Object.values(educationAtlasSources).map((source) => ({
+      id: source.id,
+      name: source.label,
+      owner: source.publisher,
+      url: source.url,
+      cadence: source.cadence,
+      license: source.license,
+    })),
+    freshness: "snapshot",
+    filters: ["period", "region", "schoolType", "pathway", "limit", "offset"],
+    caveat: "Studenti aggregati per Regione e percorso nel file MIM. Le variazioni descrivono la presenza nel dato osservato: non misurano qualità, esiti, domanda futura o carenze occupazionali. Le Regioni assenti dalla fonte restano n.d. e non vengono imputate.",
+  },
 ];
 
 export const datasetCatalog: DatasetDescriptor[] = datasetDescriptors.map((dataset) => {
@@ -270,4 +303,10 @@ const businessDatasetIdSet = new Set<string>(BUSINESS_DATASET_IDS);
 
 export const businessDatasetCatalog = datasetCatalog.filter((dataset) =>
   businessDatasetIdSet.has(dataset.id),
+);
+
+const educationDatasetIdSet = new Set<string>(EDUCATION_DATASET_IDS);
+
+export const educationDatasetCatalog = datasetCatalog.filter((dataset) =>
+  educationDatasetIdSet.has(dataset.id),
 );

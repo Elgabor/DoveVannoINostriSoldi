@@ -106,6 +106,12 @@ const querySchema = z.object({
   years: z.number().int().min(2).max(20)
     .describe("Numero di Leggi di Bilancio più recenti da restituire, da 2 a 20, solo per il dataset che lo dichiara.")
     .optional(),
+  schoolType: z.string().max(30)
+    .describe("Tipo di scuola del dataset istruzione: state, paritaria oppure all.")
+    .optional(),
+  pathway: z.string().max(80)
+    .describe("Codice o etichetta del percorso di studio del dataset istruzione.")
+    .optional(),
   limit: z.number().int().min(1).max(100)
     .describe("Numero massimo di record da restituire, da 1 a 100, solo per dataset che supportano limit.")
     .optional(),

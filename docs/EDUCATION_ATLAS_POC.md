@@ -2,7 +2,8 @@
 
 Questo documento definisce il primo perimetro per aggiungere l'istruzione
 all'Atlante già integrato in DoveVannoINostriSoldi. Non introduce un nuovo
-nome di prodotto e non è ancora una PR applicativa.
+nome di prodotto. La prima implementazione è stata preparata localmente in un
+worktree separato; non è ancora una PR applicativa.
 
 ## Domanda
 
@@ -61,6 +62,21 @@ alla geografia effettivamente pubblicata. Questi dati hanno periodi e grane
 diverse dalla serie scolastica e non vengono fusi in un unico indicatore senza
 un contratto esplicito.
 
+## Implementazione locale della prima tranche
+
+La prima prova è ora disponibile nella route `/istruzione` e usa la stessa
+grammatica di Atlante Imprese: mappa regionale, filtri, classifica descrittiva,
+trend e fonte sempre visibile. Il filtro per percorso porta anche agli
+indirizzi di studio aggregati, mentre la card “Lacune della fonte” espone la
+copertura mancante senza trasformarla in un giudizio.
+
+Il generatore `scripts/etl/education_atlas_snapshot.py` scarica i dodici CSV
+MIM del triennio, verifica lo schema, normalizza i nomi regionali, fa il join
+su `CODICESCUOLA` e produce il solo aggregato committato in
+`src/data/generated/education-atlas-snapshot.json`. Il dataset è disponibile
+anche come `education_students_by_pathway` nel catalogo MCP, con paginazione,
+provenance e caveat.
+
 ## Prima UI
 
 La vista resta dentro Atlante e riusa la grammatica di Atlante Imprese:
@@ -112,6 +128,12 @@ Nel file statale, il totale studenti passa da 2.518.855 nel 2022/23 a
 `INDUSTRIA E ARTIGIANATO` crescono dell'11,38%, mentre `CLASSICO` diminuisce
 del 7,54%. Sono variazioni descrittive del file, non spiegazioni causali.
 
+Il primo snapshot locale contiene 108 osservazioni regionali, 1.086 per
+percorso e 6.677 per indirizzo. Tutti i 12 join anno/tipo scuola hanno avuto
+zero righe orfane. Le fonti, gli hash SHA-256 dei file e i conteggi di input
+sono conservati nel manifest dello snapshot; il controllo offline è eseguibile
+con `python3 scripts/etl/education_atlas_snapshot.py --check`.
+
 ## Fonti e condizioni
 
 - MIM pubblica il dataset degli indirizzi con periodicità annuale e licenza
@@ -125,9 +147,10 @@ del 7,54%. Sono variazioni descrittive del file, non spiegazioni causali.
 
 ## Stima di lavoro
 
-Stima operativa, non promessa di calendario:
+Stima operativa, non promessa di calendario. La prima voce è stata completata
+nel worktree locale:
 
-- audit e source lock MIM: 1–2 giorni di lavoro agente;
+- audit e source lock MIM: completati;
 - POC indirizzi + trend + UI + test: 3–5 giorni;
 - OpenCoesione, pagamenti/progetti e QA della PR: altri 3–5 giorni;
 - confronto istruzione/imprese con crosswalk documentato: 3–7 giorni

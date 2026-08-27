@@ -375,6 +375,18 @@ export async function queryPublicDataset(
         offset,
       }));
     }
+    case "education_students_by_pathway": {
+      const { queryEducationAtlasDataset } = await import("@/lib/education-atlas");
+      return jsonSafe(queryEducationAtlasDataset({
+        dataset: query.dataset,
+        period: query.period,
+        region: query.region,
+        schoolType: query.schoolType,
+        pathway: query.pathway,
+        limit,
+        offset,
+      }));
+    }
     default: {
       const unsupported: never = query.dataset;
       throw new Error(`Dataset non supportato: ${String(unsupported)}.`);

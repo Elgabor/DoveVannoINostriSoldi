@@ -7,9 +7,35 @@ process.env.MCP_ALLOWED_HOSTS = [process.env.MCP_ALLOWED_HOSTS, "example.test"]
   .join(",");
 
 const { GET, OPTIONS, POST } = await import("../src/app/api/mcp/route.ts");
+const { dvnsStarterPrompts } = await import("../src/lib/mcp/server.ts");
 const loader = await import("../src/lib/integrated-sources.ts");
 
 const requestBody = JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" });
+const expectedServerInfo = {
+  name: "dove-vanno-i-nostri-soldi",
+  title: "DoveVannoINostriSoldi",
+  version: "0.2.0",
+  websiteUrl: "https://www.dovevannoinostrisoldi.com",
+  description:
+    "Accesso read-only a dati pubblici italiani verificati, con fonti, periodi, copertura e caveat espliciti.",
+  icons: [
+    {
+      src: "https://www.dovevannoinostrisoldi.com/brand/icon-192.png",
+      mimeType: "image/png",
+      sizes: ["192x192"],
+    },
+    {
+      src: "https://www.dovevannoinostrisoldi.com/brand/icon-512.png",
+      mimeType: "image/png",
+      sizes: ["512x512"],
+    },
+    {
+      src: "https://www.dovevannoinostrisoldi.com/brand/icon-1024.png",
+      mimeType: "image/png",
+      sizes: ["1024x1024"],
+    },
+  ],
+};
 
 function request(headers = {}, body = requestBody) {
   return new Request("https://example.test/api/mcp", {
@@ -272,6 +298,10 @@ test("MCP query tool describes every input parameter for clients and directories
   const rpcEvent = parseRpcEvent(await response.text());
   const queryTool = rpcEvent.result.tools.find((tool) => tool.name === "query_dataset");
   assert.ok(queryTool, "query_dataset tool missing");
+  assert.deepEqual(queryTool.securitySchemes, [{ type: "noauth" }]);
+  assert.deepEqual(queryTool._meta?.securitySchemes, [{ type: "noauth" }]);
+  assert.equal(queryTool.outputSchema?.type, "object");
+  assert.deepEqual(queryTool.outputSchema?.required, ["ok", "dataset"]);
   const properties = queryTool.inputSchema?.properties;
   assert.ok(properties && Object.keys(properties).length > 0, "query_dataset properties missing");
   assert.deepEqual(Object.keys(properties), [
@@ -300,6 +330,20 @@ test("MCP query tool describes every input parameter for clients and directories
       `${name} is missing a non-empty description`,
     );
   }
+});
+
+test("MCP list tool declares no-auth access and a structured output contract", async () => {
+  const response = await POST(request({ Origin: "https://example.test" }));
+  const rpcEvent = parseRpcEvent(await response.text());
+  const listTool = rpcEvent.result.tools.find((tool) => tool.name === "list_datasets");
+  assert.ok(listTool, "list_datasets tool missing");
+  assert.deepEqual(listTool.securitySchemes, [{ type: "noauth" }]);
+  assert.deepEqual(listTool._meta?.securitySchemes, [{ type: "noauth" }]);
+  assert.equal(listTool.outputSchema?.type, "object");
+  assert.deepEqual(
+    listTool.outputSchema?.required,
+    ["datasets", "relatedMcpServices"],
+  );
 });
 
 test("MCP endpoint exposes the machine-readable dataset catalog resource", async () => {
@@ -346,10 +390,79 @@ test("MCP endpoint supports the modern 2026 protocol envelope", async () => {
     }),
   ));
   const body = await response.text();
+  const rpcResponse = JSON.parse(body);
   assert.equal(response.status, 200);
   assert.match(body, /"resultType":"complete"/);
   assert.match(body, /list_datasets/);
+  for (const tool of rpcResponse.result.tools) {
+    assert.deepEqual(tool.securitySchemes, [{ type: "noauth" }]);
+    assert.deepEqual(tool._meta?.securitySchemes, [{ type: "noauth" }]);
+  }
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+});
+
+test("MCP initialize advertises complete publishing metadata", async () => {
+  const response = await POST(request({}, JSON.stringify({
+    jsonrpc: "2.0",
+    id: 11,
+    method: "initialize",
+    params: {
+      protocolVersion: "2025-11-25",
+      capabilities: {},
+      clientInfo: { name: "publishing-check", version: "1.0.0" },
+    },
+  })));
+  const rpcEvent = parseRpcEvent(await response.text());
+  assert.equal(response.status, 200);
+  assert.deepEqual(rpcEvent.result.serverInfo, expectedServerInfo);
+});
+
+test("MCP prompts/list mirrors the documented starter prompts", async () => {
+  const response = await POST(request({}, JSON.stringify({
+    jsonrpc: "2.0",
+    id: 12,
+    method: "prompts/list",
+  })));
+  const rpcEvent = parseRpcEvent(await response.text());
+  assert.equal(response.status, 200);
+  assert.equal(rpcEvent.result.prompts.length, dvnsStarterPrompts.length);
+  const names = new Set(rpcEvent.result.prompts.map((prompt) => prompt.name));
+  for (const spec of dvnsStarterPrompts) {
+    assert.ok(names.has(spec.name), `prompt mancante: ${spec.name}`);
+  }
+  for (const prompt of rpcEvent.result.prompts) {
+    assert.equal(typeof prompt.description, "string");
+    assert.ok(prompt.description.length > 0);
+  }
+});
+
+test("MCP prompts/get returns the exact documented starter message", async () => {
+  const spec = dvnsStarterPrompts[0];
+  const response = await POST(request({}, JSON.stringify({
+    jsonrpc: "2.0",
+    id: 13,
+    method: "prompts/get",
+    params: { name: spec.name },
+  })));
+  const rpcEvent = parseRpcEvent(await response.text());
+  assert.equal(response.status, 200);
+  const message = rpcEvent.result.messages[0];
+  assert.equal(message.role, "user");
+  assert.equal(message.content.type, "text");
+  assert.equal(message.content.text, spec.message);
+});
+
+test("MCP prompts/get rejects an unknown prompt name", async () => {
+  const response = await POST(request({}, JSON.stringify({
+    jsonrpc: "2.0",
+    id: 14,
+    method: "prompts/get",
+    params: { name: "prompt_inesistente" },
+  })));
+  const rpcEvent = parseRpcEvent(await response.text());
+  assert.equal(response.status, 200);
+  assert.ok(rpcEvent.result === undefined);
+  assert.ok(typeof rpcEvent.error?.message === "string");
 });
 
 test("MCP endpoint supports 2026 server discovery", async () => {
@@ -367,9 +480,13 @@ test("MCP endpoint supports 2026 server discovery", async () => {
     }),
   ));
   const body = await response.text();
+  const rpcEvent = JSON.parse(body);
   assert.equal(response.status, 200);
   assert.match(body, /2026-07-28/);
-  assert.match(body, /dove-vanno-i-nostri-soldi/);
+  assert.deepEqual(
+    rpcEvent.result._meta["io.modelcontextprotocol/serverInfo"],
+    expectedServerInfo,
+  );
   assert.match(body, /"resultType":"complete"/);
 });
 
@@ -621,5 +738,6 @@ test("MCP tool responses stay below the wire-size budget", async () => {
   assert.ok(new TextEncoder().encode(body).byteLength <= 750_000);
   const rpcEvent = parseRpcEvent(body);
   assert.equal(rpcEvent.result.isError, true);
-  assert.match(rpcEvent.result.structuredContent.error, /response_too_large/);
+  assert.equal(rpcEvent.result.structuredContent, undefined);
+  assert.match(rpcEvent.result.content[0].text, /supera il limite di dimensione/i);
 });

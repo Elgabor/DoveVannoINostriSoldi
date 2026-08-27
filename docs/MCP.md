@@ -22,6 +22,8 @@ va duplicato su un secondo runtime.
 - Resource `dvns://datasets`: copia JSON del catalogo.
 - Resource `dvns://related-mcp-services`: endpoint pubblici complementari, separati dagli adapter
   DVNS e mai inoltrati automaticamente.
+- Capability `prompts`: i cinque starter prompt della distribuzione (`docs/MCP_DISTRIBUTION.md`)
+  sono esposti anche via `prompts/list` e `prompts/get`, che resta la fonte unica dei testi.
 
 I dataset live interrogano soltanto adapter ufficiali già usati dalle API del sito. I dataset snapshot leggono gli artefatti versionati e validati dagli ETL.
 

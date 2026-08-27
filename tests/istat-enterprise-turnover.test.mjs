@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import "./helpers/register-ts-alias.mjs";
 
@@ -15,6 +16,7 @@ const {
   validateIstatTurnoverSnapshot,
 } = await import("../src/lib/istat-turnover-contract.ts");
 
+const { istatTurnoverSourceMetadata } = await import("../src/lib/istat-turnover-metadata.ts");
 const { queryPublicDataset } = await import("../src/lib/mcp/datasets.ts");
 const {
   DATASET_IDS,
@@ -184,4 +186,15 @@ test("getIstatTurnoverView builds compliant view for dashboard", () => {
   assert.equal(campaniaView.selectedRegion?.code, "15");
   assert.equal(campaniaView.selectedRegion?.name, "Campania");
   assert.equal(campaniaView.selectedRegion?.value, 216_750_478);
+});
+
+test("fonti lists the lightweight ISTAT turnover source next to the camera sources", async () => {
+  const pageSource = await readFile(new URL("../src/app/fonti/page.tsx", import.meta.url), "utf8");
+
+  assert.match(pageSource, /@\/lib\/istat-turnover-metadata/);
+  assert.doesNotMatch(pageSource, /@\/lib\/istat-turnover["']/);
+  assert.match(pageSource, /Frame Territoriale Anticipato/);
+  assert.match(pageSource, /fatturato individuale/);
+  assert.deepEqual(istatTurnoverSourceMetadata, istatTurnoverSnapshot.source);
+  assert.deepEqual(istatTurnoverSourceMetadata, istatTurnoverSource());
 });

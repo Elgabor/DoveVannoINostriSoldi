@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { shortDate } from "@/lib/format";
 import { companyAtlasSourceList } from "@/lib/company-atlas-metadata";
+import { istatTurnoverSourceMetadata } from "@/lib/istat-turnover-metadata";
 import { REPO_URL } from "@/lib/site";
 import { latestDataBySlug } from "@/lib/source-latest-data";
 import { publicSources, sourceCounts } from "@/lib/sources";
@@ -80,8 +81,9 @@ export default function SourcesPage() {
       <section className="panel" aria-labelledby="company-atlas-sources-title">
         <h2 id="company-atlas-sources-title" className="panel-title">Fonti del modulo Imprese</h2>
         <p>
-          L&apos;Atlante Imprese usa tre release aggregate di CCIAA Marche su dati InfoCamere.
-          Sono registrate qui con periodo osservato e licenza; non fanno ancora parte del
+          L&apos;Atlante Imprese usa tre release aggregate di CCIAA Marche su dati InfoCamere
+          e la stima anticipata ISTAT 2024 (Frame Territoriale Anticipato). Sono
+          registrate qui con periodo osservato e licenza; non fanno ancora parte del
           registry operativo delle fonti civiche.
         </p>
         <p id="company-atlas-sources-scroll-hint" className={styles.scrollHint}>
@@ -104,7 +106,7 @@ export default function SourcesPage() {
               </tr>
             </thead>
             <tbody>
-              {companyAtlasSourceList.map((source) => (
+              {[...companyAtlasSourceList, istatTurnoverSourceMetadata].map((source) => (
                 <tr key={source.id}>
                   <th scope="row">
                     <a href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>
@@ -118,8 +120,9 @@ export default function SourcesPage() {
           </table>
         </div>
         <p>
-          Il modulo mostra soltanto aggregati regionali per sezione ATECO 2025: non nomi di
-          aziende, identificativi o fatturato esatto. <Link href="/imprese">Apri Atlante Imprese →</Link>
+          Il modulo mostra soltanto aggregati regionali: sezioni ATECO 2025 per le fonti
+          camerali, macro-settori ATECO 2007 agg. 2022 per il fatturato ISTAT. Non nomi di
+          aziende, identificativi o fatturato individuale. <Link href="/imprese">Apri Atlante Imprese →</Link>
         </p>
       </section>
 

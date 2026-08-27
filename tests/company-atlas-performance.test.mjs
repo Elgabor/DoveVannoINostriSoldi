@@ -12,6 +12,8 @@ test("fonti uses the lightweight company atlas metadata entry point", async () =
 
   assert.match(pageSource, /@\/lib\/company-atlas-metadata/);
   assert.doesNotMatch(pageSource, /@\/lib\/company-atlas["']/);
+  assert.match(pageSource, /@\/lib\/istat-turnover-metadata/);
+  assert.doesNotMatch(pageSource, /@\/lib\/istat-turnover["']/);
   assert.deepEqual(companyAtlasSourceList, Object.values(snapshot.sources));
   assert.equal(Object.keys(companyAtlasSources).length, 3);
 });

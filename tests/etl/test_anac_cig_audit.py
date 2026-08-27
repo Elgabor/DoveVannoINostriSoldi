@@ -103,6 +103,20 @@ class AnacCigAuditTest(unittest.TestCase):
         self.assertEqual(result["coverage"]["observedMonths"], [1])
         self.assertEqual(result["procedureChoice"]["directAward"]["records"], 2)
         self.assertAlmostEqual(result["procedureChoice"]["directAward"]["sharePercent"], 66.666667)
+        self.assertEqual(result["procedureChoice"]["directAward"]["amountEuroCents"], 28_990_000)
+        self.assertAlmostEqual(
+            result["procedureChoice"]["directAward"]["amountSharePercent"],
+            65.901341,
+        )
+        self.assertEqual(result["procedureChoice"]["totalPositiveAmountEuroCents"], 43_990_000)
+        self.assertEqual(
+            result["procedureChoice"]["allLabelsAmountEuroCents"]["AFFIDAMENTO DIRETTO"],
+            28_990_000,
+        )
+        self.assertEqual(
+            result["procedureChoice"]["allLabelsAmountEuroCents"]["PROCEDURA APERTA"],
+            15_000_000,
+        )
         self.assertEqual(result["servicesAndSuppliesBelow140000"]["records"], 1)
         self.assertEqual(result["thresholdBand135000To140000"]["strictContractRecords"], 1)
         self.assertEqual(result["exactContractAmounts"]["139900"], 1)

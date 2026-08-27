@@ -23,6 +23,6 @@ export function PublicDebtHistoryChart({ data }: { data: Point[] }) {
       </ResponsiveContainer>
     </div>
     <figcaption>Debito lordo della PA a fine mese. L’asse parte dal minimo osservato, non da zero.</figcaption>
-    <ChartDataTable label="Debito pubblico mensile" columns={["Debito esatto"]} rows={points.map((point) => ({ label: point.label, values: [exact.format(point.euro)] }))} />
+    <ChartDataTable label="Debito pubblico mensile" columns={["Debito convertito in euro"]} rows={points.map((point) => ({ label: point.label, values: [exact.format(point.euro)] }))} />
   </figure>;
 }

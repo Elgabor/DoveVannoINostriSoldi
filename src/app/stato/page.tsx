@@ -425,6 +425,15 @@ function SpendingDashboard({ snapshot }: { snapshot: StateSpendingSnapshot }) {
           {snapshot.sources.administrationEconomic && <SourceRow dataset={snapshot.sources.administrationEconomic} />}
         </div>
       </section>
+
+      <div className="notice">
+        <strong>Spesa e cicli di legislatura</strong>
+        <p>
+          Confronto descrittivo, anno per anno dal 2014, tra la spesa statale dell&apos;anno
+          pre-elettorale e la media degli altri anni della stessa legislatura.{" "}
+          <Link href="/stato/legislature">Apri il confronto →</Link>
+        </p>
+      </div>
     </>
   );
 }

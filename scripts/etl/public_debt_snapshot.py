@@ -193,7 +193,15 @@ def validate_source_lock(lock: dict[str, Any]) -> None:
     euro = _require_dict(lock["eurostat"], "eurostat")
     if set(_require_dict(bank.get("cubes"), "cubes")) != EXPECTED_CUBES:
         _fail("source lock: cubi BDS non autorizzati")
-    validate_official_url(bank.get("exportTemplate", "").replace("{cube}", "TCCE0175"), bank.get("allowedHost", ""))
+    export_template = bank.get("exportTemplate", "")
+    if not isinstance(export_template, str) or export_template.count("{cube}") != 1:
+        _fail("source lock: template export BDS non valido")
+    for cube_id in EXPECTED_CUBES:
+        validate_official_url(
+            export_template.replace("{cube}", cube_id),
+            bank.get("allowedHost", ""),
+            f"/infostat/dataservices/export/IT/CSV/ALL/CUBE/BANKITALIA/DIFF/{cube_id}",
+        )
     for cube_id, cube in bank["cubes"].items():
         series = _require_list(_require_dict(cube, cube_id).get("series"), f"{cube_id}.series")
         if not series:
@@ -655,7 +663,12 @@ def validate_snapshot(snapshot: dict[str, Any], *, now: str | None = None) -> li
         if not SHA256.fullmatch(str(cube.get("sha256", ""))):
             _fail("snapshot: hash Banca d'Italia non valido")
         _safe_integer(cube.get("bytes"), "bytes Banca d'Italia", nonnegative=True)
-        validate_official_url(cube.get("exportUrl", ""), "a2a.bancaditalia.it")
+        cube_id = cube.get("id")
+        validate_official_url(
+            cube.get("exportUrl", ""),
+            "a2a.bancaditalia.it",
+            f"/infostat/dataservices/export/IT/CSV/ALL/CUBE/BANKITALIA/DIFF/{cube_id}",
+        )
     if not SHA256.fullmatch(str(euro.get("sha256", ""))):
         _fail("snapshot: hash Eurostat non valido")
     _safe_integer(euro.get("bytes"), "bytes Eurostat", nonnegative=True)
@@ -714,11 +727,14 @@ def validate_snapshot(snapshot: dict[str, Any], *, now: str | None = None) -> li
     holder_amounts = 0
     holder_shares = 0
     for sector in sectors:
-        holder_amounts += _safe_integer(sector.get("amountCents"), "importo detentore", nonnegative=True)
+        amount = _safe_integer(sector.get("amountCents"), "importo detentore", nonnegative=True)
+        holder_amounts += amount
         share = _safe_integer(sector.get("shareBasisPoints"), "quota detentore", nonnegative=True)
         if share > 10_000:
             _fail("quote detentori fuori intervallo")
         holder_shares += share
+        if holder_total > 0 and abs(share - share_basis_points(amount, holder_total)) > 5:
+            _fail("quota detentore non coerente con l'importo")
     _near(holder_amounts, holder_total, "detentori")
     if abs(holder_shares - 10_000) > 20:
         _fail("quote detentori non sommano a cento")
@@ -873,7 +889,8 @@ def refresh(lock_path: Path, output_path: Path) -> bool:
     parsed_cubes: dict[str, dict[str, Any]] = {}
     for cube_id in sorted(EXPECTED_CUBES):
         url = bank["exportTemplate"].replace("{cube}", cube_id)
-        payload = _download(url, bank["allowedHost"], expected_path=None, max_bytes=MAX_ZIP_BYTES, expected_content="application/zip")
+        expected_path = f"/infostat/dataservices/export/IT/CSV/ALL/CUBE/BANKITALIA/DIFF/{cube_id}"
+        payload = _download(url, bank["allowedHost"], expected_path=expected_path, max_bytes=MAX_ZIP_BYTES, expected_content="application/zip")
         raw_cubes[cube_id] = payload
         parsed_cubes[cube_id] = parse_bds_zip(payload, cube_id, lock)
     euro_lock = lock["eurostat"]

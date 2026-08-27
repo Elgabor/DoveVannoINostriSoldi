@@ -31,7 +31,13 @@
         "requiresNetworkInput": true
       },
       "refreshWorkflow": ".github/workflows/consulenti-refresh.yml",
-      "trustModel": "Scheduled workflow downloads official statistics and commits the snapshot. PR-side validation proves the committed file is internally valid offline."
+      "publication": {
+        "branch": "automation/data/consulenti",
+        "commitTitle": "chore(data): refresh Consulenti Pubblici snapshot",
+        "prTitle": "data: refresh Consulenti Pubblici snapshot",
+        "upstreamUrl": "https://consulentipubblici.dfp.gov.it/progetto"
+      },
+      "trustModel": "Scheduled workflow creates a bot-authored managed PR candidate from the official source; review and PR-side validation govern publication of the snapshot."
     },
     {
       "id": "cpt-regional-fiscal",
@@ -154,6 +160,30 @@
       "trustModel": "Partitioned JSONL.gz row files derived from the source ledger. Validated by the ETL test suite which loads and checks the committed rows."
     },
     {
+      "id": "istat-municipality-geography",
+      "owner": "ISTAT SITUAS municipal geography snapshot",
+      "files": [
+        "src/data/generated/istat-municipality-geography.json"
+      ],
+      "verificationMode": "online-refresh",
+      "offlineCheck": {
+        "command": "python scripts/etl/istat_municipality_geography.py --validate-committed",
+        "coveredBy": "standalone"
+      },
+      "reconciliationTests": [
+        "tests/etl/test_istat_municipality_geography.py"
+      ],
+      "nodeTests": [
+        "tests/municipality-geography.test.mjs"
+      ],
+      "generator": {
+        "command": "python scripts/etl/istat_municipality_geography.py",
+        "requiresNetworkInput": true
+      },
+      "refreshWorkflow": null,
+      "trustModel": "The committed annual snapshot is validated offline for schema, coverage, identifiers, denominators, and provenance; online generation downloads the official ISTAT SITUAS reports."
+    },
+    {
       "id": "istat-regions-2024",
       "owner": "ISTAT regional accounts 2024",
       "files": [
@@ -226,7 +256,13 @@
         "requiresNetworkInput": true
       },
       "refreshWorkflow": ".github/workflows/mef-participations-refresh.yml",
-      "trustModel": "Scheduled workflow downloads official annual data and commits the snapshot."
+      "publication": {
+        "branch": "automation/data/mef-participations",
+        "commitTitle": "chore(data): refresh MEF public participations snapshot",
+        "prTitle": "data: refresh MEF public participations snapshot",
+        "upstreamUrl": "https://www.de.mef.gov.it/it/attivita_istituzionali/partecipazioni_pubbliche/open_data_partecipazioni/index.html"
+      },
+      "trustModel": "Scheduled workflow creates a bot-authored managed PR candidate from the official source; review and PR-side validation govern publication of the snapshot."
     },
     {
       "id": "opencivitas-2022",
@@ -248,7 +284,13 @@
         "requiresNetworkInput": true
       },
       "refreshWorkflow": ".github/workflows/opencivitas-refresh.yml",
-      "trustModel": "Scheduled workflow downloads official data and commits the snapshot."
+      "publication": {
+        "branch": "automation/data/opencivitas",
+        "commitTitle": "chore(data): refresh OpenCivitas municipal snapshot",
+        "prTitle": "data: refresh OpenCivitas municipal snapshot",
+        "upstreamUrl": "https://www.opencivitas.it/it/open-data"
+      },
+      "trustModel": "Scheduled workflow creates a bot-authored managed PR candidate from the official source; review and PR-side validation govern publication of the snapshot."
     },
     {
       "id": "opencoesione",
@@ -271,7 +313,13 @@
         "requiresNetworkInput": true
       },
       "refreshWorkflow": ".github/workflows/opencoesione-refresh.yml",
-      "trustModel": "Scheduled workflow downloads official data and commits the snapshot."
+      "publication": {
+        "branch": "automation/data/opencoesione",
+        "commitTitle": "chore(data): refresh OpenCoesione national snapshot",
+        "prTitle": "data: refresh OpenCoesione national snapshot",
+        "upstreamUrl": "https://opencoesione.gov.it/it/api/aggregati/"
+      },
+      "trustModel": "Scheduled workflow creates a bot-authored managed PR candidate from the official source; review and PR-side validation govern publication of the snapshot."
     },
     {
       "id": "parliament",
@@ -375,7 +423,13 @@
         "requiresNetworkInput": true
       },
       "refreshWorkflow": ".github/workflows/public-debt-refresh.yml",
-      "trustModel": "A scheduled workflow downloads four authorized Banca d'Italia BDS cubes and the two authorized Eurostat series. Pull requests validate the committed snapshot and adversarial fixtures entirely offline."
+      "publication": {
+        "branch": "automation/data/public-debt",
+        "commitTitle": "chore(data): refresh public debt snapshot",
+        "prTitle": "data: refresh public debt snapshot",
+        "upstreamUrl": "https://www.bancaditalia.it/pubblicazioni/finanza-pubblica/index.html"
+      },
+      "trustModel": "Scheduled workflow creates a bot-authored managed PR candidate from the official Banca d'Italia and Eurostat sources; review and PR-side validation govern publication of the snapshot."
     },
     {
       "id": "rgs-consulting-payments",
@@ -474,7 +528,13 @@
         "requiresNetworkInput": true
       },
       "refreshWorkflow": ".github/workflows/siope-refresh.yml",
-      "trustModel": "The offline contract (scripts/etl/siope_snapshot_check.py) is the single implementation used locally, in CI, and in the refresh workflow. The scheduled workflow rebuilds from the official SIOPE source and commits."
+      "publication": {
+        "branch": "automation/data/siope",
+        "commitTitle": "chore(data): refresh SIOPE municipal snapshot",
+        "prTitle": "data: refresh SIOPE municipal snapshot",
+        "upstreamUrl": "https://www.siope.it/documenti/siope2/open/last"
+      },
+      "trustModel": "Scheduled workflow creates a bot-authored managed PR candidate from the official source; review and PR-side validation govern publication of the snapshot."
     },
     {
       "id": "ssn-cce-2024",
@@ -521,6 +581,29 @@
       },
       "refreshWorkflow": null,
       "trustModel": "Curated committed artifact with no Python generator. Validated by the Node runtime contract in src/lib/vive-restoration-snapshot.ts."
+    },
+    {
+      "id": "company-atlas",
+      "owner": "Atlante Imprese Italia aggregate snapshot",
+      "files": [
+        "src/data/generated/company-atlas-snapshot.json"
+      ],
+      "verificationMode": "online-refresh",
+      "offlineCheck": {
+        "command": "node scripts/etl/company_atlas_snapshot.mjs --check",
+        "coveredBy": "standalone"
+      },
+      "reconciliationTests": [],
+      "nodeTests": [
+        "tests/company-atlas.test.mjs",
+        "tests/company-atlas-performance.test.mjs"
+      ],
+      "generator": {
+        "command": "node scripts/etl/company_atlas_snapshot.mjs",
+        "requiresNetworkInput": true
+      },
+      "refreshWorkflow": null,
+      "trustModel": "The committed snapshot is derived from three official CC BY 4.0 aggregate releases. The offline check validates schema, provenance, exact 20-region and ATECO coverage, workforce all-bucket aggregation, null coverage, release totals, duplicate protection and the aggregate-only boundary; a future refresh must be reviewed before publication."
     },
     {
       "id": "source-ledger-proofs",

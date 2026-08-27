@@ -8,8 +8,15 @@ import styles from "./fisco.module.css";
 export const metadata: Metadata = {
   title: "Entrate e spese pubbliche per territorio",
   description:
-    "Entrate, spese e saldo contabile territorializzato della Pubblica Amministrazione consolidata, con valori pro capite CPT 2023.",
+    "Entrate, spese e saldo contabile territorializzato della Pubblica Amministrazione consolidata, con valori totali, pro capite e per km² CPT 2023.",
 };
+
+type Measure = "per-abitante" | "per-km2" | "totale";
+
+function selectedMeasure(value: string | string[] | undefined): Measure {
+  const scalar = Array.isArray(value) ? value[0] : value;
+  return scalar === "per-km2" || scalar === "totale" ? scalar : "per-abitante";
+}
 
 const euro = new Intl.NumberFormat("it-IT", {
   style: "currency",
@@ -39,12 +46,40 @@ function signedFromCents(cents: number): string {
   return value;
 }
 
-export default function RegionalFiscalPage() {
+export default async function RegionalFiscalPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ misura?: string | string[] }>;
+}) {
+  const measure = selectedMeasure((await searchParams).misura);
   const data = queryCptRegionalFiscal();
+  const metricValue = (row: typeof data.rows[number], kind: "revenue" | "expenditure" | "balance"): number | null => {
+    if (measure === "totale") return row[`${kind}Cents`];
+    if (measure === "per-km2") return row[`${kind}PerSquareKmCents`];
+    return row[`${kind}PerCapitaCents`];
+  };
   const rows = [...data.rows].sort(
-    (left, right) => (right.balancePerCapitaCents ?? 0) - (left.balancePerCapitaCents ?? 0),
+    (left, right) => {
+      const leftValue = metricValue(left, "balance");
+      const rightValue = metricValue(right, "balance");
+      if (leftValue === null) return rightValue === null ? left.region.localeCompare(right.region, "it-IT") : 1;
+      if (rightValue === null) return -1;
+      return rightValue - leftValue || left.region.localeCompare(right.region, "it-IT");
+    },
   );
-  const maxBalance = Math.max(...rows.map((row) => Math.abs(row.balancePerCapitaCents ?? 0)), 1);
+  const formatMetric = (value: number | null, signed = false) => value === null
+    ? "n.d."
+    : measure === "totale"
+    ? signed ? signedFromCents(value) : compactFromCents(value)
+    : signed ? signedFromCents(value) : exactFromCents(value);
+  const measureLabel = measure === "totale" ? "totale" : measure === "per-km2" ? "per km²" : "per abitante";
+  const maxBalance = Math.max(
+    ...rows
+      .map((row) => metricValue(row, "balance"))
+      .filter((value): value is number => value !== null)
+      .map((value) => Math.abs(value)),
+    1,
+  );
 
   return (
     <main className="shell page">
@@ -52,11 +87,19 @@ export default function RegionalFiscalPage() {
         <h1>Entrate e spese pubbliche, regione per regione</h1>
         <p>
           Confronto {data.year} della Pubblica Amministrazione consolidata nei Conti Pubblici
-          Territoriali. La vista è ordinata per saldo pro capite; i totali assoluti restano nella
+          Territoriali. La vista è ordinata per saldo {measureLabel}; i totali assoluti restano nella
           tabella. Entrate e spese sono flussi di cassa attribuiti al territorio nel perimetro CPT.
           Le entrate territorializzate includono le componenti definite da quel perimetro.
         </p>
       </div>
+
+      <nav className={styles.metricSelector} aria-label="Misura del confronto CPT">
+        {(["per-abitante", "per-km2", "totale"] as const).map((value) => (
+          <Link key={value} href={`/territori/fisco?misura=${value}`} aria-current={measure === value ? "page" : undefined}>
+            {value === "per-abitante" ? "Per abitante" : value === "per-km2" ? "Per km²" : "Totale"}
+          </Link>
+        ))}
+      </nav>
 
       <div className={styles.formula}>
         <span className={styles.visuallyHidden}>
@@ -74,7 +117,7 @@ export default function RegionalFiscalPage() {
       <section className="panel" aria-labelledby="fiscal-chart-title">
         <div className={styles.sectionHeading}>
           <div>
-            <h2 className="panel-title" id="fiscal-chart-title">Saldo pro capite · {data.year}</h2>
+            <h2 className="panel-title" id="fiscal-chart-title">Saldo {measureLabel} · {data.year}</h2>
             <p>Un segno positivo indica entrate superiori alle spese nel perimetro CPT PA; un segno negativo indica il contrario.</p>
           </div>
           <div className={styles.legend} aria-label="Legenda">
@@ -83,28 +126,28 @@ export default function RegionalFiscalPage() {
           </div>
         </div>
 
-        <ol className={styles.balanceChart} aria-label="Territori ordinati per saldo contabile pro capite">
+        <ol className={styles.balanceChart} aria-label={`Territori ordinati per saldo ${measureLabel}`}>
           {rows.map((row) => {
-            const balance = row.balancePerCapitaCents ?? 0;
-            const width = `${Math.max((Math.abs(balance) / maxBalance) * 100, 1)}%`;
+            const balance = metricValue(row, "balance");
+            const width = balance === null ? "0%" : `${Math.max((Math.abs(balance) / maxBalance) * 100, 1)}%`;
             return (
               <li key={row.regionCode}>
                 <span className={styles.regionName}>{row.region}</span>
                 <span className={styles.axis} aria-hidden="true">
                   <span
-                    className={balance >= 0 ? styles.positiveBar : styles.negativeBar}
+                    className={balance === null ? styles.emptyBar : balance >= 0 ? styles.positiveBar : styles.negativeBar}
                     style={{ "--bar-width": width } as CSSProperties}
                   />
                 </span>
                 <strong className={styles.balanceValue}>
-                  <span className={styles.visuallyHidden}>{balance >= 0 ? "positivo" : "negativo"}: </span>
-                  {signedFromCents(balance)}
+                  <span className={styles.visuallyHidden}>{balance === null ? "non disponibile" : balance >= 0 ? "positivo" : "negativo"}: </span>
+                  {formatMetric(balance, true)}
                 </strong>
               </li>
             );
           })}
         </ol>
-        <p className={styles.note}>Importi per abitante, popolazione ISTAT al 31 dicembre 2023.</p>
+        <p className={styles.note}>{measure === "per-km2" ? "Superficie comunale aggregata da ISTAT SITUAS, quadro territoriale 2023." : measure === "per-abitante" ? "Importi per abitante, popolazione ISTAT al 31 dicembre 2023." : "Valori totali CPT nel perimetro PA consolidato."}</p>
       </section>
 
       <section className="panel" aria-labelledby="fiscal-table-title">
@@ -116,13 +159,13 @@ export default function RegionalFiscalPage() {
           tabIndex={0}
         >
           <table className="table">
-            <caption className={styles.visuallyHidden}>Valori CPT PA consolidati {data.year}, ordinati per saldo pro capite</caption>
+            <caption className={styles.visuallyHidden}>Valori CPT PA consolidati {data.year}, ordinati per saldo {measureLabel}</caption>
             <thead>
               <tr>
                 <th scope="col">Territorio</th>
-                <th scope="col" className="num">Entrate per abitante</th>
-                <th scope="col" className="num">Spese per abitante</th>
-                <th scope="col" className="num">Saldo per abitante</th>
+                <th scope="col" className="num">Entrate {measureLabel}</th>
+                <th scope="col" className="num">Spese {measureLabel}</th>
+                <th scope="col" className="num">Saldo {measureLabel}</th>
                 <th scope="col" className="num">Entrate totali</th>
                 <th scope="col" className="num">Spese totali</th>
                 <th scope="col" className="num">Saldo totale</th>
@@ -132,9 +175,9 @@ export default function RegionalFiscalPage() {
               {rows.map((row) => (
                 <tr key={row.regionCode} id={`regione-${row.regionCode}`}>
                   <th scope="row">{row.region}</th>
-                  <td className="num">{exactFromCents(row.revenuePerCapitaCents ?? 0)}</td>
-                  <td className="num">{exactFromCents(row.expenditurePerCapitaCents ?? 0)}</td>
-                  <td className="num">{signedFromCents(row.balancePerCapitaCents ?? 0)}</td>
+                  <td className="num">{formatMetric(metricValue(row, "revenue"))}</td>
+                  <td className="num">{formatMetric(metricValue(row, "expenditure"))}</td>
+                  <td className="num">{formatMetric(metricValue(row, "balance"), true)}</td>
                   <td className="num">{compactFromCents(row.revenueCents)}</td>
                   <td className="num">{compactFromCents(row.expenditureCents)}</td>
                   <td className="num">{signedFromCents(row.balanceCents)}</td>

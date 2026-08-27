@@ -2,6 +2,7 @@ import { z } from "zod";
 
 const MAX_SAFE = Number.MAX_SAFE_INTEGER;
 const TOLERANCE_CENTS = 10_000_000;
+const HOLDER_SHARE_TOLERANCE_BASIS_POINTS = 5;
 const money = z.number().int().min(-MAX_SAFE).max(MAX_SAFE);
 const nonnegativeMoney = money.nonnegative();
 const basisPoints = z.number().int().min(0).max(10_000);
@@ -155,6 +156,14 @@ export const publicDebtSnapshotSchema = z.object({
   if (new Set(holders.sectors.map((sector) => sector.id)).size !== 5) issue(context, "settori detentori duplicati", ["holders", "sectors"]);
   if (Math.abs(holders.sectors.reduce((sum, sector) => sum + sector.amountCents, 0) - holders.totalCents) > TOLERANCE_CENTS) issue(context, "detentori non riconciliati", ["holders"]);
   if (Math.abs(holders.sectors.reduce((sum, sector) => sum + sector.shareBasisPoints, 0) - 10_000) > 20) issue(context, "quote detentori non riconciliate", ["holders"]);
+  if (holders.totalCents > 0) {
+    holders.sectors.forEach((sector, index) => {
+      const calculatedShare = shareBasisPoints(sector.amountCents, holders.totalCents);
+      if (Math.abs(sector.shareBasisPoints - calculatedShare) > HOLDER_SHARE_TOLERANCE_BASIS_POINTS) {
+        issue(context, "quota detentore non coerente con l'importo", ["holders", "sectors", index, "shareBasisPoints"]);
+      }
+    });
+  }
   const holderStock = stock.history.find((point) => point.referenceDate === holders.referenceDate)?.totalCents;
   if (holderStock !== undefined && Math.abs(holderStock - holders.totalCents) > TOLERANCE_CENTS) issue(context, "totale detentori non coincide con stock", ["holders"]);
   const maturityTotal = residualMaturity.upToOneYearCents + residualMaturity.oneToFiveYearsCents + residualMaturity.overFiveYearsCents;

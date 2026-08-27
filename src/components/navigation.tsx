@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { HeaderSearch } from "@/components/header-search";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { GithubIcon } from "@hugeicons/core-free-icons";
@@ -14,8 +14,38 @@ import {
 } from "@/lib/site-navigation";
 import { REPO_URL } from "@/lib/site";
 
+type NavigationContentProps = Readonly<{
+  pathname: string;
+  currentSearch: string | null;
+}>;
+
 export function Navigation() {
   const pathname = usePathname();
+  const [currentSearch, setCurrentSearch] = useState<string | null>(null);
+  return (
+    <>
+      <Suspense fallback={null}>
+        <NavigationSearchSync onChange={setCurrentSearch} />
+      </Suspense>
+      <NavigationContent pathname={pathname} currentSearch={currentSearch} />
+    </>
+  );
+}
+
+function NavigationSearchSync({
+  onChange,
+}: Readonly<{ onChange: (search: string) => void }>) {
+  const searchParams = useSearchParams();
+  const currentSearch = searchParams.toString();
+
+  useLayoutEffect(() => {
+    onChange(currentSearch);
+  }, [currentSearch, onChange]);
+
+  return null;
+}
+
+function NavigationContent({ pathname, currentSearch }: NavigationContentProps) {
   const navigationRef = useRef<HTMLElement>(null);
   const activeLinkRef = useRef<HTMLAnchorElement>(null);
   /**
@@ -23,17 +53,25 @@ export function Navigation() {
    * same state so CSS never opens a second panel through :hover/:focus-within
    * while another is still held open.
    *
-   * The path it was opened on travels with it: a completed navigation has
+   * The URL it was opened on travels with it: a completed navigation has
    * already answered the menu, so the open state simply stops applying rather
    * than being cleared from an effect after the new page has painted.
    */
-  const [openMenu, setOpenMenu] = useState<{ href: string; pathname: string } | null>(null);
-  const openHref = openMenu?.pathname === pathname ? openMenu.href : null;
+  const [openMenu, setOpenMenu] = useState<{
+    href: string;
+    pathname: string;
+    search: string | null;
+  } | null>(null);
+  const openHref =
+    openMenu?.pathname === pathname &&
+    (openMenu.search === null || currentSearch === null || openMenu.search === currentSearch)
+      ? openMenu.href
+      : null;
 
   const closeMenu = useCallback(() => setOpenMenu(null), []);
   const openItem = useCallback(
-    (href: string) => setOpenMenu({ href, pathname }),
-    [pathname],
+    (href: string) => setOpenMenu({ href, pathname, search: currentSearch }),
+    [currentSearch, pathname],
   );
 
   useEffect(() => {
@@ -87,7 +125,7 @@ export function Navigation() {
 
         <div className="header-actions">
           <Link className="header-action header-action-accent" href="/mcp">
-            MCP
+            Istruzioni MCP
           </Link>
           <a
             className="header-action header-action-icon"
@@ -149,9 +187,12 @@ export function Navigation() {
                 >
                   <Link
                     href={item.href}
-                    aria-current={pathname === item.href ? "page" : undefined}
+                    aria-current={
+                      pathname === item.href && currentSearch === "" ? "page" : undefined
+                    }
                     data-section-active={active ? "true" : undefined}
                     ref={active ? activeLinkRef : undefined}
+                    onClick={closeMenu}
                   >
                     {item.label}
                   </Link>
@@ -164,7 +205,11 @@ export function Navigation() {
                         aria-controls={menuId}
                         aria-label={`${open ? "Chiudi" : "Apri"} le pagine in ${item.label}`}
                         onClick={() =>
-                          setOpenMenu(open ? null : { href: item.href, pathname })
+                          setOpenMenu(
+                            open
+                              ? null
+                              : { href: item.href, pathname, search: currentSearch },
+                          )
                         }
                       >
                         <span aria-hidden="true">▾</span>
@@ -181,10 +226,17 @@ export function Navigation() {
                               <Link
                                 href={child.href}
                                 aria-current={
-                                  isNavChildActive(pathname, child.href, item.children!)
+                                  currentSearch !== null &&
+                                  isNavChildActive(
+                                    pathname,
+                                    child.href,
+                                    item.children!,
+                                    currentSearch,
+                                  )
                                     ? "page"
                                     : undefined
                                 }
+                                onClick={closeMenu}
                               >
                                 {child.label}
                               </Link>

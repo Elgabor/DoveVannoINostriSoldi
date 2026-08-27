@@ -300,6 +300,10 @@ class PublicDebtSnapshotTests(unittest.TestCase):
                 "ec.europa.eu",
                 expected_path="/eurostat/api/dissemination/statistics/1.0/data/gov_10a_main",
             )
+        lock = load_lock()
+        lock["bancaditalia"]["exportTemplate"] = "https://a2a.bancaditalia.it/infostat/wrong/{cube}"
+        with self.assertRaisesRegex(ETL.SnapshotError, "path"):
+            ETL.validate_source_lock(lock)
         with self.assertRaisesRegex(ETL.SnapshotError, "redirect"):
             ETL.validate_redirect(
                 "https://a2a.bancaditalia.it/infostat/x",
@@ -512,7 +516,7 @@ class PublicDebtSnapshotTests(unittest.TestCase):
             (lambda value: value["change"].__setitem__("liquidityContributionCents", value["change"]["liquidityContributionCents"] + 1), "liquid"),
             (lambda value: value["change"].__setitem__("otherEffectsCents", value["change"]["otherEffectsCents"] + 1), "altri effetti"),
             (lambda value: value["holders"]["sectors"][0].__setitem__("amountCents", value["holders"]["sectors"][0]["amountCents"] + 100_000_001), "detentor"),
-            (lambda value: value["holders"]["sectors"][0].__setitem__("shareBasisPoints", 9000), "quote"),
+            (lambda value: value["holders"]["sectors"][0].__setitem__("shareBasisPoints", 9000), "quot"),
             (lambda value: value["residualMaturity"].__setitem__("upToOneYearCents", value["residualMaturity"]["upToOneYearCents"] + 100_000_001), "vita residua"),
             (lambda value: value["annualInterest"].__setitem__("interestShareBasisPoints", value["annualInterest"]["interestShareBasisPoints"] + 1), "interessi"),
             (lambda value: value["stock"]["history"].pop(), "tredici"),
@@ -526,6 +530,12 @@ class PublicDebtSnapshotTests(unittest.TestCase):
             mutate(candidate)
             with self.subTest(message=message), self.assertRaisesRegex(ETL.SnapshotError, message):
                 ETL.validate_snapshot(candidate, now="2026-08-24T09:00:00Z")
+
+        balanced_shares = copy.deepcopy(original)
+        balanced_shares["holders"]["sectors"][0]["shareBasisPoints"] += 100
+        balanced_shares["holders"]["sectors"][1]["shareBasisPoints"] -= 100
+        with self.assertRaisesRegex(ETL.SnapshotError, "quota detentore"):
+            ETL.validate_snapshot(balanced_shares, now="2026-08-24T09:00:00Z")
 
     def test_holder_latency_future_period_and_annual_staleness_are_enforced(self):
         lock = load_lock()

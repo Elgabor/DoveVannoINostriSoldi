@@ -20,6 +20,9 @@ test("public debt snapshot validates and derived values reconcile", () => {
   assert.equal(view.citizenImpact.refinancingExposure.upToOneYearShareBasisPoints, 1821);
   assert.equal(view.stock.instrumentShares.currencyAndDepositsBasisPoints, 582);
   assert.equal(view.residualMaturity.shares.upToOneYearBasisPoints, 1821);
+  assert.equal(view.measurement.bancaditaliaSourceUnit, "milioni di euro");
+  assert.match(view.measurement.precisionNote, /non misure osservate con precisione al centesimo/);
+  assert.equal(view.sources.bancaditalia.accessedAt, view.sources.bancaditalia.retrievedAt);
 });
 
 test("runtime contract fails closed on every monetary reconciliation", () => {
@@ -30,6 +33,10 @@ test("runtime contract fails closed on every monetary reconciliation", () => {
   assertInvalid((value) => { value.change.otherEffectsCents += 1; }, /altri effetti/);
   assertInvalid((value) => { value.holders.sectors[0].amountCents += 10_000_001; }, /detentori/);
   assertInvalid((value) => { value.holders.sectors[0].shareBasisPoints += 21; }, /quote detentori/);
+  assertInvalid((value) => {
+    value.holders.sectors[0].shareBasisPoints += 100;
+    value.holders.sectors[1].shareBasisPoints -= 100;
+  }, /quota detentore/);
   assertInvalid((value) => { value.residualMaturity.upToOneYearCents += 10_000_001; }, /vita residua/);
   assertInvalid((value) => { value.annualInterest.interestShareBasisPoints += 1; }, /interessi/);
   assertInvalid((value) => { value.annualInterest.totalGovernmentExpenditureCents = 0; });

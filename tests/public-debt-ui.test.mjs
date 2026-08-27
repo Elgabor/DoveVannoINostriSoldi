@@ -23,7 +23,7 @@ test("debt page exposes financing, composition, holder and refinancing boundarie
   assert.match(page, /netMediumLongTermSecuritiesCents/);
   assert.match(page, /Netto significa emissioni meno rimborsi/);
   assert.match(page, /Un valore positivo non è il totale collocato/);
-  assert.match(page, /Composizione esatta del debito/);
+  assert.match(page, /Composizione del debito in euro convertiti/);
   assert.match(page, /componente \/ totale/);
   assert.match(page, /settori istituzionali, non singoli investitori/i);
   assert.match(page, /Altri residenti” non equivale alle sole famiglie/);
@@ -44,9 +44,13 @@ test("official sources are linked in a new tab and periods remain distinct", () 
   for (const source of ["landingUrl", "bdsUrl", "datasetUrl", "termsUrl", "TREASURY_URL"]) assert.match(page, new RegExp(source));
   assert.ok((page.match(/target="_blank"/g) ?? []).length >= 7);
   assert.match(page, /Detentori al/);
-  assert.match(page, /bancaditalia\.retrievedAt/);
-  assert.match(page, /eurostat\.retrievedAt/);
+  assert.match(page, /bancaditalia\.accessedAt/);
+  assert.match(page, /eurostat\.accessedAt/);
   assert.match(page, /upstreamUpdatedAt/);
+  assert.match(page, /precisionNote/);
+  assert.match(page, /accessedAt/);
+  assert.match(page, /attribution/);
+  assert.doesNotMatch(page, /esatti|esatta/);
 });
 
 test("debt page follows the shared civic shell and source provenance pattern", () => {

@@ -462,6 +462,79 @@ export async function getStatePaymentDatasetForYear(
   return matches[0] ?? null;
 }
 
+export const STATE_SPENDING_HISTORY_MAX_CONCURRENCY = 3;
+
+export type StateAnnualSpendingTotal = {
+  year: number;
+  totalPaid: number;
+  source: ConsuntivoBdapDataset;
+};
+
+/**
+ * Reads several annual mission totals with one catalog discovery and a bounded
+ * number of CSV downloads. This avoids repeating the same package_search and
+ * fetching the administration/economic companion datasets when a caller only
+ * needs the national total.
+ */
+export async function getStateSpendingTotalsForYears(
+  years: readonly number[],
+  options: { signal?: AbortSignal; concurrency?: number } = {},
+): Promise<Map<number, StateAnnualSpendingTotal>> {
+  const requestedYears = [...new Set(years)];
+  for (const year of requestedYears) {
+    if (!Number.isInteger(year) || year < 2000 || year > 2200) {
+      throw new Error(`Anno OpenBDAP non valido: ${year}`);
+    }
+  }
+  if (requestedYears.length === 0) return new Map();
+
+  const datasets = await searchProduct(
+    consuntivoProductCode("mission"),
+    "mission",
+    "consuntivo",
+    options.signal,
+  );
+  const requested = new Set(requestedYears);
+  const byYear = new Map<number, ConsuntivoBdapDataset>();
+  for (const dataset of datasets) {
+    if (dataset.releaseKind !== "consuntivo" || !requested.has(dataset.referenceYear)) continue;
+    if (byYear.has(dataset.referenceYear)) {
+      throw new Error(`OpenBDAP ha restituito più consuntivi per missione nel ${dataset.referenceYear}`);
+    }
+    byYear.set(dataset.referenceYear, dataset);
+  }
+  for (const year of requestedYears) {
+    if (!byYear.has(year)) throw new StatePaymentPeriodUnavailableError(year, null);
+  }
+
+  const totals = new Map<number, StateAnnualSpendingTotal>();
+  let cursor = 0;
+  const requestedConcurrency = options.concurrency ?? STATE_SPENDING_HISTORY_MAX_CONCURRENCY;
+  if (!Number.isFinite(requestedConcurrency) || requestedConcurrency < 1) {
+    throw new Error("Concorrenza OpenBDAP non valida");
+  }
+  const workerCount = Math.min(
+    requestedYears.length,
+    Math.max(1, Math.trunc(requestedConcurrency)),
+  );
+  async function runWorker(): Promise<void> {
+    while (cursor < requestedYears.length) {
+      if (options.signal?.aborted) throw options.signal.reason;
+      const year = requestedYears[cursor];
+      cursor += 1;
+      const dataset = byYear.get(year)!;
+      const rows = normalizeMissionRows(await fetchDatasetRows(dataset, options.signal), dataset);
+      const total = sum(rows, (row) => row.totalPaid);
+      if (!Number.isFinite(total) || total <= 0) {
+        throw new Error(`Totale OpenBDAP per missione non valido nel ${year}`);
+      }
+      totals.set(year, { year, totalPaid: total, source: dataset });
+    }
+  }
+  await Promise.all(Array.from({ length: workerCount }, () => runWorker()));
+  return totals;
+}
+
 async function resolveStatePaymentDataset(
   dimension: StatePaymentDimension,
   options: { year?: number; month?: number; signal?: AbortSignal },

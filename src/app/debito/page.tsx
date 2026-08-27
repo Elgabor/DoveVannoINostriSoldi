@@ -13,6 +13,7 @@ export const metadata: Metadata = {
 
 const TREASURY_URL = "https://www.dt.mef.gov.it/it/debito_pubblico/";
 const euro = (cents: number) => cents / 100;
+const sourceMillions = (cents: number) => (cents / 100_000_000).toLocaleString("it-IT", { maximumFractionDigits: 3 });
 const signed = (cents: number) => `${cents >= 0 ? "+" : "−"}${compactEuro(Math.abs(euro(cents)))}`;
 const bpPercent = (basisPoints: number) => percent(basisPoints / 100, 2);
 
@@ -86,6 +87,7 @@ export default function PublicDebtPage() {
         <span className={styles.kicker}>Banca d’Italia + Eurostat · snapshot verificato</span>
         <h1>Il debito pubblico italiano, senza contatori stimati</h1>
         <p>Stock, variazioni, finanziamento, detentori, scadenze e interessi. I periodi restano separati perché le fonti non si aggiornano insieme.</p>
+        <p className={styles.meta}>{data.measurement.precisionNote}</p>
       </header>
 
       <div className={`stat-strip ${styles.periodStrip}`} aria-label="Periodi dei dati">
@@ -111,10 +113,10 @@ export default function PublicDebtPage() {
         <div className={styles.overviewGrid}>
           <div className={styles.hero}>
             <div className={styles.heroValue}>{compactEuro(euro(stock.totalCents))}</div>
-            <div className={styles.exact}>{exactEuro(euro(stock.totalCents))} esatti</div>
+            <div className={styles.exact}>{sourceMillions(stock.totalCents)} milioni di euro nella fonte</div>
             <p className={styles.change}>{signed(stock.changeCents)} rispetto al mese precedente · {stock.changeCents >= 0 ? "aumento" : "diminuzione"}</p>
             <p>Debito lordo della PA a fine mese secondo il perimetro Maastricht: non è la spesa dell’anno e non è una fattura individuale.</p>
-            <p className={styles.meta}>Dato al {longDate(stock.referenceDate)} · unità: euro · <a href={data.sources.bancaditalia.landingUrl} target="_blank" rel="noreferrer">Fonte: Banca d’Italia</a></p>
+            <p className={styles.meta}>Dato al {longDate(stock.referenceDate)} · fonte in milioni di euro, equivalente convertito per la visualizzazione · <a href={data.sources.bancaditalia.landingUrl} target="_blank" rel="noreferrer">Fonte: Banca d’Italia</a></p>
             {stock.freshness.state === "stale" && <p className="notice warning-notice"><strong>Aggiornamento in ritardo.</strong> Lo stock ha superato la soglia di 75 giorni.</p>}
           </div>
           <PublicDebtHistoryChart data={stock.history} />
@@ -157,7 +159,7 @@ export default function PublicDebtPage() {
         <ul className={styles.barList} aria-label="Composizione del debito">
           {composition.map((item) => <li key={item.id}><div><strong>{item.label}</strong><span>{bpPercent(item.share)}</span></div><span className={styles.bar} aria-hidden="true"><span style={{ width: `${item.share / 100}%` }} /></span></li>)}
         </ul>
-        <div className={styles.tableWrap} role="region" aria-label="Composizione esatta del debito" tabIndex={0}>
+        <div className={styles.tableWrap} role="region" aria-label="Composizione del debito in euro convertiti" tabIndex={0}>
           <table className="table"><thead><tr><th scope="col">Strumento</th><th scope="col" className="num">Importo</th><th scope="col" className="num">Quota</th></tr></thead><tbody>{composition.map((item) => <tr key={item.id}><th scope="row">{item.label}</th><td className="num">{exactEuro(euro(item.cents))}</td><td className="num">{bpPercent(item.share)}</td></tr>)}</tbody></table>
         </div>
         <p className={styles.meta}>Dato al {longDate(stock.referenceDate)} · unità: euro e percentuale dello stock · formula: componente / totale · <a href={data.sources.bancaditalia.bdsUrl} target="_blank" rel="noreferrer">Fonte: BDS Banca d’Italia</a></p>
@@ -182,7 +184,7 @@ export default function PublicDebtPage() {
         <ul className={styles.barList} aria-label="Debito per vita residua">
           {maturityBands.map((item) => <li key={item.id}><div><strong>{item.label}</strong><span>{bpPercent(item.share)}</span></div><span className={styles.bar} aria-hidden="true"><span style={{ width: `${item.share / 100}%` }} /></span></li>)}
         </ul>
-        <div className={styles.tableWrap} role="region" aria-label="Vita residua esatta del debito" tabIndex={0}>
+        <div className={styles.tableWrap} role="region" aria-label="Vita residua del debito in euro convertiti" tabIndex={0}>
           <table className="table"><thead><tr><th scope="col">Vita residua</th><th scope="col" className="num">Importo</th><th scope="col" className="num">Quota</th></tr></thead><tbody>{maturityBands.map((item) => <tr key={item.id}><th scope="row">{item.label}</th><td className="num">{exactEuro(euro(item.cents))}</td><td className="num">{bpPercent(item.share)}</td></tr>)}</tbody></table>
         </div>
         <p>Vita media residua: <strong>{residualMaturity.averageYears.toLocaleString("it-IT")} anni</strong>. Le fasce sommano al totale del {longDate(residualMaturity.referenceDate)}.</p>
@@ -247,7 +249,7 @@ export default function PublicDebtPage() {
             owner="Banca d’Italia"
             release="Rilascio mensile · 4 cubi BDS"
             title={data.sources.bancaditalia.title}
-            detail={`Stock al ${longDate(stock.referenceDate)} · snapshot ${longDate(data.sources.bancaditalia.retrievedAt)}`}
+            detail={`Stock al ${longDate(stock.referenceDate)} · accesso ${longDate(data.sources.bancaditalia.accessedAt)} · importi originari in milioni di euro`}
             actions={[
               { href: data.sources.bancaditalia.bdsUrl, label: "BDS", ariaLabel: "Apri la Base Dati Statistica di Banca d’Italia (si apre in una nuova scheda)" },
               { href: data.sources.bancaditalia.landingUrl, label: "Report", ariaLabel: "Apri i report sul debito di Banca d’Italia (si apre in una nuova scheda)" },
@@ -258,7 +260,7 @@ export default function PublicDebtPage() {
             owner="Eurostat"
             release="Aggiornamento annuale · gov_10a_main"
             title={data.sources.eurostat.title}
-            detail={`Serie D41PAY e TE · fonte aggiornata il ${longDate(data.sources.eurostat.upstreamUpdatedAt)} · snapshot ${longDate(data.sources.eurostat.retrievedAt)}`}
+            detail={`Serie D41PAY e TE · fonte aggiornata il ${longDate(data.sources.eurostat.upstreamUpdatedAt)} · accesso ${longDate(data.sources.eurostat.accessedAt)} · importi originari in milioni di euro`}
             actions={[
               { href: data.sources.eurostat.datasetUrl, label: "Dataset", ariaLabel: "Apri il Data Browser Eurostat per gov_10a_main (si apre in una nuova scheda)" },
               { href: data.sources.eurostat.termsUrl, label: "Riuso", ariaLabel: "Apri le condizioni di riuso Eurostat (si apre in una nuova scheda)" },
@@ -276,6 +278,8 @@ export default function PublicDebtPage() {
         </div>
 
         <div className={styles.provenanceNotes}>
+          <p>{data.measurement.transformation}</p>
+          <p>Attribuzioni: {data.sources.bancaditalia.attribution} {data.sources.eurostat.attribution}</p>
           <p>Quote, variazioni e riconciliazioni sono elaborazioni dichiarate di DoveVannoINostriSoldi; i dati recenti possono essere provvisori e soggetti a revisione.</p>
           {data.caveats.map((item) => <p key={item}>{item}</p>)}
         </div>

@@ -3,7 +3,7 @@ import { createDvnsMcpServer } from "@/lib/mcp/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const MAX_REQUEST_BYTES = 1_000_000;
 
@@ -46,13 +46,34 @@ function normalizedOrigin(value: string): string | null {
 }
 
 function allowedOrigins(request: Request): Set<string> {
+  const requestUrl = new URL(request.url);
+  const requestHost = normalizedHost(request.headers.get("host") ?? "");
+  const validatedHostOrigin = requestHost && requestHostAllowed(request)
+    ? `${requestUrl.protocol}//${requestHost}`
+    : null;
+  const requestOrigin = normalizedOrigin(request.headers.get("origin") ?? "");
+  const requestOriginUrl = requestOrigin ? new URL(requestOrigin) : null;
+  const requestUrlHost = normalizedHost(requestUrl.host);
+  const requestOriginHost = requestOriginUrl ? normalizedHost(requestOriginUrl.host) : null;
+  const equivalentLoopbackOrigin =
+    requestOriginUrl
+    && requestUrlHost
+    && requestOriginHost
+    && requestOriginUrl.protocol === requestUrl.protocol
+    && requestOriginUrl.port === requestUrl.port
+    && isLoopbackHost(requestUrlHost)
+    && isLoopbackHost(requestOriginHost)
+      ? requestOrigin
+      : null;
   const configured = (process.env.MCP_ALLOWED_ORIGINS ?? "")
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean)
     .map(normalizedOrigin)
     .filter((value): value is string => value !== null);
-  return new Set([new URL(request.url).origin, ...configured]);
+  return new Set([requestUrl.origin, validatedHostOrigin, equivalentLoopbackOrigin, ...configured].filter(
+    (value): value is string => value !== null,
+  ));
 }
 
 function normalizedHost(value: string): string | null {
@@ -173,4 +194,14 @@ export function OPTIONS(request: Request) {
   );
   response.headers.set("Access-Control-Max-Age", "600");
   return secureResponse(response, request);
+}
+
+export function GET(request: Request) {
+  const rejected = validateRequest(request);
+  if (rejected) return secureResponse(rejected, request);
+
+  return secureResponse(Response.json(
+    { error: "Questo server MCP usa Streamable HTTP tramite POST" },
+    { status: 405, headers: { Allow: "POST, OPTIONS" } },
+  ), request);
 }

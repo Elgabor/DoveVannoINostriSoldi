@@ -666,12 +666,10 @@ await waitForServer(baseUrl);
 const debtApiResponse = await fetch(new URL("/api/debito", baseUrl));
 assert.equal(debtApiResponse.status, 200, "Debito API: risposta iniziale non valida");
 const debtApi = await debtApiResponse.json();
-const debtExact = new Intl.NumberFormat("it-IT", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 2,
+const debtSourceMillions = new Intl.NumberFormat("it-IT", {
+  maximumFractionDigits: 3,
   useGrouping: "always",
-}).format(debtApi.stock.totalCents / 100);
+}).format(debtApi.stock.totalCents / 100_000_000);
 const debtReferenceDate = new Intl.DateTimeFormat("it-IT", {
   day: "numeric",
   month: "long",
@@ -684,6 +682,104 @@ const completed = [];
 
 try {
   browser = await launchBrowser();
+
+  for (const width of [390, 768, 1280]) {
+    const label = `Atlante Imprese ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/imprese",
+      width,
+      validate: async (page) => {
+        const text = await bodyText(page);
+        assertTextMatches(text, /Atlante Imprese Italia/i, label);
+        assertTextMatches(text, /Solo dati aggregati/i, label);
+        assertTextMatches(text, /Fonte del numero/i, label);
+        assert.equal(
+          (await page.$$('[data-region-map="true"] path[role="button"]')).length,
+          20,
+          `${label}: mappa regionale incompleta`,
+        );
+
+        const metricFilter = '[data-atlas-filter="metric"]';
+        await page.focus(metricFilter);
+        assert.equal(
+          await page.$eval(metricFilter, (element) => document.activeElement === element),
+          true,
+          `${label}: il filtro metrica non riceve focus`,
+        );
+        await page.select(metricFilter, "employees");
+        await page.waitForFunction(
+          () => new URL(window.location.href).searchParams.get("metric") === "employees",
+          { timeout: 3_000 },
+        );
+        assertTextMatches(await bodyText(page), /Addetti per regione/i, label);
+
+        const firstRegion = '[data-region-map="true"] path[role="button"]';
+        await page.$eval(firstRegion, (element) => element.focus());
+        await page.keyboard.press("Enter");
+        await page.waitForFunction(
+          () => new URL(window.location.href).searchParams.has("region"),
+          { timeout: 3_000 },
+        );
+        await assertResponsiveShell(page, `${label} filtro regione`, width);
+      },
+    });
+    completed.push(label);
+  }
+
+  await runScenario(browser, {
+    label: "Atlante Imprese query navigation 390px",
+    pathname: "/imprese?metric=employees",
+    width: 390,
+    validate: async (page) => {
+      const currentLabels = await page.$$eval(
+        'nav.primary-nav a[aria-current="page"]',
+        (links) => links.map((link) => link.textContent?.trim()),
+      );
+      assert.deepEqual(currentLabels, ["Addetti"]);
+
+      await assertPrimaryDropdownTap(page, "Atlante Imprese query navigation 390px", {
+        sectionLabel: "Imprese",
+        childLabel: "Localizzazioni attive",
+      });
+
+      const itemElement = await findPrimaryNavSection(page, "Imprese");
+      assert.ok(itemElement, "Atlante Imprese query navigation 390px: sezione Imprese assente");
+      const toggle = await itemElement.$(".nav-item-toggle");
+      assert.ok(toggle, "Atlante Imprese query navigation 390px: pulsante tendina assente");
+      await toggle.click();
+      await assertSubmenuVisible(
+        itemElement,
+        page,
+        "Atlante Imprese query navigation 390px",
+        "Localizzazioni attive",
+      );
+      const localUnitsLink = await itemElement.$(
+        'a[href="/imprese?metric=active_local_units"]',
+      );
+      assert.ok(localUnitsLink, "Atlante Imprese query navigation 390px: link metrica assente");
+      await localUnitsLink.click();
+      await page.waitForFunction(
+        () => new URL(window.location.href).searchParams.get("metric") === "active_local_units",
+        { timeout: 3_000 },
+      );
+      await page.waitForFunction(
+        () => {
+          const current = document.querySelector(
+            'nav.primary-nav a[aria-current="page"]',
+          );
+          return current?.textContent?.trim() === "Localizzazioni attive";
+        },
+        { timeout: 3_000 },
+      );
+      assert.equal(
+        await page.$eval(".nav-row", (row) => row.hasAttribute("data-menu-open")),
+        false,
+        "Atlante Imprese query navigation 390px: menu rimasto aperto dopo la query",
+      );
+    },
+  });
+  completed.push("Atlante Imprese query navigation 390px");
 
   for (const width of [390, 768, 1280]) {
     const label = `Scheda economica Benevento ${width}px`;
@@ -882,7 +978,7 @@ try {
         const text = await bodyText(page);
         assertTextMatches(text, /Quanto debito c’è/i, label);
         assertTextMatches(text, /Come può incidere sulla tua vita/i, label);
-        assertTextMatches(text, new RegExp(debtExact.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), label);
+        assertTextMatches(text, new RegExp(`${debtSourceMillions.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} milioni di euro nella fonte`), label);
         assertTextMatches(text, new RegExp(debtReferenceDate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"), label);
         assertTextMatches(text, /Netto significa emissioni meno rimborsi/i, label);
         assert.equal(await page.$$eval("h1", (items) => items.length), 1);
@@ -910,7 +1006,7 @@ try {
           await chartSummary.focus();
           await page.keyboard.press("Enter");
           assert.equal(await chartSummary.evaluate((element) => element.parentElement?.open), true);
-          assert.match(await chartSummary.evaluate((element) => element.parentElement?.innerText ?? ""), /Debito esatto/i);
+          assert.match(await chartSummary.evaluate((element) => element.parentElement?.innerText ?? ""), /Debito convertito in euro/i);
           const session = await page.createCDPSession();
           try {
             await session.send("Accessibility.enable");
@@ -919,7 +1015,6 @@ try {
             assert.ok(headingNames.includes("1. Quanto debito c’è?"), `${label}: primo titolo assente dall'albero accessibile`);
             assert.ok(headingNames.includes("7. Come può incidere sulla tua vita?"), `${label}: settimo titolo assente dall'albero accessibile`);
             assert.ok(nodes.filter((node) => node.role?.value === "table").length >= 5, `${label}: tabelle assenti dall'albero accessibile`);
-            assert.ok(nodes.some((node) => node.name?.value === debtExact), `${label}: totale esatto assente dall'albero accessibile`);
           } finally {
             await session.detach();
           }
@@ -1114,19 +1209,25 @@ try {
       width,
       validate: async (page) => {
         const text = await bodyText(page);
-        assertTextMatches(text, /I 20 Comuni con più pagamenti per abitante/i, label);
+        assertTextMatches(text, /Valori più alti · per abitante/i, label);
         const firstMunicipality = await page.$eval(
-          '[data-municipality-ranking="per-capita"] tbody tr:first-child th',
-          (heading) => ({
-            name: [...heading.childNodes]
-              .find((node) => node.nodeType === Node.TEXT_NODE)
-              ?.textContent?.trim(),
-            context: [...heading.querySelectorAll("small")].map((item) => item.textContent?.trim()),
-          }),
+          '[data-municipality-ranking="per-abitante"] tbody tr:first-child',
+          (row) => {
+            const heading = row.querySelector("th");
+            return {
+              name: [...(heading?.childNodes ?? [])]
+                .find((node) => node.nodeType === Node.TEXT_NODE)
+                ?.textContent?.trim(),
+              context: heading?.querySelector("small")?.textContent?.trim(),
+              population: row.children[3]?.textContent?.trim(),
+              surface: row.children[4]?.textContent?.trim(),
+            };
+          },
         );
         assert.match(firstMunicipality.name ?? "", /\S/);
-        assert.match(firstMunicipality.context[0] ?? "", /^\S.* · \S.*$/);
-        assert.match(firstMunicipality.context[1] ?? "", /abitanti$/);
+        assert.match(firstMunicipality.context ?? "", /^\S.* · \S.*$/);
+        assert.match(firstMunicipality.population ?? "", /^\d[\d.]*$/);
+        assert.match(firstMunicipality.surface ?? "", /km²$/);
         await assertResponsiveShell(page, label, width);
       },
     });
@@ -1162,12 +1263,13 @@ try {
         const sitemap = await page.$(".footer-sitemap");
         assert.ok(sitemap, `${label}: mappa del sito assente`);
         const rowCount = await page.$$eval(".footer-sitemap-grid", (rows) => rows.length);
-        assert.equal(rowCount, 2, `${label}: attese 2 righe nella mappa`);
+        assert.equal(rowCount, 3, `${label}: attese 3 righe nella mappa`);
         const groupCount = await page.$$eval(".footer-sitemap-group", (groups) => groups.length);
-        assert.equal(groupCount, 8, `${label}: attesi 8 gruppi nella mappa`);
+        assert.equal(groupCount, 9, `${label}: attesi 9 gruppi nella mappa`);
         const headings = await page.$$eval(".footer-sitemap-group h3", (items) =>
           items.map((item) => item.textContent?.trim() ?? ""),
         );
+        assert.ok(headings.includes("Imprese"), `${label}: sezione Imprese assente`);
         assert.ok(headings.includes("Istituzioni"), `${label}: sezione Istituzioni assente`);
         assert.ok(headings.includes("Fonti e metodo"), `${label}: sezione Fonti e metodo assente`);
         assert.ok(!headings.includes("Legale"), `${label}: sezione Legale non attesa in mappa`);
@@ -1219,11 +1321,12 @@ try {
     const label = `Macro-aree territori ${width}px`;
     await runScenario(browser, {
       label,
-      pathname: "/territori?anno=2024",
+      pathname: "/territori?anno=2024&vista=tabella",
       width,
       validate: async (page) => {
-        const groups = await page.$$eval("main table tbody", (bodies) =>
-          bodies.slice(0, 3).map((body) => ({
+        const groups = await page.$$eval(
+          'main [aria-label^="Pagamenti di tutte le regioni"] tbody',
+          (bodies) => bodies.map((body) => ({
             heading: body.querySelector("tr:first-child th")?.textContent?.trim(),
             rows: body.querySelectorAll("tr").length,
           })),

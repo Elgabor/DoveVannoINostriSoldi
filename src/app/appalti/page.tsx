@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import IntegratedSectionPreview from "@/components/integrated-section-preview";
+import { getProcurementComparisonForYear } from "@/lib/audit-data";
 import { anacCigSnapshot } from "@/lib/anac-cig-snapshot";
-import { exactEuro, integer, longDate, percent } from "@/lib/format";
+import { compactEuro, exactEuro, integer, longDate, percent } from "@/lib/format";
 import styles from "./appalti.module.css";
 import { ScrollRegion } from "./scroll-region";
 
@@ -14,15 +15,32 @@ export const metadata: Metadata = {
 
 const data = anacCigSnapshot;
 const totalCigs = data.population.records;
-const procedureEntries = Object.entries(data.procedureChoice.allLabels)
-  .map(([label, records]) => ({ label, records }))
+const labelAmounts = data.procedureChoice.allLabelsAmountEuroCents;
+const totalAmountCents = data.procedureChoice.totalPositiveAmountEuroCents;
+type ProcedureLabel = keyof typeof labelAmounts;
+const procedureEntries = (
+  Object.entries(data.procedureChoice.allLabels) as Array<[ProcedureLabel, number]>
+)
+  .map(([label, records]) => ({
+    label,
+    records,
+    amountEuroCents: labelAmounts[label],
+  }))
   .sort((left, right) => right.records - left.records);
 const featuredProcedureEntries = procedureEntries.slice(0, 6);
 const otherProcedureEntries = procedureEntries.slice(6);
 const otherProcedureCount = otherProcedureEntries.reduce((sum, row) => sum + row.records, 0);
+const otherProcedureAmount = otherProcedureEntries.reduce(
+  (sum, row) => sum + row.amountEuroCents,
+  0,
+);
 const procedureRows = [
   ...featuredProcedureEntries,
-  { label: `Altre ${otherProcedureEntries.length} etichette`, records: otherProcedureCount },
+  {
+    label: `Altre ${otherProcedureEntries.length} etichette`,
+    records: otherProcedureCount,
+    amountEuroCents: otherProcedureAmount,
+  },
 ];
 
 const directAward = data.procedureChoice.directAward;
@@ -30,9 +48,18 @@ const directAwardFamily = data.procedureChoice.directAwardFamily;
 const servicesAndSupplies = data.population.servicesAndSupplies;
 const below140000 = data.servicesAndSuppliesBelow140000;
 const thresholdBand = data.thresholdBand135000To140000;
+const marketComparison = getProcurementComparisonForYear(data.referenceYear);
+const marketValueBillion =
+  marketComparison === null
+    ? null
+    : (marketComparison.totalValueBillion * marketComparison.byValue) / 100;
 
-function share(records: number, denominator: number): string {
-  return percent((records / denominator) * 100);
+function share(part: number, denominator: number): string {
+  return percent((part / denominator) * 100);
+}
+
+function amountShare(amountEuroCents: number): string {
+  return share(amountEuroCents, totalAmountCents);
 }
 
 const exactAmountRows = Object.entries(data.exactContractAmounts)
@@ -71,45 +98,55 @@ export default function AppaltiPage() {
           <span className="stat-note">{integer(directAward.records)} su {integer(totalCigs)} CIG · quota sul numero di CIG</span>
         </div>
         <div>
-          <span className="stat-label">Servizi e forniture</span>
-          <span className="stat-value">{integer(servicesAndSupplies)}</span>
-          <span className="stat-note">{share(servicesAndSupplies, totalCigs)} del totale CIG</span>
+          <span className="stat-label">Affidamento diretto · sul valore CIG</span>
+          <span className="stat-value">{percent(directAward.amountSharePercent ?? 0)}</span>
+          <span className="stat-note">
+            somma di importo_lotto · quota sul totale euro dello snapshot
+          </span>
         </div>
         <div>
-          <span className="stat-label">Copertura</span>
+          <span className="stat-label">Copertura CIG</span>
           <span className="stat-value">12/12</span>
           <span className="stat-note">file mensili presenti nello snapshot</span>
         </div>
       </section>
 
       <section className={`notice scope-notice ${styles.readingNotice}`} aria-labelledby="appalti-reading-title">
-        <h2 id="appalti-reading-title">La lettura corretta in una frase</h2>
+        <h2 id="appalti-reading-title">Come leggere questi numeri</h2>
         <p>
-          Questi conteggi mostrano come sono classificati i CIG pubblicati e indicano dove guardare
-          meglio negli atti.
+          Qui sotto tutto parla dello <strong>stesso snapshot CIG 2025</strong>: conteggio dei CIG e
+          somma di <strong>importo_lotto</strong> (valore dichiarato del lotto). Sono due letture
+          diverse dello stesso file, non due mercati diversi. I grandi numeri in euro della tabella
+          (centinaia di miliardi) sono proprio quella somma.
         </p>
-        <div className="scope-notice__section">
-          <h3>Che cosa misura il valore</h3>
-          <p>
-            <strong>importo_lotto</strong> è il valore dichiarato del lotto nella banca dati.
-          </p>
-        </div>
       </section>
 
       <section className={`panel ${styles.leadPanel}`} aria-labelledby="procedure-title">
         <div className={styles.leadCopy}>
           <h2 id="procedure-title" className="panel-title">Le procedure che ricorrono di più</h2>
           <p>
-            La voce <strong>AFFIDAMENTO DIRETTO</strong> è l&apos;etichetta più frequente: rappresenta
-            {" "}{share(directAward.records, totalCigs)} dei {integer(totalCigs)} CIG unici osservati.
-            La famiglia più ampia delle etichette che iniziano con “AFFIDAMENTO DIRETTO” arriva a
-            {" "}{share(directAwardFamily.records, totalCigs)} e raccoglie etichette diverse.
+            La voce <strong>AFFIDAMENTO DIRETTO</strong> è l&apos;etichetta più frequente:{" "}
+            {share(directAward.records, totalCigs)} dei {integer(totalCigs)} CIG, ma solo{" "}
+            {percent(directAward.amountSharePercent ?? 0)} della somma di{" "}
+            <strong>importo_lotto</strong> nello snapshot
+            ({exactEuro((directAward.amountEuroCents ?? 0) / 100)}). La famiglia di etichette che
+            iniziano con “AFFIDAMENTO DIRETTO” arriva a {share(directAwardFamily.records, totalCigs)}{" "}
+            dei CIG e a {percent(directAwardFamily.amountSharePercent ?? 0)} del valore dichiarato.
           </p>
         </div>
-        <div className={styles.leadMeasure}>
-          <span>Etichetta più frequente</span>
-          <strong>{share(directAward.records, totalCigs)}</strong>
-          <small>del totale CIG · denominatore: {integer(totalCigs)}</small>
+        <div className={styles.leadMeasurePair}>
+          <div className={styles.leadMeasure}>
+            <span>Sul numero di CIG</span>
+            <strong>{share(directAward.records, totalCigs)}</strong>
+            <small>etichetta esatta · {integer(directAward.records)} CIG</small>
+          </div>
+          <div className={styles.leadMeasure} data-emphasis="value">
+            <span>Sul valore dichiarato</span>
+            <strong>{percent(directAward.amountSharePercent ?? 0)}</strong>
+            <small>
+              {exactEuro((directAward.amountEuroCents ?? 0) / 100)} · importo_lotto &gt; 0
+            </small>
+          </div>
         </div>
       </section>
 
@@ -121,11 +158,12 @@ export default function AppaltiPage() {
               Le prime sei voci coprono {share(
                 featuredProcedureEntries.reduce((sum, row) => sum + row.records, 0),
                 totalCigs,
-              )} dei CIG. Le altre sono accorpate solo nel grafico e nella tabella equivalente qui
-              sotto; il dettaglio delle 32 etichette resta apribile più avanti.
+              )} dei CIG e {amountShare(
+                featuredProcedureEntries.reduce((sum, row) => sum + row.amountEuroCents, 0),
+              )} del valore dichiarato (importo_lotto &gt; 0). Per ogni riga vedi conteggio e euro.
             </p>
           </div>
-          <span className="tag tag-neutral">Denominatore: tutti i CIG unici 2025</span>
+          <span className="tag tag-neutral">CIG e somma importo_lotto · 2025</span>
         </div>
 
         <ol className={styles.barList} aria-label="Le sei etichette di procedura più frequenti e le altre etichette">
@@ -135,6 +173,10 @@ export default function AppaltiPage() {
                 <span>{row.label}</span>
                 <strong>
                   {integer(row.records)} <small>· {share(row.records, totalCigs)}</small>
+                  <span className={styles.barAmount}>
+                    {compactEuro(row.amountEuroCents / 100)}
+                    <small> · {amountShare(row.amountEuroCents)}</small>
+                  </span>
                 </strong>
               </div>
               <div className={styles.barTrack} aria-hidden="true">
@@ -147,12 +189,16 @@ export default function AppaltiPage() {
 
         <ScrollRegion className="table-scroll" role="region" aria-label="Tabella esatta della distribuzione delle procedure" tabIndex={0}>
           <table className="table">
-            <caption>Le stesse categorie rappresentate nel grafico, con conteggio e quota sul totale dei CIG unici 2025</caption>
+            <caption>
+              Stesse categorie del grafico: conteggio CIG e somma di importo_lotto positivo
+            </caption>
             <thead>
               <tr>
                 <th scope="col">Etichetta</th>
                 <th scope="col" className="num">CIG</th>
-                <th scope="col" className="num">Quota</th>
+                <th scope="col" className="num">Quota CIG</th>
+                <th scope="col" className="num">Valore dichiarato</th>
+                <th scope="col" className="num">Quota valore</th>
               </tr>
             </thead>
             <tbody>
@@ -161,6 +207,8 @@ export default function AppaltiPage() {
                   <th scope="row">{row.label}</th>
                   <td className="num">{integer(row.records)}</td>
                   <td className="num">{share(row.records, totalCigs)}</td>
+                  <td className="num">{exactEuro(row.amountEuroCents / 100)}</td>
+                  <td className="num">{amountShare(row.amountEuroCents)}</td>
                 </tr>
               ))}
             </tbody>
@@ -177,7 +225,9 @@ export default function AppaltiPage() {
                 <tr>
                   <th scope="col">Etichetta originale</th>
                   <th scope="col" className="num">CIG</th>
-                  <th scope="col" className="num">Quota</th>
+                  <th scope="col" className="num">Quota CIG</th>
+                  <th scope="col" className="num">Valore dichiarato</th>
+                  <th scope="col" className="num">Quota valore</th>
                 </tr>
               </thead>
               <tbody>
@@ -186,6 +236,8 @@ export default function AppaltiPage() {
                     <th scope="row">{row.label}</th>
                     <td className="num">{integer(row.records)}</td>
                     <td className="num">{share(row.records, totalCigs)}</td>
+                    <td className="num">{exactEuro(row.amountEuroCents / 100)}</td>
+                    <td className="num">{amountShare(row.amountEuroCents)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -193,6 +245,33 @@ export default function AppaltiPage() {
           </ScrollRegion>
         </details>
       </section>
+
+      {marketComparison && marketValueBillion !== null ? (
+        <section className={`notice scope-notice ${styles.asideNotice}`} aria-labelledby="value-share-title">
+          <h2 id="value-share-title">Non confondere con la Relazione ANAC</h2>
+          <p>
+            I {exactEuro((directAward.amountEuroCents ?? 0) / 100)} e il{" "}
+            {percent(directAward.amountSharePercent ?? 0)} sopra sono la somma di{" "}
+            <strong>importo_lotto</strong> su tutti i CIG dello snapshot. La Relazione annuale ANAC
+            parla invece solo del mercato delle procedure da <strong>40.000 € in su</strong>: lì gli
+            affidamenti diretti sono il {percent(marketComparison.byNumber)} del numero e il{" "}
+            {percent(marketComparison.byValue)} del valore (circa{" "}
+            {marketValueBillion.toLocaleString("it-IT", { maximumFractionDigits: 1 })} mld € su{" "}
+            {marketComparison.totalValueBillion.toLocaleString("it-IT", {
+              maximumFractionDigits: 1,
+            })}{" "}
+            mld €). Non sostituisce i numeri della tabella.
+          </p>
+          <p className={styles.note}>
+            {marketComparison.caveat}{" "}
+            <a href={marketComparison.sourceUrl} target="_blank" rel="noreferrer">
+              {marketComparison.sourceTitle} ↗
+            </a>
+            {" · "}
+            <Link href="/controlli">Serie e confronti in Controlli →</Link>
+          </p>
+        </section>
+      ) : null}
 
       <section className={`panel ${styles.subsetPanel}`} aria-labelledby="subset-title">
         <div className={styles.sectionHeading}>
@@ -237,8 +316,8 @@ export default function AppaltiPage() {
             <h2 id="threshold-title" className="panel-title">Un segnale vicino alla soglia</h2>
             <p>
               Nella fascia <strong>[135.000 €, 140.000 €)</strong> ci sono {integer(thresholdBand.servicesAndSuppliesRecords)}
-              {" "}CIG di servizi e forniture. La fascia serve a scegliere cosa verificare negli atti
-              originali.
+              {" "}CIG di servizi e forniture. Questi numeri indicano dove guardare meglio negli atti.
+              La fascia serve a scegliere cosa verificare negli atti originali.
             </p>
           </div>
           <span className="tag tag-neutral">Intervallo dichiarato da ANAC</span>
@@ -419,9 +498,9 @@ export default function AppaltiPage() {
               per soggetto.
             </li>
             <li>
-              L&apos;importo del lotto è il valore dichiarato nella banca dati. Per verificare un caso
-              servono l&apos;atto originale, la procedura completa e le informazioni collegate
-              pubblicate dalle fonti ufficiali.
+              Il campo <strong>importo_lotto</strong> è il valore dichiarato del lotto nella banca dati.
+              Per verificare un caso servono l&apos;atto originale, la procedura completa e le
+              informazioni collegate pubblicate dalle fonti ufficiali.
             </li>
           </ul>
         </details>

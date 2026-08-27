@@ -11,7 +11,7 @@ const navigationSource = fs.readFileSync(
 const layoutSource = fs.readFileSync(new URL("../src/app/layout.tsx", import.meta.url), "utf8");
 const globalsCss = fs.readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
 
-const { activeNavSection, isNavChildActive } = await import("../src/lib/site-navigation.ts");
+const { PRIMARY_NAV, activeNavSection, isNavChildActive } = await import("../src/lib/site-navigation.ts");
 
 test("site navigation exposes coesione asili in primary and footer maps", () => {
   assert.match(navigationSource, /href: "\/coesione\/asili", label: "Asili e prima infanzia"/);
@@ -69,6 +69,86 @@ test("a submenu can be opened without a pointer that can hover", async () => {
   assert.match(globalsCss, /\.nav-row\[data-menu-open="true"\] \.primary-nav \{ overflow: visible; \}/);
 });
 
+test("query-aware section links identify the selected business metric", async () => {
+  const business = PRIMARY_NAV.find((item) => item.href === "/imprese");
+  assert.ok(business?.children);
+
+  assert.equal(
+    isNavChildActive(
+      "/imprese",
+      "/imprese?metric=employees",
+      business.children,
+      "metric=employees&period=2026-Q2",
+    ),
+    true,
+  );
+  assert.equal(
+    isNavChildActive(
+      "/imprese",
+      "/imprese",
+      business.children,
+      "metric=employees&period=2026-Q2",
+    ),
+    false,
+  );
+  assert.equal(
+    isNavChildActive(
+      "/imprese?metric=active_local_units",
+      "/imprese?metric=active_local_units",
+      business.children,
+    ),
+    true,
+  );
+  assert.equal(
+    isNavChildActive(
+      "/imprese",
+      "/imprese?metric=employees",
+      business.children,
+      "metric=active_enterprises",
+    ),
+    false,
+  );
+  assert.equal(
+    isNavChildActive("/imprese", "/imprese", business.children, "period=2026-07-31"),
+    true,
+  );
+  assert.equal(
+    isNavChildActive("/imprese", "/imprese", business.children, "metric=unknown"),
+    false,
+  );
+});
+
+test("menu links close the open submenu and the business panels expose headings", async () => {
+  const [navigationComponent, sectionComponent, businessPage] = await Promise.all([
+    readFile(new URL("../src/components/navigation.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/section-nav.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/app/imprese/page.tsx", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(navigationComponent, /onClick=\{closeMenu\}/);
+  assert.match(navigationComponent, /useSearchParams/);
+  assert.match(navigationComponent, /currentSearch/);
+  assert.match(navigationComponent, /useState<string \| null>\(null\)/);
+  assert.match(navigationComponent, /useLayoutEffect/);
+  assert.match(navigationComponent, /openMenu\.search === null/);
+  assert.match(navigationComponent, /<Suspense fallback=\{null\}>/);
+  assert.match(navigationComponent, /<NavigationSearchSync onChange=\{setCurrentSearch\} \/>/);
+  assert.equal(
+    navigationComponent.match(/<NavigationContent pathname=/g)?.length,
+    1,
+    "the interactive primary navigation must not be duplicated across a Suspense fallback",
+  );
+  assert.match(sectionComponent, /useSearchParams/);
+  assert.match(sectionComponent, /currentSearch/);
+  assert.match(sectionComponent, /currentSearch=\{null\}/);
+  assert.match(sectionComponent, /currentSearch !== null/);
+  assert.match(sectionComponent, /<Suspense fallback=/);
+  assert.match(businessPage, /aria-labelledby="scope-title"/);
+  assert.match(businessPage, /<h2 id="scope-title" className="panel-title">Perimetro selezionato<\/h2>/);
+  assert.match(businessPage, /<h2 id="ranking-title" className="panel-title">Prime 10 regioni<\/h2>/);
+  assert.match(businessPage, /aria-label="Prime 10 regioni ordinate per valore assoluto"/);
+});
+
 test("every page offers the rest of its section without the header menu", async () => {
   const [component, layout, css] = await Promise.all([
     readFile(new URL("../src/components/section-nav.tsx", import.meta.url), "utf8"),
@@ -103,17 +183,38 @@ test("public legal pages do not expose a personal mailbox", async () => {
 });
 
 test("supporters page lists the current acknowledgements", async () => {
-  const [page, supporters, footer] = await Promise.all([
+  const [page, supporters, footer, site, globals] = await Promise.all([
     readFile(new URL("../src/app/supporter/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/lib/supporters.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/components/site-footer.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/lib/site.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/app/globals.css", import.meta.url), "utf8"),
   ]);
   assert.match(supporters, /regolo\.ai/);
   assert.match(supporters, /mantoventure\.com/);
   assert.match(supporters, /italianbuilders\.co/);
   assert.match(supporters, /modello GLM/);
+  assert.match(supporters, /INDIVIDUAL_SUPPORTERS/);
+  assert.match(supporters, /Clodo76/);
+  assert.match(supporters, /github\.com\/Clodo76/);
+  assert.match(supporters, /500 ai compute/);
+  assert.match(supporters, /Aldo Colamartino/);
+  assert.match(supporters, /Francesco Cecchetti/);
+  assert.match(supporters, /HyDrogu/);
+  assert.match(supporters, /chochoichoy/);
+  assert.match(supporters, /Sostegni anonimi/);
   assert.match(page, /SITE_SUPPORTERS/);
+  assert.match(page, /INDIVIDUAL_SUPPORTERS/);
+  assert.match(page, /BUY_ME_A_COFFEE_URL/);
+  assert.match(page, /supporter\.href \?/);
+  assert.match(page, /contributi pubblici ricevuti/);
   assert.match(footer, /href="\/supporter"/);
+  assert.match(footer, /BUY_ME_A_COFFEE_URL/);
+  assert.match(footer, /Buy me an AI compute/);
+  assert.match(site, /BUY_ME_A_COFFEE_URL = "https:\/\/www\.buymeacoffee\.com\/dovevannoinostrisoldi"/);
+  assert.match(globals, /\.footer-support \{/);
+  assert.match(globals, /\.footer-support-action \{/);
+  assert.doesNotMatch(footer, /cdnjs\.buymeacoffee\.com/);
   assert.match(navigationSource, /href: "\/supporter", label: "Chi ci sostiene"/);
 });
 

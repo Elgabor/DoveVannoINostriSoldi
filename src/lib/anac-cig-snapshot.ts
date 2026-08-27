@@ -58,6 +58,33 @@ export function assertAnacCigManifest(candidate: typeof rawManifest = rawManifes
   ) {
     throw new Error("Manifest ANAC CIG: aggregati delle procedure incoerenti.");
   }
+  const labelAmounts = candidate.procedureChoice.allLabelsAmountEuroCents;
+  const totalAmount = candidate.procedureChoice.totalPositiveAmountEuroCents;
+  if (
+    typeof totalAmount !== "number" ||
+    totalAmount < 0 ||
+    !labelAmounts ||
+    Object.keys(labelAmounts).length !== Object.keys(candidate.procedureChoice.allLabels).length
+  ) {
+    throw new Error("Manifest ANAC CIG: totali euro per etichetta mancanti o incoerenti.");
+  }
+  const amountSum = Object.values(labelAmounts).reduce((sum, value) => sum + value, 0);
+  if (amountSum !== totalAmount) {
+    throw new Error("Manifest ANAC CIG: la somma degli importi per etichetta non riconcilia.");
+  }
+  if (
+    candidate.procedureChoice.directAward.amountEuroCents !==
+      labelAmounts["AFFIDAMENTO DIRETTO"] ||
+    candidate.procedureChoice.directAward.amountEuroCents >
+      candidate.procedureChoice.directAwardFamily.amountEuroCents ||
+    candidate.procedureChoice.directAwardFamily.amountEuroCents > totalAmount ||
+    candidate.procedureChoice.openProcedure.amountEuroCents > totalAmount
+  ) {
+    throw new Error("Manifest ANAC CIG: aggregati euro delle procedure incoerenti.");
+  }
+  if (Object.values(labelAmounts).some((value) => value < 0)) {
+    throw new Error("Manifest ANAC CIG: importo euro negativo.");
+  }
   if (
     candidate.population.servicesAndSupplies > candidate.population.records ||
     candidate.servicesAndSuppliesBelow140000.records > candidate.population.servicesAndSupplies ||
@@ -103,7 +130,7 @@ export const anacCigSnapshot = {
     freshness:
       "Snapshot annuale verificato sui dodici file mensili CIG 2025; non è una query live BDNCP.",
     screeningOnly:
-      "Concentrazioni, procedure e importi vicini alle soglie indicano cosa verificare: non provano spreco, illecito, corruzione o frazionamento.",
+      "Concentrazioni, procedure e importi vicini alle soglie indicano dove guardare meglio negli atti: non provano spreco, illecito, corruzione o frazionamento.",
     supplierLimitation:
       "I file CIG non bastano per attribuire importi o concentrazione a un fornitore; servono aggiudicazioni e aggiudicatari collegati con identificativi ufficiali.",
   },

@@ -18,18 +18,31 @@ export type NavSection = Readonly<{
 export const PRIMARY_NAV: readonly NavSection[] = [
   { href: "/", label: "Home" },
   {
+    href: "/imprese",
+    label: "Imprese",
+    children: [
+      { href: "/imprese", label: "Panoramica" },
+      { href: "/imprese?metric=active_enterprises", label: "Imprese attive" },
+      { href: "/imprese?metric=employees", label: "Addetti" },
+      { href: "/imprese?metric=active_local_units", label: "Localizzazioni attive" },
+      { href: "/imprese?metric=production_value_band_count", label: "Valore della produzione" },
+    ],
+  },
+  {
     href: "/spese",
     label: "Soldi",
     aliases: ["/stato"],
     children: [
       { href: "/spese", label: "Pagamenti comunali" },
       { href: "/spese/sanita", label: "Sanità" },
+      { href: "/spese/sanita/storico", label: "Sanità · serie storica" },
       { href: "/spese/invalidita", label: "Invalidità INPS" },
       { href: "/spese/consulenze", label: "Consulenze ministeriali" },
       { href: "/spese/territoriale", label: "Spesa statale per territorio" },
       { href: "/spese/operative", label: "Spese operative" },
       { href: "/stato", label: "Amministrazioni centrali" },
       { href: "/debito", label: "Debito pubblico" },
+      { href: "/stato/legislature", label: "Spesa per legislatura" },
     ],
   },
   {
@@ -103,16 +116,28 @@ export const PRIMARY_NAV: readonly NavSection[] = [
 export const SITE_MAP_GROUPS: readonly { title: string; links: readonly NavLink[] }[] = [
   { title: "Home", links: [{ href: "/", label: "Home" }] },
   {
+    title: "Imprese",
+    links: [
+      { href: "/imprese", label: "Panoramica" },
+      { href: "/imprese?metric=active_enterprises", label: "Imprese attive" },
+      { href: "/imprese?metric=employees", label: "Addetti" },
+      { href: "/imprese?metric=active_local_units", label: "Localizzazioni attive" },
+      { href: "/imprese?metric=production_value_band_count", label: "Valore della produzione" },
+    ],
+  },
+  {
     title: "Soldi",
     links: [
       { href: "/spese", label: "Pagamenti comunali" },
       { href: "/spese/sanita", label: "Sanità" },
+      { href: "/spese/sanita/storico", label: "Sanità · serie storica" },
       { href: "/spese/invalidita", label: "Invalidità INPS" },
       { href: "/spese/consulenze", label: "Consulenze ministeriali" },
       { href: "/spese/territoriale", label: "Spesa statale per territorio" },
       { href: "/spese/operative", label: "Spese operative" },
       { href: "/stato", label: "Amministrazioni centrali" },
       { href: "/debito", label: "Debito pubblico" },
+      { href: "/stato/legislature", label: "Spesa per legislatura" },
     ],
   },
   {
@@ -166,7 +191,7 @@ export const SITE_MAP_GROUPS: readonly { title: string; links: readonly NavLink[
     title: "Strumenti",
     links: [
       { href: "/assistente", label: "Assistente" },
-      { href: "/mcp", label: "MCP" },
+      { href: "/mcp", label: "Istruzioni MCP" },
       { href: "/supporto", label: "Supporto" },
       { href: "/supporter", label: "Chi ci sostiene" },
     ],
@@ -196,19 +221,59 @@ export const FOOTER_SITEMAP_GROUPS: readonly { title: string; links: readonly Na
 
 export const FOOTER_SITEMAP_COLUMNS = 4;
 
+type NavigationLocation = Readonly<{
+  pathname: string;
+  searchParams: URLSearchParams;
+}>;
+
+function parseNavigationLocation(value: string, search = ""): NavigationLocation {
+  const [pathname = "/", inlineSearch = ""] = value.split("?", 2);
+  return {
+    pathname: pathname || "/",
+    searchParams: new URLSearchParams(search || inlineSearch),
+  };
+}
+
+function pathMatches(pathname: string, target: string): boolean {
+  return pathname === target || pathname.startsWith(`${target}/`);
+}
+
+function hrefMatchesLocation(
+  location: NavigationLocation,
+  href: string,
+): boolean {
+  const target = parseNavigationLocation(href);
+  if (!pathMatches(location.pathname, target.pathname)) return false;
+
+  for (const [key, value] of target.searchParams) {
+    if (location.searchParams.get(key) !== value) return false;
+  }
+  return true;
+}
+
+function isMoreSpecificHref(candidateHref: string, currentHref: string): boolean {
+  const candidate = parseNavigationLocation(candidateHref);
+  const current = parseNavigationLocation(currentHref);
+  if (candidate.pathname.length !== current.pathname.length) {
+    return candidate.pathname.length > current.pathname.length;
+  }
+  return candidate.searchParams.size > current.searchParams.size;
+}
+
 export function isNavSectionActive(pathname: string, item: NavSection): boolean {
-  if (item.href === "/") return pathname === "/";
-  if (pathname.startsWith(item.href)) return true;
-  if (item.aliases?.some((alias) => pathname.startsWith(alias))) return true;
+  const location = parseNavigationLocation(pathname);
+  if (item.href === "/") return location.pathname === "/";
+  if (pathMatches(location.pathname, item.href)) return true;
+  if (item.aliases?.some((alias) => pathMatches(location.pathname, alias))) return true;
   return (
     item.children?.some(
-      (child) => pathname === child.href || pathname.startsWith(`${child.href}/`),
+      (child) => hrefMatchesLocation(location, child.href),
     ) ?? false
   );
 }
 
 export function activeNavSection(pathname: string): NavSection | null {
-  if (pathname === "/") return null;
+  if (parseNavigationLocation(pathname).pathname === "/") return null;
   return (
     PRIMARY_NAV.filter((item) => item.children && item.children.length > 0)
       .filter((item) => isNavSectionActive(pathname, item))
@@ -220,13 +285,27 @@ export function isNavChildActive(
   pathname: string,
   childHref: string,
   siblings: readonly NavLink[],
+  search = "",
 ): boolean {
-  const matches = siblings.filter(
-    (child) => pathname === child.href || pathname.startsWith(`${child.href}/`),
+  const location = parseNavigationLocation(pathname, search);
+  const queryKeys = new Set(
+    siblings.flatMap((child) => [...parseNavigationLocation(child.href).searchParams.keys()]),
   );
+  const matches = siblings.filter((child) => {
+    if (!hrefMatchesLocation(location, child.href)) return false;
+
+    // A queryless overview is the fallback only when the URL is not choosing a
+    // query-backed sibling. This prevents "Panoramica" from being announced
+    // as current while, for example, ?metric=employees is selected.
+    const target = parseNavigationLocation(child.href);
+    return (
+      target.searchParams.size > 0 ||
+      ![...queryKeys].some((key) => location.searchParams.has(key))
+    );
+  });
   if (matches.length === 0) return false;
   const best = matches.reduce((current, candidate) =>
-    candidate.href.length > current.href.length ? candidate : current,
+    isMoreSpecificHref(candidate.href, current.href) ? candidate : current,
   );
   return best.href === childHref;
 }

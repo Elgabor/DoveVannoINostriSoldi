@@ -33,6 +33,7 @@ test("the education snapshot is aggregate-only and reconciles the MIM files", ()
   assert.equal(snapshot.sourceFiles.length, 12);
   assert.ok(snapshot.sourceFiles.every((file) => /^[a-f0-9]{64}$/.test(file.sha256)));
   assert.ok(snapshot.sources.every((source) => source.license === "IODL 2.0"));
+  assert.ok(snapshot.sources.every((source) => source.verifiedAt === snapshot.verifiedAt));
 
   for (const schoolType of ["state", "paritaria"]) {
     assert.equal(coverage("202425", schoolType).matchedRows, coverage("202425", schoolType).sourceRows);

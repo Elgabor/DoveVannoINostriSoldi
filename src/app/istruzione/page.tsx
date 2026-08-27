@@ -72,7 +72,7 @@ export default async function EducationAtlasPage({
   const topRegions = view.ranking.filter((region) => region.value !== null).slice(0, 10);
   const currentTrend = view.trend.at(-1);
   const previousTrend = view.trend.at(-2);
-  const selectedRegionName = view.selectedRegion?.name ?? "Tutta Italia";
+  const selectedRegionName = view.selectedRegion?.name ?? (view.missingRegionNames.length > 0 ? "Territori osservati" : "Tutta Italia");
   const source = view.sources[0]!;
 
   return (
@@ -118,7 +118,7 @@ export default async function EducationAtlasPage({
 
             <dl className={styles.factRows}>
               <div><dt>Territorio</dt><dd>{selectedRegionName}</dd></div>
-              <div><dt>Tipo di scuola</dt><dd>{view.schoolType === "all" ? "Statali e paritarie" : view.schoolType === "state" ? "Statale" : "Paritaria"}</dd></div>
+              <div><dt>Tipo di scuola</dt><dd>{view.schoolType === EDUCATION_ATLAS_ALL ? "Statali e paritarie" : view.schoolType === "state" ? "Statale" : "Paritaria"}</dd></div>
               <div><dt>Percorso</dt><dd>{view.selectedPathwayLabel}</dd></div>
               <div><dt>Copertura</dt><dd>{view.coverage.observedRegionCount}/{view.coverage.expectedRegionCount} Regioni</dd></div>
             </dl>
@@ -255,7 +255,7 @@ export default async function EducationAtlasPage({
             <dl className={styles.factRows}>
               <div><dt>Join tecnico</dt><dd>CODICESCUOLA</dd></div>
               <div><dt>Righe ultimo anno</dt><dd>{integer(view.coverage.byPeriodSchoolType[view.period]?.state.sourceRows ?? 0)} + {integer(view.coverage.byPeriodSchoolType[view.period]?.paritaria.sourceRows ?? 0)}</dd></div>
-              <div><dt>Controllato da noi</dt><dd>{longDate(source.observedAt)}</dd></div>
+              <div><dt>Verificato da noi</dt><dd>{longDate(source.verifiedAt)}</dd></div>
             </dl>
           </section>
 

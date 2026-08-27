@@ -70,6 +70,13 @@ trend e fonte sempre visibile. Il filtro per percorso porta anche agli
 indirizzi di studio aggregati, mentre la card “Lacune della fonte” espone la
 copertura mancante senza trasformarla in un giudizio.
 
+Questa prima tranche resta volutamente regionale: provincia e Comune sono
+presenti nell'anagrafe MIM come campi di join, ma non vengono ancora esposti
+come filtri o profili. Allo stesso modo, progetti e pagamenti pubblici restano
+nella seconda tranche OpenCoesione descritta sopra. Il totale dei territori
+osservati non viene quindi presentato come Italia completa quando la fonte non
+contiene tutte le Regioni.
+
 Il generatore `scripts/etl/education_atlas_snapshot.py` scarica i dodici CSV
 MIM del triennio, verifica lo schema, normalizza i nomi regionali, fa il join
 su `CODICESCUOLA` e produce il solo aggregato committato in
@@ -81,13 +88,14 @@ provenance e caveat.
 
 La vista resta dentro Atlante e riusa la grammatica di Atlante Imprese:
 
-1. selezione di regione/provincia/Comune quando la copertura lo consente;
+1. selezione della Regione nel perimetro osservato;
 2. card con periodo e perimetro;
 3. distribuzione per tipo di percorso;
 4. esplorazione degli indirizzi;
 5. trend per anno scolastico;
-6. tabella equivalente e fonte sempre visibile;
-7. sezione separata per progetti e pagamenti pubblici.
+6. classifica descrittiva, tabelle dei principali valori e fonte sempre visibile;
+7. provincia/Comune e progetti/pagamenti come estensioni successive, con
+   periodo e grana mantenuti separati.
 
 Non si pubblicano classifiche di scuole, insegnanti o studenti. Non si
 identificano persone e non si ricavano giudizi di qualità da un numero di

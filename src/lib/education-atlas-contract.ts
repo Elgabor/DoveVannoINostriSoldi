@@ -27,6 +27,7 @@ const sourceSchema = z.object({
   license: z.literal("IODL 2.0"),
   updatedAt: z.string().min(1),
   observedAt: z.string().min(1),
+  verifiedAt: z.string().min(1),
   cadence: z.literal("annuale"),
   coverage: z.string().min(1),
   caveat: z.string().min(1),
@@ -110,6 +111,7 @@ const coverageSchema = z.object({
 const educationAtlasSnapshotSchema = z.object({
   schemaVersion: z.literal(1),
   generatedAt: z.string().min(1),
+  verifiedAt: z.string().min(1),
   observationType: z.literal("aggregate"),
   geographyLevel: z.literal("region"),
   periods: z.array(periodSchema).length(3),
@@ -186,6 +188,10 @@ export function validateEducationAtlasSnapshot(input: unknown): EducationAtlasSn
     const sourceObservedAt = new Set(snapshot.sources.map((source) => source.observedAt));
     if (sourceObservedAt.size !== 1 || !sourceObservedAt.has(snapshot.generatedAt)) {
       issue(["sources"], "La provenienza deve usare lo stesso observedAt dello snapshot");
+    }
+    const sourceVerifiedAt = new Set(snapshot.sources.map((source) => source.verifiedAt));
+    if (sourceVerifiedAt.size !== 1 || !sourceVerifiedAt.has(snapshot.verifiedAt)) {
+      issue(["sources"], "La provenienza deve usare lo stesso verifiedAt dello snapshot");
     }
     const regionKeySet = new Set<string>();
     for (const [index, row] of snapshot.regionalObservations.entries()) {

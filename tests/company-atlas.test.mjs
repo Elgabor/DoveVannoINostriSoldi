@@ -305,6 +305,7 @@ test("the public MCP adapter exposes the business datasets with declared filters
     "company_active_enterprises",
     "company_workforce",
     "company_production_value_bands",
+    "company_turnover_istat",
   ]);
 
   const result = await queryPublicDataset({
@@ -345,10 +346,15 @@ test("business dataset queries fail closed on unknown filters", () => {
 });
 
 test("MCP server exposes business catalog, resources, and tools", () => {
-  assert.equal(businessDatasetCatalog.length, 3);
+  assert.equal(businessDatasetCatalog.length, 4);
   assert.deepEqual(
     businessDatasetCatalog.map((d) => d.id),
-    ["company_active_enterprises", "company_workforce", "company_production_value_bands"],
+    [
+      "company_active_enterprises",
+      "company_workforce",
+      "company_production_value_bands",
+      "company_turnover_istat",
+    ],
   );
 
   for (const dataset of businessDatasetCatalog) {
@@ -366,12 +372,14 @@ test("business navigation is additive to the civic navigation", () => {
   const businessSection = PRIMARY_NAV.find((item) => item.href === "/imprese");
   assert.ok(businessSection);
   assert.ok(businessSection.children?.some((child) => child.href.includes("metric=employees")));
+  assert.ok(businessSection.children?.some((child) => child.href.includes("metric=turnover")));
   assert.ok(PRIMARY_NAV.some((item) => item.href === "/spese"));
   assert.ok(PRIMARY_NAV.some((item) => item.href === "/territori"));
   assert.ok(PRIMARY_NAV.some((item) => item.href === "/fonti"));
 
   const businessMapGroup = SITE_MAP_GROUPS.find((group) => group.title === "Imprese");
   assert.ok(businessMapGroup);
+  assert.ok(businessMapGroup.links.some((link) => link.href.includes("metric=turnover")));
   assert.ok(SITE_MAP_GROUPS.some((group) => group.title === "Soldi"));
   assert.ok(SITE_MAP_GROUPS.some((group) => group.title === "Fonti e metodo"));
 });

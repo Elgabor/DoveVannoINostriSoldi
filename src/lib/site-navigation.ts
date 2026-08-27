@@ -26,6 +26,7 @@ export const PRIMARY_NAV: readonly NavSection[] = [
       { href: "/imprese?metric=employees", label: "Addetti" },
       { href: "/imprese?metric=active_local_units", label: "Localizzazioni attive" },
       { href: "/imprese?metric=production_value_band_count", label: "Valore della produzione" },
+      { href: "/imprese?metric=turnover", label: "Fatturato aggregato (ISTAT)" },
     ],
   },
   {
@@ -123,6 +124,7 @@ export const SITE_MAP_GROUPS: readonly { title: string; links: readonly NavLink[
       { href: "/imprese?metric=employees", label: "Addetti" },
       { href: "/imprese?metric=active_local_units", label: "Localizzazioni attive" },
       { href: "/imprese?metric=production_value_band_count", label: "Valore della produzione" },
+      { href: "/imprese?metric=turnover", label: "Fatturato aggregato (ISTAT)" },
     ],
   },
   {

@@ -24,5 +24,3 @@ dipendenze compromesse e workflow GitHub con privilegi eccessivi.
 
 I problemi di qualità o interpretazione dei dati senza impatto di sicurezza
 vanno segnalati con una issue ordinaria, allegando la fonte ufficiale.
-
-Il comportamento nella community è descritto in [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).

@@ -23,38 +23,32 @@ function securityTxtField(content, name) {
 }
 
 test("unpatched vulnerabilities are routed to the private GitHub advisory form", async () => {
-  const [securityMd, codeOfConduct, readme, contributing, securityTxt, supporto] = await Promise.all([
+  const [securityMd, readme, contributing, securityTxt, supporto, privacy] = await Promise.all([
     source("../SECURITY.md"),
-    source("../CODE_OF_CONDUCT.md"),
     source("../README.md"),
     source("../CONTRIBUTING.md"),
     source("../public/.well-known/security.txt"),
     source("../src/app/supporto/page.tsx"),
+    source("../src/app/privacy/page.tsx"),
   ]);
 
   assert.equal(
     linesOf(securityMd).find((line) => line === PRIVATE_ADVISORY),
     PRIVATE_ADVISORY,
   );
-  assert.equal(
-    linesOf(codeOfConduct).find((line) => line === PRIVATE_ADVISORY),
-    PRIVATE_ADVISORY,
-  );
 
   assert.match(securityMd, /Non aprire una issue pubblica per vulnerabilità non ancora corrette/);
   assert.doesNotMatch(securityMd, /Se la funzione non è disponibile/);
   assert.doesNotMatch(securityMd, /contatta privatamente un maintainer/);
+  assert.doesNotMatch(securityMd, /CODE_OF_CONDUCT/);
 
-  assert.match(codeOfConduct, /Per una vulnerabilità non ancora corretta non aprire una issue/);
-  assert.match(codeOfConduct, /\[SECURITY\.md\]\(SECURITY\.md\)/);
-
-  assert.match(readme, /\[codice di condotta\]\(CODE_OF_CONDUCT\.md\)/);
   assert.match(readme, /\[canale privato\]\(SECURITY\.md\)/);
   assert.match(readme, /Per una vulnerabilità non ancora corretta non aprire una issue/);
+  assert.doesNotMatch(readme, /CODE_OF_CONDUCT/);
 
   assert.match(contributing, /Non aprire una issue pubblica per una vulnerabilità non ancora corretta/);
   assert.match(contributing, /\[SECURITY\.md\]\(SECURITY\.md\)/);
-  assert.match(contributing, /\[CODE_OF_CONDUCT\.md\]\(CODE_OF_CONDUCT\.md\)/);
+  assert.doesNotMatch(contributing, /CODE_OF_CONDUCT/);
 
   assert.equal(securityTxtField(securityTxt, "Contact"), PRIVATE_ADVISORY);
   assert.equal(securityTxtField(securityTxt, "Policy"), SECURITY_POLICY);
@@ -62,6 +56,11 @@ test("unpatched vulnerabilities are routed to the private GitHub advisory form",
 
   assert.match(supporto, /\$\{REPO_URL\}\/security\/advisories\/new/);
   assert.match(supporto, /vulnerabilità non\s+ancora corretta/);
-  assert.match(supporto, /diritti privacy/);
   assert.match(supporto, /\$\{REPO_URL\}\/issues/);
+  assert.match(supporto, /Le issue GitHub sono pubbliche/);
+  assert.doesNotMatch(supporto, /problema che non deve essere pubblico/);
+  assert.doesNotMatch(supporto, /indicando l&apos;oggetto/);
+
+  assert.match(privacy, /Le issue GitHub sono pubbliche/);
+  assert.match(privacy, /canale privato/);
 });

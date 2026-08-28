@@ -12,8 +12,7 @@ riferimento, data di pubblicazione e frequenza di aggiornamento. Spiega anche ch
 cosa il dato non misura.
 
 Non aprire una issue pubblica per una vulnerabilità non ancora corretta. Segui
-[SECURITY.md](SECURITY.md) e usa il report privato. Il comportamento nella
-community è descritto in [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+[SECURITY.md](SECURITY.md) e usa il report privato.
 
 Non distribuire totali nazionali fra territori senza una geografia pubblicata
 dalla fonte. Non trasformare anomalie, differenze contabili o valori elevati in

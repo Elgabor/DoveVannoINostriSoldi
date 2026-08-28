@@ -157,7 +157,7 @@ docs/               metodo, architettura, note legali
 
 Segnalazioni utili: fonti mancanti, correzioni alle spiegazioni, qualità dei dati, accessibilità.
 
-Prima di una PR leggi [CONTRIBUTING.md](CONTRIBUTING.md) e il [codice di condotta](CODE_OF_CONDUCT.md).
+Prima di una PR leggi [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Per una vulnerabilità non ancora corretta non aprire una issue: usa il [canale privato](SECURITY.md).
 

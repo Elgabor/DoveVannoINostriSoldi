@@ -174,8 +174,18 @@ function italianIstatNameCandidates(istatName: string): string[] {
     const trimmed = part.trim();
     if (trimmed) candidates.push(trimmed);
     const hyphen = trimmed.lastIndexOf("-");
-    if (hyphen >= 8) candidates.push(trimmed.slice(0, hyphen).trim());
+    if (hyphen >= 3 && trimmed.length - hyphen - 1 >= 3) {
+      candidates.push(trimmed.slice(0, hyphen).trim());
+    }
   }
+  return candidates;
+}
+
+function siopeNameCandidates(siopeName: string): string[] {
+  const normalized = normalizeMunicipalityName(siopeName);
+  const candidates = [normalized];
+  const epithet = normalized.match(/^(.*)\s-\s[A-Z0-9]+$/);
+  if (epithet?.[1]) candidates.push(epithet[1].trim());
   return candidates;
 }
 
@@ -184,7 +194,7 @@ function compactedNamesAgree(left: string, right: string): boolean {
   const delta = left.length - right.length;
   if (delta > 1 || delta < -1) {
     const [shorter, longer] = left.length < right.length ? [left, right] : [right, left];
-    return shorter.length >= 10 && longer.startsWith(shorter);
+    return shorter.length >= 8 && longer.startsWith(shorter);
   }
   const [a, b] = left.length <= right.length ? [left, right] : [right, left];
   let i = 0;
@@ -214,11 +224,11 @@ function compactedNamesAgree(left: string, right: string): boolean {
  * still identifies the same municipality; otherwise the join must fail closed.
  */
 export function municipalityNamesAgree(siopeName: string, istatName: string): boolean {
-  const left = compactMunicipalityName(siopeName);
-  if (!left) return false;
-  return italianIstatNameCandidates(istatName).some((candidate) =>
-    compactedNamesAgree(left, compactMunicipalityName(candidate)),
-  );
+  const istatCandidates = italianIstatNameCandidates(istatName).map(compactMunicipalityName);
+  return siopeNameCandidates(siopeName).some((candidate) => {
+    const left = compactMunicipalityName(candidate);
+    return Boolean(left) && istatCandidates.some((right) => compactedNamesAgree(left, right));
+  });
 }
 
 export function getMunicipalityGeographyByTaxCodeIfNameAgrees(

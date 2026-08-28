@@ -68,6 +68,9 @@ test("municipality name agreement keeps spelling and bilingual variants, not swa
   assert.equal(municipalityNamesAgree("COMUNE DI CASSANO ALLO IONIO", "Cassano all'Ionio"), true);
   assert.equal(municipalityNamesAgree("COMUNE DI DUINO-AURISINA", "Duino Aurisina-Devin Nabrežina"), true);
   assert.equal(municipalityNamesAgree("COMUNE DI VALLECROSIA AL MARE", "Vallecrosia"), true);
+  assert.equal(municipalityNamesAgree("COMUNE DI SGONICO", "Sgonico-Zgonik"), true);
+  assert.equal(municipalityNamesAgree("COMUNE DI MURISENGO MONFERRATO", "Murisengo"), true);
+  assert.equal(municipalityNamesAgree("COMUNE DI TRIPI - ABAKAINON", "Tripi"), true);
   assert.equal(municipalityNamesAgree("COMUNE DI MONTEGRANARO", "Monte San Pietrangeli"), false);
   assert.equal(municipalityNamesAgree("COMUNE DI MONTEFORTINO", "Monte Rinaldo"), false);
   assert.equal(municipalityNamesAgree("COMUNE DI CASTIGLIONE DEL GENOVESI", "San Mango Piemonte"), false);

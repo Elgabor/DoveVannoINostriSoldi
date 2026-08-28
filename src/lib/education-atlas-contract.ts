@@ -81,6 +81,13 @@ const sourceFileSchema = z.object({
   rows: countSchema,
 }).strict();
 
+const sourceFileManifestSchema = z.object({
+  schemaVersion: z.literal(1),
+  snapshotPath: z.literal("src/data/generated/education-atlas-snapshot.json"),
+  verifiedAt: z.string().min(1),
+  files: z.array(sourceFileSchema).length(12),
+}).strict();
+
 const coverageEntrySchema = z.object({
   sourceRows: countSchema,
   matchedRows: countSchema,
@@ -157,11 +164,33 @@ const EXPECTED_REGION_NAMES = new Map([
   ["20", "Sardegna"],
 ]);
 
+const EXPECTED_SOURCE_FILE_KEYS = EXPECTED_PERIODS.flatMap((period) =>
+  ["state", "paritaria"].flatMap((schoolType) =>
+    ["students", "registry"].map((role) => `${period}|${schoolType}|${role}`),
+  ),
+);
+
 export type EducationAtlasSource = z.infer<typeof sourceSchema>;
+export type EducationAtlasSourceFile = z.infer<typeof sourceFileSchema>;
+export type EducationAtlasSourceFileManifest = z.infer<typeof sourceFileManifestSchema>;
 export type EducationAtlasRegionalObservation = z.infer<typeof regionalObservationSchema>;
 export type EducationAtlasPathwayObservation = z.infer<typeof pathwayObservationSchema>;
 export type EducationAtlasAddressObservation = z.infer<typeof addressObservationSchema>;
 export type EducationAtlasSnapshot = z.infer<typeof educationAtlasSnapshotSchema>;
+
+function validateSourceFileInventory(
+  sourceFiles: readonly EducationAtlasSourceFile[],
+  issue: (path: (string | number)[], message: string) => void,
+  path: string,
+) {
+  const keys = sourceFiles.map((file) => [file.period, file.schoolType, file.role].join("|"));
+  if (keys.join("|") !== EXPECTED_SOURCE_FILE_KEYS.join("|")) {
+    issue([path], "L'inventario deve contenere un file studenti e uno anagrafe per ogni periodo e tipo scuola");
+  }
+  if (new Set(sourceFiles.map((file) => file.url)).size !== sourceFiles.length) {
+    issue([path], "L'inventario non può contenere URL sorgente duplicati");
+  }
+}
 
 export function validateEducationAtlasSnapshot(input: unknown): EducationAtlasSnapshot {
   return educationAtlasSnapshotSchema.superRefine((snapshot, ctx) => {
@@ -193,6 +222,7 @@ export function validateEducationAtlasSnapshot(input: unknown): EducationAtlasSn
     if (sourceVerifiedAt.size !== 1 || !sourceVerifiedAt.has(snapshot.verifiedAt)) {
       issue(["sources"], "La provenienza deve usare lo stesso verifiedAt dello snapshot");
     }
+    validateSourceFileInventory(snapshot.sourceFiles, issue, "sourceFiles");
     const regionKeySet = new Set<string>();
     for (const [index, row] of snapshot.regionalObservations.entries()) {
       const key = [row.period, row.schoolType, row.regionCode].join("|");
@@ -268,5 +298,14 @@ export function validateEducationAtlasSnapshot(input: unknown): EducationAtlasSn
         }
       }
     }
+  }).parse(input);
+}
+
+export function validateEducationAtlasSourceFileManifest(input: unknown): EducationAtlasSourceFileManifest {
+  return sourceFileManifestSchema.superRefine((manifest, ctx) => {
+    const issue = (path: (string | number)[], message: string) => {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path, message });
+    };
+    validateSourceFileInventory(manifest.files, issue, "files");
   }).parse(input);
 }

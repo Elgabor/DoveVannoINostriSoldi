@@ -14,6 +14,7 @@ import csv
 import hashlib
 import io
 import json
+import re
 import sys
 import unicodedata
 import urllib.request
@@ -24,6 +25,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUTPUT = ROOT / "src/data/generated/education-atlas-snapshot.json"
+DEFAULT_SOURCE_FILES_OUTPUT = ROOT / "src/data/generated/education-atlas-source-files.json"
 OBSERVED_AT_DEFAULT = "2026-08-27T00:00:00+02:00"
 
 PERIODS = (
@@ -523,8 +525,31 @@ def assert_snapshot(snapshot: dict[str, Any]) -> None:
         raise ValueError("Tipi scuola inattesi")
     if len(snapshot.get("sources", [])) != 2:
         raise ValueError("Fonti MIM inattese")
-    if len(snapshot.get("sourceFiles", [])) != 12:
+    source_files = snapshot.get("sourceFiles", [])
+    if len(source_files) != 12:
         raise ValueError("Ricevute source file inattese")
+    expected_source_files = [
+        (period, school_type, role)
+        for period, _period_label in PERIODS
+        for school_type, _school_type_label in SCHOOL_TYPES
+        for role in ("students", "registry")
+    ]
+    actual_source_files = [
+        (item.get("period"), item.get("schoolType"), item.get("role"))
+        for item in source_files
+    ]
+    if actual_source_files != expected_source_files:
+        raise ValueError("Inventario source file incoerente: periodo, tipo scuola o ruolo inatteso")
+    if len({item.get("url") for item in source_files}) != len(source_files):
+        raise ValueError("URL sorgente duplicati nell'inventario source file")
+    for item, (period, school_type, role) in zip(source_files, expected_source_files):
+        if item.get("url") != SOURCE_FILES[period][school_type][role]:
+            raise ValueError(f"URL sorgente incoerente: {period}/{school_type}/{role}")
+        if not re.fullmatch(r"[a-f0-9]{64}", str(item.get("sha256", ""))):
+            raise ValueError(f"Hash sorgente non valido: {period}/{school_type}/{role}")
+        for field in ("bytes", "rows"):
+            if not isinstance(item.get(field), int) or item[field] < 0:
+                raise ValueError(f"Ricevuta sorgente non valida: {period}/{school_type}/{role}/{field}")
 
     region_keys: set[tuple[str, str, str]] = set()
     for row in snapshot.get("regionalObservations", []):
@@ -586,9 +611,35 @@ def assert_snapshot(snapshot: dict[str, Any]) -> None:
         raise ValueError(f"Copertura regionale cambiata: {missing}")
 
 
+def source_file_manifest(snapshot: dict[str, Any], snapshot_path: Path) -> dict[str, Any]:
+    try:
+        relative_snapshot_path = snapshot_path.resolve().relative_to(ROOT).as_posix()
+    except ValueError:
+        relative_snapshot_path = str(snapshot_path)
+    return {
+        "schemaVersion": 1,
+        "snapshotPath": relative_snapshot_path,
+        "verifiedAt": snapshot["verifiedAt"],
+        "files": snapshot["sourceFiles"],
+    }
+
+
+def assert_source_file_manifest(manifest: dict[str, Any], snapshot: dict[str, Any]) -> None:
+    if manifest.get("schemaVersion") != 1:
+        raise ValueError("Versione manifest source file inattesa")
+    if not isinstance(manifest.get("snapshotPath"), str) or not manifest["snapshotPath"].strip():
+        raise ValueError("Percorso snapshot assente nel manifest source file")
+    if manifest.get("verifiedAt") != snapshot.get("verifiedAt"):
+        raise ValueError("verifiedAt del manifest source file non riconciliato")
+    if manifest.get("files") != snapshot.get("sourceFiles"):
+        raise ValueError("Manifest source file non riconciliato con lo snapshot")
+    assert_snapshot({**snapshot, "sourceFiles": manifest["files"]})
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--source-files-output", type=Path, default=DEFAULT_SOURCE_FILES_OUTPUT)
     parser.add_argument("--input-dir", type=Path, help="Directory con i 12 CSV già scaricati.")
     parser.add_argument("--observed-at", default=OBSERVED_AT_DEFAULT)
     parser.add_argument("--check", action="store_true", help="Valida lo snapshot già committato senza rete.")
@@ -601,13 +652,22 @@ def main() -> int:
         if args.check:
             snapshot = json.loads(args.output.read_text(encoding="utf-8"))
             assert_snapshot(snapshot)
+            manifest = json.loads(args.source_files_output.read_text(encoding="utf-8"))
+            assert_source_file_manifest(manifest, snapshot)
             print(f"OK education atlas snapshot: {args.output}")
             return 0
         snapshot = build_snapshot(args.observed_at, args.input_dir)
         assert_snapshot(snapshot)
+        manifest = source_file_manifest(snapshot, args.output)
+        assert_source_file_manifest(manifest, snapshot)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(
             json.dumps(snapshot, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        args.source_files_output.parent.mkdir(parents=True, exist_ok=True)
+        args.source_files_output.write_text(
+            json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
         print(

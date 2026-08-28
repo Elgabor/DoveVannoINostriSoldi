@@ -20,7 +20,6 @@ export const PRIMARY_NAV: readonly NavSection[] = [
   {
     href: "/imprese",
     label: "Imprese",
-    aliases: ["/istruzione"],
     children: [
       { href: "/imprese", label: "Panoramica" },
       { href: "/imprese?metric=active_enterprises", label: "Imprese attive" },
@@ -28,9 +27,9 @@ export const PRIMARY_NAV: readonly NavSection[] = [
       { href: "/imprese?metric=active_local_units", label: "Localizzazioni attive" },
       { href: "/imprese?metric=production_value_band_count", label: "Valore della produzione" },
       { href: "/imprese?metric=turnover", label: "Fatturato aggregato (ISTAT)" },
-      { href: "/istruzione", label: "Istruzione" },
     ],
   },
+  { href: "/istruzione", label: "Istruzione" },
   {
     href: "/spese",
     label: "Soldi",
@@ -129,9 +128,9 @@ export const SITE_MAP_GROUPS: readonly { title: string; links: readonly NavLink[
       { href: "/imprese?metric=active_local_units", label: "Localizzazioni attive" },
       { href: "/imprese?metric=production_value_band_count", label: "Valore della produzione" },
       { href: "/imprese?metric=turnover", label: "Fatturato aggregato (ISTAT)" },
-      { href: "/istruzione", label: "Istruzione" },
     ],
   },
+  { title: "Istruzione", links: [{ href: "/istruzione", label: "Atlante Istruzione" }] },
   {
     title: "Soldi",
     links: [

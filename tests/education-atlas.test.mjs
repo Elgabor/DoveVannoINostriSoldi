@@ -14,6 +14,7 @@ const { educationDatasetCatalog } = await import("../src/lib/mcp/catalog.ts");
 const { PRIMARY_NAV, SITE_MAP_GROUPS } = await import("../src/lib/site-navigation.ts");
 
 const snapshot = (await import("../src/data/generated/education-atlas-snapshot.json", { with: { type: "json" } })).default;
+const sourceFileManifest = (await import("../src/data/generated/education-atlas-source-files.json", { with: { type: "json" } })).default;
 
 function coverage(period, schoolType) {
   return snapshot.coverage.byPeriodSchoolType[period][schoolType];
@@ -32,6 +33,8 @@ test("the education snapshot is aggregate-only and reconciles the MIM files", ()
   assert.equal(snapshot.addressObservations.length, 6677);
   assert.equal(snapshot.sourceFiles.length, 12);
   assert.ok(snapshot.sourceFiles.every((file) => /^[a-f0-9]{64}$/.test(file.sha256)));
+  assert.ok(snapshot.sourceFiles.every((file) => file.url.startsWith("https://dati.istruzione.it/")));
+  assert.deepEqual(sourceFileManifest.files, snapshot.sourceFiles);
   assert.ok(snapshot.sources.every((source) => source.license === "IODL 2.0"));
   assert.ok(snapshot.sources.every((source) => source.verifiedAt === snapshot.verifiedAt));
 
@@ -93,7 +96,9 @@ test("education MCP dataset has bounded pagination, provenance and closed filter
   assert.equal(result.pagination.returned, 7);
   assert.equal(result.data.length, 7);
   assert.ok(result.data.every((row) => row.period === "202425" && row.pathwayCode === "SCIENTIFICO"));
-  assert.equal(result.provenance.length, 2);
+  assert.equal(result.provenance.length, 12);
+  assert.ok(result.provenance.every((file) => file.url && file.role && file.sha256 && file.bytes > 0 && file.rows > 0));
+  assert.equal(result.sources.length, 2);
   assert.match(result.caveat, /non misurano qualità/i);
   assert.throws(() => queryEducationAtlasDataset({ region: "Atlantide" }), /Regione non trovata/);
   assert.throws(() => queryEducationAtlasDataset({ pathway: "inesistente" }), /Percorso non trovato/);
@@ -106,10 +111,14 @@ test("education is an existing Atlante module in the navigation and MCP catalog"
   assert.equal(educationDatasetCatalog.length, 1);
   assert.equal(educationDatasetCatalog[0].id, "education_students_by_pathway");
   assert.equal(educationDatasetCatalog[0].freshness, "snapshot");
-  assert.equal(educationDatasetCatalog[0].sources.length, 2);
+  assert.equal(educationDatasetCatalog[0].sources.length, 12);
+  assert.ok(educationDatasetCatalog[0].sources.every((source) => source.url && source.role && source.sha256 && source.bytes > 0 && source.rows > 0));
   const businessSection = PRIMARY_NAV.find((item) => item.href === "/imprese");
-  assert.ok(businessSection?.aliases?.includes("/istruzione"));
-  assert.ok(businessSection?.children?.some((child) => child.href === "/istruzione"));
+  assert.ok(!businessSection?.aliases?.includes("/istruzione"));
+  assert.ok(!businessSection?.children?.some((child) => child.href === "/istruzione"));
+  assert.equal(PRIMARY_NAV.find((item) => item.href === "/istruzione")?.label, "Istruzione");
   const businessMapGroup = SITE_MAP_GROUPS.find((group) => group.title === "Imprese");
-  assert.ok(businessMapGroup?.links.some((link) => link.href === "/istruzione"));
+  assert.ok(!businessMapGroup?.links.some((link) => link.href === "/istruzione"));
+  const educationMapGroup = SITE_MAP_GROUPS.find((group) => group.title === "Istruzione");
+  assert.ok(educationMapGroup?.links.some((link) => link.href === "/istruzione"));
 });

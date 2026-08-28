@@ -1,6 +1,6 @@
 import type { SourceId } from "@/lib/data/source-policy";
 import { MEF_IRPEF_SOURCE } from "@/lib/data/mef-irpef-source";
-import { educationAtlasSources } from "@/lib/education-atlas-metadata";
+import { educationAtlasCatalogSources } from "@/lib/education-atlas-metadata";
 import { INTEGRATED_CORPUS_CONTRACT } from "@/lib/integrated-source-contract";
 import { companyAtlasSources } from "@/lib/company-atlas-metadata";
 import { publicSources } from "@/lib/sources";
@@ -73,19 +73,27 @@ export type DatasetQuery = {
   cursor?: string;
 };
 
+export type DatasetSource = {
+  id: string;
+  name: string;
+  owner: string;
+  url: string;
+  cadence: string;
+  license?: string;
+  period?: string;
+  schoolType?: string;
+  role?: string;
+  sha256?: string;
+  bytes?: number;
+  rows?: number;
+};
+
 export type DatasetDescriptor = {
   id: DatasetId;
   title: string;
   summary: string;
   sourceIds: SourceId[];
-  sources: Array<{
-    id: string;
-    name: string;
-    owner: string;
-    url: string;
-    cadence: string;
-    license?: string;
-  }>;
+  sources: DatasetSource[];
   freshness: "snapshot" | "live";
   filters: string[];
   exampleQuery: DatasetQuery;
@@ -266,14 +274,7 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
     title: "Atlante istruzione: studenti per percorso",
     summary: "Studenti aggregati della scuola secondaria di II grado per Regione, tipo di scuola, percorso e anno scolastico.",
     sourceIds: [],
-    customSources: Object.values(educationAtlasSources).map((source) => ({
-      id: source.id,
-      name: source.label,
-      owner: source.publisher,
-      url: source.url,
-      cadence: source.cadence,
-      license: source.license,
-    })),
+    customSources: [...educationAtlasCatalogSources],
     freshness: "snapshot",
     filters: ["period", "region", "schoolType", "pathway", "limit", "offset"],
     caveat: "Studenti aggregati per Regione e percorso nel file MIM. Le variazioni descrivono la presenza nel dato osservato: non misurano qualità, esiti, domanda futura o carenze occupazionali. Le Regioni assenti dalla fonte restano n.d. e non vengono imputate.",

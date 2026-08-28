@@ -1292,11 +1292,12 @@ try {
         const columns = await page.$(".footer-sitemap-columns");
         assert.ok(columns, `${label}: contenitore dei gruppi assente`);
         const groupCount = await page.$$eval(".footer-sitemap-group", (groups) => groups.length);
-        assert.equal(groupCount, 9, `${label}: attesi 9 gruppi nella mappa`);
+        assert.equal(groupCount, 10, `${label}: attesi 10 gruppi nella mappa`);
         const headings = await page.$$eval(".footer-sitemap-group h3", (items) =>
           items.map((item) => item.textContent?.trim() ?? ""),
         );
         assert.ok(headings.includes("Imprese"), `${label}: sezione Imprese assente`);
+        assert.ok(headings.includes("Istruzione"), `${label}: sezione Istruzione assente`);
         assert.ok(headings.includes("Istituzioni"), `${label}: sezione Istituzioni assente`);
         assert.ok(headings.includes("Fonti e metodo"), `${label}: sezione Fonti e metodo assente`);
         assert.ok(!headings.includes("Legale"), `${label}: sezione Legale non attesa in mappa`);

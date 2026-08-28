@@ -657,14 +657,17 @@
       "id": "education-atlas",
       "owner": "Atlante Istruzione MIM aggregate snapshot",
       "files": [
-        "src/data/generated/education-atlas-snapshot.json"
+        "src/data/generated/education-atlas-snapshot.json",
+        "src/data/generated/education-atlas-source-files.json"
       ],
       "verificationMode": "online-refresh",
       "offlineCheck": {
         "command": "python3 scripts/etl/education_atlas_snapshot.py --check",
         "coveredBy": "standalone"
       },
-      "reconciliationTests": [],
+      "reconciliationTests": [
+        "tests/etl/test_education_atlas_snapshot.py"
+      ],
       "nodeTests": [
         "tests/education-atlas.test.mjs"
       ],
@@ -673,7 +676,7 @@
         "requiresNetworkInput": true
       },
       "refreshWorkflow": null,
-      "trustModel": "The committed snapshot is derived from official MIM IODL 2.0 CSV releases. The offline check validates source hashes, schema, duplicate protection, school-code joins, regional coverage gaps, student/gender reconciliations and the aggregate-only boundary; a future refresh must be reviewed before publication."
+      "trustModel": "The committed snapshot and source-file manifest are derived from official MIM IODL 2.0 CSV releases. The offline check validates source hashes, schema, duplicate protection, school-code joins, regional coverage gaps, student/gender reconciliations and the aggregate-only boundary; fixture reconciliation tests cover malformed schemas, incoherent periods or roles, duplicate source URLs and orphan school codes before a future refresh is reviewed for publication."
     },
     {
       "id": "source-ledger-proofs",

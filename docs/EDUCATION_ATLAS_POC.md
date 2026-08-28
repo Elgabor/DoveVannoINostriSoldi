@@ -3,7 +3,7 @@
 Questo documento definisce il primo perimetro per aggiungere l'istruzione
 all'Atlante già integrato in DoveVannoINostriSoldi. Non introduce un nuovo
 nome di prodotto. La prima implementazione è stata preparata localmente in un
-worktree separato; non è ancora una PR applicativa.
+worktree separato ed è proposta come PR applicativa.
 
 ## Domanda
 
@@ -79,10 +79,11 @@ contiene tutte le Regioni.
 
 Il generatore `scripts/etl/education_atlas_snapshot.py` scarica i dodici CSV
 MIM del triennio, verifica lo schema, normalizza i nomi regionali, fa il join
-su `CODICESCUOLA` e produce il solo aggregato committato in
-`src/data/generated/education-atlas-snapshot.json`. Il dataset è disponibile
-anche come `education_students_by_pathway` nel catalogo MCP, con paginazione,
-provenance e caveat.
+su `CODICESCUOLA` e produce l'aggregato committato in
+`src/data/generated/education-atlas-snapshot.json`, insieme al manifest
+`education-atlas-source-files.json`. Il dataset è disponibile anche come
+`education_students_by_pathway` nel catalogo MCP, con paginazione, le dodici
+ricevute di provenienza (URL, ruolo, hash, byte e righe) e caveat.
 
 ## Prima UI
 
@@ -139,8 +140,9 @@ del 7,54%. Sono variazioni descrittive del file, non spiegazioni causali.
 Il primo snapshot locale contiene 108 osservazioni regionali, 1.086 per
 percorso e 6.677 per indirizzo. Tutti i 12 join anno/tipo scuola hanno avuto
 zero righe orfane. Le fonti, gli hash SHA-256 dei file e i conteggi di input
-sono conservati nel manifest dello snapshot; il controllo offline è eseguibile
-con `python3 scripts/etl/education_atlas_snapshot.py --check`.
+sono conservati nel manifest dei file sorgente e riconciliati con lo snapshot;
+il controllo offline è eseguibile con
+`python3 scripts/etl/education_atlas_snapshot.py --check`.
 
 ## Fonti e condizioni
 

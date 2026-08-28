@@ -1,4 +1,8 @@
-import type { EducationAtlasSource } from "@/lib/education-atlas-contract";
+import sourceFileManifest from "@/data/generated/education-atlas-source-files.json";
+import {
+  validateEducationAtlasSourceFileManifest,
+  type EducationAtlasSource,
+} from "@/lib/education-atlas-contract";
 
 /**
  * Provenance-only view used by the MCP catalog and source pages. Keep the
@@ -38,4 +42,37 @@ export const educationAtlasSources = {
 
 export const educationAtlasSourceList: readonly EducationAtlasSource[] = Object.freeze(
   Object.values(educationAtlasSources),
+);
+
+export const educationAtlasSourceFileManifest = validateEducationAtlasSourceFileManifest(sourceFileManifest);
+export const educationAtlasSourceFiles = educationAtlasSourceFileManifest.files;
+
+const periodLabels = new Map([
+  ["202223", "2022/23"],
+  ["202324", "2023/24"],
+  ["202425", "2024/25"],
+]);
+const schoolTypeLabels = new Map([
+  ["state", "statali"],
+  ["paritaria", "paritarie"],
+]);
+
+export const educationAtlasCatalogSources = Object.freeze(
+  educationAtlasSourceFiles.map((file) => {
+    const source = educationAtlasSources[file.role];
+    return {
+      id: `mim-${file.role}-${file.schoolType}-${file.period}`,
+      name: `${source.label} · ${schoolTypeLabels.get(file.schoolType)} · anno ${periodLabels.get(file.period)} · ${file.role}`,
+      owner: source.publisher,
+      url: file.url,
+      cadence: source.cadence,
+      license: source.license,
+      period: file.period,
+      schoolType: file.schoolType,
+      role: file.role,
+      sha256: file.sha256,
+      bytes: file.bytes,
+      rows: file.rows,
+    };
+  }),
 );

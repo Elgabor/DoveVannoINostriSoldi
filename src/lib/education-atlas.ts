@@ -70,6 +70,7 @@ export type EducationAtlasView = Readonly<{
   trend: EducationAtlasTrendPoint[];
   addressRanking: EducationAtlasAddressPoint[];
   sources: EducationAtlasSource[];
+  sourceFiles: EducationAtlasSnapshot["sourceFiles"];
   coverage: EducationAtlasSnapshot["coverage"];
   missingRegionNames: string[];
   matchedObservationCount: number;
@@ -347,6 +348,7 @@ export function getEducationAtlasView(filters: EducationAtlasFilters = {}): Educ
     trend: mapTrend(normalized.schoolType, normalized.region, normalized.pathway),
     addressRanking,
     sources: educationAtlasSnapshot.sources,
+    sourceFiles: educationAtlasSnapshot.sourceFiles,
     coverage: educationAtlasSnapshot.coverage,
     missingRegionNames: educationAtlasSnapshot.coverage.missingRegionCodes.map(
       (code) => regionByCode.get(code)?.name ?? code,
@@ -431,7 +433,8 @@ export function queryEducationAtlasDataset(query: EducationAtlasDatasetQuery = {
     },
     data: items,
     coverage: educationAtlasSnapshot.coverage,
-    provenance: educationAtlasSnapshot.sources,
+    sources: educationAtlasSnapshot.sources,
+    provenance: educationAtlasSnapshot.sourceFiles,
     caveat: "Studenti aggregati per Regione, tipo di scuola, percorso e anno scolastico. Le variazioni descrivono il file osservato: non misurano qualità, esiti, domanda futura o carenze occupazionali. Le Regioni assenti dalla fonte restano n.d.; non vengono imputate.",
   };
 }

@@ -80,6 +80,8 @@ export type DatasetSource = {
   url: string;
   cadence: string;
   license?: string;
+  licenseUrl?: string;
+  updatedAt?: string;
   period?: string;
   schoolType?: string;
   role?: string;

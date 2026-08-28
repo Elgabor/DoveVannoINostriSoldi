@@ -208,6 +208,80 @@ assert.ok(integratedData.rows.length > 0 && integratedData.rows.length <= 5);
 assert.equal(integratedData.matchedRows, null);
 assert.equal(typeof integratedData.pagination.nextCursor, "string");
 
+const educationDataset = await mcpRequest({
+  jsonrpc: "2.0",
+  id: 23,
+  method: "tools/call",
+  params: {
+    name: "query_dataset",
+    arguments: {
+      dataset: "education_students_by_pathway",
+      period: "202425",
+      schoolType: "state",
+      pathway: "SCIENTIFICO",
+      limit: 2,
+      offset: 0,
+    },
+  },
+});
+const educationData = successfulMcpToolResult(
+  educationDataset,
+  "education_students_by_pathway",
+).data;
+assert.equal(educationData.dataset, "education_students_by_pathway");
+assert.equal(educationData.query.period, "202425");
+assert.equal(educationData.query.schoolType, "state");
+assert.equal(educationData.query.pathway, "SCIENTIFICO");
+assert.equal(educationData.pagination.offset, 0);
+assert.equal(educationData.pagination.limit, 2);
+assert.equal(educationData.pagination.returned, 2);
+assert.ok(educationData.pagination.total > educationData.pagination.returned);
+assert.equal(educationData.pagination.nextOffset, 2);
+assert.equal(educationData.data.length, 2);
+assert.ok(educationData.data.every((row) =>
+  row.period === "202425"
+  && row.schoolType === "state"
+  && row.pathwayCode === "SCIENTIFICO"
+  && row.studentCount === row.maleCount + row.femaleCount
+));
+assert.equal(educationData.provenance.length, 12);
+assert.ok(educationData.provenance.every((source) =>
+  typeof source.url === "string"
+  && typeof source.updatedAt === "string"
+  && /^[a-f0-9]{64}$/.test(source.sha256)
+  && Number.isInteger(source.bytes)
+  && Number.isInteger(source.rows)
+));
+assert.ok(educationData.sources.every((source) =>
+  source.license === "IODL 2.0"
+  && source.licenseUrl === "http://www.dati.gov.it/iodl/2.0/"
+));
+assert.match(educationData.caveat, /non misurano qualità/i);
+
+const educationNextPage = await mcpRequest({
+  jsonrpc: "2.0",
+  id: 24,
+  method: "tools/call",
+  params: {
+    name: "query_dataset",
+    arguments: {
+      dataset: "education_students_by_pathway",
+      period: "202425",
+      schoolType: "state",
+      pathway: "SCIENTIFICO",
+      limit: 2,
+      offset: educationData.pagination.nextOffset,
+    },
+  },
+});
+const educationNextData = successfulMcpToolResult(
+  educationNextPage,
+  "education_students_by_pathway",
+).data;
+assert.equal(educationNextData.pagination.offset, 2);
+assert.equal(educationNextData.pagination.returned, 2);
+assert.notDeepEqual(educationNextData.data, educationData.data);
+
 const meta = {
   "io.modelcontextprotocol/protocolVersion": "2026-07-28",
   "io.modelcontextprotocol/clientCapabilities": {},
@@ -276,6 +350,7 @@ console.log(JSON.stringify({
     "compatibility-tools",
     "legacy-query",
     "integrated-query",
+    "education-query-pagination-provenance",
     "modern-discovery",
     "compatibility-modern-discovery",
     "modern-query",

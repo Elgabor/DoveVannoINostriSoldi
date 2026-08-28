@@ -34,6 +34,16 @@ PERIODS = (
     ("202425", "2024/25"),
 )
 SCHOOL_TYPES = (("state", "Scuola statale"), ("paritaria", "Scuola paritaria"))
+ALLOWED_SCHOOL_ORDERS = frozenset({"SECONDARIA II GRADO"})
+ALLOWED_PATHWAY_TYPES = frozenset({"LICEO", "TECNICO", "PROFESSIONALE", "IEFP"})
+MAX_REMOTE_SOURCE_BYTES = 50 * 1024 * 1024
+IODL_URL = "http://www.dati.gov.it/iodl/2.0/"
+SOURCE_UPDATED_AT = {
+    ("students", "state"): "2026-02-23",
+    ("students", "paritaria"): "2026-02-23",
+    ("registry", "state"): "2025-06-03",
+    ("registry", "paritaria"): "2026-06-18",
+}
 
 REGION_NAMES = {
     "01": "Piemonte",
@@ -228,7 +238,28 @@ def source_bytes(url: str, input_dir: Path | None, local_name: str) -> bytes:
         return path.read_bytes()
     request = urllib.request.Request(url, headers={"User-Agent": "DoveVannoINostriSoldi education atlas ETL"})
     with urllib.request.urlopen(request, timeout=60) as response:
-        payload = response.read()
+        content_length = response.headers.get("Content-Length")
+        if content_length:
+            try:
+                declared_bytes = int(content_length)
+            except ValueError:
+                declared_bytes = None
+            if declared_bytes is not None and declared_bytes > MAX_REMOTE_SOURCE_BYTES:
+                raise ValueError(
+                    f"Fonte oltre il limite di {MAX_REMOTE_SOURCE_BYTES} byte: {url}"
+                )
+
+        chunks: list[bytes] = []
+        received_bytes = 0
+        while True:
+            chunk = response.read(min(1024 * 1024, MAX_REMOTE_SOURCE_BYTES - received_bytes + 1))
+            if not chunk:
+                break
+            received_bytes += len(chunk)
+            if received_bytes > MAX_REMOTE_SOURCE_BYTES:
+                raise ValueError(f"Fonte oltre il limite di {MAX_REMOTE_SOURCE_BYTES} byte: {url}")
+            chunks.append(chunk)
+        payload = b"".join(chunks)
     if not payload:
         raise ValueError(f"Fonte vuota: {url}")
     return payload
@@ -247,6 +278,7 @@ def file_receipt(
         "period": period,
         "schoolType": school_type,
         "role": role,
+        "updatedAt": SOURCE_UPDATED_AT[(role, school_type)],
         "url": url,
         "sha256": hashlib.sha256(payload).hexdigest(),
         "bytes": len(payload),
@@ -289,6 +321,21 @@ def aggregate_source(
     seen_source_keys: set[tuple[str, str, str, str, str]] = set()
 
     for line_number, row in enumerate(students, start=2):
+        source_period = normalized_text(row["ANNOSCOLASTICO"])
+        if source_period != period:
+            raise ValueError(
+                f"ANNOSCOLASTICO incoerente alla riga {line_number}: atteso {period}, trovato {source_period!r}"
+            )
+        school_order = normalized_text(row["ORDINESCUOLA"]).upper()
+        if school_order not in ALLOWED_SCHOOL_ORDERS:
+            raise ValueError(
+                f"ORDINESCUOLA inatteso alla riga {line_number}: {row['ORDINESCUOLA']!r}"
+            )
+        pathway_type = normalized_text(row["TIPOPERCORSO"]).upper()
+        if pathway_type not in ALLOWED_PATHWAY_TYPES:
+            raise ValueError(
+                f"TIPOPERCORSO inatteso alla riga {line_number}: {row['TIPOPERCORSO']!r}"
+            )
         code = normalized_text(row["CODICESCUOLA"]).upper()
         region = registry.get(code)
         if region is None:
@@ -460,6 +507,7 @@ def build_snapshot(observed_at: str, input_dir: Path | None = None) -> dict[str,
                 "landingUrl": "https://dati.istruzione.it/opendata/opendata/catalogo/elements1/?area=Studenti",
                 "publisher": "Ministero dell'Istruzione e del Merito",
                 "license": "IODL 2.0",
+                "licenseUrl": IODL_URL,
                 "updatedAt": "2026-02-23",
                 "observedAt": observed_at,
                 "verifiedAt": observed_at,
@@ -474,7 +522,8 @@ def build_snapshot(observed_at: str, input_dir: Path | None = None) -> dict[str,
                 "landingUrl": "https://dati.istruzione.it/opendata/opendata/catalogo/elements1/?area=Scuole",
                 "publisher": "Ministero dell'Istruzione e del Merito",
                 "license": "IODL 2.0",
-                "updatedAt": "2026-06-18",
+                "licenseUrl": IODL_URL,
+                "updatedAt": "2025-06-03",
                 "observedAt": observed_at,
                 "verifiedAt": observed_at,
                 "cadence": "annuale",
@@ -545,6 +594,8 @@ def assert_snapshot(snapshot: dict[str, Any]) -> None:
     for item, (period, school_type, role) in zip(source_files, expected_source_files):
         if item.get("url") != SOURCE_FILES[period][school_type][role]:
             raise ValueError(f"URL sorgente incoerente: {period}/{school_type}/{role}")
+        if item.get("updatedAt") != SOURCE_UPDATED_AT[(role, school_type)]:
+            raise ValueError(f"Data pubblicazione sorgente incoerente: {period}/{school_type}/{role}")
         if not re.fullmatch(r"[a-f0-9]{64}", str(item.get("sha256", ""))):
             raise ValueError(f"Hash sorgente non valido: {period}/{school_type}/{role}")
         for field in ("bytes", "rows"):
@@ -562,6 +613,8 @@ def assert_snapshot(snapshot: dict[str, Any]) -> None:
         for field in ("studentCount", "maleCount", "femaleCount", "schoolCount"):
             if not isinstance(row[field], int) or row[field] < 0:
                 raise ValueError(f"Valore regionale non valido: {key}/{field}")
+        if row["studentCount"] != row["maleCount"] + row["femaleCount"]:
+            raise ValueError(f"Totale regionale non riconciliato: {key}")
 
     pathway_keys: set[tuple[str, str, str, str]] = set()
     for row in snapshot.get("pathwayObservations", []):

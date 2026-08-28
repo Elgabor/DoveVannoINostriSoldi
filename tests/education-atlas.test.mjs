@@ -36,7 +36,16 @@ test("the education snapshot is aggregate-only and reconciles the MIM files", ()
   assert.ok(snapshot.sourceFiles.every((file) => file.url.startsWith("https://dati.istruzione.it/")));
   assert.deepEqual(sourceFileManifest.files, snapshot.sourceFiles);
   assert.ok(snapshot.sources.every((source) => source.license === "IODL 2.0"));
+  assert.ok(snapshot.sources.every((source) => source.licenseUrl === "http://www.dati.gov.it/iodl/2.0/"));
   assert.ok(snapshot.sources.every((source) => source.verifiedAt === snapshot.verifiedAt));
+  assert.equal(
+    snapshot.sourceFiles.find((file) => file.role === "registry" && file.schoolType === "state")?.updatedAt,
+    "2025-06-03",
+  );
+  assert.equal(
+    snapshot.sourceFiles.find((file) => file.role === "registry" && file.schoolType === "paritaria")?.updatedAt,
+    "2026-06-18",
+  );
 
   for (const schoolType of ["state", "paritaria"]) {
     assert.equal(coverage("202425", schoolType).matchedRows, coverage("202425", schoolType).sourceRows);
@@ -97,7 +106,8 @@ test("education MCP dataset has bounded pagination, provenance and closed filter
   assert.equal(result.data.length, 7);
   assert.ok(result.data.every((row) => row.period === "202425" && row.pathwayCode === "SCIENTIFICO"));
   assert.equal(result.provenance.length, 12);
-  assert.ok(result.provenance.every((file) => file.url && file.role && file.sha256 && file.bytes > 0 && file.rows > 0));
+  assert.ok(result.provenance.every((file) => file.url && file.role && file.updatedAt && file.sha256 && file.bytes > 0 && file.rows > 0));
+  assert.ok(result.sources.every((source) => source.licenseUrl === "http://www.dati.gov.it/iodl/2.0/"));
   assert.equal(result.sources.length, 2);
   assert.match(result.caveat, /non misurano qualità/i);
   assert.throws(() => queryEducationAtlasDataset({ region: "Atlantide" }), /Regione non trovata/);
@@ -112,7 +122,7 @@ test("education is an existing Atlante module in the navigation and MCP catalog"
   assert.equal(educationDatasetCatalog[0].id, "education_students_by_pathway");
   assert.equal(educationDatasetCatalog[0].freshness, "snapshot");
   assert.equal(educationDatasetCatalog[0].sources.length, 12);
-  assert.ok(educationDatasetCatalog[0].sources.every((source) => source.url && source.role && source.sha256 && source.bytes > 0 && source.rows > 0));
+  assert.ok(educationDatasetCatalog[0].sources.every((source) => source.url && source.role && source.updatedAt && source.licenseUrl && source.sha256 && source.bytes > 0 && source.rows > 0));
   const businessSection = PRIMARY_NAV.find((item) => item.href === "/imprese");
   assert.ok(!businessSection?.aliases?.includes("/istruzione"));
   assert.ok(!businessSection?.children?.some((child) => child.href === "/istruzione"));

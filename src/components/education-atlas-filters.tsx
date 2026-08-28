@@ -49,27 +49,47 @@ export function EducationAtlasFilters({
       <div className={styles.controlGrid}>
         <label>
           <span>Anno scolastico</span>
-          <select value={filters.period} onChange={(event) => updateFilter("period", event.target.value)}>
+          <select
+            value={filters.period}
+            onChange={(event) => updateFilter("period", event.target.value)}
+            data-atlas-filter="period"
+            data-education-filter="period"
+          >
             {periods.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
           </select>
         </label>
         <label>
           <span>Tipo di scuola</span>
-          <select value={filters.schoolType} onChange={(event) => updateFilter("schoolType", event.target.value)}>
+          <select
+            value={filters.schoolType}
+            onChange={(event) => updateFilter("schoolType", event.target.value)}
+            data-atlas-filter="schoolType"
+            data-education-filter="schoolType"
+          >
             <option value="all">Statali e paritarie</option>
             {schoolTypes.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
           </select>
         </label>
         <label>
           <span>Regione</span>
-          <select value={filters.region} onChange={(event) => updateFilter("region", event.target.value)}>
+          <select
+            value={filters.region}
+            onChange={(event) => updateFilter("region", event.target.value)}
+            data-atlas-filter="region"
+            data-education-filter="region"
+          >
             <option value="all">Tutte le Regioni</option>
             {regions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
           </select>
         </label>
         <label>
           <span>Percorso</span>
-          <select value={filters.pathway} onChange={(event) => updateFilter("pathway", event.target.value)}>
+          <select
+            value={filters.pathway}
+            onChange={(event) => updateFilter("pathway", event.target.value)}
+            data-atlas-filter="pathway"
+            data-education-filter="pathway"
+          >
             <option value="all">Tutti i percorsi</option>
             {pathways.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
           </select>

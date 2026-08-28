@@ -240,7 +240,7 @@ export default async function EducationAtlasPage({
 
           <section className={`panel ${styles.coveragePanel}`} aria-labelledby="coverage-title">
             <div className={styles.panelHead}>
-              <h2 id="coverage-title" className="panel-title">Lacune della fonte</h2>
+              <h2 id="coverage-title" className="panel-title">Copertura della fonte</h2>
               <span className="tag tag-neutral">da leggere con cautela</span>
             </div>
             <div className={styles.coverageSignal}>
@@ -249,7 +249,7 @@ export default async function EducationAtlasPage({
             </div>
             <p className={styles.sourceCaveat}>
               {view.missingRegionNames.length > 0
-                ? `Nel triennio del POC la fonte non espone ${view.missingRegionNames.join(" e ")}. n.d. significa dato non disponibile nel perimetro, non assenza di scuole o studenti.`
+                ? `Il dataset studenti esclude le province autonome di Trento e Bolzano; l'anagrafe usata per il join esclude inoltre Aosta. La copertura comune è ${view.coverage.observedRegionCount}/${view.coverage.expectedRegionCount} Regioni: ${view.missingRegionNames.join(" e ")} restano n.d.; n.d. significa dato non disponibile nel perimetro, non assenza di scuole o studenti.`
                 : "Il file osservato espone tutte le Regioni dichiarate nel perimetro."}
             </p>
             <dl className={styles.factRows}>

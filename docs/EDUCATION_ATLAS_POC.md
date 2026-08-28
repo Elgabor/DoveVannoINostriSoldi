@@ -67,7 +67,7 @@ un contratto esplicito.
 La prima prova è ora disponibile nella route `/istruzione` e usa la stessa
 grammatica di Atlante Imprese: mappa regionale, filtri, classifica descrittiva,
 trend e fonte sempre visibile. Il filtro per percorso porta anche agli
-indirizzi di studio aggregati, mentre la card “Lacune della fonte” espone la
+indirizzi di studio aggregati, mentre la card “Copertura della fonte” espone la
 copertura mancante senza trasformarla in un giudizio.
 
 Questa prima tranche resta volutamente regionale: provincia e Comune sono
@@ -128,9 +128,9 @@ Input MIM 2024/25 verificati offline:
 
 Il join è stato misurato contro le anagrafi statale e paritaria 2024/25:
 62.012 codici scuola distinti, nessuna duplicazione del codice nella mappa di
-join. Il file degli indirizzi copre però 18 regioni nel perimetro osservato;
-le autonomie territoriali richiedono una verifica separata prima di chiamare
-il risultato “Italia completa”.
+join. La copertura comune è di 18 regioni: i file studenti escludono le
+province autonome di Trento e Bolzano, mentre le anagrafi usate per il join
+escludono anche Aosta. Il risultato non va quindi chiamato “Italia completa”.
 
 Nel file statale, il totale studenti passa da 2.518.855 nel 2022/23 a
 2.506.430 nel 2024/25 (-0,49%). Nello stesso intervallo gli indirizzi
@@ -148,12 +148,15 @@ il controllo offline è eseguibile con
 
 - MIM pubblica il dataset degli indirizzi con periodicità annuale e licenza
   IODL 2.0; la pagina del dataset descrive la classificazione disponibile dal
-  2018/19.
+  2018/19. Il catalogo della licenza è registrato come
+  `http://www.dati.gov.it/iodl/2.0/` nella provenienza MCP.
 - La pagina MIM dell'anagrafe statale dichiara anch'essa IODL 2.0.
 - OpenCoesione dichiara per il dataset pagamenti frequenza bimestrale e
   licenza CC BY 4.0.
 - Le condizioni vanno registrate per ogni distribuzione concreta, insieme a
-  URL, data di pubblicazione, hash, schema, periodo e copertura.
+  URL, data di pubblicazione, hash, schema, periodo e copertura. Il manifest
+  ora conserva anche la data per ruolo/tipo scuola e l'ETL limita a 50 MiB la
+  lettura di ogni CSV remoto.
 
 ## Stima di lavoro
 

@@ -8,6 +8,7 @@ import io
 import json
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from scripts.etl import education_atlas_snapshot as etl
 
@@ -79,6 +80,46 @@ class EducationAtlasSnapshotETLTests(unittest.TestCase):
                 etl.STUDENT_FIELDS,
                 "https://example.test/students.csv",
             )
+
+    def test_regional_gender_total_must_reconcile(self) -> None:
+        snapshot = self.committed_snapshot()
+        snapshot["regionalObservations"][0]["studentCount"] += 1
+
+        with self.assertRaisesRegex(ValueError, "Totale regionale non riconciliato"):
+            etl.assert_snapshot(snapshot)
+
+    def test_student_dimension_values_fail_closed(self) -> None:
+        registry = {"ABC123": "15"}
+        invalid_dimensions = (
+            ("ANNOSCOLASTICO", "202324", "ANNOSCOLASTICO incoerente"),
+            ("ORDINESCUOLA", "PRIMARIA", "ORDINESCUOLA inatteso"),
+            ("TIPOPERCORSO", "ALTRO", "TIPOPERCORSO inatteso"),
+        )
+
+        for field, value, message in invalid_dimensions:
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ValueError, message):
+                    etl.aggregate_source(
+                        period="202425",
+                        school_type="state",
+                        students=[student_row(**{field: value})],
+                        registry=registry,
+                        source_url="https://example.test/students.csv",
+                    )
+
+    def test_remote_source_size_is_bounded(self) -> None:
+        class OversizedResponse:
+            headers = {"Content-Length": str(etl.MAX_REMOTE_SOURCE_BYTES + 1)}
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args) -> None:
+                return None
+
+        with patch.object(etl.urllib.request, "urlopen", return_value=OversizedResponse()):
+            with self.assertRaisesRegex(ValueError, "oltre il limite"):
+                etl.source_bytes("https://example.test/too-large.csv", None, "unused.csv")
 
     def test_orphan_school_code_fails_closed(self) -> None:
         students = [student_row()]

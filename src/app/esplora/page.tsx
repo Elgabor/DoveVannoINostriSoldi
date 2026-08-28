@@ -18,7 +18,7 @@ export default function EsploraPage() {
   const caveat = m.caveat ?? "";
 
   return (
-    <main className="shell">
+    <main className="shell page">
       <section className={styles.intro}>
         <h1>Esplora relazioni</h1>
         <p>

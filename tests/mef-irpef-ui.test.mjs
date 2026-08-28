@@ -65,8 +65,13 @@ test("the production deployment advertises HTTPS and a security contact", async 
   assert.match(vercel, /max-age=86400/);
   assert.doesNotMatch(vercel, /preload/);
   assert.match(vercel, /X-Content-Type-Options/);
-  assert.match(securityTxt, /security\/advisories\/new/);
-  assert.doesNotMatch(securityTxt, /DoveVannoINostriSoldi\/issues/);
-  assert.match(securityTxt, /Expires: 2027-08-24T00:00:00\.000Z/);
-  assert.match(securityTxt, /security\/policy/);
+  assert.match(
+    securityTxt,
+    /^Contact: https:\/\/github\.com\/Italian-Builders-Org\/DoveVannoINostriSoldi\/security\/advisories\/new$/m,
+  );
+  assert.match(
+    securityTxt,
+    /^Policy: https:\/\/github\.com\/Italian-Builders-Org\/DoveVannoINostriSoldi\/security\/policy$/m,
+  );
+  assert.match(securityTxt, /^Expires: 2027-08-24T00:00:00\.000Z$/m);
 });

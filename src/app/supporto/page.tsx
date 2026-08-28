@@ -20,7 +20,9 @@ export default function SupportPage() {
         <p>
           Apri una <a href={`${REPO_URL}/issues`}>issue pubblica su GitHub</a> indicando pagina o
           endpoint, risultato atteso, risultato osservato, data e passaggi per riprodurlo. Non
-          inserire dati personali, credenziali o informazioni riservate.
+          inserire dati personali, credenziali o informazioni riservate. Per una vulnerabilità non
+          ancora corretta non aprire una issue: usa il{" "}
+          <a href={`${REPO_URL}/security/advisories/new`}>report privato GitHub</a>.
         </p>
       </section>
 

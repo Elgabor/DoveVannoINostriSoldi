@@ -701,7 +701,7 @@ const completed = [];
 try {
   browser = await launchBrowser();
 
-  for (const width of [390, 768, 1280]) {
+  for (const width of [320, 390, 768, 1280]) {
     const label = `Atlante Imprese ${width}px`;
     await runScenario(browser, {
       label,
@@ -740,6 +740,59 @@ try {
           { timeout: 3_000 },
         );
         await assertResponsiveShell(page, `${label} filtro regione`, width);
+      },
+    });
+    completed.push(label);
+  }
+
+  const istatMetricViews = [
+    ["turnover", /Fatturato aggregato/i, /migliaia di euro/i],
+    ["istat_local_units", /Unità locali \(ISTAT\)/i, /unità locali/i],
+    ["istat_employees", /Addetti \(ISTAT\)/i, /addetti/i],
+    ["istat_value_added", /Valore aggiunto aggregato/i, /migliaia di euro/i],
+    ["istat_value_added_per_employee", /Valore aggiunto per addetto/i, /euro per addetto/i],
+    ["istat_turnover_per_employee", /Fatturato per addetto/i, /euro per addetto/i],
+  ];
+
+  for (const width of [320, 390, 768, 1280]) {
+    const label = `Atlante Imprese metriche ISTAT ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/imprese?metric=istat_value_added_per_employee&sector=INDUSTRIA",
+      width,
+      validate: async (page) => {
+        const text = await bodyText(page);
+        assertTextMatches(text, /Valore aggiunto per addetto/i, label);
+        assertTextMatches(text, /euro per addetto/i, label);
+        assertTextMatches(text, /Confronto per macro-settore/i, label);
+        assert.doesNotMatch(text, /NaN|undefined/i, `${label}: valore non formattato`);
+
+        const metricFilter = '[data-atlas-filter="metric"]';
+        assert.equal(
+          await page.$eval(metricFilter, (element) => element.value),
+          "istat_value_added_per_employee",
+          `${label}: metrica ISTAT non selezionata dall'URL`,
+        );
+        for (const [metric, titlePattern, unitPattern] of istatMetricViews) {
+          await page.select(metricFilter, metric);
+          await page.waitForFunction(
+            (expectedMetric) => new URL(window.location.href).searchParams.get("metric") === expectedMetric,
+            { timeout: 3_000 },
+            metric,
+          );
+          assertTextMatches(
+            await page.$eval("#map-panel-title", (element) => element.textContent ?? ""),
+            titlePattern,
+            `${label} ${metric}`,
+          );
+          assertTextMatches(
+            await page.$eval('section[aria-labelledby="scope-title"]', (element) => element.textContent ?? ""),
+            unitPattern,
+            `${label} ${metric}`,
+          );
+          assert.doesNotMatch(await bodyText(page), /NaN|undefined/i, `${label} ${metric}: valore non formattato`);
+          await assertResponsiveShell(page, `${label} ${metric}`, width);
+        }
       },
     });
     completed.push(label);

@@ -12,6 +12,7 @@
 - [Legge di Bilancio](https://www.dovevannoinostrisoldi.com/spese/legge-di-bilancio): variazione dello stanziamento pubblicato per missione (OpenBDAP, competenza A1) e scenario ipotetico di riallocazione. Non è cassa né una previsione.
 - [Fondi e progetti](https://www.dovevannoinostrisoldi.com/coesione): aggregati OpenCoesione su costi, pagamenti, temi, nature e stati.
 - [Enti e società](https://www.dovevannoinostrisoldi.com/enti): ricerca nell'Indice PA e collegamenti alle partecipazioni pubbliche.
+- [Istruzione](https://www.dovevannoinostrisoldi.com/istruzione): studenti aggregati MIM della scuola secondaria di II grado per Regione, tipo di scuola e percorso nel triennio 2022/23-2024/25; copertura e valori mancanti restano espliciti.
 - [Parlamento](https://www.dovevannoinostrisoldi.com/parlamento): documenti e valori strutturati verificati della Camera, quando disponibili.
 - [Cosa controllare](https://www.dovevannoinostrisoldi.com/controlli): indicatori e segnali per orientare verifiche ulteriori.
 - [Fonti](https://www.dovevannoinostrisoldi.com/fonti): registro, copertura, aggiornamento e stato operativo delle fonti.
@@ -32,7 +33,7 @@
 ## Dataset e fonti
 
 Il catalogo MCP è la fonte più compatta per identificativi e filtri. Comprende SIOPE, OpenBDAP,
-OpenCoesione, ANAC, INPS, CPT, MEF IRPEF, IPA, partecipazioni MEF, Consulenti Pubblici,
+OpenCoesione, ANAC, INPS, CPT, MEF IRPEF, MIM, IPA, partecipazioni MEF, Consulenti Pubblici,
 Parlamento e registro delle fonti. Le pagine [Fonti](https://www.dovevannoinostrisoldi.com/fonti)
 e [Metodo](https://www.dovevannoinostrisoldi.com/metodologia) riportano proprietario, formato,
 periodo, aggiornamento e limiti; la [documentazione MCP su GitHub](https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi/blob/main/docs/MCP.md)

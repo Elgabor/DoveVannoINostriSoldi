@@ -13,6 +13,8 @@ type CompanyAtlasMapProps = Readonly<{
   selectedRegion: string;
   metricUnit: string;
   valueFormat?: "thousand-euro";
+  mapTitle?: string;
+  mapDescription?: string;
 }>;
 
 function quantile(values: number[], fraction: number): number {
@@ -25,6 +27,8 @@ export function CompanyAtlasMap({
   selectedRegion,
   metricUnit,
   valueFormat,
+  mapTitle = "Valori regionali dell'Atlante Imprese Italia",
+  mapDescription = "Mappa regionale degli aggregati dell'Atlante Imprese Italia. Usa Tab per entrare nella mappa, i tasti freccia per muoverti e Invio per fissare una regione.",
 }: CompanyAtlasMapProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -106,11 +110,8 @@ export function CompanyAtlasMap({
           data-region-map="true"
           aria-labelledby="company-map-title company-map-description"
         >
-          <title id="company-map-title">Valori regionali dell&apos;Atlante Imprese Italia</title>
-          <desc id="company-map-description">
-            Mappa regionale degli aggregati dell&apos;Atlante Imprese Italia. Usa Tab per entrare
-            nella mappa, i tasti freccia per muoverti e Invio per fissare una regione.
-          </desc>
+          <title id="company-map-title">{mapTitle}</title>
+          <desc id="company-map-description">{mapDescription}</desc>
           {italyRegionGeometry.map((geometry) => {
             const region = byCode.get(geometry.code);
             const colorLevel = level(region?.value ?? null);

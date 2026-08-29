@@ -807,6 +807,232 @@ try {
   });
   completed.push("Atlante Imprese query navigation 390px");
 
+  for (const width of [320, 390, 768, 1280]) {
+    const label = `Atlante Istruzione ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/istruzione",
+      width,
+      validate: async (page) => {
+        const text = await bodyText(page);
+        assertTextMatches(text, /Atlante Istruzione/i, label);
+        assertTextMatches(text, /Solo dati aggregati/i, label);
+        assertTextMatches(text, /Modulo Istruzione · MIM/i, label);
+        assertTextMatches(text, /Perimetro selezionato/i, label);
+        assertTextMatches(text, /Dove si concentrano i percorsi/i, label);
+        assertTextMatches(text, /Studenti osservati per Regione/i, label);
+        assertTextMatches(text, /Prime 10 Regioni/i, label);
+        assertTextMatches(text, /Trend del perimetro/i, label);
+        assertTextMatches(text, /Indirizzi più presenti/i, label);
+        assertTextMatches(text, /Copertura della fonte/i, label);
+        assertTextMatches(text, /Fonte del numero/i, label);
+        assertTextMatches(text, /IODL 2\.0/i, label);
+        assertTextMatches(text, /CODICESCUOLA/i, label);
+        assertTextMatches(text, /18\/20 Regioni osservate/i, label);
+        assertTextMatches(text, /Valle d'Aosta e Trentino-Alto Adige/i, label);
+        assertTextMatches(text, /n\.d\. significa dato non disponibile/i, label);
+        assertTextMatches(text, /Dati della distribuzione/i, label);
+        assertTextMatches(text, /Pubblicato dataset studenti/i, label);
+        assertTextMatches(text, /Pubblicata anagrafe join/i, label);
+        assertTextMatches(text, /Come leggiamo i numeri →/i, label);
+        assertTextMatches(text, /Apri il catalogo MIM ↗/i, label);
+
+        if (width === 1280) {
+          const fontiToggleBounds = await page.$eval(
+            '.nav-item:has(> a[href="/fonti"]) > .nav-item-toggle',
+            (toggle) => {
+              const toggleBox = toggle.getBoundingClientRect();
+              const navigationBox = toggle.closest(".primary-nav")?.getBoundingClientRect();
+              return {
+                navigationRight: navigationBox?.right ?? 0,
+                toggleLeft: toggleBox.left,
+                toggleRight: toggleBox.right,
+              };
+            },
+          );
+          assert.ok(
+            fontiToggleBounds.toggleLeft >= 0 &&
+              fontiToggleBounds.toggleRight <= fontiToggleBounds.navigationRight,
+            `${label}: il controllo Fonti deve restare interamente visibile`,
+          );
+        }
+
+        assert.equal(
+          (await page.$$('[data-region-map="true"] path[role="button"]')).length,
+          20,
+          `${label}: mappa regionale incompleta`,
+        );
+
+        const rankingRegion = '[role="region"][aria-label="Prime 10 Regioni ordinate per studenti osservati"]';
+        const addressRegion = '[role="region"][aria-label="Indirizzi di studio con più studenti osservati"]';
+        await page.waitForSelector(rankingRegion, { visible: true });
+        await page.waitForSelector(addressRegion, { visible: true });
+
+        const tableStates = await page.$$eval(
+          `${rankingRegion}, ${addressRegion}`,
+          (regions) => regions.map((region) => ({
+            clientWidth: region.clientWidth,
+            hasTable: Boolean(region.querySelector("table")),
+            scrollWidth: region.scrollWidth,
+            tabIndex: region.tabIndex,
+          })),
+        );
+        assert.equal(tableStates.length, 2, `${label}: attese due regioni tabella`);
+        for (const [idx, state] of tableStates.entries()) {
+          assert.equal(state.hasTable, true, `${label}: tabella ${idx + 1} assente`);
+          assert.equal(state.tabIndex, 0, `${label}: tabella ${idx + 1} non raggiungibile da tastiera`);
+        }
+
+        const rankingRowCount = await page.$$eval(`${rankingRegion} tbody tr`, (rows) => rows.length);
+        assert.equal(rankingRowCount, 10, `${label}: prime 10 Regioni deve avere 10 righe`);
+        const addressRowCount = await page.$$eval(`${addressRegion} tbody tr`, (rows) => rows.length);
+        assert.ok(addressRowCount > 0, `${label}: tabella indirizzi vuota`);
+
+        for (const selector of [rankingRegion, addressRegion]) {
+          const isScrollable = await page.$eval(selector, (el) => el.scrollWidth > el.clientWidth);
+          if (isScrollable) {
+            await page.$eval(selector, (region) => {
+              region.scrollTo({ left: 0, behavior: "auto" });
+              region.focus();
+            });
+            await page.keyboard.press("ArrowRight");
+            await page.waitForFunction(
+              (sel) => document.querySelector(sel)?.scrollLeft > 0,
+              { timeout: 2_000 },
+              selector,
+            );
+          }
+        }
+
+        const pathwayFilter = 'select[data-education-filter="pathway"]';
+        await page.focus(pathwayFilter);
+        assert.equal(
+          await page.$eval(pathwayFilter, (element) => document.activeElement === element),
+          true,
+          `${label}: il filtro percorso non riceve focus`,
+        );
+        await page.select(pathwayFilter, "SCIENTIFICO");
+        await page.waitForFunction(
+          () => new URL(window.location.href).searchParams.get("pathway") === "SCIENTIFICO",
+          { timeout: 3_000 },
+        );
+        assertTextMatches(await bodyText(page), /Scientifico/i, label);
+
+        const schoolTypeFilter = 'select[data-education-filter="schoolType"]';
+        await page.select(schoolTypeFilter, "state");
+        await page.waitForFunction(
+          () => new URL(window.location.href).searchParams.get("schoolType") === "state",
+          { timeout: 3_000 },
+        );
+        assertTextMatches(await bodyText(page), /Statale/i, label);
+
+        const periodFilter = 'select[data-education-filter="period"]';
+        await page.select(periodFilter, "202324");
+        await page.waitForFunction(
+          () => new URL(window.location.href).searchParams.get("period") === "202324",
+          { timeout: 3_000 },
+        );
+        assertTextMatches(await bodyText(page), /2023\/24/i, label);
+
+        const firstRegion = '[data-region-map="true"] path[role="button"]';
+        await page.$eval(firstRegion, (element) => element.focus());
+        await page.keyboard.press("ArrowRight");
+        await page.keyboard.press("Enter");
+        await page.waitForFunction(
+          () => new URL(window.location.href).searchParams.has("region"),
+          { timeout: 3_000 },
+        );
+        await assertResponsiveShell(page, `${label} dopo selezione mappa`, width);
+      },
+    });
+    completed.push(label);
+  }
+
+  for (const width of [320, 390]) {
+    const label = `Atlante Istruzione territorio non coperto ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/istruzione?region=02",
+      width,
+      validate: async (page) => {
+        const text = await bodyText(page);
+        assertTextMatches(text, /Atlante Istruzione/i, label);
+        assertTextMatches(text, /Valle d'Aosta/i, label);
+        assertTextMatches(text, /Copertura della fonte/i, label);
+        assertTextMatches(text, /n\.d\./i, label);
+        assertTextMatches(text, /Dato non disponibile per il perimetro selezionato/i, label);
+        assertTextMatches(
+          text,
+          /Il dataset studenti esclude le province autonome di Trento e Bolzano; l'anagrafe usata per il join esclude inoltre Aosta/i,
+          label,
+        );
+
+        const vdaLabel = await page.$eval(
+          '[data-region-map="true"] path[aria-label^="Valle d\'Aosta:"]',
+          (el) => el.getAttribute("aria-label"),
+        );
+        assert.match(vdaLabel ?? "", /dato non disponibile/i);
+
+        const detailValue = await page.$eval(
+          '[data-region-map="true"] ~ [aria-live="polite"] span',
+          (el) => el.textContent?.trim(),
+        );
+        assert.equal(detailValue, "n.d.");
+
+        const emptyTableRegions = await page.$$eval(
+          '[role="region"][aria-label="Indirizzi di studio con più studenti osservati"]',
+          (regions) => regions.length,
+        );
+        assert.equal(emptyTableRegions, 0, `${label}: il pannello senza dati non deve esporre una tabella tabulabile`);
+        const rankingRows = await page.$$eval(
+          '[role="region"][aria-label="Prime 10 Regioni ordinate per studenti osservati"] tbody tr',
+          (rows) => rows.length,
+        );
+        assert.equal(rankingRows, 10, `${label}: la classifica nazionale deve restare disponibile`);
+        const emptyStatuses = await page.$$eval(
+          '[role="status"]',
+          (elements) => elements.filter((element) => element.textContent?.includes("Dato non disponibile per il perimetro selezionato.")).length,
+        );
+        assert.equal(emptyStatuses, 3, `${label}: stati n.d. incompleti o duplicati`);
+      },
+    });
+    completed.push(label);
+  }
+
+  await runScenario(browser, {
+    label: "Atlante Istruzione deep-link filtri 1280px",
+    pathname: "/istruzione?period=202425&schoolType=state&pathway=SCIENTIFICO&region=15",
+    width: 1280,
+    validate: async (page) => {
+      const text = await bodyText(page);
+      assertTextMatches(text, /Atlante Istruzione/i, "Atlante Istruzione deep-link filtri 1280px");
+      assertTextMatches(text, /Campania/i, "Atlante Istruzione deep-link filtri 1280px");
+      assertTextMatches(text, /Statale/i, "Atlante Istruzione deep-link filtri 1280px");
+      assertTextMatches(text, /Scientifico/i, "Atlante Istruzione deep-link filtri 1280px");
+      assertTextMatches(text, /Copertura della fonte/i, "Atlante Istruzione deep-link filtri 1280px");
+      assertTextMatches(text, /18\/20 Regioni/i, "Atlante Istruzione deep-link filtri 1280px");
+
+      const selectedRegionValue = await page.$eval(
+        'select[data-education-filter="region"]',
+        (select) => select.value,
+      );
+      assert.equal(selectedRegionValue, "15");
+
+      const selectedPathwayValue = await page.$eval(
+        'select[data-education-filter="pathway"]',
+        (select) => select.value,
+      );
+      assert.equal(selectedPathwayValue, "SCIENTIFICO");
+
+      const selectedSchoolTypeValue = await page.$eval(
+        'select[data-education-filter="schoolType"]',
+        (select) => select.value,
+      );
+      assert.equal(selectedSchoolTypeValue, "state");
+    },
+  });
+  completed.push("Atlante Istruzione deep-link filtri 1280px");
+
   for (const width of [390, 768, 1280]) {
     const label = `Scheda economica Benevento ${width}px`;
     await runScenario(browser, {
@@ -1292,11 +1518,12 @@ try {
         const columns = await page.$(".footer-sitemap-columns");
         assert.ok(columns, `${label}: contenitore dei gruppi assente`);
         const groupCount = await page.$$eval(".footer-sitemap-group", (groups) => groups.length);
-        assert.equal(groupCount, 9, `${label}: attesi 9 gruppi nella mappa`);
+        assert.equal(groupCount, 10, `${label}: attesi 10 gruppi nella mappa`);
         const headings = await page.$$eval(".footer-sitemap-group h3", (items) =>
           items.map((item) => item.textContent?.trim() ?? ""),
         );
         assert.ok(headings.includes("Imprese"), `${label}: sezione Imprese assente`);
+        assert.ok(headings.includes("Istruzione"), `${label}: sezione Istruzione assente`);
         assert.ok(headings.includes("Istituzioni"), `${label}: sezione Istituzioni assente`);
         assert.ok(headings.includes("Fonti e metodo"), `${label}: sezione Fonti e metodo assente`);
         assert.ok(!headings.includes("Legale"), `${label}: sezione Legale non attesa in mappa`);

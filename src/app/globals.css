@@ -716,6 +716,8 @@ main { display: block; }
    competes with it for the same line steps aside. */
 @media (max-width: 1320px) {
   .nav-note { display: none; }
+  .nav-item > a { padding-inline: 12px; }
+  .nav-item-has-menu > a { padding-right: 4px; }
   .nav-row[data-menu-open="true"] {
     overflow-x: clip;
     overflow-y: visible;

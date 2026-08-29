@@ -837,6 +837,26 @@ try {
         assertTextMatches(text, /Come leggiamo i numeri →/i, label);
         assertTextMatches(text, /Apri il catalogo MIM ↗/i, label);
 
+        if (width === 1280) {
+          const fontiToggleBounds = await page.$eval(
+            '.nav-item:has(> a[href="/fonti"]) > .nav-item-toggle',
+            (toggle) => {
+              const toggleBox = toggle.getBoundingClientRect();
+              const navigationBox = toggle.closest(".primary-nav")?.getBoundingClientRect();
+              return {
+                navigationRight: navigationBox?.right ?? 0,
+                toggleLeft: toggleBox.left,
+                toggleRight: toggleBox.right,
+              };
+            },
+          );
+          assert.ok(
+            fontiToggleBounds.toggleLeft >= 0 &&
+              fontiToggleBounds.toggleRight <= fontiToggleBounds.navigationRight,
+            `${label}: il controllo Fonti deve restare interamente visibile`,
+          );
+        }
+
         assert.equal(
           (await page.$$('[data-region-map="true"] path[role="button"]')).length,
           20,

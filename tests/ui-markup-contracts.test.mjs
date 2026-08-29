@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 import test from "node:test";
+import ts from "typescript";
 
 const root = new URL("..", import.meta.url);
 const uiRoots = ["src/app", "src/components"];
@@ -22,6 +23,31 @@ async function uiSources() {
   return Promise.all(paths.map(async (path) => [path, await readFile(new URL(path, root), "utf8")]));
 }
 
+function jsxElements(path, source) {
+  const sourceFile = ts.createSourceFile(
+    path,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
+  );
+  const elements = [];
+  const visit = (node) => {
+    if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
+      elements.push(node);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return { elements, sourceFile };
+}
+
+function jsxAttribute(element, sourceFile, name) {
+  return element.attributes.properties.find(
+    (attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(sourceFile) === name,
+  );
+}
+
 // Un'intestazione senza scope lascia allo screen reader il compito di indovinare
 // se descrive una colonna o una riga.
 test("every table header declares its scope", async () => {
@@ -40,12 +66,20 @@ test("every table header declares its scope", async () => {
 // ruolo e senza nome accessibile chi usa uno screen reader entra in un elemento
 // anonimo e non sa che cosa contiene.
 test("focusable containers expose a role and an accessible name", async () => {
+  const containerNames = new Set(["div", "section", "table", "pre", "figure", "ul", "ol"]);
   const offenders = [];
   for (const [path, source] of await uiSources()) {
-    for (const match of source.matchAll(/<(div|section|table|pre|figure|ul|ol)\b((?:[^<>]|\{[^{}]*\})*?)>/gs)) {
-      const tag = match[0];
-      if (!tag.includes("tabIndex={0}")) continue;
-      if (/\srole=/.test(tag) && /\saria-label(ledby)?=/.test(tag)) continue;
+    const { elements, sourceFile } = jsxElements(path, source);
+    for (const element of elements) {
+      if (!containerNames.has(element.tagName.getText(sourceFile))) continue;
+      if (jsxAttribute(element, sourceFile, "tabIndex")?.initializer?.getText(sourceFile) !== "{0}") continue;
+      const hasRole = Boolean(jsxAttribute(element, sourceFile, "role"));
+      const hasAccessibleName = Boolean(
+        jsxAttribute(element, sourceFile, "aria-label")
+        || jsxAttribute(element, sourceFile, "aria-labelledby"),
+      );
+      if (hasRole && hasAccessibleName) continue;
+      const tag = element.getText(sourceFile);
       offenders.push(`${path}: ${tag.replace(/\s+/g, " ").slice(0, 120)}`);
     }
   }

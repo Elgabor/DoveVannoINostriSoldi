@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { assertOpenCivitasSnapshot } from "../src/lib/data/opencivitas-contract.ts";
+import { compactEuroFromCents } from "../src/lib/format.ts";
 import {
   OPEN_CIVITAS_QUADRANT_THRESHOLD,
   summarizeOpenCivitasQuadrants,
@@ -51,6 +52,15 @@ test("OpenCivitas quadrants use the published levels and reconcile the complete 
   );
 });
 
+test("OpenCivitas compact euro formatter preserves billion and million units", () => {
+  assert.equal(compactEuroFromCents(954_431_037_886), "9,54 mld €");
+  assert.equal(compactEuroFromCents(835_871_581_264), "8,36 mld €");
+  assert.equal(compactEuroFromCents(-170_902_013_628), "-1,71 mld €");
+  assert.equal(compactEuroFromCents(123_456_789), "1,2 mln €");
+  assert.match(compactEuroFromCents(123_456), /1\.234,56/);
+  assert.throws(() => compactEuroFromCents(Number.MAX_SAFE_INTEGER + 1), /intero sicuro/);
+});
+
 test("OpenCivitas quadrant view exposes direct labels, exact table semantics and caveat", () => {
   const page = readFileSync(new URL("../src/app/territori/confronto/page.tsx", import.meta.url), "utf8");
   const component = readFileSync(
@@ -71,12 +81,18 @@ test("OpenCivitas quadrant view exposes direct labels, exact table semantics and
   assert.match(component, /<caption>/);
   assert.match(component, /scope="col"/);
   assert.match(component, /scope="row"/);
-  assert.match(component, /role="region"/);
+  assert.match(component, /HorizontalScrollRegion/);
   assert.match(component, /Scorri orizzontalmente/);
+  assert.match(component, /intero[\s\S]*perimetro OpenCivitas/);
+  assert.match(component, /filtri[\s\S]*non modificano/);
+  assert.match(component, /Distribuzione dei Comuni/);
+  assert.match(component, /ariaDescribedBy="opencivitas-exact-description"/);
   assert.match(component, /periodo \{referenceYear\}/);
   assert.match(component, /non dimostra efficienza, spreco, risparmio/);
   assert.match(style, /overflow-x: auto/);
   assert.match(style, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(style, /grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(style, /white-space: nowrap/);
   assert.match(style, /@media \(max-width: 520px\)/);
   assert.doesNotMatch(component, /efficienza[^\n]*(?:misura|indice)/i);
   assert.doesNotMatch(component, /risparmio[^\n]*(?:stimato|ottenuto|generato)/i);

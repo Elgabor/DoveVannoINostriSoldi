@@ -1,5 +1,6 @@
 import type { OpenCivitasMunicipality } from "@/lib/data/opencivitas-contract";
-import { exactEuro, integer } from "@/lib/format";
+import { HorizontalScrollRegion } from "@/components/horizontal-scroll-region";
+import { compactEuroFromCents, exactEuro, integer } from "@/lib/format";
 import {
   OPEN_CIVITAS_QUADRANT_THRESHOLD,
   summarizeOpenCivitasQuadrants,
@@ -49,28 +50,8 @@ const QUADRANT_COPY: Record<OpenCivitasQuadrantKey, Readonly<{
   },
 };
 
-function compactEuro(cents: number): string {
-  const euros = cents / 100;
-  const absolute = Math.abs(euros);
-  if (absolute >= 1_000_000_000) {
-    return `${euros.toLocaleString("it-IT", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-      useGrouping: "always",
-    })} mld €`;
-  }
-  if (absolute >= 1_000_000) {
-    return `${euros.toLocaleString("it-IT", {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-      useGrouping: "always",
-    })} mln €`;
-  }
-  return exactEuro(euros);
-}
-
 function signedEuro(cents: number, compact = false): string {
-  const value = compact ? compactEuro(cents) : exactEuro(cents / 100);
+  const value = compact ? compactEuroFromCents(cents) : exactEuro(cents / 100);
   return cents > 0 ? `+${value}` : value;
 }
 
@@ -106,7 +87,8 @@ export function OpenCivitasQuadrants({
           <p className={styles.intro}>
             Ogni Comune è collocato usando il livello della spesa e il livello dei servizi pubblicati
             dalla fonte. La soglia adottata qui è {OPEN_CIVITAS_QUADRANT_THRESHOLD}: i gruppi non sono
-            una graduatoria e non spiegano da soli le differenze tra Comuni.
+            una graduatoria e non spiegano da soli le differenze tra Comuni. Il riepilogo usa l’intero
+            perimetro OpenCivitas: i filtri della tabella comunale successiva non modificano questi profili.
           </p>
         </div>
         <dl className={styles.coverage}>
@@ -126,7 +108,7 @@ export function OpenCivitasQuadrants({
           <div>
             <h3 id="opencivitas-plot-title">Livello dei servizi e livello della spesa</h3>
             <p>
-              Quota di Comuni per i quali sono disponibili entrambi i livelli 0–10. I testi dentro
+              Distribuzione dei Comuni per i quali sono disponibili entrambi i livelli 0–10. I testi dentro
               ogni riquadro riportano sempre la stessa informazione del colore.
             </p>
           </div>
@@ -159,11 +141,11 @@ export function OpenCivitasQuadrants({
                   <dl className={styles.quadrantTotals}>
                     <div>
                       <dt>Spesa storica</dt>
-                      <dd>{compactEuro(quadrant.historicalSpendingCents)}</dd>
+                      <dd>{compactEuroFromCents(quadrant.historicalSpendingCents)}</dd>
                     </div>
                     <div>
                       <dt>Fabbisogno standard</dt>
-                      <dd>{compactEuro(quadrant.standardSpendingCents)}</dd>
+                      <dd>{compactEuroFromCents(quadrant.standardSpendingCents)}</dd>
                     </div>
                     <div>
                       <dt>Differenza</dt>
@@ -197,11 +179,14 @@ export function OpenCivitasQuadrants({
           </div>
           <span className={styles.completeTag}>Totale completo: {integer(summary.completeMunicipalities)}</span>
         </div>
-        <div
+        <p className={styles.scrollInstruction} id="opencivitas-exact-description">
+          Su schermi stretti puoi scorrere la tabella orizzontalmente; quando la regione è a fuoco,
+          Freccia destra/sinistra e Home/Fine spostano la vista.
+        </p>
+        <HorizontalScrollRegion
+          ariaDescribedBy="opencivitas-exact-description"
+          ariaLabel="Tabella esatta dei profili OpenCivitas. Scorri orizzontalmente per vedere tutte le colonne."
           className={styles.tableScroll}
-          role="region"
-          aria-label="Tabella esatta dei profili OpenCivitas. Scorri orizzontalmente per vedere tutte le colonne."
-          tabIndex={0}
         >
           <table className={`table ${styles.table}`}>
             <caption>
@@ -240,7 +225,7 @@ export function OpenCivitasQuadrants({
               </tr>
             </tfoot>
           </table>
-        </div>
+        </HorizontalScrollRegion>
         <p className={styles.excluded}>
           {integer(summary.excludedMunicipalities)} Comuni coperti non entrano nei quattro profili
           perché almeno uno dei due livelli non è disponibile nella fonte.

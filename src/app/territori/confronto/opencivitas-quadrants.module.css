@@ -128,7 +128,8 @@
   min-width: 0;
   flex-direction: column;
   padding: clamp(12px, 2.2vw, 24px);
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
   border-right: 1px solid var(--color-neutral-400);
   border-bottom: 1px solid var(--color-neutral-400);
   background: var(--color-neutral-100);
@@ -186,6 +187,7 @@
   padding-top: var(--space-4);
   color: var(--color-text);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .count strong {
@@ -219,7 +221,7 @@
   font-size: 12px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 
 .xAxis {
@@ -302,7 +304,8 @@
 
 .table th small {
   max-width: 36ch;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .excluded {
@@ -318,6 +321,12 @@
 
 .provenance a {
   overflow-wrap: anywhere;
+}
+
+.scrollInstruction {
+  margin: 0 0 var(--space-2);
+  color: var(--color-neutral-600);
+  font-size: 11px;
 }
 
 @media (max-width: 760px) {
@@ -350,11 +359,23 @@
   }
 
   .plot {
-    grid-template-rows: repeat(2, minmax(220px, auto));
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
   }
 
   .quadrant {
     padding: 12px;
+    min-height: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-neutral-400);
+  }
+
+  .quadrant:nth-last-child(-n + 2) {
+    border-bottom: 1px solid var(--color-neutral-400);
+  }
+
+  .quadrant:last-child {
+    border-bottom: 0;
   }
 
   .quadrantTotals {
@@ -371,6 +392,11 @@
 
   .quadrantTotals dd {
     text-align: right;
+  }
+
+  .count {
+    margin: var(--space-3) 0;
+    padding-top: 0;
   }
 
   .xAxis {

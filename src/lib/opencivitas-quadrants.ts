@@ -1,6 +1,6 @@
 import type { OpenCivitasMunicipality } from "./data/opencivitas-contract";
 
-/** The page uses the published 0–10 levels as two descriptive bands. */
+/** The page uses the published 0-10 levels as two descriptive bands. */
 export const OPEN_CIVITAS_QUADRANT_THRESHOLD = 6;
 
 export const OPEN_CIVITAS_QUADRANT_KEYS = [

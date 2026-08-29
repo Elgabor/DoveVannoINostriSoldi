@@ -33,19 +33,19 @@ const QUADRANT_COPY: Record<OpenCivitasQuadrantKey, Readonly<{
   description: string;
 }>> = {
   "low-low": {
-    title: "Spesa 0–5 · servizi 0–5",
+    title: "Spesa da 0 a 5 · servizi da 0 a 5",
     description: "Entrambi i livelli pubblicati sono sotto la soglia descrittiva.",
   },
   "low-high": {
-    title: "Spesa 0–5 · servizi 6–10",
+    title: "Spesa da 0 a 5 · servizi da 6 a 10",
     description: "Il livello della spesa è sotto soglia; quello dei servizi è almeno 6.",
   },
   "high-low": {
-    title: "Spesa 6–10 · servizi 0–5",
+    title: "Spesa da 6 a 10 · servizi da 0 a 5",
     description: "Il livello della spesa è almeno 6; quello dei servizi è sotto soglia.",
   },
   "high-high": {
-    title: "Spesa 6–10 · servizi 6–10",
+    title: "Spesa da 6 a 10 · servizi da 6 a 10",
     description: "Entrambi i livelli pubblicati sono almeno 6.",
   },
 };
@@ -56,7 +56,7 @@ function signedEuro(cents: number, compact = false): string {
 }
 
 function bandLabel(band: "low" | "high"): string {
-  return band === "high" ? "6–10" : "0–5";
+  return band === "high" ? "da 6 a 10" : "da 0 a 5";
 }
 
 function quadrantLabel(quadrant: OpenCivitasQuadrant): string {
@@ -108,7 +108,7 @@ export function OpenCivitasQuadrants({
           <div>
             <h3 id="opencivitas-plot-title">Livello dei servizi e livello della spesa</h3>
             <p>
-              Distribuzione dei Comuni per i quali sono disponibili entrambi i livelli 0–10. I testi dentro
+              Distribuzione dei Comuni per i quali sono disponibili entrambi i livelli da 0 a 10. I testi dentro
               ogni riquadro riportano sempre la stessa informazione del colore.
             </p>
           </div>
@@ -116,7 +116,7 @@ export function OpenCivitasQuadrants({
         </div>
 
         <div className={styles.chartFrame}>
-          <p className={styles.yAxisLabel}>Livello dei servizi · 0–10</p>
+          <p className={styles.yAxisLabel}>Livello dei servizi · da 0 a 10</p>
           <div className={styles.plotWrap}>
             <div
               className={styles.plot}
@@ -157,13 +157,13 @@ export function OpenCivitasQuadrants({
             </div>
             <div className={styles.xAxis} aria-hidden="true">
               <span>Spesa sotto soglia</span>
-              <span>Livello della spesa · 0–10</span>
+              <span>Livello della spesa · da 0 a 10</span>
               <span>Spesa almeno 6</span>
             </div>
           </div>
         </div>
         <figcaption className={styles.caption}>
-          La soglia divide i livelli pubblicati in 0–5 e 6–10. La differenza monetaria è spesa
+          La soglia divide i livelli pubblicati tra valori da 0 a 5 e valori da 6 a 10. La differenza monetaria è spesa
           storica meno fabbisogno standard: non è una misura di efficienza, spreco o risparmio.
         </figcaption>
       </figure>

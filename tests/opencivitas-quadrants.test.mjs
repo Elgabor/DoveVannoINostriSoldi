@@ -74,10 +74,10 @@ test("OpenCivitas quadrant view exposes direct labels, exact table semantics and
 
   assert.match(page, /<OpenCivitasQuadrants/);
   assert.match(component, /<figure/);
-  assert.match(component, /Spesa 0–5 · servizi 0–5/);
-  assert.match(component, /Spesa 0–5 · servizi 6–10/);
-  assert.match(component, /Spesa 6–10 · servizi 0–5/);
-  assert.match(component, /Spesa 6–10 · servizi 6–10/);
+  assert.match(component, /Spesa da 0 a 5 · servizi da 0 a 5/);
+  assert.match(component, /Spesa da 0 a 5 · servizi da 6 a 10/);
+  assert.match(component, /Spesa da 6 a 10 · servizi da 0 a 5/);
+  assert.match(component, /Spesa da 6 a 10 · servizi da 6 a 10/);
   assert.match(component, /<caption>/);
   assert.match(component, /scope="col"/);
   assert.match(component, /scope="row"/);

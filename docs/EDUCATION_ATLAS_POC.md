@@ -25,7 +25,8 @@ Fonte MIM, dataset `ALUSECGRADOIND`:
 
 - scuola secondaria di secondo grado;
 - anno scolastico;
-- tipo percorso (`LICEO`, `TECNICO`, `PROFESSIONALE`, `IeFP`);
+- tipo percorso (valori ufficiali `LICEO`, `TECNICO`, `PROFESSIONALE`,
+  `PROFESSIONALE IeFP`);
 - percorso e indirizzo;
 - studenti maschi e femmine in forma aggregata;
 - codice della scuola per il join territoriale.
@@ -83,7 +84,8 @@ su `CODICESCUOLA` e produce l'aggregato committato in
 `src/data/generated/education-atlas-snapshot.json`, insieme al manifest
 `education-atlas-source-files.json`. Il dataset è disponibile anche come
 `education_students_by_pathway` nel catalogo MCP, con paginazione, le dodici
-ricevute di provenienza (URL, ruolo, hash, byte e righe) e caveat.
+ricevute di provenienza (URL, ruolo, hash, byte, righe, data di pubblicazione e
+data di riferimento della distribuzione) e caveat.
 
 ## Prima UI
 
@@ -150,13 +152,20 @@ il controllo offline è eseguibile con
   IODL 2.0; la pagina del dataset descrive la classificazione disponibile dal
   2018/19. Il catalogo della licenza è registrato come
   `http://www.dati.gov.it/iodl/2.0/` nella provenienza MCP.
-- La pagina MIM dell'anagrafe statale dichiara anch'essa IODL 2.0.
+- La pagina MIM dell'anagrafe statale dichiara anch'essa IODL 2.0; la data di
+  pubblicazione del dataset è distinta dalla data `Dati al 31/08` contenuta
+  nella distribuzione annuale.
 - OpenCoesione dichiara per il dataset pagamenti frequenza bimestrale e
   licenza CC BY 4.0.
 - Le condizioni vanno registrate per ogni distribuzione concreta, insieme a
-  URL, data di pubblicazione, hash, schema, periodo e copertura. Il manifest
-  ora conserva anche la data per ruolo/tipo scuola e l'ETL limita a 50 MiB la
-  lettura di ogni CSV remoto.
+  URL, data di pubblicazione, data di riferimento (`dataAsOf`), hash, schema,
+  periodo e copertura. Il manifest conserva entrambe le date e l'ETL limita a
+  50 MiB la lettura di ogni CSV remoto.
+- `python3 scripts/etl/education_atlas_snapshot.py --check` verifica il
+  contenuto committato e le ricevute già registrate; non scarica nuovamente i
+  file e quindi non dimostra che l'URL remoto non sia cambiato. Il generatore
+  senza `--check` è il passaggio online che scarica le distribuzioni e aggiorna
+  gli hash.
 
 ## Stima di lavoro
 

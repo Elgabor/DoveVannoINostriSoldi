@@ -247,7 +247,8 @@ assert.ok(educationData.data.every((row) =>
 assert.equal(educationData.provenance.length, 12);
 assert.ok(educationData.provenance.every((source) =>
   typeof source.url === "string"
-  && typeof source.updatedAt === "string"
+  && typeof source.publishedAt === "string"
+  && typeof source.dataAsOf === "string"
   && /^[a-f0-9]{64}$/.test(source.sha256)
   && Number.isInteger(source.bytes)
   && Number.isInteger(source.rows)

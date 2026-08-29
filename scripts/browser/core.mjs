@@ -807,7 +807,7 @@ try {
   });
   completed.push("Atlante Imprese query navigation 390px");
 
-  for (const width of [390, 768, 1280]) {
+  for (const width of [320, 390, 768, 1280]) {
     const label = `Atlante Istruzione ${width}px`;
     await runScenario(browser, {
       label,
@@ -831,6 +831,8 @@ try {
         assertTextMatches(text, /18\/20 Regioni osservate/i, label);
         assertTextMatches(text, /Valle d'Aosta e Trentino-Alto Adige/i, label);
         assertTextMatches(text, /n\.d\. significa dato non disponibile/i, label);
+        assertTextMatches(text, /Dati della distribuzione/i, label);
+        assertTextMatches(text, /Pubblicato dataset/i, label);
         assertTextMatches(text, /Come leggiamo i numeri →/i, label);
         assertTextMatches(text, /Apri il catalogo MIM ↗/i, label);
 
@@ -925,36 +927,40 @@ try {
     completed.push(label);
   }
 
-  await runScenario(browser, {
-    label: "Atlante Istruzione territorio non coperto 390px",
-    pathname: "/istruzione?region=02",
-    width: 390,
-    validate: async (page) => {
-      const text = await bodyText(page);
-      assertTextMatches(text, /Atlante Istruzione/i, "Atlante Istruzione territorio non coperto 390px");
-      assertTextMatches(text, /Valle d'Aosta/i, "Atlante Istruzione territorio non coperto 390px");
-      assertTextMatches(text, /Copertura della fonte/i, "Atlante Istruzione territorio non coperto 390px");
-      assertTextMatches(text, /n\.d\./i, "Atlante Istruzione territorio non coperto 390px");
-      assertTextMatches(
-        text,
-        /Il dataset studenti esclude le province autonome di Trento e Bolzano; l'anagrafe usata per il join esclude inoltre Aosta/i,
-        "Atlante Istruzione territorio non coperto 390px",
-      );
+  for (const width of [320, 390]) {
+    const label = `Atlante Istruzione territorio non coperto ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/istruzione?region=02",
+      width,
+      validate: async (page) => {
+        const text = await bodyText(page);
+        assertTextMatches(text, /Atlante Istruzione/i, label);
+        assertTextMatches(text, /Valle d'Aosta/i, label);
+        assertTextMatches(text, /Copertura della fonte/i, label);
+        assertTextMatches(text, /n\.d\./i, label);
+        assertTextMatches(text, /Dato non disponibile per il perimetro selezionato/i, label);
+        assertTextMatches(
+          text,
+          /Il dataset studenti esclude le province autonome di Trento e Bolzano; l'anagrafe usata per il join esclude inoltre Aosta/i,
+          label,
+        );
 
-      const vdaLabel = await page.$eval(
-        '[data-region-map="true"] path[aria-label^="Valle d\'Aosta:"]',
-        (el) => el.getAttribute("aria-label"),
-      );
-      assert.match(vdaLabel ?? "", /dato non disponibile/i);
+        const vdaLabel = await page.$eval(
+          '[data-region-map="true"] path[aria-label^="Valle d\'Aosta:"]',
+          (el) => el.getAttribute("aria-label"),
+        );
+        assert.match(vdaLabel ?? "", /dato non disponibile/i);
 
-      const detailValue = await page.$eval(
-        '[data-region-map="true"] ~ [aria-live="polite"] span',
-        (el) => el.textContent?.trim(),
-      );
-      assert.equal(detailValue, "n.d.");
-    },
-  });
-  completed.push("Atlante Istruzione territorio non coperto 390px");
+        const detailValue = await page.$eval(
+          '[data-region-map="true"] ~ [aria-live="polite"] span',
+          (el) => el.textContent?.trim(),
+        );
+        assert.equal(detailValue, "n.d.");
+      },
+    });
+    completed.push(label);
+  }
 
   await runScenario(browser, {
     label: "Atlante Istruzione deep-link filtri 1280px",

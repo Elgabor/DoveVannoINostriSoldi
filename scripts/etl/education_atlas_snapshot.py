@@ -34,15 +34,21 @@ PERIODS = (
     ("202425", "2024/25"),
 )
 SCHOOL_TYPES = (("state", "Scuola statale"), ("paritaria", "Scuola paritaria"))
-ALLOWED_SCHOOL_ORDERS = frozenset({"SECONDARIA II GRADO"})
-ALLOWED_PATHWAY_TYPES = frozenset({"LICEO", "TECNICO", "PROFESSIONALE", "IEFP"})
+ALLOWED_SCHOOL_ORDERS = frozenset({"SCUOLA SECONDARIA II GRADO"})
+ALLOWED_PATHWAY_TYPES = frozenset({"LICEO", "TECNICO", "PROFESSIONALE", "PROFESSIONALE IEFP"})
+EXPECTED_OBSERVED_REGION_COUNT = 18
 MAX_REMOTE_SOURCE_BYTES = 50 * 1024 * 1024
 IODL_URL = "http://www.dati.gov.it/iodl/2.0/"
-SOURCE_UPDATED_AT = {
+SOURCE_PUBLISHED_AT = {
     ("students", "state"): "2026-02-23",
     ("students", "paritaria"): "2026-02-23",
-    ("registry", "state"): "2025-06-03",
+    ("registry", "state"): "2026-06-18",
     ("registry", "paritaria"): "2026-06-18",
+}
+SOURCE_DATA_AS_OF = {
+    "202223": "2023-08-31",
+    "202324": "2024-08-31",
+    "202425": "2025-08-31",
 }
 
 REGION_NAMES = {
@@ -278,7 +284,8 @@ def file_receipt(
         "period": period,
         "schoolType": school_type,
         "role": role,
-        "updatedAt": SOURCE_UPDATED_AT[(role, school_type)],
+        "publishedAt": SOURCE_PUBLISHED_AT[(role, school_type)],
+        "dataAsOf": SOURCE_DATA_AS_OF[period],
         "url": url,
         "sha256": hashlib.sha256(payload).hexdigest(),
         "bytes": len(payload),
@@ -286,16 +293,25 @@ def file_receipt(
     }
 
 
-def registry_map(rows: list[dict[str, str]], source_url: str) -> dict[str, str]:
+def registry_map(
+    rows: list[dict[str, str]],
+    source_url: str,
+    expected_period: str | None = None,
+) -> dict[str, str]:
     result: dict[str, str] = {}
     for line_number, row in enumerate(rows, start=2):
+        source_period = normalized_text(row["ANNOSCOLASTICO"])
+        if expected_period is not None and source_period != expected_period:
+            raise ValueError(
+                f"ANNOSCOLASTICO incoerente nell'anagrafe alla riga {line_number}: "
+                f"atteso {expected_period}, trovato {source_period!r}"
+            )
         code = normalized_text(row["CODICESCUOLA"]).upper()
         if not code:
             raise ValueError(f"Codice scuola vuoto alla riga {line_number}: {source_url}")
+        if code in result:
+            raise ValueError(f"Codice scuola duplicato alla riga {line_number}: {code}")
         current_region = region_code(row["REGIONE"])
-        previous_region = result.get(code)
-        if previous_region is not None and previous_region != current_region:
-            raise ValueError(f"Codice scuola associato a due Regioni alla riga {line_number}: {code}")
         result[code] = current_region
     return result
 
@@ -318,7 +334,7 @@ def aggregate_source(
     pathways: dict[tuple[str, str, str], dict[str, Any]] = {}
     addresses: dict[tuple[str, str, str, str], dict[str, Any]] = {}
     school_codes_by_region: dict[str, set[str]] = defaultdict(set)
-    seen_source_keys: set[tuple[str, str, str, str, str]] = set()
+    seen_source_keys: set[tuple[str, str, str, str, str, str, str, str]] = set()
 
     for line_number, row in enumerate(students, start=2):
         source_period = normalized_text(row["ANNOSCOLASTICO"])
@@ -345,7 +361,16 @@ def aggregate_source(
         address = normalized_text(row["INDIRIZZO"])
         if not course_year.isdigit() or not address:
             raise ValueError(f"Dimensione obbligatoria non valida alla riga {line_number}: {source_url}")
-        source_key = (code, course_year, pathway, address, normalized_text(row["TIPOPERCORSO"]))
+        source_key = (
+            source_period,
+            school_type,
+            region,
+            code,
+            course_year,
+            pathway_type,
+            pathway,
+            address,
+        )
         if source_key in seen_source_keys:
             raise ValueError(f"Riga studenti duplicata alla riga {line_number}: {source_key}")
         seen_source_keys.add(source_key)
@@ -371,6 +396,14 @@ def aggregate_source(
             {"studentCount": 0, "maleCount": 0, "femaleCount": 0},
         )
         add_bucket(address_bucket, male, female)
+
+    if len(school_codes_by_region) != EXPECTED_OBSERVED_REGION_COUNT:
+        observed_regions = ", ".join(sorted(school_codes_by_region)) or "nessuna"
+        raise ValueError(
+            f"Copertura regionale inattesa per {period}/{school_type}: "
+            f"attese {EXPECTED_OBSERVED_REGION_COUNT} Regioni osservate, "
+            f"trovate {len(school_codes_by_region)} ({observed_regions})"
+        )
 
     regional_rows = []
     for (region, current_type), values in regional.items():
@@ -453,7 +486,7 @@ def build_snapshot(observed_at: str, input_dir: Path | None = None) -> dict[str,
             students = read_csv_bytes(students_payload, STUDENT_FIELDS, urls["students"])
             registry_fields = REGISTRY_FIELDS_STATE if school_type == "state" else REGISTRY_FIELDS_PARITARIA
             registry_rows = read_csv_bytes(registry_payload, registry_fields, urls["registry"])
-            registry = registry_map(registry_rows, urls["registry"])
+            registry = registry_map(registry_rows, urls["registry"], expected_period=period)
             regional, pathways, addresses, coverage = aggregate_source(
                 period=period,
                 school_type=school_type,
@@ -508,7 +541,8 @@ def build_snapshot(observed_at: str, input_dir: Path | None = None) -> dict[str,
                 "publisher": "Ministero dell'Istruzione e del Merito",
                 "license": "IODL 2.0",
                 "licenseUrl": IODL_URL,
-                "updatedAt": "2026-02-23",
+                "publishedAt": "2026-02-23",
+                "latestDataAsOf": SOURCE_DATA_AS_OF["202425"],
                 "observedAt": observed_at,
                 "verifiedAt": observed_at,
                 "cadence": "annuale",
@@ -523,7 +557,8 @@ def build_snapshot(observed_at: str, input_dir: Path | None = None) -> dict[str,
                 "publisher": "Ministero dell'Istruzione e del Merito",
                 "license": "IODL 2.0",
                 "licenseUrl": IODL_URL,
-                "updatedAt": "2025-06-03",
+                "publishedAt": "2026-06-18",
+                "latestDataAsOf": SOURCE_DATA_AS_OF["202425"],
                 "observedAt": observed_at,
                 "verifiedAt": observed_at,
                 "cadence": "annuale",
@@ -577,6 +612,10 @@ def assert_snapshot(snapshot: dict[str, Any]) -> None:
     source_files = snapshot.get("sourceFiles", [])
     if len(source_files) != 12:
         raise ValueError("Ricevute source file inattese")
+    if snapshot.get("coverage", {}).get("expectedRegionCount") != len(REGION_CODES):
+        raise ValueError("Numero di Regioni atteso incoerente")
+    if snapshot.get("coverage", {}).get("observedRegionCount") != EXPECTED_OBSERVED_REGION_COUNT:
+        raise ValueError("Numero di Regioni osservate incoerente")
     expected_source_files = [
         (period, school_type, role)
         for period, _period_label in PERIODS
@@ -594,8 +633,10 @@ def assert_snapshot(snapshot: dict[str, Any]) -> None:
     for item, (period, school_type, role) in zip(source_files, expected_source_files):
         if item.get("url") != SOURCE_FILES[period][school_type][role]:
             raise ValueError(f"URL sorgente incoerente: {period}/{school_type}/{role}")
-        if item.get("updatedAt") != SOURCE_UPDATED_AT[(role, school_type)]:
+        if item.get("publishedAt") != SOURCE_PUBLISHED_AT[(role, school_type)]:
             raise ValueError(f"Data pubblicazione sorgente incoerente: {period}/{school_type}/{role}")
+        if item.get("dataAsOf") != SOURCE_DATA_AS_OF[period]:
+            raise ValueError(f"Data di riferimento sorgente incoerente: {period}/{school_type}/{role}")
         if not re.fullmatch(r"[a-f0-9]{64}", str(item.get("sha256", ""))):
             raise ValueError(f"Hash sorgente non valido: {period}/{school_type}/{role}")
         for field in ("bytes", "rows"):
@@ -658,6 +699,8 @@ def assert_snapshot(snapshot: dict[str, Any]) -> None:
                 raise ValueError(f"Totale indirizzo non riconciliato: {period}/{school_type}")
             if coverage["matchedRows"] != coverage["sourceRows"] or coverage["unmatchedRows"] != 0:
                 raise ValueError(f"Join incompleto: {period}/{school_type}")
+            if coverage["regionCount"] != EXPECTED_OBSERVED_REGION_COUNT:
+                raise ValueError(f"Copertura regionale incompleta: {period}/{school_type}")
 
     missing = snapshot["coverage"]["missingRegionCodes"]
     if missing != ["02", "04"]:

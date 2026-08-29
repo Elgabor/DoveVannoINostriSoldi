@@ -26,7 +26,8 @@ const sourceSchema = z.object({
   publisher: z.literal("Ministero dell'Istruzione e del Merito"),
   license: z.literal("IODL 2.0"),
   licenseUrl: z.string().url(),
-  updatedAt: z.string().min(1),
+  publishedAt: z.string().min(1),
+  latestDataAsOf: z.string().min(1),
   observedAt: z.string().min(1),
   verifiedAt: z.string().min(1),
   cadence: z.literal("annuale"),
@@ -76,7 +77,8 @@ const sourceFileSchema = z.object({
   period: z.string().regex(/^\d{6}$/),
   schoolType: educationSchoolTypeSchema,
   role: z.enum(["students", "registry"]),
-  updatedAt: z.string().min(1),
+  publishedAt: z.string().min(1),
+  dataAsOf: z.string().min(1),
   url: z.string().url(),
   sha256: z.string().regex(/^[a-f0-9]{64}$/),
   bytes: countSchema,
@@ -172,6 +174,18 @@ const EXPECTED_SOURCE_FILE_KEYS = EXPECTED_PERIODS.flatMap((period) =>
   ),
 );
 
+const EXPECTED_SOURCE_PUBLISHED_AT = new Map([
+  ["students|state", "2026-02-23"],
+  ["students|paritaria", "2026-02-23"],
+  ["registry|state", "2026-06-18"],
+  ["registry|paritaria", "2026-06-18"],
+]);
+const EXPECTED_SOURCE_DATA_AS_OF = new Map([
+  ["202223", "2023-08-31"],
+  ["202324", "2024-08-31"],
+  ["202425", "2025-08-31"],
+]);
+
 export type EducationAtlasSource = z.infer<typeof sourceSchema>;
 export type EducationAtlasSourceFile = z.infer<typeof sourceFileSchema>;
 export type EducationAtlasSourceFileManifest = z.infer<typeof sourceFileManifestSchema>;
@@ -191,6 +205,15 @@ function validateSourceFileInventory(
   }
   if (new Set(sourceFiles.map((file) => file.url)).size !== sourceFiles.length) {
     issue([path], "L'inventario non può contenere URL sorgente duplicati");
+  }
+  for (const [index, file] of sourceFiles.entries()) {
+    const expectedPublishedAt = EXPECTED_SOURCE_PUBLISHED_AT.get(`${file.role}|${file.schoolType}`);
+    if (file.publishedAt !== expectedPublishedAt) {
+      issue([path, index, "publishedAt"], "Data di pubblicazione sorgente incoerente");
+    }
+    if (file.dataAsOf !== EXPECTED_SOURCE_DATA_AS_OF.get(file.period)) {
+      issue([path, index, "dataAsOf"], "Data di riferimento sorgente incoerente");
+    }
   }
 }
 
@@ -215,6 +238,12 @@ export function validateEducationAtlasSnapshot(input: unknown): EducationAtlasSn
     const sourceIds = snapshot.sources.map((source) => source.id);
     if (sourceIds.join("|") !== "students|registry") {
       issue(["sources"], "Le fonti devono essere studenti e anagrafe scuole");
+    }
+    if (snapshot.sources[0]?.publishedAt !== "2026-02-23" || snapshot.sources[0]?.latestDataAsOf !== "2025-08-31") {
+      issue(["sources", 0], "Provenienza dataset studenti incoerente");
+    }
+    if (snapshot.sources[1]?.publishedAt !== "2026-06-18" || snapshot.sources[1]?.latestDataAsOf !== "2025-08-31") {
+      issue(["sources", 1], "Provenienza anagrafe scuole incoerente");
     }
     const sourceObservedAt = new Set(snapshot.sources.map((source) => source.observedAt));
     if (sourceObservedAt.size !== 1 || !sourceObservedAt.has(snapshot.generatedAt)) {
@@ -266,6 +295,12 @@ export function validateEducationAtlasSnapshot(input: unknown): EducationAtlasSn
     if (snapshot.coverage.observedRegionCount !== observedRegionCodes.length) {
       issue(["coverage", "observedRegionCount"], "Numero di Regioni osservate incoerente");
     }
+    if (snapshot.coverage.expectedRegionCount !== EXPECTED_REGION_CODES.length) {
+      issue(["coverage", "expectedRegionCount"], "Numero di Regioni atteso incoerente");
+    }
+    if (snapshot.coverage.observedRegionCount !== 18) {
+      issue(["coverage", "observedRegionCount"], "La copertura comune attesa è di 18 Regioni");
+    }
     if (snapshot.coverage.missingRegionCodes.join("|") !== missingRegionCodes.join("|")) {
       issue(["coverage", "missingRegionCodes"], "Elenco delle Regioni mancanti incoerente");
     }
@@ -297,6 +332,9 @@ export function validateEducationAtlasSnapshot(input: unknown): EducationAtlasSn
         }
         if (entry.matchedRows !== entry.sourceRows || entry.unmatchedRows !== 0) {
           issue(["coverage", period, schoolType], "Join scuola-territorio incompleto");
+        }
+        if (entry.regionCount !== 18) {
+          issue(["coverage", "byPeriodSchoolType", period, schoolType, "regionCount"], "La copertura per periodo e tipo scuola deve contenere 18 Regioni");
         }
       }
     }

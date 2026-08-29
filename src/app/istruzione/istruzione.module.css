@@ -41,6 +41,7 @@
   gap: var(--space-4);
 }
 .column { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+.column > :global(.panel) { width: 100%; max-width: 100%; min-width: 0; }
 .panelHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .panelHead :global(.panel-title), .panelHead > h2 { margin-bottom: 0; }
 .headNote { color: var(--color-neutral-600); font-size: 11px; }
@@ -80,6 +81,8 @@
 .pathwayList i { display: block; height: 7px; margin-top: 5px; background: var(--color-neutral-200); }
 .pathwayList i b { display: block; height: 100%; background: var(--color-accent); }
 .pathwayList small { display: block; margin-top: 3px; color: var(--color-neutral-600); font-size: 10px; }
+.emptyState { margin: 14px 0 0; padding: 14px; color: var(--color-neutral-700); background: var(--color-neutral-100); border-left: 2px solid var(--color-neutral-400); font-size: 12px; }
+.emptyCell { padding: 16px 10px !important; color: var(--color-neutral-700); text-align: left !important; }
 
 .mapPanel { min-width: 0; }
 .attribution { margin: 14px 0 0; color: var(--color-neutral-600); font-size: 10px; line-height: 1.45; }
@@ -127,4 +130,15 @@
 
 @media (max-width: 480px) {
   .trendRail { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 360px) {
+  .dashboard { gap: var(--space-3); }
+  .hero { padding-top: 14px; }
+  .hero h1 { font-size: 32px; }
+  .hero p { font-size: 14px; }
+  .headline { font-size: 36px; }
+  .factRows > div { align-items: flex-start; }
+  .factRows dd { max-width: 58%; overflow-wrap: anywhere; }
+  .emptyState { padding: 12px; }
 }

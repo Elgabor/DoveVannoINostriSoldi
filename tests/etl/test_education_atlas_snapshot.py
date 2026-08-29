@@ -28,7 +28,7 @@ def student_row(**overrides: str) -> dict[str, str]:
     row = {
         "ANNOSCOLASTICO": "202425",
         "CODICESCUOLA": "ABC123",
-        "ORDINESCUOLA": "SECONDARIA II GRADO",
+        "ORDINESCUOLA": "SCUOLA SECONDARIA II GRADO",
         "ANNOCORSO": "1",
         "TIPOPERCORSO": "LICEO",
         "PERCORSO": "SCIENTIFICO",
@@ -40,19 +40,40 @@ def student_row(**overrides: str) -> dict[str, str]:
     return row
 
 
+def full_registry_rows() -> list[dict[str, str]]:
+    source_labels = {code: label for label, code in etl.REGION_SOURCE_LABELS.items()}
+    return [
+        {
+            "ANNOSCOLASTICO": "202425",
+            "CODICESCUOLA": f"ABC{code}",
+            "REGIONE": source_labels[code],
+        }
+        for code in etl.REGION_NAMES
+        if code not in {"02", "04"}
+    ]
+
+
+def full_student_rows() -> list[dict[str, str]]:
+    rows = [student_row(CODICESCUOLA=f"ABC{code}") for code in etl.REGION_NAMES if code not in {"02", "04"}]
+    rows[0]["TIPOPERCORSO"] = "PROFESSIONALE IeFP"
+    rows[0]["PERCORSO"] = "IEFP"
+    return rows
+
+
 class EducationAtlasSnapshotETLTests(unittest.TestCase):
     def committed_snapshot(self) -> dict:
         return json.loads(SNAPSHOT_PATH.read_text(encoding="utf-8"))
 
     def test_fixture_with_expected_schema_and_join_reconciles(self) -> None:
         students = etl.read_csv_bytes(
-            csv_bytes(etl.STUDENT_FIELDS, [student_row()]),
+            csv_bytes(etl.STUDENT_FIELDS, full_student_rows()),
             etl.STUDENT_FIELDS,
             "https://example.test/students.csv",
         )
         registry = etl.registry_map(
-            [{"CODICESCUOLA": "ABC123", "REGIONE": "CAMPANIA"}],
+            full_registry_rows(),
             "https://example.test/registry.csv",
+            expected_period="202425",
         )
 
         regional, pathways, addresses, coverage = etl.aggregate_source(
@@ -63,12 +84,14 @@ class EducationAtlasSnapshotETLTests(unittest.TestCase):
             source_url="https://example.test/students.csv",
         )
 
-        self.assertEqual(coverage["sourceRows"], 1)
-        self.assertEqual(coverage["matchedRows"], 1)
+        self.assertEqual(coverage["sourceRows"], 18)
+        self.assertEqual(coverage["matchedRows"], 18)
         self.assertEqual(coverage["unmatchedRows"], 0)
+        self.assertEqual(coverage["regionCount"], 18)
+        self.assertEqual(coverage["studentCount"], 54)
         self.assertEqual(regional[0]["studentCount"], 3)
-        self.assertEqual(pathways[0]["femaleCount"], 2)
-        self.assertEqual(addresses[0]["maleCount"], 1)
+        self.assertEqual(sum(row["femaleCount"] for row in pathways), 36)
+        self.assertEqual(sum(row["maleCount"] for row in addresses), 18)
 
     def test_modified_csv_schema_fails_closed(self) -> None:
         fields = (*etl.STUDENT_FIELDS[:-1], "ALUNNIFEMMINE_MODIFICATO")
@@ -106,6 +129,41 @@ class EducationAtlasSnapshotETLTests(unittest.TestCase):
                         registry=registry,
                         source_url="https://example.test/students.csv",
                     )
+
+    def test_registry_period_and_duplicate_codes_fail_closed(self) -> None:
+        with self.assertRaisesRegex(ValueError, "ANNOSCOLASTICO incoerente nell'anagrafe"):
+            etl.registry_map(
+                [{"ANNOSCOLASTICO": "202324", "CODICESCUOLA": "ABC123", "REGIONE": "CAMPANIA"}],
+                "https://example.test/registry.csv",
+                expected_period="202425",
+            )
+
+        duplicate = [
+            {"ANNOSCOLASTICO": "202425", "CODICESCUOLA": "ABC123", "REGIONE": "CAMPANIA"},
+            {"ANNOSCOLASTICO": "202425", "CODICESCUOLA": "ABC123", "REGIONE": "CAMPANIA"},
+        ]
+        with self.assertRaisesRegex(ValueError, "Codice scuola duplicato"):
+            etl.registry_map(duplicate, "https://example.test/registry.csv", expected_period="202425")
+
+    def test_region_period_type_duplicate_and_short_coverage_fail_closed(self) -> None:
+        duplicate_students = full_student_rows() + [full_student_rows()[0]]
+        with self.assertRaisesRegex(ValueError, "Riga studenti duplicata"):
+            etl.aggregate_source(
+                period="202425",
+                school_type="state",
+                students=duplicate_students,
+                registry=etl.registry_map(full_registry_rows(), "https://example.test/registry.csv"),
+                source_url="https://example.test/students.csv",
+            )
+
+        with self.assertRaisesRegex(ValueError, "Copertura regionale inattesa"):
+            etl.aggregate_source(
+                period="202425",
+                school_type="state",
+                students=[student_row()],
+                registry={"ABC123": "15"},
+                source_url="https://example.test/students.csv",
+            )
 
     def test_remote_source_size_is_bounded(self) -> None:
         class OversizedResponse:

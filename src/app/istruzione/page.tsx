@@ -74,6 +74,10 @@ export default async function EducationAtlasPage({
   const previousTrend = view.trend.at(-2);
   const selectedRegionName = view.selectedRegion?.name ?? (view.missingRegionNames.length > 0 ? "Territori osservati" : "Tutta Italia");
   const source = view.sources[0]!;
+  const selectedPeriodSourceFile = view.sourceFiles.find(
+    (file) => file.role === "students" && file.period === view.period,
+  );
+  const hasTrendData = view.trend.some((point) => point.value !== null);
 
   return (
     <main className={`shell ${styles.dashboard}`}>
@@ -114,7 +118,7 @@ export default async function EducationAtlasPage({
               <span className="status status-attiva">Snapshot MIM</span>
             </div>
             <strong className={styles.headline}>{compactStudents(view.perimeterValue)}</strong>
-            <p className={styles.headlineNote}>studenti osservati · anno scolastico {view.periodLabel}</p>
+            <p className={styles.headlineNote}>studenti osservati · anno scolastico {view.periodLabel} · dati al {longDate(selectedPeriodSourceFile?.dataAsOf)}</p>
 
             <dl className={styles.factRows}>
               <div><dt>Territorio</dt><dd>{selectedRegionName}</dd></div>
@@ -135,21 +139,25 @@ export default async function EducationAtlasPage({
               <h2 id="pathway-title" className="panel-title">Dove si concentrano i percorsi</h2>
               <span className={styles.headNote}>studenti osservati</span>
             </div>
-            <ul className={styles.pathwayList}>
-              {topPathways.map((pathway) => {
-                const share = pathway.value !== null && pathwayTotal > 0 ? (pathway.value / pathwayTotal) * 100 : 0;
-                return (
-                  <li key={pathway.code}>
-                    <div className={styles.pathwayLabel}>
-                      <span>{pathway.label}</span>
-                      <strong>{compactStudents(pathway.value)}</strong>
-                    </div>
-                    <i aria-hidden="true"><b style={{ width: `${share}%` }} /></i>
-                    <small>{pathway.value === null ? "n.d." : percent(share)} del perimetro · {genderShare(pathway.femaleCount, pathway.value)} ragazze</small>
-                  </li>
-                );
-              })}
-            </ul>
+            {topPathways.length > 0 ? (
+              <ul className={styles.pathwayList}>
+                {topPathways.map((pathway) => {
+                  const share = pathway.value !== null && pathwayTotal > 0 ? (pathway.value / pathwayTotal) * 100 : 0;
+                  return (
+                    <li key={pathway.code}>
+                      <div className={styles.pathwayLabel}>
+                        <span>{pathway.label}</span>
+                        <strong>{compactStudents(pathway.value)}</strong>
+                      </div>
+                      <i aria-hidden="true"><b style={{ width: `${share}%` }} /></i>
+                      <small>{pathway.value === null ? "n.d." : percent(share)} del perimetro · {genderShare(pathway.femaleCount, pathway.value)} ragazze</small>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className={styles.emptyState}>Dato non disponibile per il perimetro selezionato.</p>
+            )}
             <p className={styles.note}>Il percorso è una categoria del file MIM; l&apos;indirizzo di studio è il dettaglio sottostante.</p>
           </section>
         </div>
@@ -181,13 +189,15 @@ export default async function EducationAtlasPage({
               <table className="table">
                 <thead><tr><th scope="col">#</th><th scope="col">Regione</th><th scope="col" className="num">Studenti</th></tr></thead>
                 <tbody>
-                  {topRegions.map((region, index) => (
-                    <tr key={region.code}>
-                      <td className="num">{index + 1}</td>
-                      <th scope="row"><Link href={educationHref(view, region.code)}>{region.name}</Link></th>
-                      <td className="num">{compactStudents(region.value)}</td>
-                    </tr>
-                  ))}
+                  {topRegions.length > 0 ? topRegions.map((region, index) => (
+                      <tr key={region.code}>
+                        <td className="num">{index + 1}</td>
+                        <th scope="row"><Link href={educationHref(view, region.code)}>{region.name}</Link></th>
+                        <td className="num">{compactStudents(region.value)}</td>
+                      </tr>
+                    )) : (
+                      <tr><td colSpan={3} className={styles.emptyCell}>Dato non disponibile per il perimetro selezionato.</td></tr>
+                    )}
                 </tbody>
               </table>
             </div>
@@ -201,18 +211,24 @@ export default async function EducationAtlasPage({
               <h2 id="trend-title" className="panel-title">Trend del perimetro</h2>
               <span className={styles.headNote}>serie disponibile</span>
             </div>
-            <div className={styles.trendRail}>
-              {view.trend.map((point) => (
-                <div className={styles.trendPoint} key={point.period}>
-                  <span>{point.periodLabel}</span>
-                  <strong>{compactStudents(point.value)}</strong>
-                  <small>{genderShare(point.femaleCount, point.value)} ragazze</small>
+            {hasTrendData ? (
+              <>
+                <div className={styles.trendRail}>
+                  {view.trend.map((point) => (
+                    <div className={styles.trendPoint} key={point.period}>
+                      <span>{point.periodLabel}</span>
+                      <strong>{compactStudents(point.value)}</strong>
+                      <small>{genderShare(point.femaleCount, point.value)} ragazze</small>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <p className={styles.trendDelta}>
-              Ultimo confronto: <strong>{signedPercent(currentTrend?.value ?? null, previousTrend?.value ?? null)}</strong> rispetto all&apos;anno precedente.
-            </p>
+                <p className={styles.trendDelta}>
+                  Ultimo confronto: <strong>{signedPercent(currentTrend?.value ?? null, previousTrend?.value ?? null)}</strong> rispetto all&apos;anno precedente.
+                </p>
+              </>
+            ) : (
+              <p className={styles.emptyState}>Dato non disponibile per il perimetro selezionato.</p>
+            )}
             <p className={styles.note}>La variazione è descrittiva e dipende dal perimetro e dalla classificazione pubblicati dal MIM.</p>
           </section>
 
@@ -225,13 +241,15 @@ export default async function EducationAtlasPage({
               <table className="table">
                 <thead><tr><th scope="col">Indirizzo</th><th scope="col">Percorso</th><th scope="col" className="num">Studenti</th></tr></thead>
                 <tbody>
-                  {view.addressRanking.map((address) => (
-                    <tr key={`${address.pathwayCode}-${address.addressLabel}`}>
-                      <th scope="row">{address.addressLabel}</th>
-                      <td>{address.pathwayLabel}</td>
-                      <td className="num">{integer(address.value)}</td>
-                    </tr>
-                  ))}
+                  {view.addressRanking.length > 0 ? view.addressRanking.map((address) => (
+                      <tr key={`${address.pathwayCode}-${address.addressLabel}`}>
+                        <th scope="row">{address.addressLabel}</th>
+                        <td>{address.pathwayLabel}</td>
+                        <td className="num">{integer(address.value)}</td>
+                      </tr>
+                    )) : (
+                      <tr><td colSpan={3} className={styles.emptyCell}>Dato non disponibile per il perimetro selezionato.</td></tr>
+                    )}
                 </tbody>
               </table>
             </div>
@@ -254,7 +272,9 @@ export default async function EducationAtlasPage({
             </p>
             <dl className={styles.factRows}>
               <div><dt>Join tecnico</dt><dd>CODICESCUOLA</dd></div>
-              <div><dt>Righe ultimo anno</dt><dd>{integer(view.coverage.byPeriodSchoolType[view.period]?.state.sourceRows ?? 0)} + {integer(view.coverage.byPeriodSchoolType[view.period]?.paritaria.sourceRows ?? 0)}</dd></div>
+              <div><dt>Righe anno selezionato</dt><dd>{integer(view.coverage.byPeriodSchoolType[view.period]?.state.sourceRows ?? 0)} + {integer(view.coverage.byPeriodSchoolType[view.period]?.paritaria.sourceRows ?? 0)}</dd></div>
+              <div><dt>Dati della distribuzione</dt><dd>{longDate(selectedPeriodSourceFile?.dataAsOf)}</dd></div>
+              <div><dt>Pubblicato dataset</dt><dd>{longDate(source.publishedAt)}</dd></div>
               <div><dt>Verificato da noi</dt><dd>{longDate(source.verifiedAt)}</dd></div>
             </dl>
           </section>

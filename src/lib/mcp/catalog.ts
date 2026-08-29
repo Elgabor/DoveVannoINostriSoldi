@@ -81,6 +81,8 @@ export type DatasetSource = {
   cadence: string;
   license?: string;
   licenseUrl?: string;
+  publishedAt?: string;
+  dataAsOf?: string;
   updatedAt?: string;
   period?: string;
   schoolType?: string;

@@ -27,6 +27,7 @@ test("the education snapshot is aggregate-only and reconciles the MIM files", ()
   assert.deepEqual(snapshot.periods.map((period) => period.id), ["202223", "202324", "202425"]);
   assert.equal(snapshot.regions.length, 20);
   assert.equal(snapshot.coverage.observedRegionCount, 18);
+  assert.equal(snapshot.coverage.expectedRegionCount, 20);
   assert.deepEqual(snapshot.coverage.missingRegionCodes, ["02", "04"]);
   assert.equal(snapshot.regionalObservations.length, 108);
   assert.equal(snapshot.pathwayObservations.length, 1086);
@@ -38,12 +39,17 @@ test("the education snapshot is aggregate-only and reconciles the MIM files", ()
   assert.ok(snapshot.sources.every((source) => source.license === "IODL 2.0"));
   assert.ok(snapshot.sources.every((source) => source.licenseUrl === "http://www.dati.gov.it/iodl/2.0/"));
   assert.ok(snapshot.sources.every((source) => source.verifiedAt === snapshot.verifiedAt));
+  assert.equal(snapshot.sources.find((source) => source.id === "students")?.publishedAt, "2026-02-23");
+  assert.equal(snapshot.sources.find((source) => source.id === "registry")?.publishedAt, "2026-06-18");
+  assert.ok(snapshot.sources.every((source) => source.latestDataAsOf === "2025-08-31"));
+  assert.ok(snapshot.sourceFiles.every((file) => file.publishedAt && file.dataAsOf));
+  assert.ok(snapshot.sourceFiles.filter((file) => file.period === "202425").every((file) => file.dataAsOf === "2025-08-31"));
   assert.equal(
-    snapshot.sourceFiles.find((file) => file.role === "registry" && file.schoolType === "state")?.updatedAt,
-    "2025-06-03",
+    snapshot.sourceFiles.find((file) => file.role === "registry" && file.schoolType === "state")?.publishedAt,
+    "2026-06-18",
   );
   assert.equal(
-    snapshot.sourceFiles.find((file) => file.role === "registry" && file.schoolType === "paritaria")?.updatedAt,
+    snapshot.sourceFiles.find((file) => file.role === "registry" && file.schoolType === "paritaria")?.publishedAt,
     "2026-06-18",
   );
 
@@ -89,6 +95,12 @@ test("education trend and regional view keep missing territories explicit", () =
   assert.ok((campania.perimeterValue ?? 0) > 0);
   assert.ok(campania.addressRanking.every((row) => row.pathwayCode === "SCIENTIFICO"));
 
+  const uncovered = getEducationAtlasView({ region: "02" });
+  assert.equal(uncovered.perimeterValue, null);
+  assert.equal(uncovered.pathwayBreakdown.length, 0);
+  assert.equal(uncovered.addressRanking.length, 0);
+  assert.ok(uncovered.trend.every((point) => point.value === null));
+
   const normalized = normalizeEducationAtlasFilters({ schoolType: "statali", pathway: "scientifico", region: "lombardia" });
   assert.deepEqual(normalized, { period: "202425", region: "03", schoolType: "state", pathway: "SCIENTIFICO" });
 });
@@ -106,7 +118,7 @@ test("education MCP dataset has bounded pagination, provenance and closed filter
   assert.equal(result.data.length, 7);
   assert.ok(result.data.every((row) => row.period === "202425" && row.pathwayCode === "SCIENTIFICO"));
   assert.equal(result.provenance.length, 12);
-  assert.ok(result.provenance.every((file) => file.url && file.role && file.updatedAt && file.sha256 && file.bytes > 0 && file.rows > 0));
+  assert.ok(result.provenance.every((file) => file.url && file.role && file.publishedAt && file.dataAsOf && file.sha256 && file.bytes > 0 && file.rows > 0));
   assert.ok(result.sources.every((source) => source.licenseUrl === "http://www.dati.gov.it/iodl/2.0/"));
   assert.equal(result.sources.length, 2);
   assert.match(result.caveat, /non misurano qualità/i);
@@ -122,7 +134,7 @@ test("education is an existing Atlante module in the navigation and MCP catalog"
   assert.equal(educationDatasetCatalog[0].id, "education_students_by_pathway");
   assert.equal(educationDatasetCatalog[0].freshness, "snapshot");
   assert.equal(educationDatasetCatalog[0].sources.length, 12);
-  assert.ok(educationDatasetCatalog[0].sources.every((source) => source.url && source.role && source.updatedAt && source.licenseUrl && source.sha256 && source.bytes > 0 && source.rows > 0));
+  assert.ok(educationDatasetCatalog[0].sources.every((source) => source.url && source.role && source.publishedAt && source.dataAsOf && source.licenseUrl && source.sha256 && source.bytes > 0 && source.rows > 0));
   const businessSection = PRIMARY_NAV.find((item) => item.href === "/imprese");
   assert.ok(!businessSection?.aliases?.includes("/istruzione"));
   assert.ok(!businessSection?.children?.some((child) => child.href === "/istruzione"));

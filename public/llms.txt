@@ -9,6 +9,7 @@
 - [Territori](https://www.dovevannoinostrisoldi.com/territori): confronti territoriali sui pagamenti comunali e collegamenti a CPT e MEF IRPEF.
 - [IRPEF territoriale](https://www.dovevannoinostrisoldi.com/territori/irpef): contribuenti, redditi, imposta netta dichiarata e addizionali MEF 2024 per Regione, Provincia e Comune.
 - [Spese dello Stato](https://www.dovevannoinostrisoldi.com/stato): pagamenti OpenBDAP per missione, amministrazione e categoria.
+- [Legge di Bilancio](https://www.dovevannoinostrisoldi.com/spese/legge-di-bilancio): variazione dello stanziamento pubblicato per missione (OpenBDAP, competenza A1) e scenario ipotetico di riallocazione. Non è cassa né una previsione.
 - [Fondi e progetti](https://www.dovevannoinostrisoldi.com/coesione): aggregati OpenCoesione su costi, pagamenti, temi, nature e stati.
 - [Enti e società](https://www.dovevannoinostrisoldi.com/enti): ricerca nell'Indice PA e collegamenti alle partecipazioni pubbliche.
 - [Parlamento](https://www.dovevannoinostrisoldi.com/parlamento): documenti e valori strutturati verificati della Camera, quando disponibili.

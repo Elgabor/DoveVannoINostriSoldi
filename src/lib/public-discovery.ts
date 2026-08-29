@@ -89,6 +89,7 @@ export const LLMS_DISCOVERY_PATHS = [
   "/territori",
   "/territori/irpef",
   "/stato",
+  "/spese/legge-di-bilancio",
   "/coesione",
   "/enti",
   "/parlamento",

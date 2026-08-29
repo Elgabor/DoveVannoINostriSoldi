@@ -25,6 +25,7 @@ Il progetto resta indipendente. Un contributo su Buy Me a Coffee aiuta a pagare 
 | [Territori](https://www.dovevannoinostrisoldi.com/territori) | Confronti per regione/Comune, CPT e IRPEF MEF |
 | [Fondi e progetti](https://www.dovevannoinostrisoldi.com/coesione) | OpenCoesione e traccia PNRR asili (Italia Domani) |
 | [Spese dello Stato](https://www.dovevannoinostrisoldi.com/stato) | Pagamenti per funzione e amministrazione (OpenBDAP/RGS) |
+| [Legge di Bilancio](https://www.dovevannoinostrisoldi.com/spese/legge-di-bilancio) | Stanziamenti per missione e riallocazione ipotetica (OpenBDAP, competenza A1, non cassa) |
 | [Enti e società](https://www.dovevannoinostrisoldi.com/enti) | Indice PA, schede enti, partecipazioni MEF |
 | [Istituzioni](https://www.dovevannoinostrisoldi.com/istituzioni) | Parlamento, sanità, invalidità e altri dossier |
 | [Cosa controllare](https://www.dovevannoinostrisoldi.com/controlli) | Segnali da fonti ufficiali, con limiti espliciti |

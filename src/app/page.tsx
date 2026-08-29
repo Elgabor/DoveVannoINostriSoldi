@@ -49,7 +49,6 @@ const HOME_ANOMALY_PRESENTATION = {
   "gdf-public-spending-fraud": {
     title: "Frodi accertate nei controlli",
     period: "dal 1 gen 2025 al 31 mag 2026",
-    icon: ShieldCheck,
   },
   "pnrr-beyond-2026": {
     title: "Risorse PNRR oltre il 2026",

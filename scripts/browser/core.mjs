@@ -832,7 +832,8 @@ try {
         assertTextMatches(text, /Valle d'Aosta e Trentino-Alto Adige/i, label);
         assertTextMatches(text, /n\.d\. significa dato non disponibile/i, label);
         assertTextMatches(text, /Dati della distribuzione/i, label);
-        assertTextMatches(text, /Pubblicato dataset/i, label);
+        assertTextMatches(text, /Pubblicato dataset studenti/i, label);
+        assertTextMatches(text, /Pubblicata anagrafe join/i, label);
         assertTextMatches(text, /Come leggiamo i numeri →/i, label);
         assertTextMatches(text, /Apri il catalogo MIM ↗/i, label);
 
@@ -957,6 +958,22 @@ try {
           (el) => el.textContent?.trim(),
         );
         assert.equal(detailValue, "n.d.");
+
+        const emptyTableRegions = await page.$$eval(
+          '[role="region"][aria-label="Indirizzi di studio con più studenti osservati"]',
+          (regions) => regions.length,
+        );
+        assert.equal(emptyTableRegions, 0, `${label}: il pannello senza dati non deve esporre una tabella tabulabile`);
+        const rankingRows = await page.$$eval(
+          '[role="region"][aria-label="Prime 10 Regioni ordinate per studenti osservati"] tbody tr',
+          (rows) => rows.length,
+        );
+        assert.equal(rankingRows, 10, `${label}: la classifica nazionale deve restare disponibile`);
+        const emptyStatuses = await page.$$eval(
+          '[role="status"]',
+          (elements) => elements.filter((element) => element.textContent?.includes("Dato non disponibile per il perimetro selezionato.")).length,
+        );
+        assert.equal(emptyStatuses, 3, `${label}: stati n.d. incompleti o duplicati`);
       },
     });
     completed.push(label);

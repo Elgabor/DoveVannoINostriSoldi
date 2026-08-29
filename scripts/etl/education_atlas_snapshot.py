@@ -74,6 +74,7 @@ REGION_NAMES = {
     "20": "Sardegna",
 }
 REGION_CODES = tuple(REGION_NAMES)
+EXPECTED_OBSERVED_REGION_CODES = tuple(code for code in REGION_CODES if code not in {"02", "04"})
 
 REGION_SOURCE_LABELS = {
     "ABRUZZO": "13",
@@ -176,6 +177,11 @@ for period, _label in PERIODS:
             "registry": f"https://dati.istruzione.it/opendata/opendata/catalogo/elements1/SCUANAGRAFEPAR{year}.csv",
         },
     }
+
+SOURCE_LANDING_URLS = {
+    "students": "https://dati.istruzione.it/opendata/opendata/catalogo/elements1/?area=Studenti",
+    "registry": "https://dati.istruzione.it/opendata/opendata/catalogo/elements1/?area=Scuole",
+}
 
 
 def normalized_text(value: str) -> str:
@@ -609,6 +615,18 @@ def assert_snapshot(snapshot: dict[str, Any]) -> None:
         raise ValueError("Tipi scuola inattesi")
     if len(snapshot.get("sources", [])) != 2:
         raise ValueError("Fonti MIM inattese")
+    expected_sources = (
+        ("students", SOURCE_FILES["202425"]["state"]["students"], SOURCE_LANDING_URLS["students"], "2026-02-23"),
+        ("registry", SOURCE_FILES["202425"]["state"]["registry"], SOURCE_LANDING_URLS["registry"], "2026-06-18"),
+    )
+    actual_sources = [
+        (item.get("id"), item.get("url"), item.get("landingUrl"), item.get("publishedAt"))
+        for item in snapshot["sources"]
+    ]
+    if actual_sources != list(expected_sources):
+        raise ValueError("Provenienza dataset MIM incoerente")
+    if any(item.get("latestDataAsOf") != SOURCE_DATA_AS_OF["202425"] for item in snapshot["sources"]):
+        raise ValueError("Data di riferimento più recente incoerente")
     source_files = snapshot.get("sourceFiles", [])
     if len(source_files) != 12:
         raise ValueError("Ricevute source file inattese")
@@ -640,8 +658,15 @@ def assert_snapshot(snapshot: dict[str, Any]) -> None:
         if not re.fullmatch(r"[a-f0-9]{64}", str(item.get("sha256", ""))):
             raise ValueError(f"Hash sorgente non valido: {period}/{school_type}/{role}")
         for field in ("bytes", "rows"):
-            if not isinstance(item.get(field), int) or item[field] < 0:
+            if not isinstance(item.get(field), int) or item[field] < 1:
                 raise ValueError(f"Ricevuta sorgente non valida: {period}/{school_type}/{role}/{field}")
+
+    expected_pathways = [
+        {"code": code, "label": label}
+        for code, label in sorted(PATHWAY_LABELS.items(), key=lambda item: item[1].casefold())
+    ]
+    if snapshot.get("pathways") != expected_pathways:
+        raise ValueError("Tassonomia percorsi incoerente")
 
     region_keys: set[tuple[str, str, str]] = set()
     for row in snapshot.get("regionalObservations", []):
@@ -663,6 +688,8 @@ def assert_snapshot(snapshot: dict[str, Any]) -> None:
         if key in pathway_keys:
             raise ValueError(f"Osservazione percorso duplicata: {key}")
         pathway_keys.add(key)
+        if row["pathwayCode"] not in PATHWAY_LABELS or row["pathwayLabel"] != PATHWAY_LABELS[row["pathwayCode"]]:
+            raise ValueError(f"Etichetta percorso incoerente: {key}")
         if row["studentCount"] != row["maleCount"] + row["femaleCount"]:
             raise ValueError(f"Totale percorso non riconciliato: {key}")
 
@@ -672,6 +699,8 @@ def assert_snapshot(snapshot: dict[str, Any]) -> None:
         if key in address_keys:
             raise ValueError(f"Osservazione indirizzo duplicata: {key}")
         address_keys.add(key)
+        if row["pathwayCode"] not in PATHWAY_LABELS or row["pathwayLabel"] != PATHWAY_LABELS[row["pathwayCode"]]:
+            raise ValueError(f"Etichetta percorso incoerente: {key}")
         if row["studentCount"] != row["maleCount"] + row["femaleCount"]:
             raise ValueError(f"Totale indirizzo non riconciliato: {key}")
 
@@ -701,6 +730,9 @@ def assert_snapshot(snapshot: dict[str, Any]) -> None:
                 raise ValueError(f"Join incompleto: {period}/{school_type}")
             if coverage["regionCount"] != EXPECTED_OBSERVED_REGION_COUNT:
                 raise ValueError(f"Copertura regionale incompleta: {period}/{school_type}")
+            observed_codes = sorted({row["regionCode"] for row in regional_rows})
+            if observed_codes != sorted(EXPECTED_OBSERVED_REGION_CODES):
+                raise ValueError(f"Codici Regione incompleti: {period}/{school_type}")
 
     missing = snapshot["coverage"]["missingRegionCodes"]
     if missing != ["02", "04"]:

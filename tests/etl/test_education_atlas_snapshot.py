@@ -203,6 +203,25 @@ class EducationAtlasSnapshotETLTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             etl.assert_snapshot(duplicate_role)
 
+    def test_snapshot_taxonomy_and_receipts_fail_closed(self) -> None:
+        snapshot = self.committed_snapshot()
+
+        unknown_pathway = copy.deepcopy(snapshot)
+        unknown_pathway["pathways"][0]["code"] = "UNKNOWN"
+        with self.assertRaisesRegex(ValueError, "Tassonomia percorsi incoerente"):
+            etl.assert_snapshot(unknown_pathway)
+
+        empty_receipt = copy.deepcopy(snapshot)
+        empty_receipt["sourceFiles"][0]["rows"] = 0
+        with self.assertRaisesRegex(ValueError, "Ricevuta sorgente non valida"):
+            etl.assert_snapshot(empty_receipt)
+
+        incomplete_coverage = copy.deepcopy(snapshot)
+        incomplete_coverage["regionalObservations"][0]["regionCode"] = "02"
+        incomplete_coverage["regionalObservations"][0]["regionName"] = "Valle d'Aosta"
+        with self.assertRaisesRegex(ValueError, "Codici Regione incompleti"):
+            etl.assert_snapshot(incomplete_coverage)
+
     def test_duplicate_source_url_fails_closed_and_manifest_reconciles(self) -> None:
         snapshot = self.committed_snapshot()
 

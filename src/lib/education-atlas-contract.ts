@@ -13,8 +13,43 @@ const regionSchema = z.object({
   name: z.string().min(1),
 }).strict();
 
+const EDUCATION_PATHWAY_CODES = [
+  "ARTISTICO",
+  "CLASSICO",
+  "ECONOMICO",
+  "EUROPEO",
+  "IEFP",
+  "INDUSTRIA E ARTIGIANATO",
+  "INTERNAZIONALE",
+  "LINGUISTICO",
+  "MUSICALE E COREUTICO",
+  "NUOVI PROFESSIONALI",
+  "SCIENTIFICO",
+  "SCIENZE UMANE",
+  "SERVIZI",
+  "TECNOLOGICO",
+] as const;
+const EDUCATION_PATHWAY_LABELS = {
+  ARTISTICO: "Artistico",
+  CLASSICO: "Classico",
+  ECONOMICO: "Economico",
+  EUROPEO: "Europeo",
+  IEFP: "IeFP",
+  "INDUSTRIA E ARTIGIANATO": "Industria e artigianato",
+  INTERNAZIONALE: "Internazionale",
+  LINGUISTICO: "Linguistico",
+  "MUSICALE E COREUTICO": "Musicale e coreutico",
+  "NUOVI PROFESSIONALI": "Nuovi professionali",
+  SCIENTIFICO: "Scientifico",
+  "SCIENZE UMANE": "Scienze umane",
+  SERVIZI: "Servizi",
+  TECNOLOGICO: "Tecnologico",
+} as const satisfies Record<(typeof EDUCATION_PATHWAY_CODES)[number], string>;
+const educationPathwayCodeSchema = z.enum(EDUCATION_PATHWAY_CODES);
+export type EducationAtlasPathwayCode = z.infer<typeof educationPathwayCodeSchema>;
+
 const pathwaySchema = z.object({
-  code: z.string().min(1).max(40),
+  code: educationPathwayCodeSchema,
   label: z.string().min(1),
 }).strict();
 
@@ -53,7 +88,7 @@ const pathwayObservationSchema = z.object({
   schoolType: educationSchoolTypeSchema,
   regionCode: z.string().regex(/^\d{2}$/),
   regionName: z.string().min(1),
-  pathwayCode: z.string().min(1).max(40),
+  pathwayCode: educationPathwayCodeSchema,
   pathwayLabel: z.string().min(1),
   studentCount: countSchema,
   maleCount: countSchema,
@@ -65,7 +100,7 @@ const addressObservationSchema = z.object({
   schoolType: educationSchoolTypeSchema,
   regionCode: z.string().regex(/^\d{2}$/),
   regionName: z.string().min(1),
-  pathwayCode: z.string().min(1).max(40),
+  pathwayCode: educationPathwayCodeSchema,
   pathwayLabel: z.string().min(1),
   addressLabel: z.string().min(1).max(200),
   studentCount: countSchema,
@@ -81,8 +116,8 @@ const sourceFileSchema = z.object({
   dataAsOf: z.string().min(1),
   url: z.string().url(),
   sha256: z.string().regex(/^[a-f0-9]{64}$/),
-  bytes: countSchema,
-  rows: countSchema,
+  bytes: z.number().int().positive(),
+  rows: z.number().int().positive(),
 }).strict();
 
 const sourceFileManifestSchema = z.object({
@@ -145,6 +180,7 @@ const EXPECTED_REGION_CODES = [
   "01", "02", "03", "04", "05", "06", "07", "08", "09", "10",
   "11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
 ] as const;
+const EXPECTED_OBSERVED_REGION_CODES = EXPECTED_REGION_CODES.filter((code) => code !== "02" && code !== "04");
 const EXPECTED_REGION_NAMES = new Map([
   ["01", "Piemonte"],
   ["02", "Valle d'Aosta"],
@@ -185,6 +221,31 @@ const EXPECTED_SOURCE_DATA_AS_OF = new Map([
   ["202324", "2024-08-31"],
   ["202425", "2025-08-31"],
 ]);
+const EXPECTED_SOURCE_URLS = new Map([
+  ["students", "https://dati.istruzione.it/opendata/opendata/catalogo/elements1/ALUSECGRADOINDSTA20242520250831.csv"],
+  ["registry", "https://dati.istruzione.it/opendata/opendata/catalogo/elements1/SCUANAGRAFESTAT20242520250831.csv"],
+]);
+const EXPECTED_SOURCE_LANDING_URLS = new Map([
+  ["students", "https://dati.istruzione.it/opendata/opendata/catalogo/elements1/?area=Studenti"],
+  ["registry", "https://dati.istruzione.it/opendata/opendata/catalogo/elements1/?area=Scuole"],
+]);
+const SOURCE_FILE_PERIOD_STAMPS = new Map([
+  ["202223", "20222320230831"],
+  ["202324", "20232420240831"],
+  ["202425", "20242520250831"],
+]);
+
+function expectedSourceFileUrl(
+  period: string,
+  schoolType: EducationSchoolType,
+  role: "students" | "registry",
+): string | undefined {
+  const periodStamp = SOURCE_FILE_PERIOD_STAMPS.get(period);
+  if (!periodStamp) return undefined;
+  const filePrefix = role === "students" ? "ALUSECGRADOIND" : "SCUANAGRAFE";
+  const schoolTypeSuffix = schoolType === "state" ? (role === "registry" ? "STAT" : "STA") : "PAR";
+  return `https://dati.istruzione.it/opendata/opendata/catalogo/elements1/${filePrefix}${schoolTypeSuffix}${periodStamp}.csv`;
+}
 
 export type EducationAtlasSource = z.infer<typeof sourceSchema>;
 export type EducationAtlasSourceFile = z.infer<typeof sourceFileSchema>;
@@ -207,6 +268,9 @@ function validateSourceFileInventory(
     issue([path], "L'inventario non può contenere URL sorgente duplicati");
   }
   for (const [index, file] of sourceFiles.entries()) {
+    if (file.url !== expectedSourceFileUrl(file.period, file.schoolType, file.role)) {
+      issue([path, index, "url"], "URL sorgente inatteso");
+    }
     const expectedPublishedAt = EXPECTED_SOURCE_PUBLISHED_AT.get(`${file.role}|${file.schoolType}`);
     if (file.publishedAt !== expectedPublishedAt) {
       issue([path, index, "publishedAt"], "Data di pubblicazione sorgente incoerente");
@@ -239,11 +303,28 @@ export function validateEducationAtlasSnapshot(input: unknown): EducationAtlasSn
     if (sourceIds.join("|") !== "students|registry") {
       issue(["sources"], "Le fonti devono essere studenti e anagrafe scuole");
     }
+    for (const [index, source] of snapshot.sources.entries()) {
+      if (source.url !== EXPECTED_SOURCE_URLS.get(source.id)) {
+        issue(["sources", index, "url"], "URL principale della fonte inatteso");
+      }
+      if (source.landingUrl !== EXPECTED_SOURCE_LANDING_URLS.get(source.id)) {
+        issue(["sources", index, "landingUrl"], "URL catalogo della fonte inatteso");
+      }
+    }
     if (snapshot.sources[0]?.publishedAt !== "2026-02-23" || snapshot.sources[0]?.latestDataAsOf !== "2025-08-31") {
       issue(["sources", 0], "Provenienza dataset studenti incoerente");
     }
     if (snapshot.sources[1]?.publishedAt !== "2026-06-18" || snapshot.sources[1]?.latestDataAsOf !== "2025-08-31") {
       issue(["sources", 1], "Provenienza anagrafe scuole incoerente");
+    }
+    const pathwayCodes = snapshot.pathways.map((pathway) => pathway.code);
+    if (new Set(pathwayCodes).size !== EDUCATION_PATHWAY_CODES.length) {
+      issue(["pathways"], "Il catalogo dei percorsi contiene codici duplicati o incompleti");
+    }
+    for (const [index, pathway] of snapshot.pathways.entries()) {
+      if (EDUCATION_PATHWAY_LABELS[pathway.code] !== pathway.label) {
+        issue(["pathways", index], "Etichetta percorso incoerente con la tassonomia ufficiale");
+      }
     }
     const sourceObservedAt = new Set(snapshot.sources.map((source) => source.observedAt));
     if (sourceObservedAt.size !== 1 || !sourceObservedAt.has(snapshot.generatedAt)) {
@@ -274,6 +355,9 @@ export function validateEducationAtlasSnapshot(input: unknown): EducationAtlasSn
       if (row.regionName !== EXPECTED_REGION_NAMES.get(row.regionCode)) {
         issue(["pathwayObservations", index], `Nome Regione incoerente: ${key}`);
       }
+      if (EDUCATION_PATHWAY_LABELS[row.pathwayCode] !== row.pathwayLabel) {
+        issue(["pathwayObservations", index], `Etichetta percorso incoerente: ${key}`);
+      }
       if (row.studentCount !== row.maleCount + row.femaleCount) {
         issue(["pathwayObservations", index], `Totale percorso non riconciliato: ${key}`);
       }
@@ -285,6 +369,9 @@ export function validateEducationAtlasSnapshot(input: unknown): EducationAtlasSn
       addressKeySet.add(key);
       if (row.regionName !== EXPECTED_REGION_NAMES.get(row.regionCode)) {
         issue(["addressObservations", index], `Nome Regione incoerente: ${key}`);
+      }
+      if (EDUCATION_PATHWAY_LABELS[row.pathwayCode] !== row.pathwayLabel) {
+        issue(["addressObservations", index], `Etichetta percorso incoerente: ${key}`);
       }
       if (row.studentCount !== row.maleCount + row.femaleCount) {
         issue(["addressObservations", index], `Totale indirizzo non riconciliato: ${key}`);
@@ -335,6 +422,10 @@ export function validateEducationAtlasSnapshot(input: unknown): EducationAtlasSn
         }
         if (entry.regionCount !== 18) {
           issue(["coverage", "byPeriodSchoolType", period, schoolType, "regionCount"], "La copertura per periodo e tipo scuola deve contenere 18 Regioni");
+        }
+        const regionalCodes = [...new Set(regional.map((row) => row.regionCode))].sort();
+        if (regionalCodes.join("|") !== EXPECTED_OBSERVED_REGION_CODES.join("|")) {
+          issue(["coverage", "byPeriodSchoolType", period, schoolType, "regionCodes"], "I codici Regione osservati per periodo e tipo scuola sono incompleti o inattesi");
         }
       }
     }

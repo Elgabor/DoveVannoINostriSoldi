@@ -4,6 +4,7 @@ import rawSnapshot from "@/data/generated/education-atlas-snapshot.json";
 import {
   validateEducationAtlasSnapshot,
   type EducationAtlasAddressObservation,
+  type EducationAtlasPathwayCode,
   type EducationAtlasPathwayObservation,
   type EducationAtlasRegionalObservation,
   type EducationAtlasSnapshot,
@@ -115,10 +116,11 @@ function normalizeSchoolType(value: string | undefined): EducationSchoolType | E
   return EDUCATION_ATLAS_ALL;
 }
 
-function normalizePathway(value: string | undefined): string {
+function normalizePathway(value: string | undefined): EducationAtlasPathwayCode | EducationAtlasSelection {
   const normalized = value?.trim();
   if (!normalized || normalized.toLocaleLowerCase("it-IT") === EDUCATION_ATLAS_ALL) return EDUCATION_ATLAS_ALL;
-  if (pathwayByCode.has(normalized.toUpperCase())) return normalized.toUpperCase();
+  const codeMatch = educationAtlasSnapshot.pathways.find((pathway) => pathway.code === normalized.toUpperCase());
+  if (codeMatch) return codeMatch.code;
   const match = educationAtlasSnapshot.pathways.find(
     (pathway) => pathway.label.localeCompare(normalized, "it", { sensitivity: "base" }) === 0,
   );
@@ -212,7 +214,7 @@ function periodLabel(period: string): string {
   return periodById.get(period)?.label ?? period;
 }
 
-function pathwayLabel(pathway: string): string {
+function pathwayLabel(pathway: EducationAtlasPathwayCode | EducationAtlasSelection): string {
   if (pathway === EDUCATION_ATLAS_ALL) return "Tutti i percorsi";
   return pathwayByCode.get(pathway)?.label ?? pathway;
 }

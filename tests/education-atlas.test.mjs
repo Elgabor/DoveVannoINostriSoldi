@@ -11,6 +11,7 @@ const {
   queryEducationAtlasDataset,
 } = await import("../src/lib/education-atlas.ts");
 const { educationDatasetCatalog } = await import("../src/lib/mcp/catalog.ts");
+const { validateEducationAtlasSnapshot } = await import("../src/lib/education-atlas-contract.ts");
 const { PRIMARY_NAV, SITE_MAP_GROUPS } = await import("../src/lib/site-navigation.ts");
 
 const snapshot = (await import("../src/data/generated/education-atlas-snapshot.json", { with: { type: "json" } })).default;
@@ -71,6 +72,29 @@ test("the education snapshot is aggregate-only and reconciles the MIM files", ()
   for (const row of [...snapshot.regionalObservations, ...snapshot.pathwayObservations, ...snapshot.addressObservations]) {
     for (const key of forbiddenKeys) assert.ok(!Object.hasOwn(row, key), `Forbidden key ${key}`);
   }
+});
+
+test("the education contract rejects taxonomy, source URL and receipt drift", () => {
+  const unknownPathway = structuredClone(snapshot);
+  unknownPathway.pathwayObservations[0].pathwayCode = "UNKNOWN";
+  assert.throws(() => validateEducationAtlasSnapshot(unknownPathway));
+
+  const arbitrarySourceUrl = structuredClone(snapshot);
+  arbitrarySourceUrl.sourceFiles[0].url = "https://example.test/source.csv";
+  assert.throws(() => validateEducationAtlasSnapshot(arbitrarySourceUrl));
+
+  const arbitraryDatasetUrl = structuredClone(snapshot);
+  arbitraryDatasetUrl.sources[0].url = "https://example.test/catalog.csv";
+  assert.throws(() => validateEducationAtlasSnapshot(arbitraryDatasetUrl));
+
+  const emptyReceipt = structuredClone(snapshot);
+  emptyReceipt.sourceFiles[0].rows = 0;
+  assert.throws(() => validateEducationAtlasSnapshot(emptyReceipt));
+
+  const incompleteRegionalCoverage = structuredClone(snapshot);
+  incompleteRegionalCoverage.regionalObservations[0].regionCode = "02";
+  incompleteRegionalCoverage.regionalObservations[0].regionName = "Valle d'Aosta";
+  assert.throws(() => validateEducationAtlasSnapshot(incompleteRegionalCoverage));
 });
 
 test("education trend and regional view keep missing territories explicit", () => {

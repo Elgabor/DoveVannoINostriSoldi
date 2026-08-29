@@ -73,7 +73,8 @@ export default async function EducationAtlasPage({
   const currentTrend = view.trend.at(-1);
   const previousTrend = view.trend.at(-2);
   const selectedRegionName = view.selectedRegion?.name ?? (view.missingRegionNames.length > 0 ? "Territori osservati" : "Tutta Italia");
-  const source = view.sources[0]!;
+  const studentSource = view.sources.find((item) => item.id === "students")!;
+  const registrySource = view.sources.find((item) => item.id === "registry")!;
   const selectedPeriodSourceFile = view.sourceFiles.find(
     (file) => file.role === "students" && file.period === view.period,
   );
@@ -156,7 +157,7 @@ export default async function EducationAtlasPage({
                 })}
               </ul>
             ) : (
-              <p className={styles.emptyState}>Dato non disponibile per il perimetro selezionato.</p>
+              <p className={styles.emptyState} role="status">Dato non disponibile per il perimetro selezionato.</p>
             )}
             <p className={styles.note}>Il percorso è una categoria del file MIM; l&apos;indirizzo di studio è il dettaglio sottostante.</p>
           </section>
@@ -185,22 +186,24 @@ export default async function EducationAtlasPage({
               <h2 id="education-ranking-title" className="panel-title">Prime 10 Regioni</h2>
               <span className={styles.headNote}>valore assoluto</span>
             </div>
-            <div className="table-scroll" role="region" aria-label="Prime 10 Regioni ordinate per studenti osservati" tabIndex={0}>
-              <table className="table">
-                <thead><tr><th scope="col">#</th><th scope="col">Regione</th><th scope="col" className="num">Studenti</th></tr></thead>
-                <tbody>
-                  {topRegions.length > 0 ? topRegions.map((region, index) => (
+            {topRegions.length > 0 ? (
+              <div className="table-scroll" role="region" aria-label="Prime 10 Regioni ordinate per studenti osservati" tabIndex={0}>
+                <table className="table">
+                  <thead><tr><th scope="col">#</th><th scope="col">Regione</th><th scope="col" className="num">Studenti</th></tr></thead>
+                  <tbody>
+                    {topRegions.map((region, index) => (
                       <tr key={region.code}>
                         <td className="num">{index + 1}</td>
                         <th scope="row"><Link href={educationHref(view, region.code)}>{region.name}</Link></th>
                         <td className="num">{compactStudents(region.value)}</td>
                       </tr>
-                    )) : (
-                      <tr><td colSpan={3} className={styles.emptyCell}>Dato non disponibile per il perimetro selezionato.</td></tr>
-                    )}
-                </tbody>
-              </table>
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className={styles.emptyState} role="status">Dato non disponibile per il perimetro selezionato.</p>
+            )}
             <p className={styles.note}>La classifica descrive la dimensione del perimetro selezionato, non la qualità delle scuole.</p>
           </section>
         </div>
@@ -227,7 +230,7 @@ export default async function EducationAtlasPage({
                 </p>
               </>
             ) : (
-              <p className={styles.emptyState}>Dato non disponibile per il perimetro selezionato.</p>
+              <p className={styles.emptyState} role="status">Dato non disponibile per il perimetro selezionato.</p>
             )}
             <p className={styles.note}>La variazione è descrittiva e dipende dal perimetro e dalla classificazione pubblicati dal MIM.</p>
           </section>
@@ -237,22 +240,24 @@ export default async function EducationAtlasPage({
               <h2 id="address-title" className="panel-title">Indirizzi più presenti</h2>
               <span className={styles.headNote}>{view.periodLabel}</span>
             </div>
-            <div className={`table-scroll ${styles.addressTable}`} role="region" aria-label="Indirizzi di studio con più studenti osservati" tabIndex={0}>
-              <table className="table">
-                <thead><tr><th scope="col">Indirizzo</th><th scope="col">Percorso</th><th scope="col" className="num">Studenti</th></tr></thead>
-                <tbody>
-                  {view.addressRanking.length > 0 ? view.addressRanking.map((address) => (
+            {view.addressRanking.length > 0 ? (
+              <div className={`table-scroll ${styles.addressTable}`} role="region" aria-label="Indirizzi di studio con più studenti osservati" tabIndex={0}>
+                <table className="table">
+                  <thead><tr><th scope="col">Indirizzo</th><th scope="col">Percorso</th><th scope="col" className="num">Studenti</th></tr></thead>
+                  <tbody>
+                    {view.addressRanking.map((address) => (
                       <tr key={`${address.pathwayCode}-${address.addressLabel}`}>
                         <th scope="row">{address.addressLabel}</th>
                         <td>{address.pathwayLabel}</td>
                         <td className="num">{integer(address.value)}</td>
                       </tr>
-                    )) : (
-                      <tr><td colSpan={3} className={styles.emptyCell}>Dato non disponibile per il perimetro selezionato.</td></tr>
-                    )}
-                </tbody>
-              </table>
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className={styles.emptyState} role="status">Dato non disponibile per il perimetro selezionato.</p>
+            )}
             <p className={styles.note}>Gli indirizzi sono aggregati dal file MIM. Non vengono pubblicati nomi o indirizzi fisici delle scuole.</p>
           </section>
 
@@ -274,8 +279,9 @@ export default async function EducationAtlasPage({
               <div><dt>Join tecnico</dt><dd>CODICESCUOLA</dd></div>
               <div><dt>Righe anno selezionato</dt><dd>{integer(view.coverage.byPeriodSchoolType[view.period]?.state.sourceRows ?? 0)} + {integer(view.coverage.byPeriodSchoolType[view.period]?.paritaria.sourceRows ?? 0)}</dd></div>
               <div><dt>Dati della distribuzione</dt><dd>{longDate(selectedPeriodSourceFile?.dataAsOf)}</dd></div>
-              <div><dt>Pubblicato dataset</dt><dd>{longDate(source.publishedAt)}</dd></div>
-              <div><dt>Verificato da noi</dt><dd>{longDate(source.verifiedAt)}</dd></div>
+              <div><dt>Pubblicato dataset studenti</dt><dd>{longDate(studentSource.publishedAt)}</dd></div>
+              <div><dt>Pubblicata anagrafe join</dt><dd>{longDate(registrySource.publishedAt)}</dd></div>
+              <div><dt>Verificato da noi</dt><dd>{longDate(studentSource.verifiedAt)}</dd></div>
             </dl>
           </section>
 
@@ -284,10 +290,10 @@ export default async function EducationAtlasPage({
               <h2 id="education-source-title" className="panel-title">Fonte del numero</h2>
               <span className="status status-attiva">IODL 2.0</span>
             </div>
-            <h3 className={styles.sourceTitle}>{source.label}</h3>
-            <p className={styles.sourcePublisher}>{source.publisher}</p>
-            <p className={styles.sourceCaveat}>{source.caveat}</p>
-            <a className="btn btn-block" href={source.landingUrl} target="_blank" rel="noreferrer">Apri il catalogo MIM ↗</a>
+            <h3 className={styles.sourceTitle}>{studentSource.label}</h3>
+            <p className={styles.sourcePublisher}>{studentSource.publisher}</p>
+            <p className={styles.sourceCaveat}>{studentSource.caveat}</p>
+            <a className="btn btn-block" href={studentSource.landingUrl} target="_blank" rel="noreferrer">Apri il catalogo MIM ↗</a>
           </section>
         </div>
       </div>

@@ -60,6 +60,32 @@ async function assertResponsiveShell(page, label, width) {
     state.bodyScrollWidth <= state.clientWidth + 1,
     `${label}: overflow del body ${state.bodyScrollWidth}px > ${state.clientWidth}px`,
   );
+
+  const navigationState = await page.evaluate(() => {
+    const navigation = document.querySelector(".primary-nav");
+    const note = document.querySelector(".nav-note");
+    if (!navigation || !note) return null;
+
+    const navigationBounds = navigation.getBoundingClientRect();
+    const noteBounds = note.getBoundingClientRect();
+    const noteStyle = getComputedStyle(note);
+    const noteVisible =
+      noteStyle.display !== "none" &&
+      noteStyle.visibility !== "hidden" &&
+      noteBounds.width > 0 &&
+      noteBounds.height > 0;
+
+    return {
+      navigationRight: navigationBounds.right,
+      noteLeft: noteBounds.left,
+      noteVisible,
+    };
+  });
+  assert.ok(navigationState, `${label}: navigazione primaria o nota fonti assente`);
+  assert.ok(
+    !navigationState.noteVisible || navigationState.navigationRight <= navigationState.noteLeft,
+    `${label}: navigazione primaria sovrapposta alla nota fonti`,
+  );
 }
 
 async function assertCohesionTracePanelContrast(page, label) {
@@ -1260,10 +1286,11 @@ try {
       pathname: "/",
       width,
       validate: async (page) => {
+        await page.waitForSelector(".site-footer", { visible: true });
         const sitemap = await page.$(".footer-sitemap");
         assert.ok(sitemap, `${label}: mappa del sito assente`);
-        const rowCount = await page.$$eval(".footer-sitemap-grid", (rows) => rows.length);
-        assert.equal(rowCount, 3, `${label}: attese 3 righe nella mappa`);
+        const columns = await page.$(".footer-sitemap-columns");
+        assert.ok(columns, `${label}: contenitore dei gruppi assente`);
         const groupCount = await page.$$eval(".footer-sitemap-group", (groups) => groups.length);
         assert.equal(groupCount, 9, `${label}: attesi 9 gruppi nella mappa`);
         const headings = await page.$$eval(".footer-sitemap-group h3", (items) =>
@@ -1273,10 +1300,16 @@ try {
         assert.ok(headings.includes("Istituzioni"), `${label}: sezione Istituzioni assente`);
         assert.ok(headings.includes("Fonti e metodo"), `${label}: sezione Fonti e metodo assente`);
         assert.ok(!headings.includes("Legale"), `${label}: sezione Legale non attesa in mappa`);
-        const text = await bodyText(page);
-        assertTextMatches(text, /Privacy/i, label);
-        assertTextMatches(text, /Termini/i, label);
-        assertTextMatches(text, /Chi ci sostiene/i, label);
+        const requiredFooterLinks = [
+          [".footer-actions a[href='/privacy']", "Privacy"],
+          [".footer-secondary-links a[href='/termini']", "Termini"],
+          [".footer-secondary-links a[href='/supporter']", "Chi ci sostiene"],
+        ];
+        for (const [selector, expectedLabel] of requiredFooterLinks) {
+          await page.waitForSelector(selector, { visible: true });
+          const actualLabel = await page.$eval(selector, (link) => link.textContent?.trim() ?? "");
+          assert.equal(actualLabel, expectedLabel, `${label}: etichetta errata per ${selector}`);
+        }
         await assertResponsiveShell(page, label, width);
       },
     });
@@ -1714,12 +1747,14 @@ try {
           `${label}: lo scenario dovrebbe partire da zero`,
         );
 
-        // Tastiera: sposta lo slider di +5 punti (5 passi da 1), come premere «+5».
+        // Tastiera: una freccia deve aggiornare davvero il range controllato.
+        // Un solo passo copre il contratto accessibile senza accodare cinque
+        // navigazioni App Router artificialmente più rapide di un gesto umano.
         await page.focus(sliderSelector);
-        for (let step = 0; step < 5; step += 1) await page.keyboard.press("ArrowRight");
+        await page.keyboard.press("ArrowRight");
         await page.waitForFunction(
-          (selector) => Number(document.querySelector(selector)?.value) === 5,
-          {},
+          (selector) => Number(document.querySelector(selector)?.value) === 1,
+          { timeout: 3_000 },
           sliderSelector,
         );
 

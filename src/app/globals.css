@@ -711,10 +711,10 @@ main { display: block; }
 
 /* ── responsive ─────────────────────────────────────────────────────────── */
 
-/* The nine sections need about 1250px to sit flat. Below that the row scrolls
+/* The nine sections need about 1300px to sit flat. Below that the row scrolls
    inside itself rather than pushing the page sideways, and the note that
    competes with it for the same line steps aside. */
-@media (max-width: 1260px) {
+@media (max-width: 1320px) {
   .nav-note { display: none; }
   .nav-row[data-menu-open="true"] {
     overflow-x: clip;

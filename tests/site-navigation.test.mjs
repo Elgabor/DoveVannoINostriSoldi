@@ -67,7 +67,7 @@ test("a submenu can be opened without a pointer that can hover", async () => {
 
   assert.match(globalsCss, /\.nav-item-has-menu\[data-open="true"\] \.nav-submenu/);
   assert.match(globalsCss, /\.nav-item-toggle \{/);
-  assert.match(globalsCss, /@media \(max-width: 1260px\)/);
+  assert.match(globalsCss, /@media \(max-width: 1320px\)/);
   // Below that break the row scrolls, so the panel must be anchored outside it.
   assert.match(globalsCss, /\.nav-row \{\n\s*position: relative;/);
   assert.match(navigationComponent, /data-menu-open=\{openHref \? "true" : undefined\}/);

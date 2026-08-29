@@ -373,14 +373,6 @@ nav li a { text-decoration: none; }
   display: block;
 }
 
-.nav-note {
-  margin-left: auto;
-  flex: none;
-  font-size: 12px;
-  color: var(--color-neutral-600);
-  white-space: nowrap;
-}
-
 .nav-scroll-hint { display: none; }
 
 /* ── page shells ────────────────────────────────────────────────────────── */
@@ -711,11 +703,9 @@ main { display: block; }
 
 /* ── responsive ─────────────────────────────────────────────────────────── */
 
-/* The nine sections need about 1300px to sit flat. Below that the row scrolls
-   inside itself rather than pushing the page sideways, and the note that
-   competes with it for the same line steps aside. */
+/* The primary sections need about 1300px to sit flat. Below that the row
+   scrolls inside itself rather than pushing the page sideways. */
 @media (max-width: 1320px) {
-  .nav-note { display: none; }
   .nav-item > a { padding-inline: 12px; }
   .nav-item-has-menu > a { padding-right: 4px; }
   .nav-row[data-menu-open="true"] {
@@ -764,7 +754,6 @@ main { display: block; }
   .brand { flex: 1; min-width: 0; }
   .brand-text strong { font-size: 19px; }
   .header-search { order: 3; width: 100%; }
-  .nav-note { display: none; }
 }
 
 @media (max-width: 900px) {
@@ -777,7 +766,6 @@ main { display: block; }
   .brand { flex: 1; min-width: 0; }
   .brand-text strong { font-size: 19px; }
   .header-search { order: 3; width: 100%; }
-  .nav-note { display: none; }
   .footer-sitemap-columns {
     column-count: 2;
     column-gap: var(--space-4);

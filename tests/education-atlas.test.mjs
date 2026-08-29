@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import "./helpers/register-ts-alias.mjs";
 
@@ -167,4 +168,19 @@ test("education is an existing Atlante module in the navigation and MCP catalog"
   assert.ok(!businessMapGroup?.links.some((link) => link.href === "/istruzione"));
   const educationMapGroup = SITE_MAP_GROUPS.find((group) => group.title === "Istruzione");
   assert.ok(educationMapGroup?.links.some((link) => link.href === "/istruzione"));
+});
+
+test("education period choices stay visible and keyboard-operable", async () => {
+  const [component, css] = await Promise.all([
+    readFile(new URL("../src/components/education-atlas-filters.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/education-atlas-filters.module.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(component, /<fieldset className=\{styles\.periodFieldset\}>/);
+  assert.match(component, /<legend>Anno scolastico<\/legend>/);
+  assert.match(component, /aria-pressed=\{filters\.period === option\.id\}/);
+  assert.match(component, /data-value=\{option\.id\}/);
+  assert.doesNotMatch(component, /<select[\s\S]*?data-education-filter="period"/);
+  assert.match(css, /\.periodOptions button \{[\s\S]*?min-height: 42px;/);
+  assert.match(css, /\.periodOptions button:focus-visible/);
 });

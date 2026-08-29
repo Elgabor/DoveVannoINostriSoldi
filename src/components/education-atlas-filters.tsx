@@ -47,17 +47,24 @@ export function EducationAtlasFilters({
         <p>Ogni scelta aggiorna mappa, distribuzione, trend e indirizzi osservati.</p>
       </div>
       <div className={styles.controlGrid}>
-        <label>
-          <span>Anno scolastico</span>
-          <select
-            value={filters.period}
-            onChange={(event) => updateFilter("period", event.target.value)}
-            data-atlas-filter="period"
-            data-education-filter="period"
-          >
-            {periods.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
-          </select>
-        </label>
+        <fieldset className={styles.periodFieldset}>
+          <legend>Anno scolastico</legend>
+          <div className={styles.periodOptions}>
+            {periods.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                aria-pressed={filters.period === option.id}
+                data-atlas-filter="period"
+                data-education-filter="period"
+                data-value={option.id}
+                onClick={() => updateFilter("period", option.id)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
         <label>
           <span>Tipo di scuola</span>
           <select

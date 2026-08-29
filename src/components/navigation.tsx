@@ -265,7 +265,6 @@ function NavigationContent({ pathname, currentSearch }: NavigationContentProps) 
           Scorri
           <HugeiconsIcon icon={ArrowRight01Icon} size={14} strokeWidth={1.8} />
         </span>
-        <span className="nav-note">Fonti e dati sempre visibili</span>
       </div>
     </header>
   );

@@ -64,28 +64,20 @@ async function assertResponsiveShell(page, label, width) {
   const navigationState = await page.evaluate(() => {
     const navigation = document.querySelector(".primary-nav");
     const note = document.querySelector(".nav-note");
-    if (!navigation || !note) return null;
+    if (!navigation) return null;
 
     const navigationBounds = navigation.getBoundingClientRect();
-    const noteBounds = note.getBoundingClientRect();
-    const noteStyle = getComputedStyle(note);
-    const noteVisible =
-      noteStyle.display !== "none" &&
-      noteStyle.visibility !== "hidden" &&
-      noteBounds.width > 0 &&
-      noteBounds.height > 0;
 
     return {
+      navigationLeft: navigationBounds.left,
       navigationRight: navigationBounds.right,
-      noteLeft: noteBounds.left,
-      noteVisible,
+      notePresent: Boolean(note),
     };
   });
-  assert.ok(navigationState, `${label}: navigazione primaria o nota fonti assente`);
-  assert.ok(
-    !navigationState.noteVisible || navigationState.navigationRight <= navigationState.noteLeft,
-    `${label}: navigazione primaria sovrapposta alla nota fonti`,
-  );
+  assert.ok(navigationState, `${label}: navigazione primaria assente`);
+  assert.equal(navigationState.notePresent, false, `${label}: nota fonti ridondante ancora presente`);
+  assert.ok(navigationState.navigationLeft >= 0, `${label}: navigazione fuori viewport a sinistra`);
+  assert.ok(navigationState.navigationRight <= width + 1, `${label}: navigazione fuori viewport a destra`);
 }
 
 async function assertCohesionTracePanelContrast(page, label) {
@@ -926,11 +918,22 @@ try {
         );
         assertTextMatches(await bodyText(page), /Statale/i, label);
 
-        const periodFilter = 'select[data-education-filter="period"]';
-        await page.select(periodFilter, "202324");
+        const periodFilter = 'button[data-education-filter="period"][data-value="202324"]';
+        await page.focus(periodFilter);
+        assert.equal(
+          await page.$eval(periodFilter, (element) => document.activeElement === element),
+          true,
+          `${label}: il periodo non riceve focus`,
+        );
+        await page.keyboard.press("Enter");
         await page.waitForFunction(
           () => new URL(window.location.href).searchParams.get("period") === "202324",
           { timeout: 3_000 },
+        );
+        assert.equal(
+          await page.$eval(periodFilter, (element) => element.getAttribute("aria-pressed")),
+          "true",
+          `${label}: il periodo attivo non è annunciato`,
         );
         assertTextMatches(await bodyText(page), /2023\/24/i, label);
 
@@ -1029,6 +1032,12 @@ try {
         (select) => select.value,
       );
       assert.equal(selectedSchoolTypeValue, "state");
+
+      const selectedPeriodValue = await page.$eval(
+        'button[data-education-filter="period"][aria-pressed="true"]',
+        (button) => button.getAttribute("data-value"),
+      );
+      assert.equal(selectedPeriodValue, "202425");
     },
   });
   completed.push("Atlante Istruzione deep-link filtri 1280px");

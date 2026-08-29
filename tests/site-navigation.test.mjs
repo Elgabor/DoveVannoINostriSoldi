@@ -37,6 +37,8 @@ test("primary navigation keeps dropdowns and no section subnav bar", async () =>
   );
   assert.match(navigationComponent, /nav-submenu/);
   assert.doesNotMatch(navigationComponent, /subnav-row|nav\.subnav|activeNavSection/);
+  assert.doesNotMatch(navigationComponent, /nav-note|Fonti e dati sempre visibili/);
+  assert.doesNotMatch(globalsCss, /\.nav-note/);
 });
 
 test("a submenu can be opened without a pointer that can hover", async () => {

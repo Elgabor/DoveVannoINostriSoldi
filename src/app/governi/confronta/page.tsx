@@ -121,11 +121,10 @@ export default async function GovernmentComparisonPage({ searchParams }: { searc
       <section className={styles.scoreCards} aria-label="Risultati dei due governi">
         {[left, right].map((government) => {
           if (government.calculation.status !== "scored") return null;
-          const hasHigherResult = higherResultGovernment?.id === government.id;
           const strongest = [...government.calculation.indicators].sort((a, b) => b.contributionPoints - a.contributionPoints)[0]!;
           const weakest = [...government.calculation.indicators].sort((a, b) => a.contributionPoints - b.contributionPoints)[0]!;
           return (
-            <article key={government.id} data-higher-result={hasHigherResult || undefined}>
+            <article key={government.id}>
               <div className={styles.cardHeading}>
                 <div><span>{government.status === "current" ? "In carica · provvisorio" : "Governo concluso"}</span><h2>{government.name}</h2></div>
                 <strong>{formatScore(government.calculation.score)}<small>/100</small></strong>

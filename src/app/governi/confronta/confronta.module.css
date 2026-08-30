@@ -161,10 +161,6 @@
   border: 1px solid var(--color-neutral-300);
 }
 
-.scoreCards article[data-higher-result="true"] {
-  border-top: 5px solid var(--color-accent-700);
-}
-
 .cardHeading {
   display: flex;
   justify-content: space-between;

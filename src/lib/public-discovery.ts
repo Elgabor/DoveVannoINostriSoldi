@@ -7,9 +7,10 @@ type PublicPath = "/" | `/${string}`;
  * separate from the visual navigation: a page can remain public even when it
  * is not promoted in the header or footer.
  *
- * Dynamic entity, project and dataset pages are omitted until their complete
- * canonical URL sets can be enumerated without making sitemap generation
- * depend on request-time data.
+ * Dynamic entity, project and dataset pages stay out of this static catalog
+ * until their complete URL set can be enumerated from committed data. The
+ * government scorecard pages are appended by `sitemap.ts` from the published
+ * snapshot, not from request-time I/O.
  */
 export const PUBLIC_INDEXABLE_PATHS = [
   "/",
@@ -112,8 +113,11 @@ export const LLMS_DISCOVERY_PATHS = [
   "/supporter",
 ] as const satisfies readonly (typeof PUBLIC_INDEXABLE_PATHS)[number][];
 
-export function publicSitemap(siteUrl: string): MetadataRoute.Sitemap {
-  return PUBLIC_INDEXABLE_PATHS.map((path) => ({
+export function publicSitemap(
+  siteUrl: string,
+  extraPaths: readonly string[] = [],
+): MetadataRoute.Sitemap {
+  return [...PUBLIC_INDEXABLE_PATHS, ...extraPaths].map((path) => ({
     url: new URL(path, siteUrl).href,
   }));
 }

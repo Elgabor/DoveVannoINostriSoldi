@@ -90,12 +90,18 @@ test("all and only the statically generated editorial topics are in the sitemap 
   assert.deepEqual(actual, expected);
 });
 
-test("sitemap exposes only canonical HTTPS public pages", () => {
-  const sitemap = publicSitemap(PUBLIC_SITE_URL);
+test("sitemap exposes only canonical HTTPS public pages", async () => {
+  const scorecard = JSON.parse(
+    await readFile(path.join(repositoryRoot, "src", "data", "generated", "government-scorecard.json"), "utf8"),
+  );
+  const governmentPaths = scorecard.governments.map((government) => `/governi/${government.id}`);
+  const sitemap = publicSitemap(PUBLIC_SITE_URL, governmentPaths);
   assert.deepEqual(
     sitemap.map((entry) => entry.url),
-    PUBLIC_INDEXABLE_PATHS.map((routePath) => new URL(routePath, PUBLIC_SITE_URL).href),
+    [...PUBLIC_INDEXABLE_PATHS, ...governmentPaths].map((routePath) => new URL(routePath, PUBLIC_SITE_URL).href),
   );
+  assert.ok(governmentPaths.includes("/governi/meloni-i"));
+  assert.equal(new Set(sitemap.map((entry) => entry.url)).size, sitemap.length);
   for (const entry of sitemap) {
     const url = new URL(entry.url);
     assert.equal(url.protocol, "https:");

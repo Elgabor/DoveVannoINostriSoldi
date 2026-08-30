@@ -5,6 +5,7 @@ import test from "node:test";
 const page = await readFile(new URL("../src/app/governi/page.tsx", import.meta.url), "utf8");
 const detail = await readFile(new URL("../src/app/governi/[id]/page.tsx", import.meta.url), "utf8");
 const comparison = await readFile(new URL("../src/app/governi/confronta/page.tsx", import.meta.url), "utf8");
+const comparisonStyles = await readFile(new URL("../src/app/governi/confronta/confronta.module.css", import.meta.url), "utf8");
 const comparisonOverlay = await readFile(new URL("../src/app/governi/confronta/government-comparison-overlay.tsx", import.meta.url), "utf8");
 const comparisonOverlayStyles = await readFile(new URL("../src/app/governi/confronta/government-comparison-overlay.module.css", import.meta.url), "utf8");
 const citizenModel = await readFile(new URL("../src/app/governi/citizen-score-model.tsx", import.meta.url), "utf8");
@@ -158,6 +159,8 @@ test("users can compare any two scored governments and open either detail", () =
   assert.match(comparison, /href=\{`\/governi\/\$\{government\.id\}`\}/);
   assert.match(comparison, /Non decreta il governo migliore/);
   assert.match(comparison, /Math\.abs\(category\.difference\) < 0\.1/);
+  assert.doesNotMatch(comparison, /data-higher-result/);
+  assert.doesNotMatch(comparisonStyles, /data-higher-result/);
   assert.match(comparisonOverlay, /^"use client"/);
   assert.match(comparisonOverlay, /Dati sovrapposti/);
   assert.match(comparisonOverlay, /ReferenceLine y=\{0\}/);

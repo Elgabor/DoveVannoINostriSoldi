@@ -100,6 +100,12 @@ export function getGovernmentScorecardSnapshot(): GovernmentScorecardSnapshot {
   }
 }
 
+export function getGovernmentScorecardPublicPaths() {
+  return getGovernmentScorecardSnapshot().governments.map(
+    (government) => `/governi/${government.id}` as const,
+  );
+}
+
 function rounded(value: number, digits = 1) {
   const factor = 10 ** digits;
   return Math.round((value + Number.EPSILON) * factor) / factor;

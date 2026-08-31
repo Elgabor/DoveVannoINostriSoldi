@@ -56,6 +56,13 @@ test("rifiuta honeypot compilato, categoria sconosciuta e chiave non UUID", () =
   assert.equal(parseReportRequest(validPayload({ clientKey: "abc" })).ok, false);
 });
 
+test("accetta la categoria nuova funzionalità e la mette nel titolo della issue", () => {
+  const result = parseReportRequest(validPayload({ category: "feature" }));
+  assert.equal(result.ok, true);
+  const draft = buildIssueDraft(result.value);
+  assert.equal(draft.title, "[Segnalazione] Nuova funzionalità: /spese?anno=2025");
+});
+
 test("rifiuta testi oltre i limiti e campi obbligatori vuoti", () => {
   const long = "x".repeat(REPORT_LIMITS.observedMax + 1);
   assert.equal(parseReportRequest(validPayload({ observed: long })).ok, false);

@@ -18,6 +18,7 @@ export const REPORT_CATEGORIES = Object.freeze({
   bug: "Bug del sito",
   dato: "Dato potenzialmente errato",
   accessibilita: "Accessibilità",
+  feature: "Nuova funzionalità",
   altro: "Altro",
 } as const);
 export type ReportCategory = keyof typeof REPORT_CATEGORIES;

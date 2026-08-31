@@ -45,6 +45,7 @@ chiaro chi deve verificare un cambiamento prima del merge.
 Per modifiche piccole e reversibili basta una PR focalizzata con prove
 proporzionate. Per nuove fonti, nuove superfici pubbliche o cambiamenti ampi si
 parte da una issue o da una draft PR che descriva problema, perimetro e rischi.
+La coda con priorità è in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 Le decisioni si basano su fonti, test e comportamento osservabile. Non usiamo
 votazioni formali o comitati. Se ci sono opinioni diverse, i maintainer

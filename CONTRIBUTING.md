@@ -6,7 +6,8 @@ quando sono corretti sia il codice sia il significato pubblicato.
 
 ## Prima di scrivere codice
 
-Apri o collega una issue per cambiamenti sostanziali. Per una nuova fonte indica
+Apri o collega una issue per cambiamenti sostanziali. La coda di lavoro con
+priorità e issue collegate è in [docs/ROADMAP.md](docs/ROADMAP.md). Per una nuova fonte indica
 titolare, URL ufficiale, licenza specifica, formato, geografia, periodo di
 riferimento, data di pubblicazione e frequenza di aggiornamento. Spiega anche che
 cosa il dato non misura.

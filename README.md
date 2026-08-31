@@ -174,6 +174,7 @@ Per una vulnerabilità non ancora corretta non aprire una issue: usa il [canale 
 Per una nuova fonte, in issue indica: ente, URL ufficiale, licenza, formato, frequenza, identificativi (IPA, CF, CIG, CUP) e cosa il dato **non** misura.
 
 Richieste della community: [docs/COMMUNITY_FEEDBACK.md](docs/COMMUNITY_FEEDBACK.md).
+Coda di sviluppo con priorità e issue: [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Contributori
 

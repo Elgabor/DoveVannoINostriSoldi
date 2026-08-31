@@ -2,6 +2,10 @@ import Link from "next/link";
 import { DatasetInsightPanel } from "@/components/dataset-insight-panel";
 import { integer } from "@/lib/format";
 import {
+  amountColumnKeys,
+  formatIntegratedAmountCell,
+} from "@/lib/integrated-dataset-insight-core";
+import {
   getIntegratedDataOverview,
   selectIntegratedDataset,
   type IntegratedDatasetResult,
@@ -25,8 +29,13 @@ function previewColumns(
     .slice(0, 5);
 }
 
-function cellValue(value: string | null): string {
-  return value === null || value.trim() === "" ? "n.d." : value;
+function cellValue(value: string | null, amount: boolean): string {
+  if (value === null || value.trim() === "") return "n.d.";
+  if (amount) {
+    const formatted = formatIntegratedAmountCell(value);
+    if (formatted !== null) return formatted;
+  }
+  return value;
 }
 
 function sourceDate(value: string): string {
@@ -143,6 +152,10 @@ export default async function EditorialTopicPage({ topic }: { topic: EditorialTo
         {results.map((result, index) => {
           const configured = topic.datasets[index];
           const columns = previewColumns(result, configured.columns);
+          const amounts = amountColumnKeys(
+            columns.map((column) => column.key),
+            result.rows,
+          );
           return (
             <details className={styles.dataset} key={result.dataset.id} open={index === 0}>
               <summary>
@@ -193,14 +206,26 @@ export default async function EditorialTopicPage({ topic }: { topic: EditorialTo
                       </caption>
                       <thead>
                         <tr>
-                          {columns.map((column) => <th scope="col" key={column.key}>{column.label}</th>)}
+                          {columns.map((column) => (
+                            <th
+                              scope="col"
+                              key={column.key}
+                              className={amounts.has(column.key) ? "num" : undefined}
+                            >
+                              {column.label}
+                            </th>
+                          ))}
                           <th scope="col">Fonte</th>
                         </tr>
                       </thead>
                       <tbody>
                         {result.rows.map((row) => (
                           <tr key={row.id}>
-                            {columns.map((column) => <td key={column.key}>{cellValue(row.cells[column.key])}</td>)}
+                            {columns.map((column) => (
+                              <td key={column.key} className={amounts.has(column.key) ? "num" : undefined}>
+                                {cellValue(row.cells[column.key], amounts.has(column.key))}
+                              </td>
+                            ))}
                             <td>
                               {row.sourceUrls[0] ? (
                                 <a href={row.sourceUrls[0]} target="_blank" rel="noreferrer">Apri fonte</a>

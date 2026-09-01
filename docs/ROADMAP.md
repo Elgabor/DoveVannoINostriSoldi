@@ -4,7 +4,7 @@ Guida operativa per scegliere il prossimo lavoro. Non è un elenco di idee:
 ogni riga ha priorità, stato nel repo, issue o PR se esiste, e un prossimo
 passo concreto.
 
-Verificato sul repository il 31 agosto 2026 (issue e PR aperte lette da GitHub).
+Verificato sul repository il 1 settembre 2026 (issue e PR aperte lette da GitHub).
 I codici tipo `T-001` / `X-028` vengono dalla sintesi dei feedback community;
 non sono issue GitHub.
 
@@ -72,7 +72,7 @@ Come usare questo file:
 | Collegare spesa a outcome | Assente | Dipende | Alto | Nessuna issue; si innesta sulla verticale sanità | Verticale pilota | Una verticale con outcome ufficiale e latenza dichiarata. Feedback: A-003, X-035. |
 | Interoperabilità CUP-CIG-IPA | Indici parziali su `main` | Sì | Alto | Stessa [#185](https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi/issues/185) | OpenCUP, MOP, ANAC, IPA | Indice esatto e copertura pubblica; niente fuzzy. Feedback: X-103, X-105, T-013, A-005. |
 | Nuove verticali: clima, sport, università | Solo proposte | Dipende | Fonte | [#86](https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi/issues/86), [#83](https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi/issues/83), [#101](https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi/issues/101) aperte | Nuove route | Una verticale alla volta, fonte primaria matura. Feedback: X-069, X-074, X-090. |
-| Altri aggregati proposti in community | Non specificato | Dipende | Fonte | [#103](https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi/issues/103) aperta | Da triage | Spezzare in fonti nominabili o chiudere come troppo vaga. |
+| Altri aggregati proposti in community | Non specificato | No | | [#103](https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi/issues/103) chiusa (troppo vaga) | | Una issue nuova, un solo aggregato, fonte ufficiale, perimetro e periodo. |
 
 ## P3
 
@@ -82,7 +82,6 @@ Come usare questo file:
 | Auth, API commerciali, funzioni a pagamento | MCP pubblico gratuito su `main` | Dipende da decisione | Alto | Nessuna | Separare dal dato pubblico gratuito. Feedback: T-022, A-010. |
 | Agenti di raccomandazione / piste investigative | Explorer relazioni su `main`; motori automatici no | Dipende | Alto | [#190](https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi/issues/190), [#193](https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi/issues/193) aperte | Solo percorsi conservativi con review umana. Niente tagli automatici. Feedback: T-024. |
 | Contenuti video e post automatici | Fuori dal portale | Sì, ma non nel backlog prodotto | Medio | Nessuna | Workflow editoriale a parte; bozze sempre approvate. Feedback: X-002, X-004, T-025. |
-| Contatore live/stimato del debito | `/debito` pubblica stock verificato, senza stimatori | No, in questa forma | | [#90](https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi/issues/90) aperta | Non aggiungere un contatore stimato. Eventuale chiusura o riformulazione sulla serie già pubblicata. |
 
 ## Fuori perimetro
 
@@ -90,6 +89,7 @@ Come usare questo file:
 |---|---|---|---|
 | AI che decide quali leggi tenere | Giudizio automatico senza metodo, non verificabile | Feedback T-031, X-053, X-101 | Non pubblicare. |
 | Ranking di spreco, frode o colpa da un form o da un modello | Contrasta le regole del sito | [SEGNALAZIONI.md](SEGNALAZIONI.md), [LEGAL_AND_ETHICS.md](LEGAL_AND_ETHICS.md) | Rifiutare. |
+| Contatore live/stimato del debito | Interpolazione del trend, anche se etichettata stima | [#90](https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi/issues/90) chiusa | Non pubblicare. `/debito` resta lo stock verificato. |
 
 ## Pull request aperte (non sono lavoro P0)
 
@@ -99,7 +99,7 @@ Come usare questo file:
 
 ## Issue aperte senza riga sopra
 
-Tutte le issue aperte al 31 agosto 2026 sono in tabella, con due eccezioni gestite così:
+Tutte le issue aperte al 1 settembre 2026 sono in tabella, con due eccezioni gestite così:
 
 - [#214](https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi/issues/214) è una segnalazione sul form, collegata alla riga Pensioni.
 - Le segnalazioni future del form non diventano da sole righe di roadmap: prima triage.

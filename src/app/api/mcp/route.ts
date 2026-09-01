@@ -1,11 +1,14 @@
 import { createMcpHandler } from "@modelcontextprotocol/server";
 import { createDvnsMcpServer } from "@/lib/mcp/server";
+import { SlidingWindowLimiter, clientAddress } from "@/lib/report/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 15;
 
 const MAX_REQUEST_BYTES = 1_000_000;
+const MCP_HANDLER_TIMEOUT_MS = 12_000;
+const mcpLimiter = new SlidingWindowLimiter({ windowMs: 60_000, max: 60 });
 
 function reportMcpError(error: Error) {
   if (error.message.startsWith("Rejected inbound request")) return;
@@ -179,7 +182,29 @@ export async function POST(request: Request) {
   }
   if (boundedRequest instanceof Response) return secureResponse(boundedRequest, request);
 
-  return secureResponse(await handler.fetch(boundedRequest), request);
+  const clientKey = clientAddress(request);
+  if (clientKey && !mcpLimiter.consume(clientKey)) {
+    return secureResponse(Response.json(
+      { jsonrpc: "2.0", error: { code: -32000, message: "Troppe richieste. Riprova tra un minuto." }, id: null },
+      { status: 429, headers: { "Retry-After": "60" } },
+    ), request);
+  }
+
+  const timeout = AbortSignal.timeout(MCP_HANDLER_TIMEOUT_MS);
+  const callerSignal = boundedRequest.signal;
+  const signal = callerSignal.aborted ? callerSignal : AbortSignal.any([callerSignal, timeout]);
+  const timedRequest = new Request(boundedRequest, { signal });
+  try {
+    return secureResponse(await handler.fetch(timedRequest), request);
+  } catch (error) {
+    if (timeout.aborted) {
+      return secureResponse(Response.json(
+        { jsonrpc: "2.0", error: { code: -32000, message: "Timeout della richiesta MCP" }, id: null },
+        { status: 504 },
+      ), request);
+    }
+    throw error;
+  }
 }
 
 export function OPTIONS(request: Request) {

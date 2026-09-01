@@ -178,6 +178,27 @@ test("attribution caveat counts no-awardee when multipart count is zero", () => 
   );
 });
 
+test("loader can skip the live fiscal-code check when IPA is unreachable", async () => {
+  const fixture = makeFixture();
+  try {
+    const skipped = await loader.loadAnacEntityProcurementPage({
+      codiceIpa: fixture.record.codiceIpa,
+      currentEntityCf: null,
+      rootDirectory: fixture.projectRoot,
+      verifyLiveFiscalCode: false,
+    });
+    assert.equal(skipped.status, "available");
+    const enforced = await loader.loadAnacEntityProcurementPage({
+      codiceIpa: fixture.record.codiceIpa,
+      currentEntityCf: null,
+      rootDirectory: fixture.projectRoot,
+    });
+    assert.equal(enforced.status, "identity_drift");
+  } finally {
+    cleanup(fixture);
+  }
+});
+
 test("loader fails closed on identity drift and shard tampering", async () => {
   const fixture = makeFixture();
   try {
@@ -423,8 +444,12 @@ test("UI keeps scope, rankings, official CIG links and no later indicators", () 
   assert.match(detail, /metric: "count", pageSize: size/);
   assert.match(detail, /metric: "value", pageSize: size/);
   assert.match(detail, /Perimetro temporale/);
-  assert.match(detail, /decodeEntityProcurementRouteCode/);
-  assert.match(detail, /if \(!normalizedCode\) notFound\(\)/);
+  assert.match(detail, /verifyLiveFiscalCode: false/);
+  assert.match(detail, /Indice PA non risponde/);
+  assert.match(detail, /maxDuration = 15/);
+  const entityPage = readFileSync(new URL("../src/app/enti/[codice]/page.tsx", import.meta.url), "utf8");
+  assert.match(entityPage, /Anagrafica IPA non disponibile/);
+  assert.doesNotMatch(entityPage, /Impossibile interrogare la fonte IPA/);
   assert.match(detail, /entity\?\.denominazione \?\? normalizedCode/);
   assert.match(detail, /nameVariants > 1/);
   assert.match(`${section}\n${detail}`, /codici fiscali degli operatori/);

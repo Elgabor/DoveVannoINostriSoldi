@@ -21,6 +21,7 @@ import { EntityProcurementSection } from "./entity-procurement-section";
 import styles from "./scheda.module.css";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 15;
 
 type PageProps = {
   params: Promise<{ codice: string }>;
@@ -62,18 +63,31 @@ export default async function EntityPage({ params }: PageProps) {
   let entity;
   let structure: IpaOrganizationStructure | null = null;
   try {
-    const [entityResult, structureResult] = await Promise.allSettled([
-      getIpaEntityByCode(normalizedCode),
-      getIpaOrganizationStructure(normalizedCode),
-    ]);
-    if (entityResult.status === "rejected") throw entityResult.reason;
-    entity = entityResult.value;
-    if (structureResult.status === "fulfilled") structure = structureResult.value;
+    entity = await getIpaEntityByCode(normalizedCode);
   } catch {
-    throw new Error("Impossibile interrogare la fonte IPA in questo momento.");
+    return (
+      <main className="shell page">
+        <div className="page-intro">
+          <h1>Anagrafica IPA non disponibile</h1>
+          <p>
+            Indice PA non risponde. I dati della scheda non sono cancellati: manca solo
+            l&apos;anagrafe live in questo momento.
+          </p>
+        </div>
+        <div className="notice warning-notice">
+          <strong>Codice richiesto</strong>
+          <p>{normalizedCode}</p>
+        </div>
+      </main>
+    );
   }
 
   if (!entity) notFound();
+  try {
+    structure = await getIpaOrganizationStructure(normalizedCode);
+  } catch {
+    structure = null;
+  }
   const [municipalityProfile, procurementState] = await Promise.all([
     getMunicipalityProfile(entity),
     getEntityProcurementPage(entity),

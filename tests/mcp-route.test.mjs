@@ -6,7 +6,7 @@ process.env.MCP_ALLOWED_HOSTS = [process.env.MCP_ALLOWED_HOSTS, "example.test"]
   .filter(Boolean)
   .join(",");
 
-const { GET, OPTIONS, POST } = await import("../src/app/api/mcp/route.ts");
+const { GET, OPTIONS, POST, maxDuration } = await import("../src/app/api/mcp/route.ts");
 const { dvnsStarterPrompts } = await import("../src/lib/mcp/server.ts");
 const loader = await import("../src/lib/integrated-sources.ts");
 
@@ -255,6 +255,10 @@ test("MCP endpoint does not accept a loopback Host header on a public URL", asyn
     if (previous === undefined) delete process.env.MCP_ALLOWED_HOSTS;
     else process.env.MCP_ALLOWED_HOSTS = previous;
   }
+});
+
+test("MCP route aborts before the Vercel 60-second runtime bill", () => {
+  assert.equal(maxDuration, 15);
 });
 
 test("MCP endpoint rejects an oversized declared body", async () => {

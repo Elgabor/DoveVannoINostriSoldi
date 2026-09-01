@@ -228,6 +228,7 @@ function normalizedQueryTokens(value: string): string[] {
 async function datastoreRequest(
   params: URLSearchParams,
   signal?: AbortSignal,
+  fetchOptions: Readonly<{ maxRetries?: number; timeoutMs?: number }> = {},
 ): Promise<IpaSearchResult> {
   params.set("resource_id", IPA_ENTI_RESOURCE_ID);
 
@@ -237,6 +238,8 @@ async function datastoreRequest(
     headers: { Accept: "application/json" },
     signal,
     tags: ["dataset:ipa-enti"],
+    maxRetries: fetchOptions.maxRetries,
+    timeoutMs: fetchOptions.timeoutMs,
   });
 
   if (!response.ok) {
@@ -357,7 +360,9 @@ export async function getIpaEntityByCode(codiceIpa: string): Promise<IpaEntity |
     filters: JSON.stringify({ Codice_IPA: normalized }),
   });
 
-  const result = await datastoreRequest(params);
+  // Page and API lookups must not retry a 500: each extra attempt is billed
+  // compute while crawlers and clients retry the same URL.
+  const result = await datastoreRequest(params, undefined, { maxRetries: 0, timeoutMs: 4_000 });
   return result.records[0] ?? null;
 }
 

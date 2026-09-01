@@ -8,6 +8,7 @@ import {
   countAnacAwardAttributions,
   decodeEntityProcurementRouteCode,
   getEntityProcurementPage,
+  loadAnacEntityProcurementPage,
   type AnacEntityProcurementPageView,
 } from "@/lib/data/anac-entity-procurement-page";
 import { getIpaEntityByCode } from "@/lib/ipa";
@@ -20,6 +21,7 @@ type PageProps = {
 };
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 15;
 
 type ProcurementView = "summary" | "operators" | "procedures" | "awards" | "operator";
 type RankingMetric = "count" | "value";
@@ -366,13 +368,32 @@ export default async function EntityProcurementPage({ params, searchParams }: Pa
   const { codice } = await params;
   const normalizedCode = decodeEntityProcurementRouteCode(codice);
   if (!normalizedCode) notFound();
-  const entity = await getIpaEntityByCode(normalizedCode);
-  if (!entity) notFound();
-  const state = await getEntityProcurementPage(entity);
+  let entity = null;
+  let ipaReachable = true;
+  try {
+    entity = await getIpaEntityByCode(normalizedCode);
+  } catch {
+    ipaReachable = false;
+  }
+  if (ipaReachable && !entity) notFound();
+  const state = entity
+    ? await getEntityProcurementPage(entity)
+    : await loadAnacEntityProcurementPage({
+      codiceIpa: normalizedCode,
+      currentEntityCf: null,
+      verifyLiveFiscalCode: false,
+    });
+  const heading = entity?.denominazione || normalizedCode;
   if (state.status !== "available") {
     return (
       <main className={"shell page " + styles.page}>
         <p><Link href={"/enti/" + encodeURIComponent(normalizedCode)}>← Torna alla scheda ente</Link></p>
+        {ipaReachable ? null : (
+          <div className="notice warning-notice">
+            <strong>Indice PA non risponde</strong>
+            <p>Mostriamo solo lo snapshot ANAC già in archivio. L&apos;identità fiscale live non è stata ricontrollata.</p>
+          </div>
+        )}
         <EntityProcurementSection state={state} />
       </main>
     );
@@ -392,9 +413,15 @@ export default async function EntityProcurementPage({ params, searchParams }: Pa
     <main className={"shell page " + styles.page}>
       <p><Link href={"/enti/" + encodeURIComponent(normalizedCode)}>← Torna alla scheda ente</Link></p>
       <div className="page-intro">
-        <h1>Aggiudicazioni ANAC · {entity.denominazione || normalizedCode}</h1>
+        <h1>Aggiudicazioni ANAC · {heading}</h1>
         <p>Procedure, aggiudicazioni e aggiudicatari collegati a questo ente.</p>
       </div>
+      {ipaReachable ? null : (
+        <div className="notice warning-notice">
+          <strong>Indice PA non risponde</strong>
+          <p>Mostriamo lo snapshot ANAC già in archivio. L&apos;identità fiscale live non è stata ricontrollata.</p>
+        </div>
+      )}
       {scopeLine()}
       <Views codice={normalizedCode} active={selectedView} operator={operatorRef} metric={metric} />
       {selectedView === "operators" ? <RankingMetricToggle codice={normalizedCode} metric={metric} size={size} /> : null}

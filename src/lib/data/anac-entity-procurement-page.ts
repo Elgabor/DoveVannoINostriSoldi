@@ -1172,7 +1172,12 @@ export function safeEntityProcurementPageProfile(
 }
 
 export async function loadAnacEntityProcurementPage(
-  args: Readonly<{ codiceIpa: string; currentEntityCf: string | null; rootDirectory?: string }>,
+  args: Readonly<{
+    codiceIpa: string;
+    currentEntityCf: string | null;
+    rootDirectory?: string;
+    verifyLiveFiscalCode?: boolean;
+  }>,
 ): Promise<AnacEntityProcurementPageState> {
   const codiceIpa = args.codiceIpa.trim();
   if (!CODE.test(codiceIpa)) {
@@ -1186,7 +1191,10 @@ export async function loadAnacEntityProcurementPage(
     if (!shard) return { status: "not_found", reason: "entity-not-in-profile", message: "Nessun profilo ANAC pubblicato per questo ente." };
     const record = cachedShard(root, shard).find((candidate) => candidate.codiceIpa === codiceIpa);
     if (!record) return { status: "not_found", reason: "entity-not-in-profile", message: "Nessun profilo ANAC pubblicato per questo ente." };
-    if (!validEntityCf(args.currentEntityCf) || record.codiceFiscaleEnte !== normalizedText(args.currentEntityCf)) {
+    if (
+      args.verifyLiveFiscalCode !== false
+      && (!validEntityCf(args.currentEntityCf) || record.codiceFiscaleEnte !== normalizedText(args.currentEntityCf))
+    ) {
       return { status: "identity_drift", message: "Il codice fiscale IPA corrente non coincide con il profilo ANAC bloccato." };
     }
     return { status: "available", profile: safeEntityProcurementPageProfile(record, meta) };

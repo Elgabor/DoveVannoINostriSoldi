@@ -18,6 +18,10 @@ type SourceFetchOptions = Omit<NextFetchOptions, "next" | "signal" | "cache"> & 
   signal?: AbortSignal;
   revalidateSeconds?: number;
   tags?: readonly string[];
+  /** Cannot exceed the source policy. Use 0 to fail on the first retryable status. */
+  maxRetries?: number;
+  /** Cannot exceed the source policy. Floor is 1 second. */
+  timeoutMs?: number;
 };
 
 const ALLOWED_HOSTS: Readonly<Record<SourceId, readonly string[]>> = {
@@ -149,7 +153,14 @@ export async function fetchOfficialSource(
   const policy = getSourcePolicy(sourceId);
   const url = assertOfficialUrl(sourceId, rawUrl);
   const kind = options.kind ?? "data";
-  const retries = Math.max(0, policy.maxRetries);
+  const retries = Math.max(
+    0,
+    Math.min(policy.maxRetries, options.maxRetries ?? policy.maxRetries),
+  );
+  const timeoutMs = Math.max(
+    1_000,
+    Math.min(policy.timeoutMs, options.timeoutMs ?? policy.timeoutMs),
+  );
   const cacheTags = [...new Set([...policy.tags, ...(options.tags ?? [])])];
   const requestedRevalidate = options.revalidateSeconds ?? revalidateFor(sourceId, kind);
   const revalidate = Math.max(1, Math.trunc(requestedRevalidate));
@@ -158,6 +169,8 @@ export async function fetchOfficialSource(
     kind: _kind,
     revalidateSeconds: _revalidateSeconds,
     tags: _tags,
+    maxRetries: _maxRetries,
+    timeoutMs: _timeoutMs,
     signal: callerSignal,
     headers,
     ...requestOptions
@@ -165,6 +178,8 @@ export async function fetchOfficialSource(
   void _kind;
   void _revalidateSeconds;
   void _tags;
+  void _maxRetries;
+  void _timeoutMs;
 
   const method = (requestOptions.method ?? "GET").toUpperCase();
   if (method !== "GET" && method !== "HEAD") {
@@ -185,7 +200,7 @@ export async function fetchOfficialSource(
         method,
         headers: requestHeaders(headers),
         redirect: requestOptions.redirect ?? "error",
-        signal: composedSignal(callerSignal, policy.timeoutMs),
+        signal: composedSignal(callerSignal, timeoutMs),
         next: {
           revalidate,
           tags: cacheTags,

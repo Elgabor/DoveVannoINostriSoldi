@@ -1699,6 +1699,8 @@ try {
           [".footer-actions a[href='/privacy']", "Privacy"],
           [".footer-secondary-links a[href='/termini']", "Termini"],
           [".footer-secondary-links a[href='/supporter']", "Chi ci sostiene"],
+          [".footer-social a[href='https://www.instagram.com/dovevannoinostrisoldi/']", "Instagram"],
+          [".footer-social a[href='https://x.com/DVNSoldi']", "X"],
         ];
         for (const [selector, expectedLabel] of requiredFooterLinks) {
           await page.waitForSelector(selector, { visible: true });

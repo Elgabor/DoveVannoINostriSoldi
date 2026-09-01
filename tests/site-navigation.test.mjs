@@ -220,8 +220,18 @@ test("supporters page lists the current acknowledgements", async () => {
   assert.match(footer, /BUY_ME_A_COFFEE_URL/);
   assert.match(footer, /Buy me an AI compute/);
   assert.match(site, /BUY_ME_A_COFFEE_URL = "https:\/\/www\.buymeacoffee\.com\/dovevannoinostrisoldi"/);
+  assert.match(site, /https:\/\/www\.threads\.com\/@dovevannoinostrisoldi/);
+  assert.match(site, /https:\/\/www\.facebook\.com\/profile\.php\?id=61593922084084/);
+  assert.match(site, /https:\/\/www\.instagram\.com\/dovevannoinostrisoldi\//);
+  assert.match(site, /https:\/\/www\.tiktok\.com\/@dovevannoinostrisoldi/);
+  assert.match(site, /https:\/\/x\.com\/DVNSoldi/);
+  assert.match(footer, /SOCIAL_LINKS/);
+  assert.match(footer, /footer-social/);
+  assert.match(footer, /Canali/);
   assert.match(globals, /\.footer-support \{/);
   assert.match(globals, /\.footer-support-action \{/);
+  assert.match(globals, /\.footer-social \{/);
+  assert.match(globals, /\.footer-social \.footer-link \{[\s\S]*?min-height:\s*44px/);
   assert.doesNotMatch(footer, /cdnjs\.buymeacoffee\.com/);
   assert.match(navigationSource, /href: "\/supporter", label: "Chi ci sostiene"/);
 });

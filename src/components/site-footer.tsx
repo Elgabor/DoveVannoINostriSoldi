@@ -1,9 +1,25 @@
 import Link from "next/link";
-import { Coffee02Icon, GithubIcon } from "@hugeicons/core-free-icons";
+import {
+  Coffee02Icon,
+  Facebook01Icon,
+  GithubIcon,
+  InstagramIcon,
+  NewTwitterIcon,
+  ThreadsIcon,
+  TiktokIcon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ReportProblemButton } from "@/components/report-problem/report-problem-button";
 import { FOOTER_SITEMAP_GROUPS } from "@/lib/site-navigation";
-import { BUY_ME_A_COFFEE_URL, REPO_URL } from "@/lib/site";
+import { BUY_ME_A_COFFEE_URL, REPO_URL, SOCIAL_LINKS } from "@/lib/site";
+
+const SOCIAL_ICONS = {
+  threads: ThreadsIcon,
+  facebook: Facebook01Icon,
+  instagram: InstagramIcon,
+  tiktok: TiktokIcon,
+  x: NewTwitterIcon,
+} as const;
 
 type SiteFooterProps = Readonly<{
   latestTerritorialCheckLabel: string;
@@ -50,6 +66,25 @@ export function SiteFooter({ latestTerritorialCheckLabel }: SiteFooterProps) {
           Buy me an AI compute
         </a>
       </aside>
+
+      <nav className="footer-social" aria-labelledby="footer-social-title">
+        <h2 id="footer-social-title" className="footer-social-title">Canali</h2>
+        <ul>
+          {SOCIAL_LINKS.map((channel) => (
+            <li key={channel.id}>
+              <a
+                className="footer-link"
+                href={channel.href}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <HugeiconsIcon icon={SOCIAL_ICONS[channel.id]} size={16} strokeWidth={1.8} aria-hidden="true" />
+                {channel.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
 
       <div className="footer-utility">
         <div className="footer-meta">

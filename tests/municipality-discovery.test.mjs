@@ -13,6 +13,8 @@ const [{ getGovernmentScorecardPublicPaths }, { getMunicipalityEntityPublicPaths
   ]);
 
 const sitemapPath = new URL("../src/app/sitemap.ts", import.meta.url);
+const entityPagePath = new URL("../src/app/enti/[codice]/page.tsx", import.meta.url);
+const entityProcurementPagePath = new URL("../src/app/enti/[codice]/appalti/page.tsx", import.meta.url);
 const detailSnapshotPaths = [
   new URL("../src/data/generated/siope-municipal-detail-2024.json", import.meta.url),
   new URL("../src/data/generated/siope-municipal-detail-2025.json", import.meta.url),
@@ -43,7 +45,7 @@ async function committedMunicipalityPaths() {
     .map((code) => `/enti/${encodeURIComponent(code)}`);
 }
 
-test("municipal profile pages are enumerable from committed data and wired into the sitemap", async () => {
+test("municipal profile pages stay enumerable but are excluded from crawler discovery during containment", async () => {
   const municipalityPaths = await committedMunicipalityPaths();
   const generatedMunicipalityPaths = getMunicipalityEntityPublicPaths();
 
@@ -54,25 +56,25 @@ test("municipal profile pages are enumerable from committed data and wired into 
   assert.ok(municipalityPaths.includes("/enti/c_l736"));
   assert.deepEqual(generatedMunicipalityPaths, municipalityPaths);
 
-  const sitemapUrls = new Set(
-    publicSitemap(PUBLIC_SITE_URL, municipalityPaths).map((entry) => entry.url),
-  );
+  const sitemapUrls = new Set(sitemap().map((entry) => entry.url));
   for (const path of municipalityPaths) {
     const url = new URL(path, PUBLIC_SITE_URL);
     // Codice IPA values are URL-safe as committed: the canonical URL must not
     // re-encode or otherwise alter the path.
     assert.equal(url.pathname, path);
     assert.equal(url.origin, PUBLIC_SITE_URL);
-    assert.equal(sitemapUrls.has(url.href), true);
+    assert.equal(sitemapUrls.has(url.href), false);
   }
 
-  const expectedSitemap = publicSitemap(PUBLIC_SITE_URL, [
-    ...getGovernmentScorecardPublicPaths(),
-    ...municipalityPaths,
-  ]);
+  const expectedSitemap = publicSitemap(PUBLIC_SITE_URL, getGovernmentScorecardPublicPaths());
   assert.deepEqual(sitemap(), expectedSitemap);
 
   const sitemapSource = await readFile(sitemapPath, "utf8");
-  assert.match(sitemapSource, /getMunicipalityEntityPublicPaths/);
-  assert.match(sitemapSource, /\.\.\.getMunicipalityEntityPublicPaths\(\)/);
+  assert.doesNotMatch(sitemapSource, /getMunicipalityEntityPublicPaths/);
+
+  for (const pagePath of [entityPagePath, entityProcurementPagePath]) {
+    const pageSource = await readFile(pagePath, "utf8");
+    assert.match(pageSource, /robots:\s*entityRobots/);
+    assert.match(pageSource, /index:\s*false,\s*follow:\s*false/);
+  }
 });

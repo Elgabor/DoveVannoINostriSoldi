@@ -125,16 +125,78 @@ test("entity ranking returns Jesolo for a prefix, is accent-aware and determinis
 
   const first = rankEntitySearchResults(entities, "Jes");
   const second = rankEntitySearchResults([...entities].reverse(), "Jes");
-  assert.deepEqual(first.map((result) => result.title), ["COMUNE DI JESI", "COMUNE DI JESOLO"]);
+  assert.deepEqual(first.map((result) => result.title), ["Jesi", "Jesolo"]);
   assert.deepEqual(
     second.map((result) => result.title),
     first.map((result) => result.title),
   );
-  assert.ok(first.some((result) => result.title === "COMUNE DI JESOLO"));
+  assert.ok(first.some((result) => result.href === "/enti/c_c388"));
 
   const accented = rankEntitySearchResults(entities, "citta metropolitana venezia");
   assert.equal(accented.length, 1);
   assert.equal(accented[0].title, "CITTÀ METROPOLITANA DI VENEZIA");
+});
+
+test("city-name queries prefer the municipality over agencies and metropolitan cities", () => {
+  const entities = [
+    entity({
+      codiceIpa: "agetpl",
+      denominazione: "Agenzia del Trasporto Pubblico Locale del Bacino della Citta' Metropolitana di Milano",
+      tipologia: "Pubbliche Amministrazioni",
+    }),
+    entity({
+      codiceIpa: "cmmi",
+      denominazione: "Citta' Metropolitana di Milano",
+      tipologia: "Pubbliche Amministrazioni",
+    }),
+    entity({
+      codiceIpa: "c_f205",
+      denominazione: "COMUNE DI MILANO",
+      tipologia: "Comune",
+    }),
+    entity({
+      codiceIpa: "aspcb",
+      denominazione: "ASP Citta' di Bologna",
+      tipologia: "Pubbliche Amministrazioni",
+    }),
+    entity({
+      codiceIpa: "c_a944",
+      denominazione: "COMUNE DI BOLOGNA",
+      tipologia: "Comune",
+    }),
+    entity({
+      codiceIpa: "cmbo",
+      denominazione: "Citta' Metropolitana di Bologna",
+      tipologia: "Pubbliche Amministrazioni",
+    }),
+  ];
+
+  const milano = rankEntitySearchResults(entities, "milano");
+  assert.equal(milano[0].href, "/enti/c_f205");
+  assert.equal(milano[0].title, "Milano");
+  assert.equal(milano[0].context, "Comune · Registro IPA");
+  assert.equal(milano[1].href, "/enti/cmmi");
+
+  for (const query of ["città di milano", "citta di milano", "Comune di Milano"]) {
+    const ranked = rankEntitySearchResults(entities, query);
+    assert.equal(ranked[0]?.href, "/enti/c_f205", `query "${query}" should rank Comune di Milano first`);
+    assert.equal(ranked[1]?.href, "/enti/cmmi", `query "${query}" should rank Città Metropolitana second`);
+  }
+
+  const bologna = rankEntitySearchResults(
+    [
+      ...entities,
+      entity({
+        codiceIpa: "c_a945",
+        denominazione: "COMUNE DI BOLOGNANO",
+        tipologia: "Comune",
+      }),
+    ],
+    "bologna",
+  );
+  assert.equal(bologna[0].href, "/enti/c_a944");
+  assert.equal(bologna[0].title, "Bologna");
+  assert.equal(bologna[1].href, "/enti/cmbo");
 });
 
 test("ranking removes duplicate destinations for pages and entities", () => {

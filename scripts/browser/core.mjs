@@ -1312,6 +1312,9 @@ try {
       width,
       validate: async (page) => {
         const text = await bodyText(page);
+        const heading = await page.$eval("h1", (element) => element.textContent?.trim() ?? "");
+        assert.equal(heading, "Benevento", `${label}: titolo Comune non human-readable`);
+        assertTextMatches(text, /Pagamenti|Confronto|PNRR|IRPEF|Appalti/i, label);
         assertTextMatches(text, /SIOPE · pagamenti di cassa/i, label);
         assertTextMatches(text, /Quanto ha pagato il Comune/i, label);
         assertTextMatches(text, /Redditi e imposte dei residenti/i, label);
@@ -1321,14 +1324,14 @@ try {
         assertTextMatches(text, /Dati parziali/i, label);
         assertTextMatches(text, /Per cosa ha pagato il Comune/i, label);
         assertTextMatches(text, /Pagamenti registrati per anno/i, label);
-        assertTextMatches(text, /Vedi importi esatti e periodi coperti/i, label);
+        assertTextMatches(text, /Confronti e dettaglio territoriale/i, label);
         assertTextMatches(text, /Altre categorie/i, label);
         assertTextMatches(text, /Informazioni sul Comune e fonti/i, label);
         assert.ok(
           text.indexOf("Quanto ha pagato il Comune") < text.indexOf("Per cosa ha pagato il Comune") &&
           text.indexOf("Per cosa ha pagato il Comune") < text.indexOf("Pagamenti registrati per anno") &&
-          text.indexOf("Pagamenti registrati per anno") < text.indexOf("Vedi importi esatti e periodi coperti") &&
-          text.indexOf("Vedi importi esatti e periodi coperti") < text.indexOf("Spesa e servizi a confronto") &&
+          text.indexOf("Pagamenti registrati per anno") < text.indexOf("Confronti e dettaglio territoriale") &&
+          text.indexOf("Confronti e dettaglio territoriale") < text.indexOf("Spesa e servizi a confronto") &&
           text.indexOf("Spesa e servizi a confronto") < text.indexOf("Progetti PNRR per asili e prima infanzia") &&
           text.indexOf("Progetti PNRR per asili e prima infanzia") < text.indexOf("Redditi e imposte dei residenti") &&
           text.indexOf("Redditi e imposte dei residenti") < text.indexOf("Informazioni sul Comune e fonti"),
@@ -1354,6 +1357,18 @@ try {
         const openCivitasBars = await page.$$eval("[data-opencivitas-chart] > li", (rows) => rows.map((row) => row.textContent));
         assert.equal(openCivitasBars.length, 2);
         assert.match(openCivitasBars.join(" "), /Spesa registrata.*Valore di riferimento/is);
+
+        const detailSummary = await page.$("details[data-siope-detail] > summary");
+        assert.ok(detailSummary, `${label}: dettaglio territoriale assente`);
+        assert.equal(await detailSummary.evaluate((element) => element.parentElement?.open), false);
+        await detailSummary.focus();
+        await page.keyboard.press("Enter");
+        assert.equal(await detailSummary.evaluate((element) => element.parentElement?.open), true);
+        assertTextMatches(
+          await page.$eval("details[data-siope-detail]", (element) => element.innerText),
+          /Vedi importi esatti e periodi coperti/i,
+          label,
+        );
 
         const historySummary = await page.$("details[data-payment-history] > summary");
         assert.ok(historySummary, `${label}: storico espandibile assente`);
@@ -1417,7 +1432,7 @@ try {
   }
 
   await runScenario(browser, {
-    label: "Ente non comunale invariato 390px",
+    label: "Ente non comunale layout leggibile 390px",
     pathname: "/enti/agid",
     width: 390,
     validate: async (page) => {
@@ -1426,14 +1441,82 @@ try {
         assertTextMatches(text, /Indice PA non risponde/i, "Ente non comunale");
         assertTextMatches(text, /Codice richiesto[\s\S]*agid/i, "Ente non comunale");
       } else {
-        assertTextMatches(text, /Identità amministrativa/i, "Ente non comunale");
-        assertTextMatches(text, /Dati economici · collegamenti in corso/i, "Ente non comunale");
-        assertTextMatches(text, /Formato JSON/i, "Ente non comunale");
+        assert.doesNotMatch(text, /Identità amministrativa/i);
+        assert.doesNotMatch(text, /Dati economici · collegamenti in corso/i);
+        assertTextMatches(text, /Informazioni sull'ente e fonti/i, "Ente non comunale");
+        assertTextMatches(text, /Contratti e aggiudicatari|ANAC · aggiudicazioni/i, "Ente non comunale");
       }
       assert.doesNotMatch(text, /Quanto ha pagato il Comune/i);
     },
   });
-  completed.push("Ente non comunale invariato 390px");
+  completed.push("Ente non comunale layout leggibile 390px");
+
+  await runScenario(browser, {
+    label: "Ricerca città prioritizza il Comune 390px",
+    pathname: "/",
+    width: 390,
+    validate: async (page) => {
+      async function firstEntityHrefFor(query) {
+        await page.goto(new URL("/", page.url()).toString(), {
+          waitUntil: "domcontentloaded",
+          timeout: 45_000,
+        });
+        const input = await page.waitForSelector("#global-site-search", { visible: true });
+        assert.ok(input, `Ricerca città (${query}): campo assente`);
+        await input.click();
+        await input.type(query, { delay: 20 });
+        await page.waitForFunction(
+          (expectedQuery) => {
+            const option = document.querySelector("a.header-search-option");
+            const field = document.querySelector("#global-site-search");
+            return Boolean(
+              field?.value === expectedQuery &&
+              option?.getAttribute("href")?.startsWith("/enti/"),
+            );
+          },
+          { timeout: 20_000 },
+          query,
+        );
+        return page.$eval("a.header-search-option", (element) => element.getAttribute("href"));
+      }
+
+      assert.equal(
+        await firstEntityHrefFor("milano"),
+        "/enti/c_f205",
+        "Ricerca città: primo risultato non è COMUNE DI MILANO",
+      );
+      assert.equal(
+        await firstEntityHrefFor("città di milano"),
+        "/enti/c_f205",
+        "Ricerca città: «città di milano» non porta al Comune",
+      );
+      assert.equal(
+        await firstEntityHrefFor("bologna"),
+        "/enti/c_a944",
+        "Ricerca città: primo risultato non è COMUNE DI BOLOGNA",
+      );
+    },
+  });
+  completed.push("Ricerca città prioritizza il Comune 390px");
+
+  await runScenario(browser, {
+    label: "Città metropolitana Milano scheda leggibile 390px",
+    pathname: "/enti/cmmi",
+    width: 390,
+    validate: async (page) => {
+      const text = await bodyText(page);
+      if (/Anagrafica IPA non disponibile/i.test(text)) {
+        assertTextMatches(text, /Codice richiesto[\s\S]*cmmi/i, "Città metropolitana Milano");
+        return;
+      }
+      assertTextMatches(text, /Citta.? Metropolitana di Milano/i, "Città metropolitana Milano");
+      assertTextMatches(text, /Informazioni sull'ente e fonti/i, "Città metropolitana Milano");
+      assert.doesNotMatch(text, /Identità amministrativa/i);
+      assert.doesNotMatch(text, /52\.591\.195,96629/);
+      assertTextMatches(text, /52\.591\.195,97\s*€|Valore dichiarato/i, "Città metropolitana Milano");
+    },
+  });
+  completed.push("Città metropolitana Milano scheda leggibile 390px");
 
   const dropdownRoutes = [
     {

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { inspectUniversityResearch } from "./university-research.mjs";
 import {
   NAVIGATION_TIMEOUT_MS,
   closeBrowser,
@@ -1438,6 +1439,17 @@ try {
   completed.push("Atlante Istruzione deep-link filtri 1280px");
 
   for (const width of [390, 768, 1280]) {
+    const label = `Università e Ricerca ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/istruzione/universita-ricerca",
+      width,
+      validate: inspectUniversityResearch,
+    });
+    completed.push(label);
+  }
+
+  for (const width of [390, 768, 1280]) {
     const label = `Scheda economica Benevento ${width}px`;
     await runScenario(browser, {
       label,
@@ -1754,6 +1766,10 @@ try {
         sectionLabel: "Soldi",
         childLabel: "Debito pubblico",
       });
+      await assertPrimaryDropdownTap(page, "Menu Istruzione 390px", {
+        sectionLabel: "Istruzione",
+        childLabel: "Università e Ricerca",
+      });
     },
   });
   completed.push("Menu mobile senza Indietro/Scorri 390px");
@@ -1767,6 +1783,9 @@ try {
       assert.ok(itemElement, "Menu mobile chiusura: sezione Soldi assente");
       const toggle = await itemElement.$(".nav-item-toggle");
       assert.ok(toggle, "Menu mobile chiusura: pulsante tendina assente");
+      await itemElement.evaluate((element) => {
+        element.scrollIntoView({ block: "nearest", inline: "center" });
+      });
       await waitForStableNavigationTouchTarget(page, toggle);
       const toggleBox = await toggle.boundingBox();
       assert.ok(toggleBox, "Menu mobile chiusura: pulsante tendina non visibile");

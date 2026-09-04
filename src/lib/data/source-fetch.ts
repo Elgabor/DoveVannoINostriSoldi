@@ -146,6 +146,10 @@ function shouldBypassNextFetch(cacheMode: "revalidate" | "no-store"): boolean {
   return process.env.DVNS_SOURCE_FETCH_USE_GLOBAL !== "1";
 }
 
+// Interactive IPA pages are bounded to at most 500 records. A 16 MiB ceiling
+// leaves ample room for those responses without buffering an unbounded body.
+const NATIVE_RESPONSE_MAX_BYTES = 16 * 1024 * 1024;
+
 function fetchViaNodeHttp(
   url: URL,
   init: Readonly<{
@@ -166,6 +170,18 @@ function fetchViaNodeHttp(
       requestHeaders[key] = value;
     });
 
+    let settled = false;
+    const fail = (error: unknown) => {
+      if (settled) return;
+      settled = true;
+      init.signal?.removeEventListener("abort", onAbort);
+      req?.destroy();
+      reject(error);
+    };
+    const onAbort = () => fail(
+      init.signal?.reason ?? new DOMException("The operation was aborted.", "AbortError"),
+    );
+
     const req = transport.request(
       url,
       {
@@ -174,41 +190,65 @@ function fetchViaNodeHttp(
       },
       (incoming) => {
         const chunks: Buffer[] = [];
+        let bytes = 0;
+        let ended = false;
         incoming.on("data", (chunk: Buffer | string) => {
-          chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
-        });
-        incoming.on("error", reject);
-        incoming.on("end", () => {
-          const headers = new Headers();
-          for (const [key, value] of Object.entries(incoming.headers)) {
-            if (value === undefined) continue;
-            if (Array.isArray(value)) {
-              for (const item of value) headers.append(key, item);
-            } else {
-              headers.set(key, value);
-            }
+          if (settled) return;
+          const buffer = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
+          bytes += buffer.length;
+          if (bytes > NATIVE_RESPONSE_MAX_BYTES) {
+            chunks.length = 0;
+            fail(new Error("Interactive source response exceeds the 16 MiB limit"));
+            incoming.destroy();
+            return;
           }
-          resolve(
-            new Response(Buffer.concat(chunks), {
-              status: incoming.statusCode ?? 0,
+          chunks.push(buffer);
+        });
+        incoming.on("error", fail);
+        incoming.on("aborted", () => fail(new Error("Source response ended prematurely")));
+        incoming.on("close", () => {
+          if (!ended) fail(new Error("Source response closed before completion"));
+        });
+        incoming.on("end", () => {
+          ended = true;
+          if (settled) return;
+          try {
+            const headers = new Headers();
+            for (const [key, value] of Object.entries(incoming.headers)) {
+              if (value === undefined) continue;
+              if (Array.isArray(value)) {
+                for (const item of value) headers.append(key, item);
+              } else {
+                headers.set(key, value);
+              }
+            }
+            const status = incoming.statusCode ?? 0;
+            const bodyless = init.method === "HEAD" || [204, 205, 304].includes(status);
+            const response = new Response(bodyless ? null : Buffer.concat(chunks), {
+              status,
               statusText: incoming.statusMessage,
               headers,
-            }),
-          );
+            });
+            settled = true;
+            init.signal?.removeEventListener("abort", onAbort);
+            resolve(response);
+          } catch (error) {
+            fail(error);
+          }
         });
       },
     );
 
-    const onAbort = () => {
-      req.destroy();
-      reject(init.signal?.reason ?? new DOMException("The operation was aborted.", "AbortError"));
-    };
     init.signal?.addEventListener("abort", onAbort, { once: true });
-    req.on("error", (error) => {
-      init.signal?.removeEventListener("abort", onAbort);
-      reject(error);
-    });
-    req.end();
+    req.on("error", fail);
+    if (init.signal?.aborted) onAbort();
+    else {
+      try {
+        req.end();
+      } catch (error) {
+        fail(error);
+      }
+    }
   });
 }
 

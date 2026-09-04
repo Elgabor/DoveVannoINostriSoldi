@@ -6,9 +6,15 @@ import {
   searchGlobal,
   searchGlobalLocalFallback,
 } from "@/lib/global-search";
+import { runWithRequestBudget } from "@/lib/search/request-budget";
+import { ConcurrencyLimiter, SlidingWindowLimiter, clientAddress } from "@/lib/report/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const SEARCH_REQUEST_TIMEOUT_MS = 5_000;
+const searchLimiter = new SlidingWindowLimiter({ windowMs: 60_000, max: 60 });
+const searchConcurrency = new ConcurrencyLimiter(8);
 
 function parseLimit(value: string | null): number | null {
   if (value === null) return GLOBAL_SEARCH_DEFAULT_LIMIT;
@@ -20,7 +26,11 @@ function parseLimit(value: string | null): number | null {
   return parsed;
 }
 
-function errorResponse(message: string, status = 400): Response {
+function errorResponse(
+  message: string,
+  status = 400,
+  headers: HeadersInit = {},
+): Response {
   return Response.json(
     { ok: false, error: message },
     {
@@ -28,6 +38,7 @@ function errorResponse(message: string, status = 400): Response {
       headers: {
         "Cache-Control": "no-store",
         "X-Content-Type-Options": "nosniff",
+        ...headers,
       },
     },
   );
@@ -71,12 +82,48 @@ export async function GET(request: Request) {
     });
   }
 
+  const clientKey = clientAddress(request) ?? "unknown";
+  if (!searchLimiter.consume(clientKey)) {
+    return errorResponse("Troppe ricerche. Riprova tra un minuto.", 429, {
+      "Retry-After": "60",
+    });
+  }
+
+  const release = searchConcurrency.tryAcquire();
+  if (!release) {
+    return errorResponse("Ricerca temporaneamente occupata. Riprova tra pochi secondi.", 503, {
+      "Retry-After": "5",
+    });
+  }
+
   try {
-    const result = await searchGlobal({ query, limit, signal: request.signal });
-    return searchJson(result);
+    const outcome = await runWithRequestBudget(
+      request.signal,
+      SEARCH_REQUEST_TIMEOUT_MS,
+      (signal) => searchGlobal({ query, limit, signal }),
+    );
+    if (outcome.timedOut) {
+      console.warn("Search request deadline exceeded", {
+        timeoutMs: SEARCH_REQUEST_TIMEOUT_MS,
+      });
+      return errorResponse("La ricerca ha superato il tempo massimo.", 504, {
+        "Retry-After": "10",
+      });
+    }
+
+    return Response.json(outcome.value, {
+      headers: {
+        // Search is interactive and backed by a changing public registry. Avoid
+        // replaying a stale empty prefix result from the browser or an edge cache.
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
   } catch (error) {
     if (request.signal.aborted) throw error;
     // Never let an unexpected IPA/runtime failure become HTTP 429/5xx here.
     return searchJson(searchGlobalLocalFallback({ query, limit }));
+  } finally {
+    release();
   }
 }

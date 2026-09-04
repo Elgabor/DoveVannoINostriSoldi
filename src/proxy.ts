@@ -50,11 +50,9 @@ function apiRateLimit(request: NextRequest): NextResponse | null {
   if (globalHits.length >= GLOBAL_MAX) {
     return NextResponse.json(
       { error: "Too many requests" },
-      { status: 429, headers: { "Retry-After": "60" } },
+      { status: 429, headers: { "Retry-After": "60", "Cache-Control": "private, no-store" } },
     );
   }
-  globalHits.push(now);
-
   const ip = getClientIp(request);
   const timestamps = ipHits.get(ip) ?? [];
   slidingCount(timestamps, now, PER_IP_WINDOW_MS);
@@ -62,9 +60,12 @@ function apiRateLimit(request: NextRequest): NextResponse | null {
     ipHits.set(ip, timestamps);
     return NextResponse.json(
       { error: "Too many requests" },
-      { status: 429, headers: { "Retry-After": "60" } },
+      { status: 429, headers: { "Retry-After": "60", "Cache-Control": "private, no-store" } },
     );
   }
+  // Charge the shared allowance only for admitted requests. Rejected requests
+  // from one client must not consume the capacity available to other clients.
+  globalHits.push(now);
   timestamps.push(now);
   ipHits.set(ip, timestamps);
   evictStaleIps(now - PER_IP_WINDOW_MS);

@@ -8,13 +8,11 @@ import {
 import { integratedDomainLabel } from "@/lib/integrated-domains";
 import { datasetCatalog } from "@/lib/mcp/catalog";
 import {
-  searchIpaEntities,
   searchIpaEntitiesByPrefix,
   type IpaEntity,
 } from "@/lib/ipa";
 import { municipalityName } from "@/lib/municipality-name";
 import { getMunicipalitySearchEntities } from "@/lib/siope-municipality-detail";
-import { isUpstreamOverloadedError } from "@/lib/data/source-fetch";
 import {
   PRIMARY_NAV,
   SITE_MAP_GROUPS,
@@ -695,25 +693,11 @@ export async function searchGlobal(input: {
   ).slice(0, entityLimit);
 
   try {
-    let entitySearch;
-    try {
-      entitySearch = await searchIpaEntitiesByPrefix({
-        query: normalizedQuery,
-        limit: entityLimit,
-        signal: input.signal,
-      });
-    } catch (error) {
-      if (input.signal?.aborted) throw input.signal.reason ?? error;
-      // Overload/5xx: never open a second IPA adapter — it amplifies 429 pages.
-      if (isUpstreamOverloadedError(error)) throw error;
-      // Keep the existing full-text adapter only when the SQL endpoint itself
-      // rejects the query shape (non-HTTP contract failures stay local above).
-      entitySearch = await searchIpaEntities({
-        query: normalizedQuery,
-        limit: entityLimit,
-        signal: input.signal,
-      });
-    }
+    const entitySearch = await searchIpaEntitiesByPrefix({
+      query: normalizedQuery,
+      limit: entityLimit,
+      signal: input.signal,
+    });
     const rankedIpa = rankEntitySearchResults(entitySearch.records, normalizedQuery);
     const byHref = new Map<string, SearchResult>();
     for (const result of [...municipalityResults, ...rankedIpa]) {

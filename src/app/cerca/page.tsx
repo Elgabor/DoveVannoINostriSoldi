@@ -20,6 +20,8 @@ export const metadata: Metadata = {
   },
 };
 
+const PAGE_DATA_BUDGET_MS = 5_000;
+
 type SearchPageProps = {
   searchParams: Promise<{ q?: string | string[] }>;
 };
@@ -31,11 +33,17 @@ function first(value: string | string[] | undefined): string {
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const query = first(params.q).trim().slice(0, GLOBAL_SEARCH_MAX_QUERY_LENGTH);
-  let result = null;
+  let result: Awaited<ReturnType<typeof searchGlobal>> | null = null;
+  let upstreamError = false;
   if (query.length >= GLOBAL_SEARCH_MIN_QUERY_LENGTH) {
     try {
-      result = await searchGlobal({ query, limit: GLOBAL_SEARCH_DEFAULT_LIMIT * 2 });
+      result = await searchGlobal({
+        query,
+        limit: GLOBAL_SEARCH_DEFAULT_LIMIT * 2,
+        signal: AbortSignal.timeout(PAGE_DATA_BUDGET_MS),
+      });
     } catch {
+      upstreamError = true;
       result = searchGlobalLocalFallback({ query, limit: GLOBAL_SEARCH_DEFAULT_LIMIT * 2 });
     }
   }
@@ -78,6 +86,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <div className="notice warning-notice">
           <strong>Scrivi almeno due caratteri</strong>
           <p>Così la ricerca resta utile e non sovraccarica il registro pubblico.</p>
+        </div>
+      ) : null}
+
+      {upstreamError ? (
+        <div className="notice warning-notice">
+          <strong>Ricerca temporaneamente non disponibile</strong>
+          <p>Il registro pubblico ha superato il tempo massimo. Riprova tra poco.</p>
         </div>
       ) : null}
 

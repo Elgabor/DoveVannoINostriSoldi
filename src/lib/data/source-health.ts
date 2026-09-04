@@ -2,6 +2,7 @@ import { discoverLatestStatePaymentDataset } from "@/lib/bdap-payments";
 import { discoverMopDataset } from "@/lib/bdap-public-works";
 import { classifyFreshness, type Freshness } from "@/lib/data/freshness";
 import { fetchOfficialSource } from "@/lib/data/source-fetch";
+import { ipaRuntimeFetchOptions } from "@/lib/ipa-runtime-fetch";
 import {
   SOURCE_IDS,
   SOURCE_POLICIES,
@@ -162,7 +163,7 @@ function baseHealth(
   };
 }
 
-async function getIpaRecordCount(): Promise<number | null> {
+async function getIpaRecordCount(signal?: AbortSignal): Promise<number | null> {
   const url = `https://indicepa.gov.it/ipa-dati/api/3/action/datastore_search?${new URLSearchParams({
     resource_id: IPA_ENTI_RESOURCE_ID,
     limit: "0",
@@ -171,6 +172,7 @@ async function getIpaRecordCount(): Promise<number | null> {
     kind: "discovery",
     headers: { Accept: "application/json" },
     tags: ["health:ipa", "dataset:ipa-enti"],
+    ...ipaRuntimeFetchOptions({ signal }),
   });
 
   if (!response.ok) throw new Error(`IPA datastore HTTP ${response.status}`);
@@ -179,7 +181,7 @@ async function getIpaRecordCount(): Promise<number | null> {
   return typeof payload.result?.total === "number" ? payload.result.total : null;
 }
 
-async function getIpaResourceTimestamp(): Promise<string | null> {
+async function getIpaResourceTimestamp(signal?: AbortSignal): Promise<string | null> {
   const url = `https://indicepa.gov.it/ipa-dati/api/3/action/resource_show?${new URLSearchParams({
     id: IPA_ENTI_RESOURCE_ID,
   }).toString()}`;
@@ -187,6 +189,7 @@ async function getIpaResourceTimestamp(): Promise<string | null> {
     kind: "discovery",
     headers: { Accept: "application/json" },
     tags: ["health:ipa", "metadata:ipa-enti"],
+    ...ipaRuntimeFetchOptions({ signal }),
   });
 
   if (!response.ok) throw new Error(`IPA resource_show HTTP ${response.status}`);
@@ -198,12 +201,12 @@ async function getIpaResourceTimestamp(): Promise<string | null> {
   return text(payload.result.last_modified) ?? text(payload.result.metadata_modified);
 }
 
-async function probeIpa(): Promise<SourceHealth> {
+async function probeIpa(signal?: AbortSignal): Promise<SourceHealth> {
   const base = baseHealth("ipa");
   const startedAt = performance.now();
   const [countResult, timestampResult] = await Promise.allSettled([
-    getIpaRecordCount(),
-    getIpaResourceTimestamp(),
+    getIpaRecordCount(signal),
+    getIpaResourceTimestamp(signal),
   ]);
   const latencyMs = Math.round(performance.now() - startedAt);
 
@@ -238,7 +241,7 @@ async function probeIpa(): Promise<SourceHealth> {
   };
 }
 
-async function getIpaStructureResource(resourceId: string): Promise<{
+async function getIpaStructureResource(resourceId: string, signal?: AbortSignal): Promise<{
   count: number | null;
   timestamp: string | null;
 }> {
@@ -254,11 +257,13 @@ async function getIpaStructureResource(resourceId: string): Promise<{
       kind: "discovery",
       headers: { Accept: "application/json" },
       tags: ["health:ipa-structure", `resource:${resourceId}`],
+      ...ipaRuntimeFetchOptions({ signal }),
     }),
     fetchOfficialSource("ipa-struttura", metadataUrl, {
       kind: "discovery",
       headers: { Accept: "application/json" },
       tags: ["health:ipa-structure", `metadata:${resourceId}`],
+      ...ipaRuntimeFetchOptions({ signal }),
     }),
   ]);
 
@@ -276,13 +281,13 @@ async function getIpaStructureResource(resourceId: string): Promise<{
   };
 }
 
-async function probeIpaStructure(): Promise<SourceHealth> {
+async function probeIpaStructure(signal?: AbortSignal): Promise<SourceHealth> {
   const base = baseHealth("ipa-struttura");
   const startedAt = performance.now();
   try {
     const [units, areas] = await Promise.all([
-      getIpaStructureResource(IPA_UO_RESOURCE_ID),
-      getIpaStructureResource(IPA_AOO_RESOURCE_ID),
+      getIpaStructureResource(IPA_UO_RESOURCE_ID, signal),
+      getIpaStructureResource(IPA_AOO_RESOURCE_ID, signal),
     ]);
     const timestamps = [units.timestamp, areas.timestamp].filter((value): value is string => Boolean(value));
     const oldestTimestamp = timestamps.length === 2 ? timestamps.sort().at(0) ?? null : null;
@@ -306,15 +311,15 @@ async function probeIpaStructure(): Promise<SourceHealth> {
   }
 }
 
-async function probeOpenBdap(): Promise<SourceHealth> {
+async function probeOpenBdap(signal?: AbortSignal): Promise<SourceHealth> {
   const base = baseHealth("openbdap");
   const startedAt = performance.now();
   const ssnCce = getSsnCceSourceHealth();
 
   try {
     const [latest, mop] = await Promise.all([
-      discoverLatestStatePaymentDataset("mission", { maxMonthsBack: 6 }),
-      discoverMopDataset(),
+      discoverLatestStatePaymentDataset("mission", { maxMonthsBack: 6, signal }),
+      discoverMopDataset({ signal }),
     ]);
     const timestamps = [latest.metadataModified, mop.metadata.referenceDate]
       .filter((value): value is string => Boolean(value))
@@ -344,7 +349,7 @@ async function probeOpenBdap(): Promise<SourceHealth> {
   }
 }
 
-async function probeSiope(): Promise<SourceHealth> {
+async function probeSiope(signal?: AbortSignal): Promise<SourceHealth> {
   const base = baseHealth("siope");
   const startedAt = performance.now();
   const year = new Date().getUTCFullYear();
@@ -358,6 +363,7 @@ async function probeSiope(): Promise<SourceHealth> {
         Range: "bytes=0-0",
       },
       tags: ["health:siope", `dataset:siope-uscite-${year}`],
+      signal,
     });
 
     if (!response.ok) throw new Error(`SIOPE open data HTTP ${response.status}`);
@@ -715,7 +721,7 @@ export function getSnapshotManagedSourceHealth(): SourceHealth[] {
   ];
 }
 
-type SourceHealthAdapter = () => SourceHealth | Promise<SourceHealth>;
+type SourceHealthAdapter = (signal?: AbortSignal) => SourceHealth | Promise<SourceHealth>;
 
 /** One concrete health adapter for every source policy. */
 export const SOURCE_HEALTH_ADAPTERS = Object.freeze({
@@ -759,11 +765,22 @@ export function orderSourceHealth(entries: readonly SourceHealth[]): SourceHealt
   });
 }
 
-export async function getSourceHealthOverview(): Promise<SourceHealth[]> {
+export async function getSourceHealthOverview(
+  options: { signal?: AbortSignal; deadlineMs?: number } = {},
+): Promise<SourceHealth[]> {
+  if (options.deadlineMs !== undefined && (!Number.isFinite(options.deadlineMs) || options.deadlineMs <= 0)) {
+    throw new Error("Budget temporale stato fonti non valido");
+  }
+  const deadline = options.deadlineMs === undefined
+    ? undefined
+    : AbortSignal.timeout(Math.trunc(options.deadlineMs));
+  const signal = options.signal && deadline
+    ? AbortSignal.any([options.signal, deadline])
+    : options.signal ?? deadline;
   const entries = await Promise.all(SOURCE_IDS.map((sourceId) => {
     const adapter = SOURCE_HEALTH_ADAPTERS[sourceId] as SourceHealthAdapter | undefined;
     if (!adapter) throw new Error(`Adapter operativo senza probe: ${sourceId}`);
-    return adapter();
+    return adapter(signal);
   }));
   return orderSourceHealth(entries);
 }

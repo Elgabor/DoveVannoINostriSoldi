@@ -1,4 +1,8 @@
 import { fetchOfficialSource } from "@/lib/data/source-fetch";
+import {
+  ipaRuntimeFetchOptions,
+  type IpaRuntimeFetchOptions,
+} from "@/lib/ipa-runtime-fetch";
 
 const IPA_DATASTORE_SEARCH =
   "https://indicepa.gov.it/ipa-dati/api/3/action/datastore_search";
@@ -227,8 +231,7 @@ function normalizedQueryTokens(value: string): string[] {
 
 async function datastoreRequest(
   params: URLSearchParams,
-  signal?: AbortSignal,
-  fetchOptions: Readonly<{ maxRetries?: number; timeoutMs?: number }> = {},
+  fetchOptions: IpaRuntimeFetchOptions = {},
 ): Promise<IpaSearchResult> {
   params.set("resource_id", IPA_ENTI_RESOURCE_ID);
 
@@ -236,14 +239,13 @@ async function datastoreRequest(
   const response = await fetchOfficialSource("ipa", url, {
     kind: "data",
     headers: { Accept: "application/json" },
-    signal,
+    ...ipaRuntimeFetchOptions(fetchOptions),
     tags: ["dataset:ipa-enti"],
-    maxRetries: fetchOptions.maxRetries ?? 0,
-    timeoutMs: fetchOptions.timeoutMs ?? 4_000,
-    // Interactive entity/search paths must not let upstream 429 become the page status.
-    cacheMode: "no-store",
-    rejectHttpError: true,
   });
+
+  if (!response.ok) {
+    throw new IpaUpstreamHttpError("datastore", response.status);
+  }
 
   const payload = (await response.json()) as CkanDatastoreResponse;
 
@@ -281,7 +283,17 @@ export async function searchIpaEntities(options: {
   if (natureCode) filters.Codice_natura = natureCode;
   if (Object.keys(filters).length > 0) params.set("filters", JSON.stringify(filters));
 
-  return datastoreRequest(params, options.signal);
+  return datastoreRequest(params, options);
+}
+
+export class IpaUpstreamHttpError extends Error {
+  readonly status: number;
+
+  constructor(operation: string, status: number) {
+    super(`IPA ${operation} upstream HTTP ${status}`);
+    this.name = "IpaUpstreamHttpError";
+    this.status = status;
+  }
 }
 
 /**
@@ -305,7 +317,7 @@ export async function searchIpaEntitiesByPrefix(options: {
   const limit = clamp(options.limit ?? 20, 1, IPA_SEARCH_MAX_LIMIT);
 
   if (queryTokens.length === 0) {
-    return searchIpaEntities({ limit, signal: options.signal });
+    return searchIpaEntities({ ...options, limit });
   }
 
   const predicates = queryTokens.map(tokenSearchPredicate).map((predicate) => `(${predicate})`);
@@ -333,13 +345,13 @@ export async function searchIpaEntitiesByPrefix(options: {
   const response = await fetchOfficialSource("ipa", sourceUrl, {
     kind: "data",
     headers: { Accept: "application/json" },
-    signal: options.signal,
+    ...ipaRuntimeFetchOptions(options),
     tags: ["dataset:ipa-enti", "view:global-search"],
-    maxRetries: 0,
-    timeoutMs: 4_000,
-    cacheMode: "no-store",
-    rejectHttpError: true,
   });
+
+  if (!response.ok) {
+    throw new IpaUpstreamHttpError("SQL", response.status);
+  }
 
   const payload = (await response.json()) as CkanSqlResponse;
   if (!payload.success || !Array.isArray(payload.result?.records)) {
@@ -359,8 +371,8 @@ export async function searchIpaEntitiesByPrefix(options: {
   };
 }
 
-export async function getIpaCentralAdministrations(): Promise<IpaSearchResult> {
-  return searchIpaEntities({ categoryCode: "C1", limit: 50 });
+export async function getIpaCentralAdministrations(signal?: AbortSignal): Promise<IpaSearchResult> {
+  return searchIpaEntities({ categoryCode: "C1", limit: 50, signal });
 }
 
 export async function getIpaEntityByCode(
@@ -377,14 +389,14 @@ export async function getIpaEntityByCode(
 
   // Page and API lookups must not retry a 500: each extra attempt is billed
   // compute while crawlers and clients retry the same URL.
-  const result = await datastoreRequest(params, signal, { maxRetries: 0, timeoutMs: 4_000 });
+  const result = await datastoreRequest(params, { signal });
   return result.records[0] ?? null;
 }
 
-export async function getIpaRegistryStats(): Promise<{
+export async function getIpaRegistryStats(signal?: AbortSignal): Promise<{
   total: number;
   observedAt: string;
 }> {
-  const result = await searchIpaEntities({ limit: 0 });
+  const result = await searchIpaEntities({ limit: 0, signal });
   return { total: result.total, observedAt: result.observedAt };
 }

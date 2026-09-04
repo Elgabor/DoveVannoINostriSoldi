@@ -565,6 +565,22 @@ async function bodyText(page) {
   return page.$eval("body", (body) => body.innerText);
 }
 
+async function assertGovernmentChartKeyboard(page, label) {
+  const selector = '[data-slide-id] svg[role="img"][tabindex="0"]';
+  const chart = await page.$(selector);
+  assert.ok(chart, `${label}: grafico navigabile da tastiera assente`);
+  await page.$eval(selector, (element) => element.focus());
+  assert.equal(
+    await page.$eval(selector, (element) => document.activeElement === element),
+    true,
+    `${label}: il grafico non riceve il focus`,
+  );
+  const currentPeriod = await page.$eval('[data-slide-id] [role="status"] strong', (element) => element.textContent);
+  await page.keyboard.press("ArrowLeft");
+  const previousPeriod = await page.$eval('[data-slide-id] [role="status"] strong', (element) => element.textContent);
+  assert.notEqual(previousPeriod, currentPeriod, `${label}: freccia sinistra non cambia il periodo letto`);
+}
+
 function assertTextMatches(text, pattern, label) {
   assert.ok(pattern.test(text), `${label}: testo atteso ${pattern} assente`);
 }
@@ -780,7 +796,7 @@ const completed = [];
 try {
   browser = await launchBrowser();
 
-  for (const width of [390, 1280]) {
+  for (const width of [390, 768, 1280]) {
     const label = `Pagella governi ${width}px`;
     await runScenario(browser, {
       label,
@@ -788,9 +804,8 @@ try {
       width,
       validate: async (page) => {
         const text = await bodyText(page);
-        assertTextMatches(text, /Economia italiana: cosa sta migliorando e cosa no/i, label);
-        assertTextMatches(text, /Come sta andando con Meloni-I/i, label);
-        assertTextMatches(text, /AMECO/i, label);
+        assertTextMatches(text, /Pagella politico-economica/i, label);
+        assertTextMatches(text, /Meloni I/i, label);
         assertTextMatches(text, /Eurostat/i, label);
         assert.equal(
           await page.$eval("body", (element) => getComputedStyle(element).fontFamily.includes("Geist")),
@@ -805,10 +820,11 @@ try {
           `${label}: selettore indicatori sotto i 44px`,
         );
         await indicatorButton.click();
+        await assertGovernmentChartKeyboard(page, label);
 
         await page.evaluate(() => {
           const summary = [...document.querySelectorAll("summary")].find(
-            (candidate) => candidate.textContent?.trim() === "Dati del grafico in tabella",
+            (candidate) => candidate.textContent?.trim() === "Apri la tabella equivalente",
           );
           summary?.click();
         });
@@ -822,32 +838,35 @@ try {
     completed.push(label);
   }
 
-  await runScenario(browser, {
-    label: "Confronto governi 390px",
-    pathname: "/governi/confronta",
-    width: 390,
-    validate: async (page) => {
-      await page.select('select[name="x"]', "prodi-i");
-      await page.select('select[name="y"]', "meloni-i");
-      await Promise.all([
-        page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-        page.click('main button[type="submit"]'),
-      ]);
-      assert.equal(new URL(page.url()).searchParams.get("x"), "prodi-i");
-      assert.equal(new URL(page.url()).searchParams.get("y"), "meloni-i");
-      const text = await bodyText(page);
-      assertTextMatches(text, /Prodi-I/i, "Confronto governi 390px");
-      assertTextMatches(text, /Meloni-I/i, "Confronto governi 390px");
-      assert.equal(
-        await page.$("[data-higher-result]"),
-        null,
-        "Confronto governi 390px: evidenza da vincitore ancora presente",
-      );
-    },
-  });
-  completed.push("Confronto governi 390px");
+  for (const width of [390, 768, 1280]) {
+    const label = `Confronto governi ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/governi/confronta",
+      width,
+      validate: async (page) => {
+        await page.select('select[name="sinistra"]', "prodi-i");
+        await page.select('select[name="destra"]', "meloni-i");
+        await Promise.all([
+          page.waitForNavigation({ waitUntil: "domcontentloaded" }),
+          page.click('main button[type="submit"]'),
+        ]);
+        assert.equal(new URL(page.url()).searchParams.get("sinistra"), "prodi-i");
+        assert.equal(new URL(page.url()).searchParams.get("destra"), "meloni-i");
+        const text = await bodyText(page);
+        assertTextMatches(text, /Prodi I/i, label);
+        assertTextMatches(text, /Meloni I/i, label);
+        assert.equal(
+          await page.$("[data-higher-result]"),
+          null,
+          `${label}: evidenza da vincitore ancora presente`,
+        );
+      },
+    });
+    completed.push(label);
+  }
 
-  for (const width of [390, 1280]) {
+  for (const width of [390, 768, 1280]) {
     const label = `Scheda governo Meloni-I ${width}px`;
     await runScenario(browser, {
       label,
@@ -857,20 +876,21 @@ try {
         const text = await bodyText(page);
         assert.equal(
           await page.$eval("main h1", (element) => element.textContent?.trim()),
-          "Meloni-I",
+          "Meloni I",
           `${label}: H1 della scheda assente`,
         );
-        assertTextMatches(text, /Commissione europea · AMECO/i, label);
-        assertTextMatches(text, /Cosa ha ereditato/i, label);
-        assertTextMatches(text, /Cosa i dati non dimostrano/i, label);
+        assertTextMatches(text, /Eurostat/i, label);
+        assertTextMatches(text, /Il mandato in breve/i, label);
+        assertTextMatches(text, /Geopolitica, shock e crisi/i, label);
 
         const indicatorButton = await page.$('main button[aria-pressed="false"]');
         assert.ok(indicatorButton, `${label}: selettore indicatori assente`);
         await indicatorButton.click();
+        await assertGovernmentChartKeyboard(page, label);
 
         await page.evaluate(() => {
           const summary = [...document.querySelectorAll("summary")].find(
-            (candidate) => candidate.textContent?.trim() === "Dati del grafico in tabella",
+            (candidate) => candidate.textContent?.trim() === "Apri la tabella equivalente",
           );
           summary?.click();
         });
@@ -882,6 +902,35 @@ try {
       },
     });
     completed.push(label);
+  }
+
+  for (const width of [390, 768, 1280]) {
+    for (const state of [
+      {
+        id: "dalema-ii",
+        expected: /Mandato troppo breve per i dati annuali disponibili/i,
+        name: "mandato breve",
+      },
+      {
+        id: "dini-i",
+        expected: /Dati AMECO obbligatori incompleti/i,
+        name: "dati mancanti",
+      },
+    ]) {
+      const label = `Pagella governi ${state.name} ${width}px`;
+      await runScenario(browser, {
+        label,
+        pathname: `/governi/${state.id}`,
+        width,
+        validate: async (page) => {
+          const text = await bodyText(page);
+          assertTextMatches(text, /Voto non calcolabile/i, label);
+          assertTextMatches(text, state.expected, label);
+          assertTextMatches(text, /Cosa è successo/i, label);
+        },
+      });
+      completed.push(label);
+    }
   }
 
   for (const width of [320, 390, 768, 1280]) {

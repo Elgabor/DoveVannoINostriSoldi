@@ -59,7 +59,7 @@ def review_deadline(reviewed_at):
     return dt.date(year, month, min(reviewed.day, calendar.monthrange(year, month)[1]))
 
 
-def validate_release(core, supplemental, registry, policy):
+def validate_release(core, supplemental, registry, policy, checked_at=None):
     """The same offline contract gates both refresh and the existing publisher."""
     score.validate_snapshot(core)
     chronology.validate_registry(registry)
@@ -72,6 +72,9 @@ def validate_release(core, supplemental, registry, policy):
     if set(review) != {"reviewedAt", "contextsSha256", "chronologySha256"}:
         score.fail("context review: unexpected schema")
     review_deadline(review["reviewedAt"])
+    checked_at = checked_at or dt.datetime.now(dt.UTC).date()
+    if supplemental["as_of_date"] > checked_at.isoformat():
+        score.fail("snapshot as_of_date exceeds validation date")
     if review["reviewedAt"] > supplemental["as_of_date"]:
         score.fail("context review date exceeds snapshot as_of_date")
     if (review["contextsSha256"] != page._canonical_hash(supplemental["contexts"])
@@ -236,8 +239,8 @@ def refresh(retrieved_at, *, root=ROOT, fetch_score=score.download, build_page=p
                           "scoreAcquiredAt": candidate_core["sources"]["ameco"]["retrievedAt"],
                           "coreArtifactSha256": score.sha256(encoded(candidate_core))}, ensure_ascii=False, indent=2))
         return False
-    validate_release(candidate_core, candidate_page, registry, policy)
     today = dt.date.fromisoformat(retrieved_at[:10])
+    validate_release(candidate_core, candidate_page, registry, policy, checked_at=today)
     if today < dt.date.fromisoformat(policy["contextReview"]["reviewedAt"]):
         score.fail("context review date is in the future")
     if today >= review_deadline(policy["contextReview"]["reviewedAt"]):

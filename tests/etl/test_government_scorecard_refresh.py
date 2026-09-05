@@ -292,6 +292,13 @@ class OfflineContextReviewDateTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'context review date exceeds snapshot as_of_date'):
             refresh.validate_release(self.core, self.supplemental, self.registry, self.policy)
 
+    def test_offline_release_rejects_future_snapshot_and_review(self):
+        future = (refresh.dt.datetime.now(refresh.dt.UTC).date() + refresh.dt.timedelta(days=1)).isoformat()
+        self.supplemental['as_of_date'] = future
+        self.policy['contextReview']['reviewedAt'] = future
+        with self.assertRaisesRegex(ValueError, 'snapshot as_of_date exceeds validation date'):
+            refresh.validate_release(self.core, self.supplemental, self.registry, self.policy)
+
     def test_offline_release_accepts_review_on_snapshot_date_and_current_release(self):
         refresh.validate_release(self.core, self.supplemental, self.registry, self.policy)
         self.policy['contextReview']['reviewedAt'] = self.supplemental['as_of_date']

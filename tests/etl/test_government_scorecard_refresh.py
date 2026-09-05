@@ -2,6 +2,7 @@ import copy
 import contextlib
 import io
 import json
+import runpy
 import tempfile
 import unittest
 from pathlib import Path
@@ -256,6 +257,53 @@ class RefreshTests(unittest.TestCase):
         self.page['sources'][1]['raw_sha256'] = 'a' * 64
         self.assertFalse(self.run_refresh(observe=True))
         self.assertEqual(self.files(), self.originals)
+
+
+class OfflineContextReviewDateTests(unittest.TestCase):
+    def setUp(self):
+        self.core = score.load_json(score.DEFAULT_OUTPUT)
+        self.supplemental = page._load(page.OUTPUT)
+        self.registry = page._load(page.CHRONOLOGY_PATH)
+        self.policy = refresh.load_policy(refresh.POLICY_PATH)
+
+    def test_offline_release_rejects_future_review_with_valid_hashes(self):
+        self.policy['contextReview']['reviewedAt'] = (
+            refresh.dt.date.fromisoformat(self.supplemental['as_of_date'])
+            + refresh.dt.timedelta(days=1)
+        ).isoformat()
+        self.assertEqual(self.policy['contextReview']['contextsSha256'],
+                         page._canonical_hash(self.supplemental['contexts']))
+        self.assertEqual(self.policy['contextReview']['chronologySha256'],
+                         page._canonical_hash(self.registry))
+        with self.assertRaisesRegex(ValueError, 'context review date exceeds snapshot as_of_date'):
+            refresh.validate_release(self.core, self.supplemental, self.registry, self.policy)
+
+    def test_offline_release_accepts_review_on_snapshot_date_and_current_release(self):
+        refresh.validate_release(self.core, self.supplemental, self.registry, self.policy)
+        self.policy['contextReview']['reviewedAt'] = self.supplemental['as_of_date']
+        refresh.validate_release(self.core, self.supplemental, self.registry, self.policy)
+
+    def test_offline_release_still_rejects_review_before_registry_verification(self):
+        self.policy['contextReview']['reviewedAt'] = (
+            refresh.dt.date.fromisoformat(self.registry['verifiedAt'])
+            - refresh.dt.timedelta(days=1)
+        ).isoformat()
+        with self.assertRaisesRegex(ValueError, 'requires a matching editorial review'):
+            refresh.validate_release(self.core, self.supplemental, self.registry, self.policy)
+
+    def test_ci_checker_inherits_future_review_rejection(self):
+        checker = runpy.run_path(str(refresh.ROOT / 'scripts/ci/check-government-scorecard-artifacts.py'))
+        with contextlib.redirect_stdout(io.StringIO()):
+            checker['main']()
+        policy = copy.deepcopy(self.policy)
+        policy['contextReview']['reviewedAt'] = (
+            refresh.dt.date.fromisoformat(self.supplemental['as_of_date'])
+            + refresh.dt.timedelta(days=1)
+        ).isoformat()
+        # Replace only the receipt input; exercise the real checker and validator.
+        with patch.object(checker['government_scorecard_refresh'], 'load_policy', return_value=policy):
+            with self.assertRaisesRegex(ValueError, 'context review date exceeds snapshot as_of_date'):
+                checker['main']()
 
 
 class RawEurostatTests(unittest.TestCase):

@@ -72,6 +72,8 @@ def validate_release(core, supplemental, registry, policy):
     if set(review) != {"reviewedAt", "contextsSha256", "chronologySha256"}:
         score.fail("context review: unexpected schema")
     review_deadline(review["reviewedAt"])
+    if review["reviewedAt"] > supplemental["as_of_date"]:
+        score.fail("context review date exceeds snapshot as_of_date")
     if (review["contextsSha256"] != page._canonical_hash(supplemental["contexts"])
             or review["chronologySha256"] != page._canonical_hash(registry)
             or review["reviewedAt"] < registry["verifiedAt"]):

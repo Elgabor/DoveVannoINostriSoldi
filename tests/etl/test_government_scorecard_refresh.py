@@ -161,6 +161,20 @@ class RefreshTests(unittest.TestCase):
         self.assertEqual(self.files(), self.originals)
         self.assertEqual(str(refresh.review_deadline('2026-01-31')), '2026-04-30')
 
+    def test_unchanged_context_review_advances_snapshot_date_once(self):
+        self.policy['contextReview']['reviewedAt'] = '2026-09-04'
+        self.save_policy()
+
+        self.assertTrue(self.run_refresh(timestamp='2026-09-04T08:00:00Z'))
+        first = self.files()
+        result = page._load(self.root / 'src/data/generated/government-scorecard-page.json')
+        self.assertEqual(result['as_of_date'], '2026-09-04')
+        self.assertEqual(first['government-scorecard.json'], self.originals['government-scorecard.json'])
+
+        self.page = result
+        self.assertFalse(self.run_refresh(timestamp='2026-09-05T08:00:00Z'))
+        self.assertEqual(self.files(), first)
+
     def test_failed_final_validation_restores_both_exact_original_files(self):
         self.approve_inflation_change()
         def fail():

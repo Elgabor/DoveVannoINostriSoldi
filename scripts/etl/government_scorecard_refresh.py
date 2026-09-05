@@ -132,7 +132,7 @@ def validate_release(core, supplemental, registry, policy):
                         score.fail("score display must use common observed AMECO values")
 
 
-def preserve_unchanged_receipts(candidate, previous):
+def preserve_unchanged_receipts(candidate, previous, reviewed_at):
     """A successful poll is recorded in the run log, never by rewriting acquisition dates."""
     previous_sources = {item["id"]: item for item in previous["sources"]}
     retained = {}
@@ -157,7 +157,7 @@ def preserve_unchanged_receipts(candidate, previous):
                             point["retrieved_at"] = old_point["retrieved_at"]
     without_date = lambda value: {key: item for key, item in value.items() if key != "as_of_date"}
     if without_date(candidate) == without_date(previous):
-        candidate["as_of_date"] = previous["as_of_date"]
+        candidate["as_of_date"] = max(previous["as_of_date"], reviewed_at)
 
 
 def require_complete_update(candidate, previous):
@@ -224,7 +224,11 @@ def refresh(retrieved_at, *, root=ROOT, fetch_score=score.download, build_page=p
         candidate_core = previous_core
     candidate_page = build_page(retrieved_at, core=candidate_core, chronology=registry,
                                 existing=previous_page, core_hash=score.sha256(encoded(candidate_core)))
-    preserve_unchanged_receipts(candidate_page, previous_page)
+    preserve_unchanged_receipts(
+        candidate_page,
+        previous_page,
+        policy["contextReview"]["reviewedAt"],
+    )
     require_complete_update(candidate_page, previous_page)
     if observe:
         print(json.dumps({"approvedSources": [receipt(item) for item in candidate_page["sources"]],

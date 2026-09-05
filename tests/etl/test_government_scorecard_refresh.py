@@ -1,7 +1,6 @@
 import copy
 import contextlib
 import io
-import json
 import runpy
 import tempfile
 import unittest

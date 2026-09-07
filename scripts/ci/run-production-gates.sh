@@ -83,6 +83,14 @@ echo "::endgroup::"
 
 export DVNS_BASE_URL="$BASE_URL"
 
+echo "::group::Browser assistant chat suite"
+npm run test:browser:assistant
+echo "::endgroup::"
+
+echo "::group::Browser assistant attachments suite"
+npm run test:browser:attachments
+echo "::endgroup::"
+
 echo "::group::Browser assistant voice suite"
 npm run test:browser:voice
 echo "::endgroup::"

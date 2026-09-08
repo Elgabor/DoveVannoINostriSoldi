@@ -63,8 +63,6 @@ export const dvnsStarterPrompts = [
   },
 ] as const;
 
-
-
 const listDatasetsToolConfig = {
   title: "Elenca i dataset",
   description: "Elenca tutti i dataset disponibili, i filtri ammessi, la freschezza e le cautele interpretative.",

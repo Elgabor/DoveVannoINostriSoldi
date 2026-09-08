@@ -4,7 +4,7 @@ import { classifyFreshness, type Freshness } from "@/lib/data/freshness";
 import { fetchOfficialSource } from "@/lib/data/source-fetch";
 import { ipaRuntimeFetchOptions } from "@/lib/ipa-runtime-fetch";
 import {
-  SOURCE_IDS,
+  ACTIVE_SOURCE_IDS,
   SOURCE_POLICIES,
   type SourceId,
   type SourcePolicy,
@@ -43,7 +43,7 @@ import { getGovernmentScorecardV6SupplementalSnapshot } from "@/lib/data/governm
 import { getGovernmentScorecardSourceSummary } from "@/lib/government-scorecard-governments";
 import istatMunicipalityGeographyMetadata from "@/data/generated/istat-municipality-geography.meta.json";
 
-export type SourceIntegrationState = "active";
+export type SourceIntegrationState = "active" | "configured";
 export type SourceReachability = "up" | "down" | "not-probed";
 
 export type SourceHealth = {
@@ -148,6 +148,7 @@ function freshnessFor(sourceId: SourceId, sourceTimestamp: string | null): Fresh
 
 function baseHealth(
   sourceId: SourceId,
+  integration: SourceIntegrationState = SOURCE_POLICIES[sourceId].integration ?? "active",
 ): Omit<
   SourceHealth,
   "reachability" | "freshness" | "latencyMs" | "detail" | "recordCount"
@@ -157,7 +158,7 @@ function baseHealth(
     sourceId,
     label: policy.label,
     owner: policy.owner,
-    integration: "active",
+    integration,
     checkedAt: new Date().toISOString(),
     policy: {
       cadence: policy.cadence,
@@ -168,6 +169,47 @@ function baseHealth(
       sourceUrl: policy.sourceUrl,
     },
   };
+}
+
+function unconfiguredOpenCupStorage(): SourceHealth {
+  const base = baseHealth("opencup");
+  return {
+    ...base,
+    reachability: base.integration === "active" ? "down" : "not-probed",
+    freshness: freshnessFor("opencup", null),
+    latencyMs: null,
+    detail: "Manifest nazionale OpenCUP non configurato: dati non disponibili.",
+    recordCount: null,
+  };
+}
+
+async function probeOpenCup(signal?: AbortSignal): Promise<SourceHealth> {
+  if (!process.env.DVNS_OPENCUP_PROJECTS_MANIFEST) return unconfiguredOpenCupStorage();
+  const base = baseHealth("opencup");
+  const startedAt = performance.now();
+  try {
+    const { probeOpenCupRelease } = await import("@/lib/opencup-projects-index");
+    const release = await probeOpenCupRelease(signal);
+    return {
+      ...base,
+      reachability: "up",
+      freshness: freshnessFor("opencup", release.publicationDate),
+      latencyMs: Math.round(performance.now() - startedAt),
+      detail: release.fixtureOnly
+        ? `Fixture sintetica verificata · release ${release.releaseId.slice(0, 12)} · ${release.publicRows} righe · ${release.distinctCups} CUP distinti · copertura nazionale non attiva.`
+        : `Manifest e canary verificati · release ${release.releaseId.slice(0, 12)} · ${release.publicRows.toLocaleString("it-IT")} righe · ${release.distinctCups.toLocaleString("it-IT")} CUP distinti${base.integration === "configured" ? " · dataset non ancora attivo" : ""}.`,
+      recordCount: release.publicRows,
+    };
+  } catch (error) {
+    return {
+      ...base,
+      reachability: "down",
+      freshness: freshnessFor("opencup", null),
+      latencyMs: Math.round(performance.now() - startedAt),
+      detail: error instanceof Error ? error.message : "Artifact OpenCUP non verificabile.",
+      recordCount: null,
+    };
+  }
 }
 
 async function getIpaRecordCount(signal?: AbortSignal): Promise<number | null> {
@@ -829,6 +871,7 @@ export const SOURCE_HEALTH_ADAPTERS = Object.freeze({
   "istat-casellario-pensioni": snapshotManagedIstatCasellarioPensioni,
   consip: snapshotManagedConsip,
   opencoesione: snapshotManagedOpenCoesione,
+  opencup: probeOpenCup,
   italiadomani: snapshotManagedPnrr,
   opencivitas: snapshotManagedOpenCivitas,
   consulenti: snapshotManagedConsulenti,
@@ -854,7 +897,7 @@ export const SOURCE_HEALTH_ADAPTERS = Object.freeze({
 /** Orders every adapter by the public registry and fails closed on omissions. */
 export function orderSourceHealth(entries: readonly SourceHealth[]): SourceHealth[] {
   const bySource = new Map(entries.map((entry) => [entry.sourceId, entry]));
-  return SOURCE_IDS.map((sourceId) => {
+  return ACTIVE_SOURCE_IDS.map((sourceId) => {
     const health = bySource.get(sourceId);
     if (!health) throw new Error(`Adapter operativo senza probe: ${sourceId}`);
     return health;
@@ -873,7 +916,7 @@ export async function getSourceHealthOverview(
   const signal = options.signal && deadline
     ? AbortSignal.any([options.signal, deadline])
     : options.signal ?? deadline;
-  const entries = await Promise.all(SOURCE_IDS.map((sourceId) => {
+  const entries = await Promise.all(ACTIVE_SOURCE_IDS.map((sourceId) => {
     const adapter = SOURCE_HEALTH_ADAPTERS[sourceId] as SourceHealthAdapter | undefined;
     if (!adapter) throw new Error(`Adapter operativo senza probe: ${sourceId}`);
     return adapter(signal);

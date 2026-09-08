@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import "./helpers/register-ts-alias.mjs";
 
-const { SOURCE_IDS, SOURCE_POLICIES } = await import("../src/lib/data/source-policy.ts");
+const { ACTIVE_SOURCE_IDS, SOURCE_IDS, SOURCE_POLICIES } = await import("../src/lib/data/source-policy.ts");
 const {
   getSnapshotManagedSourceHealth,
   getSourceHealthOverview,
@@ -52,7 +52,7 @@ test("source health applies one global deadline and aborts every live probe", as
     const started = performance.now();
     const overview = await getSourceHealthOverview({ deadlineMs: 5 });
     const elapsed = performance.now() - started;
-    assert.deepEqual(overview.map((entry) => entry.sourceId), SOURCE_IDS);
+    assert.deepEqual(overview.map((entry) => entry.sourceId), ACTIVE_SOURCE_IDS);
     assert.ok(signals.length > 0);
     assert.ok(signals.every((signal) => signal.aborted));
     assert.ok(elapsed < 1_500, `global source-health deadline was cosmetic: ${elapsed}ms`);
@@ -108,12 +108,12 @@ test("source health registry covers every operational source, including ANAC, IN
     assert.equal(health.sourceId, snapshot.sourceId);
   }
   const snapshotIds = new Set(snapshots.map((entry) => entry.sourceId));
-  const live = SOURCE_IDS
+  const live = ACTIVE_SOURCE_IDS
     .filter((sourceId) => !snapshotIds.has(sourceId))
     .map(fakeLiveHealth);
   const overview = orderSourceHealth([...live, ...snapshots]);
 
-  assert.deepEqual(overview.map((entry) => entry.sourceId), SOURCE_IDS);
+  assert.deepEqual(overview.map((entry) => entry.sourceId), ACTIVE_SOURCE_IDS);
   const anac = overview.find((entry) => entry.sourceId === "anac");
   assert.equal(anac?.reachability, "not-probed");
   assert.equal(anac?.recordCount, 1_453_918);
@@ -155,6 +155,12 @@ test("source health registry covers every operational source, including ANAC, IN
   assert.equal(pnrr?.freshness.sourceTimestamp, "2026-06-13");
   assert.match(pnrr?.detail ?? "", /285992 CUP validi/);
   assert.match(pnrr?.detail ?? "", /senza pagamenti/);
+  const openCup = overview.find((entry) => entry.sourceId === "opencup");
+  assert.equal(openCup, undefined);
+  assert.equal(SOURCE_POLICIES.opencup.integration, "configured");
+  assert.equal(SOURCE_POLICIES.opencup.cadence, "mensile");
+  assert.equal(SOURCE_POLICIES.opencup.discoveryRevalidateSeconds, 86_400);
+  assert.equal(SOURCE_POLICIES.opencup.staleAfterSeconds, 62 * 86_400);
   const istat = overview.find((entry) => entry.sourceId === "istat");
   assert.equal(istat?.reachability, "not-probed");
   assert.equal(istat?.recordCount, 7_894);

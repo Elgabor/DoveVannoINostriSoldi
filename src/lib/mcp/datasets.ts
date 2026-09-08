@@ -8,7 +8,10 @@ import {
 const datasetFilters = new Map(datasetCatalog.map((dataset) => [dataset.id, new Set(dataset.filters)]));
 
 function rejectUnsupportedFilters(query: DatasetQuery) {
-  const supported = datasetFilters.get(query.dataset) ?? new Set<string>();
+  const supported = datasetFilters.get(query.dataset);
+  if (!supported) {
+    throw new Error(`Dataset non supportato o non disponibile: ${query.dataset}.`);
+  }
   const provided = Object.entries(query)
     .filter(([key, value]) => key !== "dataset" && value !== undefined)
     .map(([key]) => key);
@@ -63,6 +66,15 @@ export async function queryPublicDataset(
   const offset = boundedInteger(query.offset, 0, 0, 100_000);
 
   switch (query.dataset) {
+    case "opencup_progetto": {
+      const { selectOpenCupProjects } = await import("@/lib/integrated-public-view");
+      return jsonSafe(await selectOpenCupProjects({
+        cup: query.cup,
+        limit: query.limit,
+        cursor: query.cursor,
+        signal: options.signal,
+      }));
+    }
     case "pnrr_progetti": {
       const { selectPnrrProjects } = await import("@/lib/integrated-public-view");
       return jsonSafe(await selectPnrrProjects({

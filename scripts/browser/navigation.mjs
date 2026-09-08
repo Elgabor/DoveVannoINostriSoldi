@@ -1,10 +1,17 @@
 import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync } from "node:fs";
-import { PRIMARY_NAV } from "../../src/lib/site-navigation.ts";
+import { PRIMARY_NAV, flattenNavLinks } from "../../src/lib/site-navigation.ts";
 import { closeBrowser, defaultBaseUrl, launchBrowser, runScenario, waitForServer } from "./harness.mjs";
 
 const baseUrl = defaultBaseUrl();
-const destinations = [...new Set(PRIMARY_NAV.flatMap((item) => [item.href, ...(item.children ?? []).map((child) => child.href)]))];
+const destinations = [
+  ...new Set(
+    PRIMARY_NAV.flatMap((item) => [
+      item.href,
+      ...flattenNavLinks(item.children ?? []).map((child) => child.href),
+    ]),
+  ),
+];
 mkdirSync("artifacts/browser", { recursive: true });
 await waitForServer(baseUrl);
 const linkResults = [];

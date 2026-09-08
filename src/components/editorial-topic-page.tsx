@@ -144,7 +144,7 @@ export default async function EditorialTopicPage({ topic }: { topic: EditorialTo
         <div className={styles.sectionHeading}>
           <div>
             <h2 id="anteprima-record">Anteprima dei record</h2>
-            <p>Selezione breve; il collegamento apre grafico, fonti e tutte le righe.</p>
+            <p>Selezione breve; il collegamento apre fonti e tutte le righe.</p>
           </div>
           <Link className={styles.action} href="/dati">Apri il registro completo</Link>
         </div>
@@ -253,7 +253,7 @@ export default async function EditorialTopicPage({ topic }: { topic: EditorialTo
                 )}
                 <Link className={styles.action} href={`/dati/${result.dataset.id}`}>
                   {result.dataset.queryable
-                    ? "Vedi destinatari, importi e tutte le righe"
+                    ? "Esplora tutte le righe"
                     : "Apri scheda (senza numeri)"}
                 </Link>
               </div>

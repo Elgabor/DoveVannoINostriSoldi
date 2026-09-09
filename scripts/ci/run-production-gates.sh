@@ -101,6 +101,7 @@ export DVNS_BASE_URL="$BASE_URL"
 
 echo "::group::MCP HTTP smoke"
 npm run test:mcp:http -- --mode contract
+MCP_CONTRACT_WINDOW_COMPLETED_MS="$(node -e 'console.log(Date.now())')"
 echo "::endgroup::"
 
 echo "::group::Browser assistant chat suite"
@@ -124,10 +125,12 @@ npm run test:browser:papers
 echo "::endgroup::"
 
 echo "::group::MCP rate-limit window transition"
-# The 29 contract POSTs above share the local public-client window. Keep the
-# one unavoidable residual wait before the two subscriptions and 15-sample
-# load, which together occupy only 17 POSTs in the new window.
-node --input-type=module -e 'await new Promise((resolve) => setTimeout(resolve, 60100))'
+# The 29 contract POSTs above share the local public-client window. Start the
+# conservative residual interval only after that group completes: every POST is
+# known to predate this timestamp. The two subscriptions and 15-sample load then
+# occupy only 17 POSTs in the next window. Browser suites that already consumed
+# the interval continue immediately.
+node scripts/ci/mcp-rate-limit-window.mjs "$MCP_CONTRACT_WINDOW_COMPLETED_MS"
 echo "::endgroup::"
 
 echo "::group::MCP subscription smoke"

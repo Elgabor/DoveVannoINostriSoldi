@@ -433,7 +433,32 @@ class SiopeCompletePromotionTests(TestCase):
             private_map_out=None,
         )
         corpus.commit_artifacts(artifacts)
+        builder.unrelated_row_hashes = {
+            path.name: digest(path.read_bytes()) for path in builder.rows.glob("*.jsonl.gz")
+        }
         return builder, release, detail, append_release, corpus
+
+    def _assert_promoted(self, builder: ClosedSiopePromotionBuilder, detail, manifest: dict) -> None:
+        self.assertEqual(
+            json.loads(builder.release_proof.read_text())["datasets"]["publicRows"],
+            builder.expected_rows(manifest)["publicRows"],
+        )
+        self.assertEqual(
+            json.loads((builder.generated / "siope-nonmunicipal-provenance.json").read_text()),
+            manifest,
+        )
+        for name, expected_hash in builder.unrelated_row_hashes.items():
+            self.assertEqual(digest((builder.rows / name).read_bytes()), expected_hash)
+        detail.validate_committed_detail(
+            builder.detail,
+            provenance_path=builder.generated / "siope-nonmunicipal-provenance.json",
+            view_proof_path=builder.view_proof,
+            catalog_path=builder.catalog,
+            rows_dir=builder.rows,
+            receipts_dir=builder.receipts,
+            dataset_proof_path=builder.proof,
+            release_proof_path=builder.release_proof,
+        )
 
     def _release_gates(self, stack: ExitStack, builder: ClosedSiopePromotionBuilder, release) -> None:
         stack.enter_context(mock.patch.object(release, "_validate_archive_receipt", return_value={
@@ -520,17 +545,7 @@ class SiopeCompletePromotionTests(TestCase):
             self.assertEqual(builder.release_hashes(), before_update)
             append_release.append(**kwargs)
             self.assertFalse(stale.exists())
-            self.assertEqual(json.loads(builder.release_proof.read_text())["datasets"]["publicRows"], updated_expected["publicRows"])
-            detail.validate_committed_detail(
-                builder.detail,
-                provenance_path=builder.generated / "siope-nonmunicipal-provenance.json",
-                view_proof_path=builder.view_proof,
-                catalog_path=builder.catalog,
-                rows_dir=builder.rows,
-                receipts_dir=builder.receipts,
-                dataset_proof_path=builder.proof,
-                release_proof_path=builder.release_proof,
-            )
+            self._assert_promoted(builder, detail, updated_manifest)
 
     def test_automated_refresh_uses_candidate_manifest_and_rolls_back_seal_failure(self) -> None:
         import integrated_source_release as release
@@ -558,3 +573,4 @@ class SiopeCompletePromotionTests(TestCase):
             self.assertEqual(builder.release_hashes(), before_update)
             append_release.append(**kwargs)
             self.assertNotEqual(builder.release_hashes(), before_update)
+            self._assert_promoted(builder, detail, updated)

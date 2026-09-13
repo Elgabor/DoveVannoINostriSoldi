@@ -14,33 +14,34 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Lavorare in questo repository
 
-- Per task leggi `docs/AGENT_CONTEXT.md`; se non copre, parti da
-  `docs/ARCHITECTURE.md` (percorsi del dato) e `CONTRIBUTING.md` (setup e gate).
-  Non servono database, Docker o credenziali per avviare il sito.
-- MCP/API: leggi «MCP e API» in `docs/AGENT_CONTEXT.md` prima di toccare
+- Se la task appartiene a un dominio mappato, leggi solo la sua sezione in
+  `docs/AGENT_CONTEXT.md`. Per una task non mappata parti da
+  [ARCHITECTURE.md](docs/ARCHITECTURE.md) (percorsi del dato) e
+  `CONTRIBUTING.md` (setup e gate). Non servono database, Docker o credenziali.
+- MCP/API: leggi [«MCP e API»](docs/AGENT_CONTEXT.md#mcp-e-api) prima di toccare
   `src/lib/mcp/`. `/api/dati/[dataset]` è il corpus integrato, non un ID MCP.
 - Percorsi: pagine/API `src/app/`; UI `src/components/`; adapter e aggregazioni
   `src/lib/`; contratti `src/lib/data/`; acquisizione `scripts/etl/`.
 - Validazione e provenance restano al confine degli snapshot; il corpus integrato
-  pubblico passa da `integrated-public-view.ts` e nessuna riga raw entra nei
-  Client Component. Zero, dato mancante e cella oscurata restano distinti.
+  pubblico passa da `integrated-public-view.ts` e niente righe raw nei Client
+  Component. Zero, mancante e oscurato restano distinti.
 - Parti da `git status --short --branch`. Per lavoro isolato usa un worktree con
   `node_modules`, `.venv`, `.next` e porta propri. Non copiare `.env` o
-  condividere `.next` tra checkout.
+  condividere `.next`.
 - Test mirati: `node --experimental-strip-types --test tests/NOME.test.mjs`
   (`--test-name-pattern='testo'` per un caso); ETL con virtualenv attivo:
   `DVNS_OFFLINE_GUARD=1 PYTHONPATH=scripts/etl:scripts/ci python -m unittest discover -s tests/etl -p 'test_NOME.py'`.
-- `npm run typecheck` genera prima i tipi Next anche senza `next dev`; leggi le
-  guide della versione installata nel blocco Next qui sopra.
+- `npm run typecheck` genera i tipi Next anche senza `next dev`; leggi le guide
+  installate nel blocco Next.
 - Prima della consegna: `npm run ci:static`, `npm run ci:action-pins`, `npm test`,
   `npm run test:etl`, `npm run test:snapshots`, `npm run build`,
   `NEXT_PORT=PORTA_LIBERA npm run test:production`, `git diff --check`.
-  Per ETL e snapshot attiva il network guard come in CONTRIBUTING.
-- Il runner di produzione possiede il server e lo termina anche in errore. Log:
-  `artifacts/production/next.log`; browser e screenshot: `artifacts/browser/`;
+  Per ETL e snapshot attiva il network guard (CONTRIBUTING).
+- Il runner di produzione possiede e termina il proprio server anche in errore.
+  Log: `artifacts/production/next.log`; browser e screenshot: `artifacts/browser/`;
   Lighthouse: `.lighthouseci/`.
 - Socket e Chromium richiedono loopback. `listen EPERM` è un limite d'ambiente,
   non una regressione; il build scarica Geist da Google Fonts. Distingui rete da
-  errori di contratto; non disattivare i gate per un verde.
+  contratti; non disattivare i gate per un verde.
 - `npm run bench:runtime` misura gli hot path offline. Confronta revisioni sullo
-  stesso runtime e a macchina libera, conservando anche i digest.
+  stesso runtime e a macchina libera, conservando i digest.

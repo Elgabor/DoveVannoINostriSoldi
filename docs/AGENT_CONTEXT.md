@@ -8,13 +8,13 @@ a caso.
 
 ## Ingresso
 
-- **Quando serve**: all'inizio di ogni task, per scegliere le fonti da leggere.
-- **Fonti iniziali**: questa mappa; [docs/ARCHITECTURE.md](ARCHITECTURE.md) per i
-  percorsi reali del dato; [CONTRIBUTING.md](../CONTRIBUTING.md) per setup, test
-  e gate.
-- **Fallback**: se il tuo gruppo di lavoro non è ancora mappato (arriva nei
-  ticket successivi), parti da ARCHITECTURE per capire dove passa il dato e da
-  CONTRIBUTING per i comandi, poi segui i contratti sotto `src/lib/`.
+- **Quando serve**: solo se la task appartiene a un dominio mappato; leggi la
+  sezione pertinente, non tutta la mappa. Per una task non mappata non usare
+  questa mappa come ingresso: parti da
+  [docs/ARCHITECTURE.md](ARCHITECTURE.md) per i percorsi del dato e da
+  [CONTRIBUTING.md](../CONTRIBUTING.md) per setup, test e gate.
+- **Selezione**: una task trasversale legge solo l'unione delle sezioni
+  pertinenti; in questa fase l'unica sezione disponibile è «MCP e API».
 - **Invariante**: non leggere tutti i documenti del repository; apri soltanto la
   sezione pertinente e, da lì, le fonti che elenca.
 

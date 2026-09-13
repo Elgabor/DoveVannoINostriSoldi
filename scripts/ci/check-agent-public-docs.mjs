@@ -102,11 +102,19 @@ export function checkAgentPublicDocs(snapshot) {
         add(id, field, `campo obbligatorio mancante o vuoto: ${field}`);
       }
     }
-    const declaredSourceUrls = Array.isArray(card?.declaredSourceUrls) ? card.declaredSourceUrls : [];
-    const declaredReferenceUrls = Array.isArray(card?.declaredReferenceUrls) ? card.declaredReferenceUrls : [];
+    const declaredSourceUrls = card?.declaredSourceUrls;
+    const declaredReferenceUrls = card?.declaredReferenceUrls;
+    if (!Array.isArray(declaredSourceUrls)) {
+      add(id, "declaredSourceUrls", "campo obbligatorio mancante o non array: declaredSourceUrls");
+    }
+    if (!Array.isArray(declaredReferenceUrls)) {
+      add(id, "declaredReferenceUrls", "campo obbligatorio mancante o non array: declaredReferenceUrls");
+    }
+    const sourceUrls = Array.isArray(declaredSourceUrls) ? declaredSourceUrls : [];
+    const referenceUrls = Array.isArray(declaredReferenceUrls) ? declaredReferenceUrls : [];
     if (!Array.isArray(card?.sources)) {
       add(id, "sources", "elenco fonti mancante");
-    } else if (declaredSourceUrls.length > 0 && card.sources.length === 0) {
+    } else if (sourceUrls.length > 0 && card.sources.length === 0) {
       add(id, "sources", "elenco fonti vuoto nonostante fonti dichiarate dal descriptor");
     }
     if (!Array.isArray(card?.references)) add(id, "references", "elenco riferimenti mancante");
@@ -115,12 +123,12 @@ export function checkAgentPublicDocs(snapshot) {
     if (typeof sanitizePublicUrl === "function" && sanitizePublicUrl(routePath) === null) {
       add(id, "route-link", `link di scheda non ammesso: ${routePath}`);
     }
-    for (const url of declaredSourceUrls) {
+    for (const url of sourceUrls) {
       if (typeof sanitizePublicUrl === "function" && sanitizePublicUrl(url) === null) {
         add(id, "source-url", `URL fonte non ammesso: ${String(url)}`);
       }
     }
-    for (const url of declaredReferenceUrls) {
+    for (const url of referenceUrls) {
       if (typeof sanitizePublicUrl === "function" && sanitizePublicUrl(url) === null) {
         add(id, "reference-url", `URL riferimento non ammesso: ${String(url)}`);
       }

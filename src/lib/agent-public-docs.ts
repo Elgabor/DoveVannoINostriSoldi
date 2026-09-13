@@ -1,4 +1,3 @@
-import { mefIrpefSourceMeta } from "@/lib/data/mef-irpef-source";
 import {
   datasetCatalog,
   type DatasetDescriptor,
@@ -58,24 +57,10 @@ const NO_STABLE_COVERAGE =
   "Copertura non rappresentata da un metadato stabile nel catalogo: dipende dalla risposta del dataset.";
 
 const MARKDOWN_METACHARACTERS = /([\\`*_[\]<>|#])/g;
-const FORBIDDEN_LOCAL_RESULT = /[()\]\[`<>|\r\n]/;
+const FORBIDDEN_URL_RESULT = /[()\]\[`<>|\r\n]/;
+const DANGEROUS_URL_CHARACTERS = /[()\]\[`<>|\s\u0000-\u001f\u007f]/g;
 const LOCAL_DATASET_PATH_PREFIX = `${AGENTS_INDEX_PATH}/datasets/`;
 const SAFE_DATASET_SLUG = /^[a-z0-9_]+$/;
-
-const ITALIAN_MONTHS = [
-  "gennaio",
-  "febbraio",
-  "marzo",
-  "aprile",
-  "maggio",
-  "giugno",
-  "luglio",
-  "agosto",
-  "settembre",
-  "ottobre",
-  "novembre",
-  "dicembre",
-] as const;
 
 export type AgentPublicFilter = Readonly<{ name: string; description: string }>;
 export type AgentPublicSource = Readonly<{
@@ -107,14 +92,6 @@ export type AgentPublicDoc = Readonly<{
 }>;
 
 export type AgentPublicDocViolation = Readonly<{ id: string; reason: string }>;
-
-type AgentDatasetFacts = Readonly<{
-  period: readonly string[];
-  units: readonly string[];
-  coverage: string;
-  queryNotes: readonly string[];
-  references: readonly AgentPublicReference[];
-}>;
 
 export function escapeMarkdownText(value: string): string {
   return value.replace(/\r\n|\r|\n/g, " ").replace(MARKDOWN_METACHARACTERS, "\\$1");
@@ -153,6 +130,16 @@ function isAllowedLocalPath(pathname: string): boolean {
   return SAFE_DATASET_SLUG.test(slug) && ACTIVE_DATASET_ID_SET.has(slug);
 }
 
+function percentEncodeCharacter(character: string): string {
+  return [...new TextEncoder().encode(character)]
+    .map((byte) => `%${byte.toString(16).toUpperCase().padStart(2, "0")}`)
+    .join("");
+}
+
+function encodeDangerousUrlCharacters(value: string): string {
+  return value.replace(DANGEROUS_URL_CHARACTERS, percentEncodeCharacter);
+}
+
 function sanitizeLocalPath(value: string): string | null {
   let parsed: URL;
   try {
@@ -164,7 +151,7 @@ function sanitizeLocalPath(value: string): string | null {
   if (!isAllowedLocalPath(parsed.pathname)) return null;
   const query = new URLSearchParams(parsed.search).toString();
   const result = query ? `${parsed.pathname}?${query}` : parsed.pathname;
-  return FORBIDDEN_LOCAL_RESULT.test(result) ? null : result;
+  return FORBIDDEN_URL_RESULT.test(result) ? null : result;
 }
 
 function hasExplicitPort(value: string): boolean {
@@ -194,45 +181,11 @@ export function sanitizePublicUrl(value: string): string | null {
   if (parsed.username || parsed.password || parsed.port || hasExplicitPort(trimmed)) return null;
   if (isBlockedHostname(parsed.hostname)) return null;
   if (!ALLOWED_PUBLIC_HOSTS.has(normalizedHostname(parsed.hostname))) return null;
-  return parsed.href;
-}
-
-function formatIsoDate(value: string): string {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (!match) return value;
-  const month = ITALIAN_MONTHS[Number(match[2]) - 1];
-  if (!month) return value;
-  return `${Number(match[3])} ${month} ${match[1]}`;
-}
-
-function verifiedFacts(datasetId: string): AgentDatasetFacts | null {
-  if (datasetId !== "mef_irpef_comunale") return null;
-  const { period, coverage, source } = mefIrpefSourceMeta;
-  return {
-    period: [
-      `Anno d'imposta: ${period.taxYear} — periodo economico delle variabili.`,
-      `Dichiarazioni: ${period.declarationYear} — il MEF assegna il contribuente al Comune del domicilio fiscale al 31 dicembre dell'anno di presentazione della dichiarazione.`,
-      `Pubblicazione della fonte MEF: ${formatIsoDate(period.publishedAt)}.`,
-      `Osservazione dello snapshot: ${period.observedAt}.`,
-    ],
-    units: [
-      "Contribuenti e frequenze: conteggi in unità di persone fisiche; il numero contribuenti non coincide con la frequenza del reddito complessivo.",
-      "Ammontari monetari: interi in centesimi di euro; la fonte pubblica importi in euro e la conversione è esatta, senza aggiungere precisione.",
-      "Variabili dichiarative MEF, non incassi di cassa.",
-      "Le celle oscurate per tutela statistica restano parziali: null non è zero e non viene stimato.",
-    ],
-    coverage: `${coverage.municipalities} Comuni, ${coverage.provinces} Province e ${coverage.regions} Regioni; ${coverage.sourceRows} righe fonte con ${coverage.unassignedRows} riga Mancante/errata (${coverage.taxpayers.unassigned} contribuenti) tenuta separata e non distribuita sui territori.`,
-    queryNotes: [
-      "Il filtro year accetta solo l'anno d'imposta di riferimento (2024), non l'anno di dichiarazione.",
-      "Il filtro level accetta region, province oppure municipality.",
-      "Per i Comuni indica almeno uno fra code, query, region oppure province; code e query non insieme.",
-    ],
-    references: [
-      { label: "Nota metodologica MEF 2024", url: source.methodologyUrl },
-      { label: "Definizioni delle variabili MEF 2024", url: source.definitionsUrl },
-      { label: `Licenza ${source.license}`, url: source.licenseUrl },
-    ],
-  };
+  const pathname = encodeDangerousUrlCharacters(parsed.pathname);
+  const query = new URLSearchParams(parsed.search).toString();
+  const fragment = parsed.hash ? `#${encodeDangerousUrlCharacters(parsed.hash.slice(1))}` : "";
+  const result = `${parsed.origin}${pathname}${query ? `?${query}` : ""}${fragment}`;
+  return FORBIDDEN_URL_RESULT.test(result) ? null : result;
 }
 
 function schemaDescription(schema: unknown): string | undefined {
@@ -267,7 +220,7 @@ function exampleQueryViolation(dataset: DatasetDescriptor): string | null {
 }
 
 function buildAgentPublicDoc(dataset: DatasetDescriptor): AgentPublicDoc {
-  const facts = verifiedFacts(dataset.id);
+  const facts = dataset.publicMetadata;
   const sources = dataset.sources.flatMap((source) => {
     const url = sanitizePublicUrl(source.url);
     if (!url) return [];

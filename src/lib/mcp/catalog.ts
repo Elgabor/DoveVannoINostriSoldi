@@ -134,6 +134,14 @@ export type DatasetSource = {
   rows?: number;
 };
 
+export type DatasetPublicMetadata = Readonly<{
+  period: readonly string[];
+  units: readonly string[];
+  coverage: string;
+  queryNotes: readonly string[];
+  references: readonly Readonly<{ label: string; url: string }>[];
+}>;
+
 export type DatasetDescriptor = {
   id: DatasetId;
   title: string;
@@ -146,6 +154,7 @@ export type DatasetDescriptor = {
   filters: string[];
   exampleQuery: DatasetQuery;
   caveat?: string;
+  publicMetadata?: DatasetPublicMetadata;
 };
 
 type DatasetDescriptorInput = Omit<DatasetDescriptor, "sources" | "exampleQuery" | "integration"> & {
@@ -396,7 +405,50 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
   { id: "istat_pensioni_prestazioni", title: "Pensioni ISTAT · prestazioni", summary: "Numero di prestazioni pensionistiche, importo lordo annuo e importo lordo medio per categoria, dal 2012 al 2022.", sourceIds: ["istat-casellario-pensioni"], freshness: "snapshot", filters: ["year"], caveat: "Il denominatore è il numero di prestazioni, non il numero di persone. Gli importi sono lordi e nominali, espressi in migliaia di euro per i totali e in euro per la media; i conteggi delle categorie riconciliano esattamente, mentre i relativi importi possono differire dal totale di 1-2 migliaia di euro per arrotondamento della fonte. Non è sommabile con pensionati né con CIVDIS/invalidità civile INPS." },
   { id: "istat_pensionati_persone", title: "Pensionati ISTAT · persone", summary: "Numero di persone pensionate, reddito pensionistico lordo annuo e media lorda, dal 2012 al 2022.", sourceIds: ["istat-casellario-pensioni"], freshness: "snapshot", filters: ["year"], caveat: "Il denominatore è il numero di persone pensionate, non il numero di prestazioni. Gli importi sono lordi e nominali, espressi in migliaia di euro per i totali e in euro per la media. Non è sommabile con le prestazioni pensionistiche né con CIVDIS/invalidità civile INPS; lo snapshot non è una serie INPS 2024." },
   { id: "cpt_finanza_regionale", title: "Entrate e spese pubbliche per territorio", summary: "Entrate, spese e saldo contabile territorializzato della PA consolidata CPT, con valori pro capite e per km² 2023.", sourceIds: ["cpt", "istat"], freshness: "snapshot", filters: ["year", "region"], caveat: "Il saldo è entrate meno spese nello stesso perimetro CPT PA. Le normalizzazioni ISTAT non misurano pressione fiscale, qualità dei servizi, merito politico o trasferimenti netti fra regioni e non sono il residuo fiscale di Banca d'Italia." },
-  { id: "mef_irpef_comunale", title: MEF_IRPEF_SOURCE.mcp.title, summary: MEF_IRPEF_SOURCE.mcp.summary, sourceIds: [MEF_IRPEF_SOURCE.id], freshness: "snapshot", filters: ["year", "level", "region", "province", "code", "query", "detail", "limit", "offset"], caveat: MEF_IRPEF_SOURCE.mcp.caveat },
+  {
+    id: "mef_irpef_comunale",
+    title: MEF_IRPEF_SOURCE.mcp.title,
+    summary: MEF_IRPEF_SOURCE.mcp.summary,
+    sourceIds: [MEF_IRPEF_SOURCE.id],
+    freshness: "snapshot",
+    filters: ["year", "level", "region", "province", "code", "query", "detail", "limit", "offset"],
+    caveat: MEF_IRPEF_SOURCE.mcp.caveat,
+    publicMetadata: {
+      period: [
+        "Anno d'imposta: 2024 — periodo economico delle variabili.",
+        "Dichiarazioni: 2025 — il MEF assegna il contribuente al Comune del domicilio fiscale al 31 dicembre dell'anno di presentazione della dichiarazione.",
+        "Pubblicazione della fonte MEF: 23 aprile 2026.",
+        "Osservazione dello snapshot: 2026-09-04T08:16:29Z.",
+      ],
+      units: [
+        "Contribuenti e frequenze: conteggi in unità di persone fisiche; il numero contribuenti non coincide con la frequenza del reddito complessivo.",
+        "Ammontari monetari: interi in centesimi di euro; la fonte pubblica importi in euro e la conversione è esatta, senza aggiungere precisione.",
+        "Variabili dichiarative MEF, non incassi di cassa.",
+        "Le celle oscurate per tutela statistica restano parziali: null non è zero e non viene stimato.",
+      ],
+      coverage:
+        "7896 Comuni, 107 Province e 20 Regioni; 7897 righe fonte con 1 riga Mancante/errata (5305 contribuenti) tenuta separata e non distribuita sui territori.",
+      queryNotes: [
+        "Il filtro year accetta solo l'anno d'imposta di riferimento (2024), non l'anno di dichiarazione.",
+        "Il filtro level accetta region, province oppure municipality.",
+        "Per i Comuni indica almeno uno fra code, query, region oppure province; code e query non insieme.",
+      ],
+      references: [
+        {
+          label: "Nota metodologica MEF 2024",
+          url: "https://www1.finanze.gov.it/finanze/analisi_stat/public/v_4_0_0/contenuti/nota_metodologica_2024.pdf",
+        },
+        {
+          label: "Definizioni delle variabili MEF 2024",
+          url: "https://www1.finanze.gov.it/finanze/analisi_stat/public/v_4_0_0/contenuti/definizione_variabili_2024_irpef.pdf",
+        },
+        {
+          label: "Licenza CC BY 3.0",
+          url: "https://creativecommons.org/licenses/by/3.0/it/",
+        },
+      ],
+    },
+  },
   { id: "ipa_enti", title: "Enti pubblici IPA", summary: "Ricerca e scheda degli enti nell’Indice PA.", sourceIds: ["ipa"], freshness: "live", filters: ["query", "code", "limit", "offset"] },
   { id: "ipa_struttura", title: "Struttura organizzativa IPA", summary: "Unità organizzative e aree organizzative omogenee di un ente.", sourceIds: ["ipa-struttura"], freshness: "live", filters: ["code", "limit", "offset"] },
   { id: "mef_partecipazioni", title: "Partecipazioni pubbliche", summary: "Aggregati della rilevazione annuale MEF sulle partecipazioni pubbliche.", sourceIds: ["partecipazioni-pubbliche"], freshness: "snapshot", filters: [] },

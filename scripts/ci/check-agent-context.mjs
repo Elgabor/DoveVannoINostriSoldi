@@ -23,14 +23,19 @@ const AGENTS_DOCUMENT = "AGENTS.md";
 // Sezioni obbligatorie nella mappa; il ticket 02 estende questo elenco.
 const REQUIRED_MAP_SECTIONS = ["## Ingresso", "## MCP e API"];
 
-// Collegamento AGENTS -> mappa e percorso di fallback verso ARCHITECTURE.
-const AGENTS_REQUIRED_REFERENCES = ["docs/AGENT_CONTEXT.md", "docs/ARCHITECTURE.md"];
+// Collegamento AGENTS -> mappa e fallback AGENTS -> ARCHITECTURE, realizzati come
+// link Markdown attivi fuori dai blocchi di codice.
+const AGENTS_REQUIRED_LINKS = ["docs/AGENT_CONTEXT.md", "docs/ARCHITECTURE.md"];
 // Percorso ad ARCHITECTURE dentro la mappa.
-const MAP_ARCHITECTURE_REFERENCE = "ARCHITECTURE.md";
+const MAP_REQUIRED_LINKS = ["docs/ARCHITECTURE.md"];
+// Il ponte CLAUDE e' l'intero contenuto del file, non una sottostringa casuale.
 const CLAUDE_BRIDGE = "@AGENTS.md";
 
 const INLINE_LINK_RE = /\[([^\]]*)\]\(([^()\s]+)\)/g;
-const EXTERNAL_SCHEME_RE = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
+const SCHEME_RE = /^([a-zA-Z][a-zA-Z0-9+.-]*):/;
+// Solo HTTP/HTTPS sono considerati URL esterni da ignorare; ogni altro schema
+// (javascript:, data:, mailto:, ...) e' un riferimento non supportato.
+const IGNORED_EXTERNAL_SCHEMES = new Set(["http", "https"]);
 const FENCE_RE = /^(`{3,}|~{3,})/;
 const HEADING_RE = /^(#{1,6})\s+(.*\S)\s*$/;
 
@@ -86,6 +91,33 @@ function extractHeadings(content) {
   return headings;
 }
 
+function collectActiveLinks(document) {
+  const outside = linesOutsideFences(document.lines);
+  const links = [];
+  document.lines.forEach((line, index) => {
+    if (!outside.has(index)) return;
+    INLINE_LINK_RE.lastIndex = 0;
+    let match;
+    while ((match = INLINE_LINK_RE.exec(line)) !== null) {
+      links.push({ text: match[1], target: match[2], line: index + 1 });
+    }
+  });
+  return links;
+}
+
+function classifyTarget(target) {
+  if (target.startsWith("//")) return { kind: "external" };
+  const scheme = SCHEME_RE.exec(target);
+  if (scheme) {
+    if (IGNORED_EXTERNAL_SCHEMES.has(scheme[1].toLowerCase())) return { kind: "external" };
+    return { kind: "unsupported", scheme: scheme[1] };
+  }
+  const hashIndex = target.indexOf("#");
+  const pathPart = hashIndex === -1 ? target : target.slice(0, hashIndex);
+  const anchor = hashIndex === -1 ? "" : target.slice(hashIndex + 1);
+  return { kind: "local", pathPart, anchor };
+}
+
 function readOwnedDocuments(root, violations) {
   const documents = new Map();
   const realRoot = safeRealpath(root) ?? path.resolve(root);
@@ -111,15 +143,26 @@ function readOwnedDocuments(root, violations) {
   return { documents, realRoot };
 }
 
-function checkMandatoryReferences(documents, violations) {
+function linkResolvesTo(document, root, expectedRelative) {
+  for (const link of collectActiveLinks(document)) {
+    const classified = classifyTarget(link.target);
+    if (classified.kind !== "local" || classified.pathPart === "") continue;
+    const resolved = path.resolve(path.dirname(document.absolute), classified.pathPart);
+    if (!isWithin(root, resolved)) continue;
+    if (path.relative(root, resolved) === expectedRelative) return true;
+  }
+  return false;
+}
+
+function checkMandatoryReferences(documents, root, violations) {
   const agents = documents.get(AGENTS_DOCUMENT);
   if (agents) {
-    for (const reference of AGENTS_REQUIRED_REFERENCES) {
-      if (!agents.content.includes(reference)) {
+    for (const required of AGENTS_REQUIRED_LINKS) {
+      if (!linkResolvesTo(agents, root, required)) {
         violations.push({
           file: AGENTS_DOCUMENT,
           line: 1,
-          message: `manca il riferimento obbligatorio '${reference}' in ${AGENTS_DOCUMENT}`,
+          message: `manca il link AGENTS -> ${required}`,
         });
       }
     }
@@ -137,32 +180,36 @@ function checkMandatoryReferences(documents, violations) {
         });
       }
     }
-    if (!map.content.includes(MAP_ARCHITECTURE_REFERENCE)) {
-      violations.push({
-        file: MAP_DOCUMENT,
-        line: 1,
-        message: `manca il percorso ad ARCHITECTURE in ${MAP_DOCUMENT}`,
-      });
+    for (const required of MAP_REQUIRED_LINKS) {
+      if (!linkResolvesTo(map, root, required)) {
+        violations.push({
+          file: MAP_DOCUMENT,
+          line: 1,
+          message: `manca il link ${MAP_DOCUMENT} -> ${required}`,
+        });
+      }
     }
   }
 
   const claude = documents.get(CLAUDE_DOCUMENT);
-  if (claude && !claude.content.includes(CLAUDE_BRIDGE)) {
+  if (claude && claude.content.trim() !== CLAUDE_BRIDGE) {
     violations.push({
       file: CLAUDE_DOCUMENT,
       line: 1,
-      message: `manca il ponte ${CLAUDE_BRIDGE} in ${CLAUDE_DOCUMENT}`,
+      message: `il ponte deve essere esattamente '${CLAUDE_BRIDGE}'`,
     });
   }
 }
 
 function checkLinkTarget(documentName, document, root, realRoot, documents, violations, target, line) {
-  if (EXTERNAL_SCHEME_RE.test(target) || target.startsWith("//")) return;
+  const classified = classifyTarget(target);
+  if (classified.kind === "external") return;
+  if (classified.kind === "unsupported") {
+    violations.push({ file: documentName, line, message: `schema non supportato: ${classified.scheme}:` });
+    return;
+  }
 
-  const hashIndex = target.indexOf("#");
-  const pathPart = hashIndex === -1 ? target : target.slice(0, hashIndex);
-  const anchor = hashIndex === -1 ? "" : target.slice(hashIndex + 1);
-
+  const { pathPart, anchor } = classified;
   if (pathPart === "") {
     if (anchor && !document.headings.has(anchor)) {
       violations.push({ file: documentName, line, message: `ancora locale assente: #${anchor}` });
@@ -196,22 +243,16 @@ function checkLinkTarget(documentName, document, root, realRoot, documents, viol
 }
 
 function checkDocumentLinks(documentName, document, root, realRoot, documents, violations) {
-  const outside = linesOutsideFences(document.lines);
-  document.lines.forEach((line, index) => {
-    if (!outside.has(index)) return;
-    INLINE_LINK_RE.lastIndex = 0;
-    let match;
-    while ((match = INLINE_LINK_RE.exec(line)) !== null) {
-      checkLinkTarget(documentName, document, root, realRoot, documents, violations, match[2], index + 1);
-    }
-  });
+  for (const link of collectActiveLinks(document)) {
+    checkLinkTarget(documentName, document, root, realRoot, documents, violations, link.target, link.line);
+  }
 }
 
 export function checkAgentContext(options = {}) {
   const root = path.resolve(options.root ?? DEFAULT_ROOT);
   const violations = [];
   const { documents, realRoot } = readOwnedDocuments(root, violations);
-  checkMandatoryReferences(documents, violations);
+  checkMandatoryReferences(documents, root, violations);
   for (const [name, document] of documents) {
     checkDocumentLinks(name, document, root, realRoot, documents, violations);
   }
@@ -223,7 +264,7 @@ export function parseArgs(argv) {
   const options = { root: undefined, help: false };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === "--help" || arg === "-h") {
+    if (arg === "--help") {
       options.help = true;
       continue;
     }
@@ -232,12 +273,6 @@ export function parseArgs(argv) {
       if (value === undefined || value.startsWith("-")) throw new UsageError("--root richiede un valore");
       options.root = value;
       index += 1;
-      continue;
-    }
-    if (arg.startsWith("--root=")) {
-      const value = arg.slice("--root=".length);
-      if (!value) throw new UsageError("--root richiede un valore");
-      options.root = value;
       continue;
     }
     throw new UsageError(`opzione o argomento non supportato: ${arg}`);

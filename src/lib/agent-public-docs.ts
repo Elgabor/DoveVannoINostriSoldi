@@ -20,6 +20,7 @@ const AGENT_PUBLIC_DOC_DATASET_ID_SET = new Set<string>(AGENT_PUBLIC_DOC_DATASET
 
 const ALLOWED_LOCAL_PATHS = new Set<string>([
   AGENTS_INDEX_PATH,
+  "/dati",
   "/api/mcp",
   "/api/territori/irpef",
   "/mcp",
@@ -28,6 +29,13 @@ const ALLOWED_LOCAL_PATHS = new Set<string>([
   "/territori/irpef",
   "/privacy",
   "/supporto",
+]);
+
+const ALLOWED_PUBLIC_HOSTS = new Set<string>([
+  "www.dovevannoinostrisoldi.com",
+  "dovevannoinostrisoldi.com",
+  "www1.finanze.gov.it",
+  "creativecommons.org",
 ]);
 
 const MARKDOWN_METACHARACTERS = /([\\`*_[\]<>|#])/g;
@@ -86,7 +94,25 @@ type AgentDatasetFacts = Readonly<{
 }>;
 
 export function escapeMarkdownText(value: string): string {
-  return value.replace(MARKDOWN_METACHARACTERS, "\\$1");
+  return value.replace(/\r\n|\r|\n/g, " ").replace(MARKDOWN_METACHARACTERS, "\\$1");
+}
+
+const PRIVATE_HOSTNAMES = /^(?:localhost|.*\.localhost|.*\.local)$/;
+const IPV4_HOSTNAME = /^\d{1,3}(?:\.\d{1,3}){3}$/;
+const IPV6_HOSTNAME = /^\[[0-9a-f:]+\]$/i;
+
+function normalizedHostname(hostname: string): string {
+  return hostname.toLocaleLowerCase("en-US").replace(/\.$/, "");
+}
+
+function isBlockedHostname(hostname: string): boolean {
+  const normalized = normalizedHostname(hostname);
+  return (
+    normalized.length === 0 ||
+    PRIVATE_HOSTNAMES.test(normalized) ||
+    IPV4_HOSTNAME.test(normalized) ||
+    IPV6_HOSTNAME.test(normalized)
+  );
 }
 
 export function agentDatasetPath(datasetId: string): string {
@@ -115,7 +141,9 @@ export function sanitizePublicUrl(value: string): string | null {
     return null;
   }
   if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
-  if (!parsed.hostname) return null;
+  if (parsed.username || parsed.password || parsed.port) return null;
+  if (isBlockedHostname(parsed.hostname)) return null;
+  if (!ALLOWED_PUBLIC_HOSTS.has(normalizedHostname(parsed.hostname))) return null;
   return parsed.href;
 }
 
@@ -242,6 +270,12 @@ function renderReferences(references: readonly AgentPublicReference[]): string[]
   });
 }
 
+function longestBacktickRun(value: string): number {
+  let longest = 0;
+  for (const match of value.matchAll(/`+/g)) longest = Math.max(longest, match[0].length);
+  return longest;
+}
+
 export function renderAgentsIndexMarkdown(): string {
   const docs = listAgentPublicDocs();
   const lines: string[] = [
@@ -272,6 +306,7 @@ export function renderAgentsIndexMarkdown(): string {
   lines.push("- Strumenti: `list_datasets` per l'elenco, `query_dataset` per l'interrogazione.");
   lines.push("", "## Riferimenti", "");
   const indexReferences = renderReferences([
+    { label: "Dati", url: "/dati" },
     { label: "Pagina MCP", url: "/mcp" },
     { label: "Metodologia", url: "/metodologia" },
     { label: "Registro delle fonti", url: "/fonti" },
@@ -306,10 +341,14 @@ export function renderAgentPublicDocMarkdown(doc: AgentPublicDoc): string {
     "## Fonti",
     "",
   ];
-  if (doc.sources.length === 0) {
+  const safeSources = doc.sources.flatMap((source) => {
+    const url = sanitizePublicUrl(source.url);
+    return url ? [{ ...source, url }] : [];
+  });
+  if (safeSources.length === 0) {
     lines.push("Fonti indicate nella risposta del dataset.");
   } else {
-    for (const source of doc.sources) {
+    for (const source of safeSources) {
       const license = source.license ? ` Licenza: ${escapeMarkdownText(source.license)}.` : "";
       lines.push(
         `- [${escapeMarkdownText(source.name)}](${source.url}) — ${escapeMarkdownText(source.owner)}. Cadenza: ${escapeMarkdownText(source.cadence)}.${license}`,
@@ -330,9 +369,12 @@ export function renderAgentPublicDocMarkdown(doc: AgentPublicDoc): string {
   }
   lines.push("", "## Esempio supportato", "");
   lines.push("Input conforme allo schema condiviso, riutilizzato dal descrittore del dataset:");
-  lines.push("", "```json", JSON.stringify(doc.exampleQuery, null, 2), "```", "");
+  const exampleJson = JSON.stringify(doc.exampleQuery, null, 2);
+  const fence = "`".repeat(Math.max(3, longestBacktickRun(exampleJson) + 1));
+  lines.push("", `${fence}json`, exampleJson, fence, "");
   lines.push("## Accesso ai dati", "");
-  lines.push(`- MCP: \`${doc.mcpEndpoint}\` (Streamable HTTP, \`POST\`, sola lettura). Chiama \`list_datasets\`, poi \`query_dataset\`.`);
+  const mcpEndpoint = sanitizePublicUrl(doc.mcpEndpoint) ?? "/api/mcp";
+  lines.push(`- MCP: \`${mcpEndpoint}\` (Streamable HTTP, \`POST\`, sola lettura). Chiama \`list_datasets\`, poi \`query_dataset\`.`);
   if (doc.httpEndpoint) {
     const httpUrl = sanitizePublicUrl(doc.httpEndpoint);
     if (httpUrl) {

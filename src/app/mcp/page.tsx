@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { AgentMcpPrompt, McpEndpoint } from "@/components/mcp-endpoint";
 import { datasetCatalog } from "@/lib/mcp/catalog";
 import { relatedMcpServices } from "@/lib/mcp/related-services";
@@ -29,6 +30,11 @@ export default function McpPage() {
           disponibile anche come risorsa <code>dvns://datasets</code>. L&apos;indirizzo breve di
           questa pagina, <code>/mcp</code>, accetta comunque le richieste MCP per compatibilità:
           non è necessario indovinare un percorso diverso.
+        </p>
+        <p>
+          Ogni dataset ha anche una scheda in Markdown leggibile via HTTP senza client MCP:{" "}
+          <Link href="/for-agents">apri l&apos;indice per agenti</Link> per fonte, periodo,
+          filtri, esempio di query supportato e limiti.
         </p>
       </section>
 

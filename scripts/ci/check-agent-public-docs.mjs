@@ -92,12 +92,38 @@ export function checkAgentPublicDocs(snapshot) {
     if (!card?.exampleQuery || typeof card.exampleQuery !== "object") {
       add(id, "exampleQuery", "esempio mancante");
     }
-    if (!Array.isArray(card?.sources)) add(id, "sources", "elenco fonti mancante");
+    for (const field of ["period", "units"]) {
+      const entries = card?.[field];
+      if (
+        !Array.isArray(entries) ||
+        entries.length === 0 ||
+        entries.some((entry) => !isNonEmptyString(entry))
+      ) {
+        add(id, field, `campo obbligatorio mancante o vuoto: ${field}`);
+      }
+    }
+    const declaredSourceUrls = Array.isArray(card?.declaredSourceUrls) ? card.declaredSourceUrls : [];
+    const declaredReferenceUrls = Array.isArray(card?.declaredReferenceUrls) ? card.declaredReferenceUrls : [];
+    if (!Array.isArray(card?.sources)) {
+      add(id, "sources", "elenco fonti mancante");
+    } else if (declaredSourceUrls.length > 0 && card.sources.length === 0) {
+      add(id, "sources", "elenco fonti vuoto nonostante fonti dichiarate dal descriptor");
+    }
     if (!Array.isArray(card?.references)) add(id, "references", "elenco riferimenti mancante");
 
     const routePath = `${datasetPathPrefix}${id}`;
     if (typeof sanitizePublicUrl === "function" && sanitizePublicUrl(routePath) === null) {
       add(id, "route-link", `link di scheda non ammesso: ${routePath}`);
+    }
+    for (const url of declaredSourceUrls) {
+      if (typeof sanitizePublicUrl === "function" && sanitizePublicUrl(url) === null) {
+        add(id, "source-url", `URL fonte non ammesso: ${String(url)}`);
+      }
+    }
+    for (const url of declaredReferenceUrls) {
+      if (typeof sanitizePublicUrl === "function" && sanitizePublicUrl(url) === null) {
+        add(id, "reference-url", `URL riferimento non ammesso: ${String(url)}`);
+      }
     }
     for (const source of Array.isArray(card?.sources) ? card.sources : []) {
       if (typeof sanitizePublicUrl === "function" && sanitizePublicUrl(source?.url) === null) {
@@ -111,6 +137,13 @@ export function checkAgentPublicDocs(snapshot) {
     }
 
     if (!card?.exampleQuery || typeof card.exampleQuery !== "object") continue;
+    if (card.exampleQuery.dataset !== id) {
+      add(
+        id,
+        "example-dataset",
+        `dataset dell'esempio non coincide con l'identificativo della scheda: ${String(card.exampleQuery.dataset)}`,
+      );
+    }
     const filterNames = new Set((card.filters ?? []).map((filter) => filter?.name));
     const keys = Object.keys(card.exampleQuery).filter((key) => key !== "dataset");
     const undeclared = keys.filter((key) => !filterNames.has(key));

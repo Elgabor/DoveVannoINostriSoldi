@@ -7,16 +7,35 @@ import {
 import { datasetQuerySchema } from "@/lib/mcp/query-schema";
 
 /**
- * Temporary availability list for the first public slice (ticket 04). It holds
- * only the dataset whose card is actually served; ticket 05 removes this gate
- * and derives the served set from the whole active catalog.
+ * The public served set is exactly the active MCP catalog: one card per active
+ * dataset id, derived from the same `datasetCatalog` authority. No second
+ * catalog or snapshot is created here.
  */
-export const AGENT_PUBLIC_DOC_DATASET_IDS = ["mef_irpef_comunale"] as const;
-export type AgentPublicDocDatasetId = (typeof AGENT_PUBLIC_DOC_DATASET_IDS)[number];
-
 export const AGENTS_INDEX_PATH = "/for-agents";
 
-const AGENT_PUBLIC_DOC_DATASET_ID_SET = new Set<string>(AGENT_PUBLIC_DOC_DATASET_IDS);
+const ACTIVE_DATASET_ID_SET = new Set<string>(datasetCatalog.map((dataset) => dataset.id));
+
+const DVNS_PUBLIC_HOSTS = ["www.dovevannoinostrisoldi.com", "dovevannoinostrisoldi.com"];
+const VERIFIED_PUBLIC_HOSTS = ["creativecommons.org", "www1.finanze.gov.it"];
+const CATALOG_SOURCE_HOSTS = new Set<string>();
+for (const dataset of datasetCatalog) {
+  for (const source of dataset.sources) {
+    try {
+      const url = new URL(source.url);
+      if (url.protocol === "https:" && url.hostname) {
+        CATALOG_SOURCE_HOSTS.add(normalizedHostname(url.hostname));
+      }
+    } catch {
+      // Malformed source urls stay visible as plain text; they never become links.
+    }
+  }
+}
+
+const ALLOWED_PUBLIC_HOSTS = new Set<string>([
+  ...DVNS_PUBLIC_HOSTS,
+  ...VERIFIED_PUBLIC_HOSTS,
+  ...CATALOG_SOURCE_HOSTS,
+]);
 
 const ALLOWED_LOCAL_PATHS = new Set<string>([
   AGENTS_INDEX_PATH,
@@ -31,12 +50,12 @@ const ALLOWED_LOCAL_PATHS = new Set<string>([
   "/supporto",
 ]);
 
-const ALLOWED_PUBLIC_HOSTS = new Set<string>([
-  "www.dovevannoinostrisoldi.com",
-  "dovevannoinostrisoldi.com",
-  "www1.finanze.gov.it",
-  "creativecommons.org",
-]);
+const NO_STABLE_PERIOD =
+  "Periodo non rappresentato da un metadato stabile nel catalogo: dipende dai filtri e dalla risposta del dataset.";
+const NO_STABLE_UNITS =
+  "Unità non rappresentata da un metadato stabile nel catalogo: dipende dal campo e dalla risposta del dataset.";
+const NO_STABLE_COVERAGE =
+  "Copertura non rappresentata da un metadato stabile nel catalogo: dipende dalla risposta del dataset.";
 
 const MARKDOWN_METACHARACTERS = /([\\`*_[\]<>|#])/g;
 const FORBIDDEN_LOCAL_RESULT = /[()\]\[`<>|\r\n]/;
@@ -80,11 +99,14 @@ export type AgentPublicDoc = Readonly<{
   filters: readonly AgentPublicFilter[];
   queryNotes: readonly string[];
   exampleQuery: Record<string, unknown>;
+  exampleError: string | null;
   sources: readonly AgentPublicSource[];
   references: readonly AgentPublicReference[];
   mcpEndpoint: string;
   httpEndpoint: string | null;
 }>;
+
+export type AgentPublicDocViolation = Readonly<{ id: string; reason: string }>;
 
 type AgentDatasetFacts = Readonly<{
   period: readonly string[];
@@ -128,7 +150,7 @@ function isAllowedLocalPath(pathname: string): boolean {
   if (ALLOWED_LOCAL_PATHS.has(pathname)) return true;
   if (!pathname.startsWith(LOCAL_DATASET_PATH_PREFIX)) return false;
   const slug = pathname.slice(LOCAL_DATASET_PATH_PREFIX.length);
-  return SAFE_DATASET_SLUG.test(slug) && AGENT_PUBLIC_DOC_DATASET_ID_SET.has(slug);
+  return SAFE_DATASET_SLUG.test(slug) && ACTIVE_DATASET_ID_SET.has(slug);
 }
 
 function sanitizeLocalPath(value: string): string | null {
@@ -230,10 +252,18 @@ function filterDescription(name: string): string {
   return schemaDescription(shape[name]) ?? "Filtro dichiarato dal dataset.";
 }
 
-function isExampleQuerySupported(dataset: DatasetDescriptor): boolean {
+function exampleQueryViolation(dataset: DatasetDescriptor): string | null {
   const keys = Object.keys(dataset.exampleQuery).filter((key) => key !== "dataset");
-  if (keys.some((key) => !dataset.filters.includes(key))) return false;
-  return datasetQuerySchema.safeParse(dataset.exampleQuery).success;
+  const unknown = keys.filter((key) => !dataset.filters.includes(key));
+  if (unknown.length > 0) {
+    return `chiavi dell'esempio non dichiarate fra i filtri: ${unknown.join(", ")}`;
+  }
+  const parsed = datasetQuerySchema.safeParse(dataset.exampleQuery);
+  if (!parsed.success) {
+    const issues = parsed.error.issues.map((issue) => issue.message).join("; ");
+    return `esempio non conforme a datasetQuerySchema: ${issues}`;
+  }
+  return null;
 }
 
 function buildAgentPublicDoc(dataset: DatasetDescriptor): AgentPublicDoc {
@@ -249,20 +279,24 @@ function buildAgentPublicDoc(dataset: DatasetDescriptor): AgentPublicDoc {
       ...(source.license ? { license: source.license } : {}),
     }];
   });
+  const cadence = dataset.publicationCadence
+    ? `; acquisizione e pubblicazione: ${dataset.publicationCadence}`
+    : "";
   return {
     id: dataset.id,
     title: dataset.title,
     summary: dataset.summary,
-    availability: `Integrazione ${dataset.integration === "active" ? "attiva" : "configurata"}; ${
+    availability: `Integrazione attiva; ${
       dataset.freshness === "snapshot" ? "snapshot verificato, senza query live nel rendering" : "fonte ufficiale live"
-    }.`,
-    period: facts?.period ?? [],
-    units: facts?.units ?? [],
-    coverage: facts?.coverage ?? "Copertura non rappresentata da un metadato stabile; dipende dalla risposta del dataset.",
+    }${cadence}.`,
+    period: facts?.period ?? [NO_STABLE_PERIOD],
+    units: facts?.units ?? [NO_STABLE_UNITS],
+    coverage: facts?.coverage ?? NO_STABLE_COVERAGE,
     caveat: dataset.caveat ?? "Nessun caveat specifico dichiarato: conserva fonte, periodo e perimetro.",
     filters: dataset.filters.map((name) => ({ name, description: filterDescription(name) })),
     queryNotes: facts?.queryNotes ?? [],
     exampleQuery: JSON.parse(JSON.stringify(dataset.exampleQuery)) as Record<string, unknown>,
+    exampleError: exampleQueryViolation(dataset),
     sources,
     references: (facts?.references ?? []).flatMap((reference) => {
       const url = sanitizePublicUrl(reference.url);
@@ -273,15 +307,15 @@ function buildAgentPublicDoc(dataset: DatasetDescriptor): AgentPublicDoc {
   };
 }
 
-function servedDescriptors(): DatasetDescriptor[] {
-  return datasetCatalog.filter(
-    (dataset) =>
-      AGENT_PUBLIC_DOC_DATASET_ID_SET.has(dataset.id) && isExampleQuerySupported(dataset),
-  );
-}
-
-const servedDocs = servedDescriptors().map(buildAgentPublicDoc);
+const servedDocs = datasetCatalog.map(buildAgentPublicDoc);
 const servedDocById = new Map<string, AgentPublicDoc>(servedDocs.map((doc) => [doc.id, doc]));
+
+export function validateAgentPublicDocs(): readonly AgentPublicDocViolation[] {
+  return datasetCatalog.flatMap((dataset) => {
+    const reason = exampleQueryViolation(dataset);
+    return reason ? [{ id: dataset.id, reason }] : [];
+  });
+}
 
 export function listAgentPublicDocs(): readonly AgentPublicDoc[] {
   return servedDocs;
@@ -316,9 +350,9 @@ export function renderAgentsIndexMarkdown(): string {
   const lines: string[] = [
     "# DVNS · indice per agenti",
     "",
-    "Questa superficie pubblica espone in Markdown UTF-8 le schede dei dataset attivi realmente servite. Serve a leggere metadati, filtri, periodo, unità e limiti senza dipendere dai widget interattivi.",
+    "Questa superficie pubblica espone in Markdown UTF-8 una scheda per ogni dataset del catalogo MCP attivo. Serve a leggere metadati, fonti, filtri, periodo, unità e limiti senza dipendere dai widget interattivi.",
     "",
-    "Copertura iniziale: una sola scheda pubblicata, `mef_irpef_comunale`. L'indice non elenca l'intero catalogo MCP attivo: per il catalogo completo chiama `list_datasets` su `/api/mcp`.",
+    `Il catalogo attivo comprende ${docs.length} dataset e l'indice ne elenca uno per identificativo. Per interrogare i dati usa \`list_datasets\` e \`query_dataset\` su \`/api/mcp\`: la query richiede un client MCP compatibile.`,
     "",
     "## Procedura d'uso",
     "",
@@ -403,10 +437,15 @@ export function renderAgentPublicDocMarkdown(doc: AgentPublicDoc): string {
     lines.push(...doc.queryNotes.map((note) => `- ${escapeMarkdownText(note)}`));
   }
   lines.push("", "## Esempio supportato", "");
-  lines.push("Input conforme allo schema condiviso, riutilizzato dal descrittore del dataset:");
-  const exampleJson = JSON.stringify(doc.exampleQuery, null, 2);
-  const fence = "`".repeat(Math.max(3, longestBacktickRun(exampleJson) + 1));
-  lines.push("", `${fence}json`, exampleJson, fence, "");
+  if (doc.exampleError) {
+    lines.push("L'esempio dichiarato dal descrittore non supera la validazione condivisa:");
+    lines.push("", `Validazione fallita: ${escapeMarkdownText(doc.exampleError)}`, "");
+  } else {
+    lines.push("Input conforme allo schema condiviso, riutilizzato dal descrittore del dataset:");
+    const exampleJson = JSON.stringify(doc.exampleQuery, null, 2);
+    const fence = "`".repeat(Math.max(3, longestBacktickRun(exampleJson) + 1));
+    lines.push("", `${fence}json`, exampleJson, fence, "");
+  }
   lines.push("## Accesso ai dati", "");
   const mcpEndpoint = sanitizePublicUrl(doc.mcpEndpoint) ?? "/api/mcp";
   lines.push(`- MCP: \`${mcpEndpoint}\` (Streamable HTTP, \`POST\`, sola lettura). Chiama \`list_datasets\`, poi \`query_dataset\`.`);
@@ -419,7 +458,8 @@ export function renderAgentPublicDocMarkdown(doc: AgentPublicDoc): string {
     }
   }
   lines.push("", "La scheda è leggibile via HTTP; l'esecuzione della query richiede un client MCP compatibile.");
-  lines.push("", "## Limiti", "", escapeMarkdownText(doc.caveat));  lines.push("", "## Riferimenti", "");
+  lines.push("", "## Limiti", "", escapeMarkdownText(doc.caveat));
+  lines.push("", "## Riferimenti", "");
   lines.push(`- [Indice per agenti](${AGENTS_INDEX_PATH})`);
   lines.push(...renderReferences(doc.references));
   return `${lines.join("\n").trimEnd()}\n`;

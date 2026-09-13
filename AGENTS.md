@@ -14,11 +14,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Lavorare in questo repository
 
-- Se la task appartiene a un dominio mappato, leggi solo la sua sezione in
+- Se la task è in un dominio mappato, leggi solo la sua sezione in
   `docs/AGENT_CONTEXT.md`. Per una task non mappata parti da
   [ARCHITECTURE.md](docs/ARCHITECTURE.md) (percorsi del dato) e
   [CONTRIBUTING.md](CONTRIBUTING.md) (setup e gate). Non servono database, Docker o credenziali.
-- MCP/API: leggi [«MCP e API»](docs/AGENT_CONTEXT.md#mcp-e-api) prima di toccare
+- MCP/API: leggi [MCP e API](docs/AGENT_CONTEXT.md#mcp-e-api) prima di toccare
   `src/lib/mcp/`. `/api/dati/[dataset]` è il corpus integrato, non un ID MCP.
 - Percorsi: pagine/API `src/app/`; UI `src/components/`; adapter e aggregazioni
   `src/lib/`; contratti `src/lib/data/`; acquisizione `scripts/etl/`.

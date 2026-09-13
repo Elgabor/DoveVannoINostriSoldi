@@ -29,6 +29,7 @@
 
 - [MCP Streamable HTTP](https://www.dovevannoinostrisoldi.com/api/mcp): endpoint canonico pubblico e read-only. Chiama prima `list_datasets`, poi `query_dataset`; il catalogo dichiara filtri, freschezza, provenienza e caveat.
 - [Pagina MCP](https://www.dovevannoinostrisoldi.com/mcp): pagina informativa per configurare il client e consultare i limiti. Per compatibilità, lo stesso percorso accetta anche `POST` e `OPTIONS` MCP; il riferimento canonico resta `/api/mcp`.
+- [Indice Markdown per agenti](/for-agents): schede pubbliche leggibili come Markdown UTF-8; in questa prima versione espone solo `mef_irpef_comunale` con fonte, periodo, unità, filtri, esempio e limiti. Il catalogo completo resta su `/api/mcp`.
 - [Assistente testuale](https://www.dovevannoinostrisoldi.com/assistente): interfaccia deterministica read-only con pochi intenti allowlisted; non usa provider LLM o voce e non conserva il prompt.
 - [API assistente](https://www.dovevannoinostrisoldi.com/api/assistant): `POST` JSON same-origin con `{ "prompt": "..." }`; una sola query, prompt massimo 500 caratteri e timeout bounded.
 - [Catalogo fonti via API](https://www.dovevannoinostrisoldi.com/api/fonti/stato): stato operativo delle fonti quando disponibile.

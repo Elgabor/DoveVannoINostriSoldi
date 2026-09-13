@@ -97,6 +97,10 @@ export function escapeMarkdownText(value: string): string {
   return value.replace(/\r\n|\r|\n/g, " ").replace(MARKDOWN_METACHARACTERS, "\\$1");
 }
 
+function safeInlineCode(value: string): string {
+  return SAFE_DATASET_SLUG.test(value) ? value : "identificativo-non-valido";
+}
+
 const PRIVATE_HOSTNAMES = /^(?:localhost|.*\.localhost|.*\.local)$/;
 const IPV4_HOSTNAME = /^\d{1,3}(?:\.\d{1,3}){3}$/;
 const IPV6_HOSTNAME = /^\[[0-9a-f:]+\]$/i;
@@ -119,21 +123,39 @@ export function agentDatasetPath(datasetId: string): string {
   return `${LOCAL_DATASET_PATH_PREFIX}${datasetId}`;
 }
 
+function isAllowedLocalPath(pathname: string): boolean {
+  if (ALLOWED_LOCAL_PATHS.has(pathname)) return true;
+  if (!pathname.startsWith(LOCAL_DATASET_PATH_PREFIX)) return false;
+  const slug = pathname.slice(LOCAL_DATASET_PATH_PREFIX.length);
+  return SAFE_DATASET_SLUG.test(slug) && AGENT_PUBLIC_DOC_DATASET_ID_SET.has(slug);
+}
+
+function sanitizeLocalPath(value: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(value, "https://local.invalid");
+  } catch {
+    return null;
+  }
+  if (parsed.origin !== "https://local.invalid") return null;
+  if (!isAllowedLocalPath(parsed.pathname)) return null;
+  const query = new URLSearchParams(parsed.search).toString();
+  return query ? `${parsed.pathname}?${query}` : parsed.pathname;
+}
+
+function hasExplicitPort(value: string): boolean {
+  const schemeIndex = value.indexOf("://");
+  if (schemeIndex < 0) return false;
+  const authority = value.slice(schemeIndex + 3).split(/[/?#]/, 1)[0];
+  const host = authority.slice(authority.lastIndexOf("@") + 1);
+  return host.includes(":");
+}
+
 export function sanitizePublicUrl(value: string): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   if (trimmed.length === 0 || trimmed.startsWith("//")) return null;
-  if (trimmed.startsWith("/")) {
-    const path = trimmed.split(/[?#]/, 1)[0];
-    if (ALLOWED_LOCAL_PATHS.has(path)) return trimmed;
-    if (path.startsWith(LOCAL_DATASET_PATH_PREFIX)) {
-      const slug = path.slice(LOCAL_DATASET_PATH_PREFIX.length);
-      return SAFE_DATASET_SLUG.test(slug) && AGENT_PUBLIC_DOC_DATASET_ID_SET.has(slug)
-        ? trimmed
-        : null;
-    }
-    return null;
-  }
+  if (trimmed.startsWith("/")) return sanitizeLocalPath(trimmed);
   let parsed: URL;
   try {
     parsed = new URL(trimmed);
@@ -141,7 +163,7 @@ export function sanitizePublicUrl(value: string): string | null {
     return null;
   }
   if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
-  if (parsed.username || parsed.password || parsed.port) return null;
+  if (parsed.username || parsed.password || parsed.port || hasExplicitPort(trimmed)) return null;
   if (isBlockedHostname(parsed.hostname)) return null;
   if (!ALLOWED_PUBLIC_HOSTS.has(normalizedHostname(parsed.hostname))) return null;
   return parsed.href;
@@ -320,7 +342,7 @@ export function renderAgentPublicDocMarkdown(doc: AgentPublicDoc): string {
   const lines: string[] = [
     `# ${escapeMarkdownText(doc.title)}`,
     "",
-    `Identificativo dataset: \`${doc.id}\`.`,
+    `Identificativo dataset: \`${safeInlineCode(doc.id)}\`.`,
     "",
     escapeMarkdownText(doc.summary),
     "",

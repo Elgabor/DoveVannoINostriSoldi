@@ -311,7 +311,38 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
   { id: "siope_regioni", title: "SIOPE · pagamenti delle Regioni", summary: "Movimenti mensili di cassa SIOPE delle Regioni e Province autonome 2024–2026, separati dai Comuni.", sourceIds: ["siope", "ipa"], customSources: nonMunicipalSiopeSources, freshness: "snapshot", publicationCadence: "manuale", filters: ["year", "region", "code", "query", "limit", "offset", "cursor"], caveat: "Comparto REG; comprende le Province autonome registrate da SIOPE. Non è spesa sanitaria né una somma dei Comuni; il 2026 è parziale." },
   { id: "siope_citta_metropolitane", title: "SIOPE · pagamenti delle Città metropolitane", summary: "Movimenti mensili di cassa SIOPE delle Città metropolitane 2024–2026, separati dalle Province.", sourceIds: ["siope", "ipa"], customSources: nonMunicipalSiopeSources, freshness: "snapshot", publicationCadence: "manuale", filters: ["year", "region", "code", "query", "limit", "offset", "cursor"], caveat: "Comparto PRO. Sono pagamenti di cassa dell'amministrazione, non spesa consolidata nel territorio né una classifica; il 2026 è parziale." },
   { id: "siope_entrate_comuni", title: "Incassi dei Comuni", summary: "Incassi di cassa SIOPE 2024–2026, aggregati nazionali e regionali e dettaglio comunale completo paginato per codice fiscale o IPA.", sourceIds: ["siope", "ipa", "istat"], freshness: "snapshot", filters: ["year", "region", "code", "query", "limit", "offset"], caveat: "Incasso non è accertamento né entrata di competenza. Il 2026 può essere parziale: verificare period. Nessun saldo di bilancio, residuo fiscale o ranking di efficienza o spreco. national resta nazionale anche con filtri; selection riassume tutti i Comuni selezionati, non soltanto la pagina. Importi nazionali in euro, campi Cents in centesimi. Gli incassi senza Regione IPA restano nel totale nazionale; trasferimenti e partite di giro non sono consolidati." },
-  { id: "siope_comuni", title: "Pagamenti dei Comuni", summary: "Pagamenti di cassa SIOPE, serie mensile, titoli, regioni e principali Comuni, con normalizzazione territoriale ISTAT.", sourceIds: ["siope", "ipa", "istat"], freshness: "snapshot", filters: ["year", "region"], caveat: "I totali nazionali includono gli enti riconosciuti come Comuni in SIOPE; gli aggregati regionali coprono soltanto quelli abbinati tramite IPA e dichiarano conteggi e importi non regionalizzabili. Il campo distribution completo è disponibile solo nella risposta nazionale; le liste comunali contengono i primi 100 nazionali per totale, pro capite o km². Le normalizzazioni sono descrittive e non misurano efficienza, qualità o fabbisogno." },
+  {
+    id: "siope_comuni",
+    title: "Pagamenti dei Comuni",
+    summary: "Pagamenti di cassa SIOPE, serie mensile, titoli, regioni e principali Comuni, con normalizzazione territoriale ISTAT.",
+    sourceIds: ["siope", "ipa", "istat"],
+    freshness: "snapshot",
+    filters: ["year", "region"],
+    caveat:
+      "I totali nazionali includono gli enti riconosciuti come Comuni in SIOPE; gli aggregati regionali coprono soltanto quelli abbinati tramite IPA e dichiarano conteggi e importi non regionalizzabili. Il campo distribution completo è disponibile solo nella risposta nazionale; le liste comunali contengono i primi 100 nazionali per totale, pro capite o km². Le normalizzazioni sono descrittive e non misurano efficienza, qualità o fabbisogno. Il dataset MCP non isola un singolo Comune: per il dettaglio comunale cerca il Codice IPA nel registro /enti e usa GET /api/enti/{CodiceIPA}, disponibile per i Comuni con join esatto Codice IPA↔codice fiscale nello snapshot; resta un pagamento di cassa, distinto dal bilancio e dal servizio ricevuto.",
+    publicMetadata: {
+      period: [
+        "2024 e 2025 sono anni completi; il 2026 è aggiornato fino al mese presente nello snapshot ed è quindi potenzialmente parziale.",
+        "Il mese e la completezza esatti dipendono dalla risposta del dataset per anno: non vengono generalizzati.",
+      ],
+      units: [
+        "L'API espone totalCents, perCapitaCents e perSquareKmCents in centesimi di euro; la pagina rende gli importi in euro e chiarisce il valore per abitante e per km².",
+        "Quali misure siano presenti per un singolo anno dipende dalla risposta del dataset.",
+      ],
+      coverage:
+        "Il dettaglio per Comune copre solo gli enti con join esatto Codice IPA↔codice fiscale nello snapshot; i record senza IPA non sono raggiungibili per la scheda comunale. È un pagamento di cassa, distinto dal bilancio e dal servizio ricevuto. Gli aggregati MCP restano nazionali/regionali e top-100; completezza e dettaglio per anno dipendono dalla risposta del dataset.",
+      queryNotes: [
+        "Il dataset MCP siope_comuni accetta soltanto year e region.",
+        "Per un Comune cerca il Codice IPA nel registro /enti e poi usa GET /api/enti/{CodiceIPA}; non inventare code o q per siope_comuni.",
+      ],
+      references: [
+        {
+          label: "Registro enti: cerca il Codice IPA del Comune",
+          url: "https://www.dovevannoinostrisoldi.com/enti",
+        },
+      ],
+    },
+  },
   { id: "openbdap_spesa_stato", title: "Spesa dello Stato", summary: "Pagamenti dello Stato per missione, amministrazione e categoria economica; la query annuale preferisce il consuntivo ufficiale.", sourceIds: ["openbdap"], freshness: "live", filters: ["year", "month"], caveat: "I rilasci mensili sono cumulati dal 1° gennaio al mese indicato; il consuntivo annuale è una serie distinta e non viene mescolato con i mesi." },
   { id: "openbdap_amministrazione", title: "Spesa di una amministrazione statale", summary: "Dettaglio OpenBDAP di una amministrazione per missione e categoria, con consuntivo annuale o rilascio mensile coerente.", sourceIds: ["openbdap"], freshness: "live", filters: ["code", "year", "month"], caveat: "Una query annuale senza mese preferisce il consuntivo; una query con mese resta sul rilascio mensile corrispondente." },
   { id: "openbdap_opere_pubbliche", title: "Opere pubbliche per CUP", summary: "Stato, date, costi e finanziamenti delle opere pubbliche MOP.", sourceIds: ["openbdap"], freshness: "live", filters: ["cup"], caveat: "I segnali di qualità o ritardo richiedono verifica e non provano uno spreco." },

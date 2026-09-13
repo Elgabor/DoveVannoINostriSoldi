@@ -33,6 +33,12 @@ const istatBesLavoroRuntimeFiles = [
   "src/data/generated/istat-bes-lavoro-2008-2024.data.json",
 ];
 
+const euVatGapItalyRuntimeFiles = [
+  "src/data/generated/eu-vat-gap-italy.data.json",
+  "src/data/generated/eu-vat-gap-italy.meta.json",
+  "scripts/etl/specs/eu-vat-gap-italy.source.json",
+];
+
 const childcareRuntimeFiles = ["src/data/generated/pnrr-childcare.data.json"];
 const pensionsRuntimeFiles = [
   "src/data/generated/istat-pensions-2012-2022.data.json",
@@ -139,10 +145,11 @@ const nextConfig: NextConfig = {
     "/fonti/copertura": integratedSourceRuntimeFiles,
     "/fonti/catalogo": integratedSourceRuntimeFiles,
     "/api/fonti/catalogo": integratedSourceRuntimeFiles,
+    "/api/tributi/vat-gap": euVatGapItalyRuntimeFiles,
     "/api/territori/bes-lavoro": istatBesLavoroRuntimeFiles,
-    "/api/assistant/chat": [...operatorRuntimeFiles, ...istatBesLavoroRuntimeFiles, ...childcareRuntimeFiles, ...naspiRuntimeFiles, ...pensionsRuntimeFiles, ...openCivitas2017RuntimeFiles],
-    "/mcp": [...integratedSourceRuntimeFiles, ...operatorRuntimeFiles, ...istatBesLavoroRuntimeFiles, ...childcareRuntimeFiles, ...naspiRuntimeFiles, ...pensionsRuntimeFiles, ...openCivitas2017RuntimeFiles],
-    "/api/mcp": [...integratedSourceRuntimeFiles, ...operatorRuntimeFiles, ...istatBesLavoroRuntimeFiles, ...childcareRuntimeFiles, ...naspiRuntimeFiles, ...pensionsRuntimeFiles, ...openCivitas2017RuntimeFiles],
+    "/api/assistant/chat": [...operatorRuntimeFiles, ...istatBesLavoroRuntimeFiles, ...euVatGapItalyRuntimeFiles, ...childcareRuntimeFiles, ...naspiRuntimeFiles, ...pensionsRuntimeFiles, ...openCivitas2017RuntimeFiles],
+    "/mcp": [...integratedSourceRuntimeFiles, ...operatorRuntimeFiles, ...istatBesLavoroRuntimeFiles, ...euVatGapItalyRuntimeFiles, ...childcareRuntimeFiles, ...naspiRuntimeFiles, ...pensionsRuntimeFiles, ...openCivitas2017RuntimeFiles],
+    "/api/mcp": [...integratedSourceRuntimeFiles, ...operatorRuntimeFiles, ...istatBesLavoroRuntimeFiles, ...euVatGapItalyRuntimeFiles, ...childcareRuntimeFiles, ...naspiRuntimeFiles, ...pensionsRuntimeFiles, ...openCivitas2017RuntimeFiles],
   },
 };
 

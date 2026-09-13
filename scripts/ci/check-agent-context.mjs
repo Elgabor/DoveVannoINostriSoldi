@@ -73,13 +73,19 @@ function isWithin(root, target) {
 
 function linesOutsideFences(lines) {
   const outside = new Set();
+  // La fence di apertura conserva tipo e lunghezza: una fence si chiude solo con
+  // lo stesso carattere e una lunghezza almeno pari (CommonMark).
   let fence = null;
   for (let index = 0; index < lines.length; index += 1) {
     const match = FENCE_RE.exec(lines[index].trimStart());
     if (match) {
       const marker = match[1][0];
-      if (fence === null) fence = marker;
-      else if (fence === marker) fence = null;
+      const length = match[1].length;
+      if (fence === null) {
+        fence = { marker, length };
+      } else if (fence.marker === marker && length >= fence.length) {
+        fence = null;
+      }
       continue;
     }
     if (fence === null) outside.add(index);

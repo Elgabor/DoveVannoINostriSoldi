@@ -23,7 +23,8 @@ a caso.
 ## MCP e API
 
 - **Quando serve**: per modificare o verificare il server MCP (`src/lib/mcp/`),
-  il contratto condiviso delle query o il comportamento di `/api/mcp`.
+  il contratto condiviso delle query, il comportamento di `/api/mcp` o
+  l'assistente e la chat (`src/lib/assistant/`, `/api/assistant/`).
 - **Fonti iniziali**:
   - [src/lib/mcp/query-schema.ts](../src/lib/mcp/query-schema.ts): schema
     `datasetQuerySchema` condiviso tra MCP e assistente.

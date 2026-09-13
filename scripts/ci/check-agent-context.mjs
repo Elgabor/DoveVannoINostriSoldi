@@ -20,8 +20,16 @@ const MAP_DOCUMENT = "docs/AGENT_CONTEXT.md";
 const CLAUDE_DOCUMENT = "CLAUDE.md";
 const AGENTS_DOCUMENT = "AGENTS.md";
 
-// Sezioni obbligatorie nella mappa; il ticket 02 estende questo elenco.
-const REQUIRED_MAP_SECTIONS = ["## Ingresso", "## MCP e API"];
+// Sezioni obbligatorie nella mappa: ingresso e i sei domini coperti dal ticket 02.
+const REQUIRED_MAP_SECTIONS = [
+  "## Ingresso",
+  "## MCP e API",
+  "## UI e browser",
+  "## Runtime e CI",
+  "## Acquisizione e snapshot",
+  "## Finanza e territori",
+  "## Progetti enti e altri dati",
+];
 
 // Collegamento AGENTS -> mappa e fallback AGENTS -> ARCHITECTURE, realizzati come
 // link Markdown attivi fuori dai blocchi di codice.

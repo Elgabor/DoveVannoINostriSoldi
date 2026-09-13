@@ -39,6 +39,7 @@ const ALLOWED_PUBLIC_HOSTS = new Set<string>([
 ]);
 
 const MARKDOWN_METACHARACTERS = /([\\`*_[\]<>|#])/g;
+const FORBIDDEN_LOCAL_RESULT = /[()\]\[`<>|\r\n]/;
 const LOCAL_DATASET_PATH_PREFIX = `${AGENTS_INDEX_PATH}/datasets/`;
 const SAFE_DATASET_SLUG = /^[a-z0-9_]+$/;
 
@@ -140,15 +141,20 @@ function sanitizeLocalPath(value: string): string | null {
   if (parsed.origin !== "https://local.invalid") return null;
   if (!isAllowedLocalPath(parsed.pathname)) return null;
   const query = new URLSearchParams(parsed.search).toString();
-  return query ? `${parsed.pathname}?${query}` : parsed.pathname;
+  const result = query ? `${parsed.pathname}?${query}` : parsed.pathname;
+  return FORBIDDEN_LOCAL_RESULT.test(result) ? null : result;
 }
 
 function hasExplicitPort(value: string): boolean {
   const schemeIndex = value.indexOf("://");
   if (schemeIndex < 0) return false;
   const authority = value.slice(schemeIndex + 3).split(/[/?#]/, 1)[0];
-  const host = authority.slice(authority.lastIndexOf("@") + 1);
-  return host.includes(":");
+  const hostAndPort = authority.slice(authority.lastIndexOf("@") + 1);
+  if (hostAndPort.startsWith("[")) {
+    const closingBracket = hostAndPort.indexOf("]");
+    return closingBracket >= 0 && hostAndPort.slice(closingBracket + 1).startsWith(":");
+  }
+  return hostAndPort.includes(":");
 }
 
 export function sanitizePublicUrl(value: string): string | null {
@@ -298,6 +304,13 @@ function longestBacktickRun(value: string): number {
   return longest;
 }
 
+export function renderAgentIndexEntry(doc: AgentPublicDoc): string {
+  const id = safeInlineCode(doc.id);
+  const path = sanitizePublicUrl(agentDatasetPath(doc.id));
+  const title = escapeMarkdownText(doc.title);
+  return path ? `- [${title}](${path}) — \`${id}\`.` : `- ${title} — \`${id}\`.`;
+}
+
 export function renderAgentsIndexMarkdown(): string {
   const docs = listAgentPublicDocs();
   const lines: string[] = [
@@ -320,7 +333,7 @@ export function renderAgentsIndexMarkdown(): string {
     lines.push("Nessuna scheda disponibile.");
   } else {
     for (const doc of docs) {
-      lines.push(`- [${escapeMarkdownText(doc.title)}](${agentDatasetPath(doc.id)}) — \`${doc.id}\`.`);
+      lines.push(renderAgentIndexEntry(doc));
     }
   }
   lines.push("", "## Accesso ai dati", "");

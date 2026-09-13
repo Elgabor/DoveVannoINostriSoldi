@@ -25,13 +25,13 @@ const REQUIRED_MAP_SECTIONS = ["## Ingresso", "## MCP e API"];
 
 // Collegamento AGENTS -> mappa e fallback AGENTS -> ARCHITECTURE, realizzati come
 // link Markdown attivi fuori dai blocchi di codice.
-const AGENTS_REQUIRED_LINKS = ["docs/AGENT_CONTEXT.md", "docs/ARCHITECTURE.md"];
+const AGENTS_REQUIRED_LINKS = ["docs/AGENT_CONTEXT.md", "docs/ARCHITECTURE.md", "CONTRIBUTING.md"];
 // Percorso ad ARCHITECTURE dentro la mappa.
 const MAP_REQUIRED_LINKS = ["docs/ARCHITECTURE.md"];
 // Il ponte CLAUDE e' l'intero contenuto del file, non una sottostringa casuale.
 const CLAUDE_BRIDGE = "@AGENTS.md";
 
-const INLINE_LINK_RE = /\[([^\]]*)\]\(([^()\s]+)\)/g;
+const INLINE_LINK_RE = /\[([^\]]*)\]\(\s*([^()\s]+?)(?:\s+["'][^"']*["'])?\s*\)/g;
 const SCHEME_RE = /^([a-zA-Z][a-zA-Z0-9+.-]*):/;
 // Solo HTTP/HTTPS sono considerati URL esterni da ignorare; ogni altro schema
 // (javascript:, data:, mailto:, ...) e' un riferimento non supportato.
@@ -170,8 +170,9 @@ function checkMandatoryReferences(documents, root, violations) {
 
   const map = documents.get(MAP_DOCUMENT);
   if (map) {
+    const mapOutside = linesOutsideFences(map.lines);
     for (const section of REQUIRED_MAP_SECTIONS) {
-      const present = map.lines.some((line) => line.trim() === section);
+      const present = map.lines.some((line, index) => mapOutside.has(index) && line.trim() === section);
       if (!present) {
         violations.push({
           file: MAP_DOCUMENT,

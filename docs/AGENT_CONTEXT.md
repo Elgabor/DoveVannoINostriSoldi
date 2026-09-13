@@ -41,5 +41,6 @@ a caso.
   dichiarati; i rami riusano i moduli di dominio senza duplicare fetch o
   normalizzazione. Zero, dato mancante e cella oscurata restano distinti.
 - **Test mirati** (percorsi, non lettura obbligatoria):
-  `tests/mcp-datasets.test.mjs`, `tests/mcp-route.test.mjs`,
-  `tests/mcp-deadline.test.mjs`.
+  [tests/mcp-datasets.test.mjs](../tests/mcp-datasets.test.mjs),
+  [tests/mcp-route.test.mjs](../tests/mcp-route.test.mjs),
+  [tests/mcp-deadline.test.mjs](../tests/mcp-deadline.test.mjs).

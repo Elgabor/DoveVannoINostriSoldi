@@ -86,6 +86,8 @@ export type AgentPublicDoc = Readonly<{
   exampleQuery: Record<string, unknown>;
   exampleError: string | null;
   sources: readonly AgentPublicSource[];
+  declaredSourceUrls: readonly string[];
+  declaredReferenceUrls: readonly string[];
   references: readonly AgentPublicReference[];
   mcpEndpoint: string;
   httpEndpoint: string | null;
@@ -221,6 +223,8 @@ function exampleQueryViolation(dataset: DatasetDescriptor): string | null {
 
 function buildAgentPublicDoc(dataset: DatasetDescriptor): AgentPublicDoc {
   const facts = dataset.publicMetadata;
+  const declaredSourceUrls = dataset.sources.map((source) => source.url);
+  const declaredReferenceUrls = (facts?.references ?? []).map((reference) => reference.url);
   const sources = dataset.sources.flatMap((source) => {
     const url = sanitizePublicUrl(source.url);
     if (!url) return [];
@@ -251,6 +255,8 @@ function buildAgentPublicDoc(dataset: DatasetDescriptor): AgentPublicDoc {
     exampleQuery: JSON.parse(JSON.stringify(dataset.exampleQuery)) as Record<string, unknown>,
     exampleError: exampleQueryViolation(dataset),
     sources,
+    declaredSourceUrls,
+    declaredReferenceUrls,
     references: (facts?.references ?? []).flatMap((reference) => {
       const url = sanitizePublicUrl(reference.url);
       return url ? [{ label: reference.label, url }] : [];

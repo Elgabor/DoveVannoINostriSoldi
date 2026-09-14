@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { IntentLink } from "@/components/intent-link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -11,7 +11,7 @@ import { PublicationAnnouncement, type PublicationAnnouncementItem } from "@/com
 import { readStoredSidebarState, setSidebarState } from "@/lib/sidebar";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  ArrowDown01Icon, ArrowLeft01Icon, PinIcon, Menu01Icon, Cancel01Icon,
+  ArrowDown01Icon, Menu01Icon, Cancel01Icon,
   GithubIcon, Home01Icon, News01Icon, Building03Icon, School01Icon, Money01Icon,
   Analytics01Icon, MapsGlobal01Icon, Task01Icon, Building04Icon, Building06Icon, Search01Icon,
   AiChat01Icon, BookSearchIcon, BookOpen01Icon, UserGroupIcon,
@@ -86,13 +86,13 @@ function NavSubtree({
             className={hasNested ? "nav-subitem nav-subitem-has-menu" : "nav-subitem"}
             data-open={nestedOpen ? "true" : undefined}
           >
-            <Link
+            <IntentLink
               href={child.href}
               onNavigate={onNavigate}
               aria-current={current ? "page" : undefined}
             >
               {child.label}
-            </Link>
+            </IntentLink>
             {hasNested ? (
               <button
                 type="button"
@@ -155,14 +155,14 @@ function NavigationLinks({ pathname, currentSearch, id, collapsed = false, onNav
             <li key={item.href} className={hasChildren ? "nav-item nav-item-has-menu" : "nav-item"}
               data-section-active={active ? "true" : undefined} data-open={open ? "true" : undefined}>
               {item.href === "/imprese" || item.href === "/report" ? (
-                <span className="sidebar-group">{item.href === "/report" ? "Pubblicazioni" : "Esplora i dati"}</span>
+                <span className="sidebar-group">{item.href === "/report" ? "Pubblicazioni" : "Dati"}</span>
               ) : null}
-              <Link href={item.href} title={collapsed ? item.label : undefined}
+              <IntentLink href={item.href} title={collapsed ? item.label : undefined}
                 aria-current={pathname === item.href && currentSearch === "" && (!hasChildren || !open) ? "page" : undefined}
                 data-section-active={active ? "true" : undefined} onNavigate={onNavigate}>
                 <HugeiconsIcon icon={NAV_ICONS[item.icon]} size={19} strokeWidth={1.8} aria-hidden="true" />
                 <span className="nav-label">{item.label}</span>
-              </Link>
+              </IntentLink>
               {hasChildren ? (
                 <button type="button" className="nav-item-toggle" aria-expanded={open}
                   aria-controls={menuId} aria-label={`Pagine in ${item.label}`}
@@ -282,15 +282,15 @@ function NavigationContent({ pathname, currentSearch, announcements }: Navigatio
             aria-haspopup="dialog" onClick={openDrawer}>
             <HugeiconsIcon icon={Menu01Icon} size={22} strokeWidth={1.8} aria-hidden="true" />
           </button>
-          <Link href="/" className="brand" aria-label="Dove vanno i nostri soldi, home">
+          <IntentLink href="/" className="brand" aria-label="Dove vanno i nostri soldi, home">
             <Image className="brand-mark" src="/brand/dvns-mark-transparent.png" width={44} height={44} alt="" aria-hidden="true" priority />
             <span className="brand-text"><strong>Dove vanno i nostri soldi?</strong></span>
-          </Link>
+          </IntentLink>
           <span className="header-spacer" />
           <HeaderSearch />
           <div className="header-actions">
             <ThemeToggle />
-            <Link className="header-action header-action-accent" href="/mcp" aria-label="Istruzioni MCP">MCP</Link>
+            <IntentLink className="header-action header-action-accent" href="/mcp" aria-label="Istruzioni MCP">MCP</IntentLink>
             <a className="header-action header-action-icon" href={REPO_URL} target="_blank" rel="noreferrer"
               aria-label="Codice su GitHub, si apre in una nuova scheda" title="Codice su GitHub">
               <HugeiconsIcon icon={GithubIcon} size={19} strokeWidth={1.7} aria-hidden="true" />
@@ -309,10 +309,10 @@ function NavigationContent({ pathname, currentSearch, announcements }: Navigatio
         }}>
         <div className="sidebar-toolbar">
           <button type="button" className="navigation-button sidebar-collapse" ref={collapseRef}
-            aria-label={collapsed ? "Ancora il menu aperto" : "Sblocca il menu e riducilo a icone"}
-            title={collapsed ? "Ancora il menu aperto" : "Sblocca il menu e riducilo a icone"}
+            aria-label={collapsed ? "Espandi menu laterale" : "Riduci menu laterale"}
+            title={collapsed ? "Espandi menu laterale" : "Riduci menu laterale"}
             aria-pressed={!collapsed} aria-controls="desktop-navigation" onClick={togglePinned}>
-            <HugeiconsIcon icon={collapsed ? PinIcon : ArrowLeft01Icon} size={20} strokeWidth={1.8} aria-hidden="true" />
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3" stroke="currentColor" strokeWidth="1.8" /><path d="M9 4v16" stroke="currentColor" strokeWidth="1.8" /></svg>
           </button>
         </div>
         <NavigationLinks id="desktop-navigation" pathname={pathname} currentSearch={currentSearch} collapsed={compact} />
@@ -341,7 +341,7 @@ function NavigationContent({ pathname, currentSearch, announcements }: Navigatio
         }}>
         <div className="mobile-navigation-panel">
           <div className="sidebar-toolbar">
-            <h2 id="mobile-navigation-title" className="sidebar-heading">Esplora il sito</h2>
+            <h2 id="mobile-navigation-title" className="sr-only">Menu del sito</h2>
             <button type="button" className="navigation-button" ref={closeRef} aria-label="Chiudi menu di navigazione" onClick={closeDrawer}>
               <HugeiconsIcon icon={Cancel01Icon} size={22} strokeWidth={1.8} aria-hidden="true" />
             </button>

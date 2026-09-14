@@ -22,6 +22,33 @@ function escapeRegExp(value) {
 }
 
 /**
+ * Removes fenced code blocks. A closing fence closes the block only when it
+ * uses the same marker (backtick or tilde), is at least as long as the opening
+ * fence and carries nothing but spaces after the marker. An unclosed fence is
+ * dropped to EOF.
+ */
+function stripFencedBlocks(text) {
+  const kept = [];
+  let fence = null;
+  for (const line of text.split("\n")) {
+    if (fence) {
+      const closing = line.match(/^[ \t]*(`{3,}|~{3,})[ \t]*\r?$/);
+      if (closing && closing[1][0] === fence.char && closing[1].length >= fence.length) {
+        fence = null;
+      }
+      continue;
+    }
+    const opening = line.match(/^[ \t]*(`{3,}|~{3,})([^\n]*)$/);
+    if (opening) {
+      fence = { char: opening[1][0], length: opening[1].length };
+      continue;
+    }
+    kept.push(line);
+  }
+  return kept.join("\n");
+}
+
+/**
  * Strips HTML comments, fenced code blocks and inline code so that link checks
  * only see effective Markdown links, never links hidden in fences or comments.
  */
@@ -29,11 +56,7 @@ export function visibleMarkdown(markdown) {
   let text = String(markdown ?? "");
   text = text.replace(/<!--[\s\S]*?-->/g, "");
   text = text.replace(/<!--[\s\S]*$/, "");
-  text = text.replace(
-    /^[ \t]*(?:`{3,}|~{3,})[^\n]*\n[\s\S]*?^[ \t]*(?:`{3,}|~{3,})[^\n]*$/gm,
-    "",
-  );
-  text = text.replace(/^[ \t]*(?:`{3,}|~{3,})[^\n]*[\s\S]*$/m, "");
+  text = stripFencedBlocks(text);
   // Code span: closes only with a run of the same backtick length, without
   // crossing a blank line. Handles runs of any length (`` … ``, ``` … ```, …).
   text = text.replace(/(?<!`)(`+)(?!`)(?:(?!\n[ \t]*\n)[\s\S])*?(?<!`)\1(?!`)/g, "");

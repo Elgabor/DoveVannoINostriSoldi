@@ -310,7 +310,25 @@ const COMPANY_ATLAS_SOURCES: DatasetDescriptor["sources"] = Object.values(compan
 
 const datasetDescriptors: DatasetDescriptorInput[] = [
   { id: "siope_inventario_enti", title: "SIOPE · inventario enti", summary: "Censimento nazionale SIOPE per tipo di ente e anno, con copertura dei join IPA e movimenti osservati.", sourceIds: ["siope", "ipa"], customSources: nonMunicipalSiopeSources, freshness: "snapshot", publicationCadence: "manuale", filters: ["year", "query", "limit", "offset", "cursor"], caveat: "È un inventario di copertura: non pubblica pagamenti per tipi diversi da ASL, Province, Regioni e Città metropolitane. Zero osservato, assenza di movimenti ed errore di join restano distinti; il 2026 è parziale." },
-  { id: "siope_asl", title: "SIOPE · pagamenti delle ASL", summary: "Movimenti mensili di cassa SIOPE delle aziende sanitarie locali 2024–2026, con voci del comparto SAN e join IPA esatto.", sourceIds: ["siope", "ipa"], customSources: nonMunicipalSiopeSources, freshness: "snapshot", publicationCadence: "manuale", filters: ["year", "region", "code", "query", "limit", "offset", "cursor"], caveat: "Solo enti di tipo ASL nel registro SIOPE, non tutti gli enti del SSN. Pagamenti di cassa, distinti dal conto economico OpenBDAP; nessuna somma tra i due perimetri. Il 2026 è parziale." },
+  { id: "siope_asl", title: "SIOPE · pagamenti delle ASL", summary: "Movimenti mensili di cassa SIOPE delle aziende sanitarie locali 2024–2026, con voci del comparto SAN e join IPA esatto.", sourceIds: ["siope", "ipa"], customSources: nonMunicipalSiopeSources, freshness: "snapshot", publicationCadence: "manuale", filters: ["year", "region", "code", "query", "limit", "offset", "cursor"], caveat: "Solo enti di tipo ASL nel registro SIOPE, non tutti gli enti del SSN. Pagamenti di cassa, distinti dal conto economico OpenBDAP; nessuna somma tra i due perimetri. Il 2026 è parziale.",
+    publicMetadata: {
+      period: [
+        "Snapshot acquisito il 2026-09-07: anni serviti 2024, 2025 e 2026.",
+        "Il 2026 è parziale e revisionabile: la fonte aggiorna il file dell'anno in corso, quindi i mesi osservati possono essere meno di dodici e il mese più recente può essere incompleto.",
+      ],
+      units: [
+        "Pagamenti di cassa in centesimi di euro (EUR-cent), flusso uscite: non bilancio, impegni o costo economico di competenza.",
+        "Movimenti di cassa del comparto SAN per ente, distinti dal conto economico OpenBDAP: nessuna somma fra i due perimetri.",
+      ],
+      coverage:
+        "334.479 movimenti mensili pubblici e paginati via MCP; 116 schede aggregate server-only con join IPA esatto; unmatched conservati, fuori-validità esclusi e diagnosticati. Solo enti di tipo ASL nel registro SIOPE, non tutti gli enti del SSN. Il 2024 e il 2025 coprono dodici mesi per la quasi totalità delle ASL; il 2026 è parziale.",
+      queryNotes: [
+        "Filtri: year (2024, 2025 o 2026), region (nome o codice risolto al nome canonico), code (codice IPA o codice fiscale), query (testo).",
+        "Usa cursor insieme a year/region/code/query per proseguire la scansione; offset è ammesso solo senza quei filtri e non è compatibile con cursor.",
+      ],
+      references: [],
+    },
+  },
   { id: "siope_province", title: "SIOPE · pagamenti delle Province", summary: "Movimenti mensili di cassa SIOPE delle Province 2024–2026, con identità temporale e join IPA esatto.", sourceIds: ["siope", "ipa"], customSources: nonMunicipalSiopeSources, freshness: "snapshot", publicationCadence: "manuale", filters: ["year", "region", "code", "query", "limit", "offset", "cursor"], caveat: "Comparto PRO. Sono pagamenti di cassa dell'amministrazione, non spesa consolidata nel territorio né una classifica; il 2026 è parziale." },
   { id: "siope_regioni", title: "SIOPE · pagamenti delle Regioni", summary: "Movimenti mensili di cassa SIOPE delle Regioni e Province autonome 2024–2026, separati dai Comuni.", sourceIds: ["siope", "ipa"], customSources: nonMunicipalSiopeSources, freshness: "snapshot", publicationCadence: "manuale", filters: ["year", "region", "code", "query", "limit", "offset", "cursor"], caveat: "Comparto REG; comprende le Province autonome registrate da SIOPE. Non è spesa sanitaria né una somma dei Comuni; il 2026 è parziale." },
   { id: "siope_citta_metropolitane", title: "SIOPE · pagamenti delle Città metropolitane", summary: "Movimenti mensili di cassa SIOPE delle Città metropolitane 2024–2026, separati dalle Province.", sourceIds: ["siope", "ipa"], customSources: nonMunicipalSiopeSources, freshness: "snapshot", publicationCadence: "manuale", filters: ["year", "region", "code", "query", "limit", "offset", "cursor"], caveat: "Comparto PRO. Sono pagamenti di cassa dell'amministrazione, non spesa consolidata nel territorio né una classifica; il 2026 è parziale." },

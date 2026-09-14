@@ -1,6 +1,6 @@
 # DVNS — lettura per agenti e contesto essenziale
 
-Versione 3, 12 settembre 2026. Direzione semplificata approvata da Lorenzo. Tracker esclusivamente locale. Questa specifica e i ticket 01–08 sostituiscono il precedente piano R01–R12/P01–P06; il laboratorio precedente è storico, non un prerequisito. Nessuna implementazione di prodotto presente al momento della stesura.
+Versione 3, 12 settembre 2026. Direzione semplificata approvata da Lorenzo. La specifica nasceva come tracker locale; questa copia curata è versionata soltanto sul fork per la revisione interna e resta esclusa dalla futura PR verso upstream. Questa specifica e i ticket 01–08 sostituiscono il precedente piano R01–R12/P01–P06; il laboratorio precedente è storico, non un prerequisito. Nessuna implementazione di prodotto era presente al momento della stesura.
 
 ## S1. Obiettivo e risultato atteso
 

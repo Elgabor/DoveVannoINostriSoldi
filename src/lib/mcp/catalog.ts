@@ -349,7 +349,7 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
         "Enti di tipo PROVINCIA (comparto SIOPE PRO); le Città metropolitane sono escluse e pubblicate nel dataset separato siope_citta_metropolitane.",
       ],
       coverage:
-        "270.194 righe canoniche della proiezione (265.836 matched, 4.358 unmatched); 88 schede server-only con join IPA esatto e un includedCode per ente. Sono pagamenti di cassa dell'amministrazione provinciale, non spesa consolidata nel territorio né una classifica.",
+        "270.194 righe canoniche della proiezione; 88 schede server-only con join IPA esatto e un includedCode per ente. Eventuali movimenti unmatched o fuori validità restano diagnostici nell'audit di provenienza e non sono conteggiati per comparto. Sono pagamenti di cassa dell'amministrazione provinciale, non spesa consolidata nel territorio né una classifica.",
       queryNotes: [
         "Filtri: year (2024, 2025 o 2026), region (nome o codice risolto al nome canonico), code (codice IPA o codice fiscale), query (testo).",
         "Usa cursor insieme a year/region/code/query per proseguire la scansione; offset è ammesso solo senza quei filtri e non è compatibile con cursor.",

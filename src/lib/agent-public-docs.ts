@@ -15,25 +15,28 @@ export const AGENTS_INDEX_PATH = "/for-agents";
 const ACTIVE_DATASET_ID_SET = new Set<string>(datasetCatalog.map((dataset) => dataset.id));
 
 const DVNS_PUBLIC_HOSTS = ["www.dovevannoinostrisoldi.com", "dovevannoinostrisoldi.com"];
-const VERIFIED_PUBLIC_HOSTS = ["creativecommons.org", "www1.finanze.gov.it"];
-const CATALOG_SOURCE_HOSTS = new Set<string>();
+/** HTTPS hosts declared by the active catalog itself: descriptor sources and publicMetadata references. */
+const CATALOG_PUBLIC_HOSTS = new Set<string>();
 for (const dataset of datasetCatalog) {
-  for (const source of dataset.sources) {
+  const declaredUrls = [
+    ...dataset.sources.map((source) => source.url),
+    ...(dataset.publicMetadata?.references ?? []).map((reference) => reference.url),
+  ];
+  for (const declaredUrl of declaredUrls) {
     try {
-      const url = new URL(source.url);
+      const url = new URL(declaredUrl);
       if (url.protocol === "https:" && url.hostname) {
-        CATALOG_SOURCE_HOSTS.add(normalizedHostname(url.hostname));
+        CATALOG_PUBLIC_HOSTS.add(normalizedHostname(url.hostname));
       }
     } catch {
-      // Malformed source urls stay visible as plain text; they never become links.
+      // Malformed declared urls stay visible as plain text; they never become links.
     }
   }
 }
 
 const ALLOWED_PUBLIC_HOSTS = new Set<string>([
   ...DVNS_PUBLIC_HOSTS,
-  ...VERIFIED_PUBLIC_HOSTS,
-  ...CATALOG_SOURCE_HOSTS,
+  ...CATALOG_PUBLIC_HOSTS,
 ]);
 
 const ALLOWED_LOCAL_PATHS = new Set<string>([

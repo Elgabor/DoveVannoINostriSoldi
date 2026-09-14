@@ -73,7 +73,7 @@ export const datasetQuerySchema = z.object({
     .describe("Modalità di sesso per i dataset che la espongono: F, M oppure T (totale, che NON è la somma di F e M).")
     .optional(),
   sector: z.string().max(20)
-    .describe("Codice della sezione ATECO accettato dal dataset selezionato.")
+    .describe("Codice del settore accettato dal dataset selezionato: per esempio una sezione ATECO, oppure un settore istituzionale (S1, S13_15) per istat_epea.")
     .optional(),
   band: z.string().max(30)
     .describe("Codice della fascia di valore della produzione, solo per il dataset che la dichiara.")

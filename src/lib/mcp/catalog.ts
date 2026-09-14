@@ -396,7 +396,38 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
   },
   { id: "openbdap_ssn_storico_nazionale", title: "Serie storica nazionale del Conto Economico SSN", summary: "Costi della produzione, personale, prestazioni di lavoro e acquisti di servizi a livello nazionale, dal 2012 al 2024.", sourceIds: ["openbdap"], freshness: "live", liveFallback: "snapshot", filters: [], caveat: "Solo livello nazionale: il dettaglio regionale e per ente resta disponibile soltanto per il 2024 in openbdap_ssn_conto_economico. Preferisce la lettura live OpenBDAP e, se i CSV annuali non sono disponibili, usa lo snapshot nazionale committed (dataMode snapshot). Voci di competenza economica, non pagamenti di cassa; non identificano gettonisti, cooperative o organico e non permettono classifiche di efficienza tra anni o Regioni." },
   { id: "openbdap_spesa_legislature", title: "Spesa dello Stato per legislatura", summary: "Confronto descrittivo tra l'anno pre-elettorale e la media degli altri anni completi di ogni legislatura, sulla spesa OpenBDAP RGS per missione (2014-2025).", sourceIds: ["openbdap"], freshness: "live", filters: [], caveat: "Confronto puramente descrittivo, non un test di significatività statistica: due sole legislature complete osservate, la spesa statale cresce anche per motivi non elettorali (trend, inflazione) e il 2020-2021 include la spesa emergenziale COVID-19, dichiarata esplicitamente. La legislatura in corso espone gli anni completi già pubblicati dal consuntivo, senza anno pre-elettorale: l'elezione che la chiuderà non è ancora avvenuta. Non implica causalità né intento elettorale, non copre spesa comunale, regionale o europea." },
-  { id: "openbdap_legge_bilancio_storico", title: "Legge di Bilancio per missione, serie storica", summary: "Snapshot verificato degli stanziamenti di competenza per missione nelle Leggi di Bilancio 2017-2026; ultimi sei anni per default, fino a dieci disponibili con years, filtro mission sul nome esatto.", sourceIds: ["openbdap"], freshness: "snapshot", filters: ["years", "mission"], caveat: "È lo stanziamento pubblicato dalla Legge di Bilancio (competenza, primo anno), non le misure della manovra né un pagamento osservato. Euro correnti, non corretti per inflazione. L'MCP usa lo snapshot verificato senza download live; pagina Legge di Bilancio e API dichiarano separatamente l'eventuale modalità live. Ricerca e innovazione (017) comprende anche enti non universitari; Istruzione universitaria e formazione post-universitaria (023) resta una missione distinta. Non isola FFO, bilanci atenei o progetti PRIN/PNRR e non misura qualità o efficienza. Il dataset completo include il rimborso lordo del debito pubblico." },
+  {
+    id: "openbdap_legge_bilancio_storico",
+    title: "Legge di Bilancio per missione, serie storica",
+    summary: "Snapshot verificato degli stanziamenti di competenza per missione nelle Leggi di Bilancio 2017-2026; ultimi sei anni per default, fino a dieci disponibili con years, filtro mission sul nome esatto.",
+    sourceIds: ["openbdap"],
+    freshness: "snapshot",
+    filters: ["years", "mission"],
+    caveat: "È lo stanziamento pubblicato dalla Legge di Bilancio (competenza, primo anno), non le misure della manovra né un pagamento osservato. Euro correnti, non corretti per inflazione. L'MCP usa lo snapshot verificato senza download live; pagina Legge di Bilancio e API dichiarano separatamente l'eventuale modalità live. Ricerca e innovazione (017) comprende anche enti non universitari; Istruzione universitaria e formazione post-universitaria (023) resta una missione distinta. Non isola FFO, bilanci atenei o progetti PRIN/PNRR e non misura qualità o efficienza. Il dataset completo include il rimborso lordo del debito pubblico.",
+    publicMetadata: {
+      period: [
+        "Snapshot verificato: anni serviti 2017–2026 (10 anni consecutivi), osservato il 2026-08-28.",
+        "La tassonomia delle missioni è stabile dal 2017; gli anni precedenti non sono confrontabili per la rinomina delle missioni.",
+      ],
+      units: [
+        "Stanziamento di competenza del primo anno (CP A1) in euro correnti, non corretto per inflazione.",
+        "Importi stanziati dalla Legge di Bilancio pubblicata, non pagamenti di cassa: nessun confronto con SIOPE o col consuntivo è una riconciliazione.",
+      ],
+      coverage:
+        "Lo snapshot completo contiene 34 missioni × 10 anni (2017–2026), 340 allocazioni e 306 delta; la risposta è ridotta dai filtri years (finestra 2–20, default 6) e mission (nome esatto). La fonte AMPMA pubblica 13.876 righe incl. header su 15 colonne, aggregate per anno e missione su amministrazioni, programmi e macroaggregati: l'MCP espone solo l'aggregato anno×missione, non il dettaglio per amministrazione, programma o macroaggregato.",
+      queryNotes: [
+        "years è la lunghezza della finestra (2–20, default 6) sugli anni più recenti disponibili, non un anno singolo; lo snapshot copre 2017–2026.",
+        "mission richiede il nome esatto di una delle 34 missioni; una missione assente in un anno della finestra resta fuori per non mostrare uno zero falso.",
+        "L'MCP serve lo snapshot verificato (osservato il 2026-08-28) senza download live; la modalità live vale solo per pagina e API.",
+      ],
+      references: [
+        {
+          label: "Catalogo OpenBDAP · prodotto LBF_SPE_CRU_AMPMA_001",
+          url: "https://bdap-opendata.rgs.mef.gov.it/SpodCkanApi/api/3/action/package_search?q=LBF_SPE_CRU_AMPMA_001&rows=20",
+        },
+      ],
+    },
+  },
   { id: "opencivitas_fabbisogni", title: "Fabbisogni e servizi comunali", summary: "Spesa storica, spesa standard e livelli dei servizi dei Comuni coperti da OpenCivitas.", sourceIds: ["opencivitas"], freshness: "snapshot", filters: ["year", "region", "code", "limit", "offset"], caveat: "La differenza dalla spesa standard non è una misura automatica di spreco." },
   { id: "opencivitas_fabbisogni_2021", title: "Fabbisogni e servizi comunali 2021 (FC70TOT)", summary: "Spesa storica, spesa standard e livelli dei servizi dei Comuni RSO, annualità 2021, famiglia FC70TOT.", sourceIds: ["opencivitas"], freshness: "snapshot", filters: ["year", "region", "code", "limit", "offset"], caveat: "Contratto distinto da FC80TOT 2022: non sommare né confrontare in silenzio le due annualità. La differenza dalla spesa standard non è spreco. RSS fuori perimetro." },
   {

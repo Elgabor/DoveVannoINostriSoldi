@@ -449,7 +449,7 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
         "La fonte pubblica milioni di euro a prezzi correnti; il dataset espone importi in centesimi di euro e non aggiunge precisione.",
       ],
       coverage:
-        "Italia, ripartizioni e regioni, 1995–2023: 32 aree, totale G e dieci divisioni COFOG (G010–G100) su 29 anni, 10.208 celle attese e osservate. Le aree composite (Nord, Centro-nord, Mezzogiorno, Trentino Alto Adige) contengono già le loro parti e non vanno sommate a esse.",
+        "Italia, ripartizioni e regioni, 1995–2023: 32 aree — incluse l'Extra-Regio (codice ITZ) e le composite —, totale G e dieci divisioni COFOG (G010–G100) su 29 anni, 10.208 celle attese e osservate. Le aree composite (Nord, Centro-nord, Mezzogiorno, Trentino Alto Adige) contengono già le loro parti e non vanno sommate a esse.",
       queryNotes: [
         "Filtri: year (1995–2023), territory (codice ISTAT dell'area pubblicata) e cofog (G oppure G010…G100); più filtri insieme si combinano in AND.",
         "Consumi finali a competenza economica, non cassa SIOPE: nessun confronto o somma con SIOPE è una riconciliazione.",
@@ -468,10 +468,11 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
         "Spesa per la protezione dell'ambiente per settore istituzionale e classe CEPA: contabilità di competenza, non cassa SIOPE.",
       ],
       coverage:
-        "Italia, 2016–2022: sette settori istituzionali (S1, S13_15, S14, S1K, S1K_ANC, S1K_SPASEC, S2) e otto classi CEPA (CEPA1, CEPA2, CEPA3, CEPA4, CEPA5, CEPA6, CEPA7_9, TOT_CEPA). TOT_CEPA e i totali settoriali contengono già le parti e non vanno sommati a esse.",
+        "Italia, 2016–2022: sette settori istituzionali (S1, S13_15, S14, S1K, S1K_ANC, S1K_SPASEC, S2) e otto classi CEPA (CEPA1, CEPA2, CEPA3, CEPA4, CEPA5, CEPA6, CEPA7_9, TOT_CEPA). Ogni riga porta anche l'aggregato contabile dataTypeAggr (17 valori): aggregati, settori e classi CEPA restano dimensioni distinte e non vanno sommati fra loro. TOT_CEPA e i totali settoriali contengono già le parti e non vanno sommati a esse.",
       queryNotes: [
         "Specificare almeno un filtro fra year (2016–2022), sector e cepa: la serie completa senza filtri viene rifiutata.",
         "sector accetta i codici pubblicati; cepa accetta CEPA1…CEPA7_9 oppure TOT_CEPA.",
+        "dataTypeAggr è presente nelle righe (17 aggregati contabili) ma non è offerto come filtro: non è selezionabile.",
       ],
       references: [],
     },

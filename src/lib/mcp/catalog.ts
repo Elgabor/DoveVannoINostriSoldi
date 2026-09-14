@@ -357,7 +357,35 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
       references: [],
     },
   },
-  { id: "siope_regioni", title: "SIOPE · pagamenti delle Regioni", summary: "Movimenti mensili di cassa SIOPE delle Regioni e Province autonome 2024–2026, separati dai Comuni.", sourceIds: ["siope", "ipa"], customSources: nonMunicipalSiopeSources, freshness: "snapshot", publicationCadence: "manuale", filters: ["year", "region", "code", "query", "limit", "offset", "cursor"], caveat: "Comparto REG; comprende le Province autonome registrate da SIOPE. Non è spesa sanitaria né una somma dei Comuni; il 2026 è parziale." },
+  {
+    id: "siope_regioni",
+    title: "SIOPE · pagamenti delle Regioni",
+    summary: "Movimenti mensili di cassa SIOPE delle Regioni e Province autonome 2024–2026, separati dai Comuni.",
+    sourceIds: ["siope", "ipa"],
+    customSources: nonMunicipalSiopeSources,
+    freshness: "snapshot",
+    publicationCadence: "manuale",
+    filters: ["year", "region", "code", "query", "limit", "offset", "cursor"],
+    caveat: "Comparto REG; comprende le Province autonome registrate da SIOPE. Non è spesa sanitaria né una somma dei Comuni; il 2026 è parziale.",
+    publicMetadata: {
+      period: [
+        "Snapshot acquisito il 2026-09-07: anni serviti 2024, 2025 e 2026.",
+        "2024 e 2025: tutti i 22 enti con dodici mesi. 2026: tutti i 22 con nove mesi, parziale e revisionabile.",
+      ],
+      units: [
+        "Pagamenti di cassa in centesimi di euro (EUR-cent), flusso uscite, comparto REG: non spesa sanitaria e non somma dei Comuni.",
+        "Movimenti mensili di uscita per ente: non bilancio, impegni o costo economico di competenza.",
+      ],
+      coverage:
+        "150.088 righe canoniche pubbliche contigue della proiezione; 22 schede server-only con join IPA esatto e un includedCode per ente. Tra i 22 enti figurano due Province autonome (Trento e Bolzano).",
+      queryNotes: [
+        "Filtri: year (2024, 2025 o 2026), region (nome o codice risolto al nome canonico), code (codice IPA o codice fiscale), query (testo).",
+        "Usa cursor insieme a year/region/code/query per proseguire la scansione; offset è ammesso solo senza quei filtri e non è compatibile con cursor.",
+        "Snapshot committed e aggiornato manualmente; eventuali movimenti non risolti restano diagnostici a livello globale e non sono attribuiti alle Regioni.",
+      ],
+      references: [],
+    },
+  },
   { id: "siope_citta_metropolitane", title: "SIOPE · pagamenti delle Città metropolitane", summary: "Movimenti mensili di cassa SIOPE delle Città metropolitane 2024–2026, separati dalle Province.", sourceIds: ["siope", "ipa"], customSources: nonMunicipalSiopeSources, freshness: "snapshot", publicationCadence: "manuale", filters: ["year", "region", "code", "query", "limit", "offset", "cursor"], caveat: "Comparto PRO. Sono pagamenti di cassa dell'amministrazione, non spesa consolidata nel territorio né una classifica; il 2026 è parziale." },
   { id: "siope_entrate_comuni", title: "Incassi dei Comuni", summary: "Incassi di cassa SIOPE 2024–2026, aggregati nazionali e regionali e dettaglio comunale completo paginato per codice fiscale o IPA.", sourceIds: ["siope", "ipa", "istat"], freshness: "snapshot", filters: ["year", "region", "code", "query", "limit", "offset"], caveat: "Incasso non è accertamento né entrata di competenza. Il 2026 può essere parziale: verificare period. Nessun saldo di bilancio, residuo fiscale o ranking di efficienza o spreco. national resta nazionale anche con filtri; selection riassume tutti i Comuni selezionati, non soltanto la pagina. Importi nazionali in euro, campi Cents in centesimi. Gli incassi senza Regione IPA restano nel totale nazionale; trasferimenti e partite di giro non sono consolidati." },
   {

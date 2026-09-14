@@ -332,7 +332,7 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
         "201 righe pubbliche = 67 tipi di ente × 3 anni (2024–2026) su 20 colonne; il join IPA è riportato per conteggi e importi matched/unmatched/ambiguous, senza valori numerici qui.",
       queryNotes: [
         "Filtri: year, query, limit, offset e cursor; region e code non sono disponibili su questo dataset.",
-        "Usa cursor insieme a query per proseguire la scansione; offset è ammesso solo senza ricerca testuale e non è compatibile con cursor.",
+        "Usa cursor insieme a year/query; offset è ammesso solo senza quei filtri e non è compatibile con cursor.",
         "Snapshot committed aggiornato manualmente; le righe non sono le righe movimento raw della fonte.",
       ],
       references: [],

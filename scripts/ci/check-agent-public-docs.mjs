@@ -28,12 +28,15 @@ function escapeRegExp(value) {
 export function visibleMarkdown(markdown) {
   let text = String(markdown ?? "");
   text = text.replace(/<!--[\s\S]*?-->/g, "");
+  text = text.replace(/<!--[\s\S]*$/, "");
   text = text.replace(
     /^[ \t]*(?:`{3,}|~{3,})[^\n]*\n[\s\S]*?^[ \t]*(?:`{3,}|~{3,})[^\n]*$/gm,
     "",
   );
   text = text.replace(/^[ \t]*(?:`{3,}|~{3,})[^\n]*[\s\S]*$/m, "");
-  text = text.replace(/`[^`\n]*`/g, "");
+  // Code span: closes only with a run of the same backtick length, without
+  // crossing a blank line. Handles runs of any length (`` … ``, ``` … ```, …).
+  text = text.replace(/(?<!`)(`+)(?!`)(?:(?!\n[ \t]*\n)[\s\S])*?(?<!`)\1(?!`)/g, "");
   return text;
 }
 

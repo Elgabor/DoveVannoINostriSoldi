@@ -38,9 +38,17 @@ function stripFencedBlocks(text) {
       }
       continue;
     }
-    const opening = line.match(/^[ \t]*(`{3,}|~{3,})([^\n]*)$/);
-    if (opening) {
-      fence = { char: opening[1][0], length: opening[1].length };
+    // A backtick fence's info string may not contain backticks: a column-zero
+    // run followed by more backticks on the same line is an inline code span,
+    // not a fence, and must not swallow the rest of the document.
+    const backtickOpening = line.match(/^[ \t]*(`{3,})([^\n]*)$/);
+    if (backtickOpening && !backtickOpening[2].includes("`")) {
+      fence = { char: "`", length: backtickOpening[1].length };
+      continue;
+    }
+    const tildeOpening = line.match(/^[ \t]*(~{3,})([^\n]*)$/);
+    if (tildeOpening) {
+      fence = { char: "~", length: tildeOpening[1].length };
       continue;
     }
     kept.push(line);

@@ -22,53 +22,82 @@ function escapeRegExp(value) {
 }
 
 /**
- * Removes fenced code blocks. A closing fence closes the block only when it
- * uses the same marker (backtick or tilde), is at least as long as the opening
- * fence and carries nothing but spaces after the marker. An unclosed fence is
- * dropped to EOF.
- */
-function stripFencedBlocks(text) {
-  const kept = [];
-  let fence = null;
-  for (const line of text.split("\n")) {
-    if (fence) {
-      const closing = line.match(/^[ \t]*(`{3,}|~{3,})[ \t]*\r?$/);
-      if (closing && closing[1][0] === fence.char && closing[1].length >= fence.length) {
-        fence = null;
-      }
-      continue;
-    }
-    // A backtick fence's info string may not contain backticks: a column-zero
-    // run followed by more backticks on the same line is an inline code span,
-    // not a fence, and must not swallow the rest of the document.
-    const backtickOpening = line.match(/^[ \t]*(`{3,})([^\n]*)$/);
-    if (backtickOpening && !backtickOpening[2].includes("`")) {
-      fence = { char: "`", length: backtickOpening[1].length };
-      continue;
-    }
-    const tildeOpening = line.match(/^[ \t]*(~{3,})([^\n]*)$/);
-    if (tildeOpening) {
-      fence = { char: "~", length: tildeOpening[1].length };
-      continue;
-    }
-    kept.push(line);
-  }
-  return kept.join("\n");
-}
-
-/**
- * Strips HTML comments, fenced code blocks and inline code so that link checks
- * only see effective Markdown links, never links hidden in fences or comments.
+ * Removes fenced code blocks, inline code spans and HTML comments in document
+ * order, so a literal `<!--` inside a fence or code span never opens a comment,
+ * and a fence marker inside a comment never opens a fence. Contracts kept:
+ * - fences: backtick/tilde, opening at line start with optional info string
+ *   (no backticks in a backtick info string), closing with the same marker,
+ *   length at least the opening, and only spaces after; unclosed to EOF;
+ * - code spans: any backtick run length, closed only by a run of equal length,
+ *   not crossing a blank line;
+ * - comments: closed or unclosed (to EOF).
  */
 export function visibleMarkdown(markdown) {
-  let text = String(markdown ?? "");
-  text = text.replace(/<!--[\s\S]*?-->/g, "");
-  text = text.replace(/<!--[\s\S]*$/, "");
-  text = stripFencedBlocks(text);
-  // Code span: closes only with a run of the same backtick length, without
-  // crossing a blank line. Handles runs of any length (`` … ``, ``` … ```, …).
-  text = text.replace(/(?<!`)(`+)(?!`)(?:(?!\n[ \t]*\n)[\s\S])*?(?<!`)\1(?!`)/g, "");
-  return text;
+  const text = String(markdown ?? "");
+  let out = "";
+  let i = 0;
+  while (i < text.length) {
+    const atLineStart = i === 0 || text[i - 1] === "\n";
+    if (atLineStart) {
+      const lineEnd = text.indexOf("\n", i);
+      const line = lineEnd === -1 ? text.slice(i) : text.slice(i, lineEnd);
+      const opening = line.match(/^[ \t]*(`{3,}|~{3,})([^\n]*)$/);
+      const isFence = opening && (opening[1][0] === "~" || !opening[2].includes("`"));
+      if (isFence) {
+        const char = opening[1][0];
+        const minLength = opening[1].length;
+        let j = lineEnd === -1 ? text.length : lineEnd + 1;
+        while (j < text.length) {
+          const closeEnd = text.indexOf("\n", j);
+          const closeLine = closeEnd === -1 ? text.slice(j) : text.slice(j, closeEnd);
+          const closing = closeLine.match(/^[ \t]*(`{3,}|~{3,})[ \t]*\r?$/);
+          j = closeEnd === -1 ? text.length : closeEnd + 1;
+          if (closing && closing[1][0] === char && closing[1].length >= minLength) break;
+        }
+        i = lineEnd === -1 ? text.length : j;
+        continue;
+      }
+    }
+    const char = text[i];
+    if (char === "`") {
+      let run = 0;
+      while (text[i + run] === "`") run += 1;
+      let j = i + run;
+      let close = -1;
+      while (j < text.length) {
+        if (text[j] === "`") {
+          let k = 0;
+          while (text[j + k] === "`") k += 1;
+          if (k === run) {
+            close = j;
+            break;
+          }
+          j += k;
+        } else if (text[j] === "\n") {
+          if (/^\n[ \t]*\n/.test(text.slice(j))) break;
+          j += 1;
+        } else {
+          j += 1;
+        }
+      }
+      if (close !== -1) {
+        i = close + run;
+        continue;
+      }
+      // A maximal backtick run without a matching closer is literal text.
+      out += "`".repeat(run);
+      i += run;
+      continue;
+    }
+    if (char === "<" && text.startsWith("<!--", i)) {
+      const end = text.indexOf("-->", i + 4);
+      i = end === -1 ? text.length : end + 3;
+      continue;
+    }
+    out += char;
+    i += 1;
+  }
+  return out;
 }
 
 /** Targets of effective Markdown links, ignoring fences, comments and inline code. */

@@ -94,6 +94,7 @@ export type AgentPublicDoc = Readonly<{
   references: readonly AgentPublicReference[];
   mcpEndpoint: string;
   httpEndpoint: string | null;
+  methodologyUrl: string;
 }>;
 
 export type AgentPublicDocViolation = Readonly<{ id: string; reason: string }>;
@@ -270,6 +271,7 @@ function buildAgentPublicDoc(dataset: DatasetDescriptor): AgentPublicDoc {
     }),
     mcpEndpoint: "/api/mcp",
     httpEndpoint: dataset.id === "mef_irpef_comunale" ? "/api/territori/irpef" : null,
+    methodologyUrl: "/metodologia",
   };
 }
 
@@ -425,6 +427,11 @@ export function renderAgentPublicDocMarkdown(doc: AgentPublicDoc): string {
   }
   lines.push("", "La scheda è leggibile via HTTP; l'esecuzione della query richiede un client MCP compatibile.");
   lines.push("", "## Limiti", "", escapeMarkdownText(doc.caveat));
+  const methodologyUrl = sanitizePublicUrl(doc.methodologyUrl) ?? "/metodologia";
+  lines.push("", "## Metodologia", "");
+  lines.push(
+    `Copertura, note sui filtri e limiti di questa scheda derivano dal contratto del dataset. Metodo pubblico e provenienza: [Metodologia](${methodologyUrl}).`,
+  );
   lines.push("", "## Riferimenti", "");
   lines.push(`- [Indice per agenti](${AGENTS_INDEX_PATH})`);
   lines.push(...renderReferences(doc.references));

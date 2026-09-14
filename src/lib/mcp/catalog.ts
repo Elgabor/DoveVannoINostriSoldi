@@ -508,6 +508,24 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
       { id: "anac-cig-storico", name: "ANAC · CIG annuali 2007-2025", owner: "Autorità Nazionale Anticorruzione", url: "https://dati.anticorruzione.it/opendata/dataset?q=cig-+anno&organization=anticorruzione", cadence: "Snapshot annuali 2007-2025", period: "2007-2025 (dettaglio procedure CIG)", license: "CC BY-SA 4.0" },
     ],
     caveat: "Indice storico cross-temporale; non dichiara la popolazione nazionale corrente. Importi di aggiudicazione dichiarata, non pagamenti o incassi. Valore solo per operatore unico; schede con al massimo 15 CIG pubblicati. Ranking descrittivi, non prove di irregolarità. I riferimenti op-######## valgono nello snapshot consultato.",
+    publicMetadata: {
+      period: [
+        "Snapshot dell'indice operatori osservato il 2026-09-08; struttura cross-temporale, con anno minimo e massimo per operatore riportati nella risposta.",
+        "I campi procedura (oggetto, CPV, stazione appaltante) derivano dagli snapshot CIG annuali 2007-2025 e possono mancare se il CIG non compare in quei file.",
+      ],
+      units: [
+        "Importi di aggiudicazione dichiarata in euro (stringhe decimali), non pagamenti o incassi.",
+        "awardCount conta le aggiudicazioni, incluse quelle con più operatori; attributedValue attribuisce il valore solo alle aggiudicazioni con operatore unico risolto.",
+      ],
+      coverage:
+        "5.345.384 righe candidate, incluse 3.906 duplicazioni della chiave CIG/aggiudicazione/CF; 3.591 relazioni distinte unmatched; 5.337.887 relazioni distinte risolte. Su 5.437.334 righe eleggibili, 91.950 restano non risolte per codice fiscale non valido. L'indice copre 478.418 operatori con CF valido, 4.478.729 aggiudicazioni attribuite e 1.896.866 aggiudicazioni pubblicate (massimo 15 per operatore). La copertura nazionale corrente non è dichiarata: è uno snapshot cross-temporale, non un censimento.",
+      queryNotes: [
+        "Usa un solo selettore fra query (3-120 caratteri alfanumerici, ricerca per prefisso e sottostringa su denominazione normalizzata), code (riferimento op-######## dello snapshot) e measure (awardCount oppure attributedValue).",
+        "limit 1-10 limita le imprese in ricerca o classifica, oppure i CIG della scheda; le righe restituite non sono il totale e il campione pubblica al massimo 15 CIG per operatore.",
+        "I riferimenti op-######## valgono solo nello snapshot osservato e non sono identificativi stabili tra aggiornamenti.",
+      ],
+      references: [],
+    },
   },
   { id: "consip_ordini", title: "Acquisti Consip · ordini Convenzioni e MEPA", summary: "Righe ordinate su Convenzioni e MEPA 2024-2026 aggregate per regione e tipologia di amministrazione, con importi noti e celle soppresse dichiarate.", sourceIds: ["consip"], freshness: "snapshot", filters: ["year", "channel"], caveat: "Gli importi sono limiti inferiori: la fonte sopprime il valore in molte righe (nei file MEPA importo e numero ordini sono mutuamente esclusivi) e pubblica anche storni negativi. Ordinato non è pagato e Consip non è tutta la spesa per acquisti della PA: nessun confronto con ANAC o SIOPE è una riconciliazione." },
   { id: "eurostat_cofog", title: "Eurostat · spesa pubblica per funzione (COFOG)", summary: "Spesa delle Amministrazioni pubbliche per funzione COFOG dal 2014 al 2024, in milioni di euro e in quota di PIL, per UE27, area euro e trenta Stati.", sourceIds: ["eurostat-cofog"], freshness: "snapshot", filters: ["country", "year", "cofog"], caveat: "Competenza economica SEC 2010: non sono pagamenti di cassa, quindi nessun confronto con SIOPE è una riconciliazione e la spesa per funzione non misura efficienza o qualità del servizio. Il totale è quello pubblicato dalla fonte e differisce dalla somma delle dieci divisioni per solo arrotondamento. Le celle con flag «b» segnano una interruzione della serie storica e non sono confrontabili a cavallo; quelle con flag «p» sono provvisorie. Gli aggregati UE27 e area euro contengono già gli Stati membri e non vanno sommati a essi." },

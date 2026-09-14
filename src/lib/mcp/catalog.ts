@@ -350,7 +350,50 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
   { id: "openbdap_spesa_stato", title: "Spesa dello Stato", summary: "Pagamenti dello Stato per missione, amministrazione e categoria economica; la query annuale preferisce il consuntivo ufficiale.", sourceIds: ["openbdap"], freshness: "live", filters: ["year", "month"], caveat: "I rilasci mensili sono cumulati dal 1° gennaio al mese indicato; il consuntivo annuale è una serie distinta e non viene mescolato con i mesi." },
   { id: "openbdap_amministrazione", title: "Spesa di una amministrazione statale", summary: "Dettaglio OpenBDAP di una amministrazione per missione e categoria, con consuntivo annuale o rilascio mensile coerente.", sourceIds: ["openbdap"], freshness: "live", filters: ["code", "year", "month"], caveat: "Una query annuale senza mese preferisce il consuntivo; una query con mese resta sul rilascio mensile corrispondente." },
   { id: "openbdap_opere_pubbliche", title: "Opere pubbliche per CUP", summary: "Stato, date, costi e finanziamenti delle opere pubbliche MOP.", sourceIds: ["openbdap"], freshness: "live", filters: ["cup"], caveat: "I segnali di qualità o ritardo richiedono verifica e non provano uno spreco." },
-  { id: "openbdap_ssn_conto_economico", title: "Conto Economico degli enti del SSN", summary: "Consuntivo 2024 OpenBDAP con aggregato nazionale, aggregati regionali e dettaglio di 232 enti; costo del personale, acquisti di servizi e voci ufficiali di consulenze, collaborazioni, interinale e altre prestazioni di lavoro.", sourceIds: ["openbdap"], freshness: "snapshot", filters: ["year", "region", "code", "limit", "offset"], caveat: "Il nazionale e le Regioni provengono da dataset ufficiali distinti dal dettaglio enti; le 21 righe codeSsn=999 non sono esposte per evitare doppio conteggio. Le voci sono categorie contabili: non equivalgono a gettonisti, cooperative, organico o pagamenti di cassa e non consentono classifiche di efficienza o inferenze sulla qualità sanitaria." },
+  {
+    id: "openbdap_ssn_conto_economico",
+    title: "Conto Economico degli enti del SSN",
+    summary: "Consuntivo 2024 OpenBDAP con aggregato nazionale, aggregati regionali e dettaglio di 232 enti; costo del personale, acquisti di servizi e voci ufficiali di consulenze, collaborazioni, interinale e altre prestazioni di lavoro.",
+    sourceIds: ["openbdap"],
+    freshness: "snapshot",
+    filters: ["year", "region", "code", "limit", "offset"],
+    caveat: "Il nazionale e le Regioni provengono da dataset ufficiali distinti dal dettaglio enti; le 21 righe codeSsn=999 non sono esposte per evitare doppio conteggio. Le voci sono categorie contabili: non equivalgono a gettonisti, cooperative, organico o pagamenti di cassa e non consentono classifiche di efficienza o inferenze sulla qualità sanitaria.",
+    publicMetadata: {
+      period: [
+        "Consuntivo 2024: anno di riferimento 2024, rilevazione CONSUNTIVO di conto economico.",
+        "Pubblicazione della fonte: 2026-02-11; osservazione: 2026-02-10. Il dataset è disponibile solo per il 2024.",
+      ],
+      units: [
+        "Importi in centesimi di euro nell'artefatto; competenza economica (conto economico consuntivo), non flussi di cassa.",
+        "Il dataset MCP espone cinque metriche selezionate: BZ9999 Totale costi della produzione, BA2080 Totale costo del personale, BA1350 e BA1750 prestazioni di lavoro sanitarie e non sanitarie, BA0390 acquisti di servizi.",
+      ],
+      coverage:
+        "Dettaglio: 232 enti esposti (253 nella fonte, senza le righe aggregate codeSsn=999) su 21 aggregati territoriali regionali, con Trento e Bolzano mantenute separate. Nazionale (5 righe) e regionale (105 righe) sono query OData filtrate sulle stesse cinque metriche, non l'intero perimetro di 554 codici voce della fonte. I tre livelli sono ufficiali e distinti: non si sommano fra loro.",
+      queryNotes: [
+        "Il filtro year accetta solo il 2024; region e code selezionano il dettaglio, limit e offset paginano. Le metriche non sono filtrabili.",
+        "Il flag missing distingue l'assenza del valore da uno zero osservato: detailCoverage.present/missing riconciliano i 232 enti per metrica (es. productionCosts 232/0, personnelCost 218/14).",
+        "Le righe aggregate codeSsn=999 e i codici regionali 041/042 sono usati per la verifica di riconciliazione e non sono esposti come enti di dettaglio.",
+      ],
+      references: [
+        {
+          label: "Dettaglio enti SSN 2024 (OpenBDAP)",
+          url: "https://bdap-opendata.rgs.mef.gov.it/content/2024-modello-di-rilevazione-del-conto-economico-degli-enti-del-ssn",
+        },
+        {
+          label: "Conto Economico SSN 2024 · livello nazionale (OpenBDAP)",
+          url: "https://bdap-opendata.rgs.mef.gov.it/content/2024-modello-di-rilevazione-del-conto-economico-degli-enti-del-ssn-livello-nazionale",
+        },
+        {
+          label: "Conto Economico SSN 2024 · livello regionale (OpenBDAP)",
+          url: "https://bdap-opendata.rgs.mef.gov.it/content/2024-modello-di-rilevazione-del-conto-economico-degli-enti-del-ssn-livello-regionale",
+        },
+        {
+          label: "Licenza CC BY 3.0",
+          url: "https://creativecommons.org/licenses/by/3.0/",
+        },
+      ],
+    },
+  },
   { id: "openbdap_ssn_storico_nazionale", title: "Serie storica nazionale del Conto Economico SSN", summary: "Costi della produzione, personale, prestazioni di lavoro e acquisti di servizi a livello nazionale, dal 2012 al 2024.", sourceIds: ["openbdap"], freshness: "live", liveFallback: "snapshot", filters: [], caveat: "Solo livello nazionale: il dettaglio regionale e per ente resta disponibile soltanto per il 2024 in openbdap_ssn_conto_economico. Preferisce la lettura live OpenBDAP e, se i CSV annuali non sono disponibili, usa lo snapshot nazionale committed (dataMode snapshot). Voci di competenza economica, non pagamenti di cassa; non identificano gettonisti, cooperative o organico e non permettono classifiche di efficienza tra anni o Regioni." },
   { id: "openbdap_spesa_legislature", title: "Spesa dello Stato per legislatura", summary: "Confronto descrittivo tra l'anno pre-elettorale e la media degli altri anni completi di ogni legislatura, sulla spesa OpenBDAP RGS per missione (2014-2025).", sourceIds: ["openbdap"], freshness: "live", filters: [], caveat: "Confronto puramente descrittivo, non un test di significatività statistica: due sole legislature complete osservate, la spesa statale cresce anche per motivi non elettorali (trend, inflazione) e il 2020-2021 include la spesa emergenziale COVID-19, dichiarata esplicitamente. La legislatura in corso espone gli anni completi già pubblicati dal consuntivo, senza anno pre-elettorale: l'elezione che la chiuderà non è ancora avvenuta. Non implica causalità né intento elettorale, non copre spesa comunale, regionale o europea." },
   { id: "openbdap_legge_bilancio_storico", title: "Legge di Bilancio per missione, serie storica", summary: "Snapshot verificato degli stanziamenti di competenza per missione nelle Leggi di Bilancio 2017-2026; ultimi sei anni per default, fino a dieci disponibili con years, filtro mission sul nome esatto.", sourceIds: ["openbdap"], freshness: "snapshot", filters: ["years", "mission"], caveat: "È lo stanziamento pubblicato dalla Legge di Bilancio (competenza, primo anno), non le misure della manovra né un pagamento osservato. Euro correnti, non corretti per inflazione. L'MCP usa lo snapshot verificato senza download live; pagina Legge di Bilancio e API dichiarano separatamente l'eventuale modalità live. Ricerca e innovazione (017) comprende anche enti non universitari; Istruzione universitaria e formazione post-universitaria (023) resta una missione distinta. Non isola FFO, bilanci atenei o progetti PRIN/PNRR e non misura qualità o efficienza. Il dataset completo include il rimborso lordo del debito pubblico." },

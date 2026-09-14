@@ -18,7 +18,7 @@
 - [Spese dello Stato](https://www.dovevannoinostrisoldi.com/stato): pagamenti OpenBDAP per missione, amministrazione e categoria.
 - [Legge di Bilancio](https://www.dovevannoinostrisoldi.com/spese/legge-di-bilancio): variazione dello stanziamento pubblicato per missione (OpenBDAP, competenza A1) e scenario ipotetico di riallocazione. Non è cassa né una previsione.
 - [Fondi e progetti](https://www.dovevannoinostrisoldi.com/coesione): aggregati OpenCoesione su costi, pagamenti, temi, nature e stati.
-- [Enti e società](https://www.dovevannoinostrisoldi.com/enti): ricerca nell'Indice PA e collegamenti alle partecipazioni pubbliche.
+- [Enti e società](https://www.dovevannoinostrisoldi.com/enti): ricerca nell'Indice PA e schede per ente; per i Comuni la scheda riporta i pagamenti di cassa SIOPE per anno tramite Codice IPA. Collegamenti alle partecipazioni pubbliche.
 - [Istruzione](https://www.dovevannoinostrisoldi.com/istruzione): studenti aggregati MIM della scuola secondaria di II grado per Regione, tipo di scuola e percorso nel triennio 2022/23-2024/25; copertura e valori mancanti restano espliciti.
 - [Parlamento](https://www.dovevannoinostrisoldi.com/parlamento): documenti e valori strutturati verificati della Camera, quando disponibili.
 - [Pagella economica dei governi](https://www.dovevannoinostrisoldi.com/governi): Core macroeconomico annuale dal 1995, confronto con tre paesi europei, contesto e misure separati dall'attribuzione causale.
@@ -29,10 +29,12 @@
 
 - [MCP Streamable HTTP](https://www.dovevannoinostrisoldi.com/api/mcp): endpoint canonico pubblico e read-only. Chiama prima `list_datasets`, poi `query_dataset`; il catalogo dichiara filtri, freschezza, provenienza e caveat.
 - [Pagina MCP](https://www.dovevannoinostrisoldi.com/mcp): pagina informativa per configurare il client e consultare i limiti. Per compatibilità, lo stesso percorso accetta anche `POST` e `OPTIONS` MCP; il riferimento canonico resta `/api/mcp`.
+- [Indice Markdown per agenti](/for-agents): una scheda Markdown UTF-8 per ogni dataset del catalogo MCP attivo, con fonte, periodo, unità, filtri, esempio e limiti. Per interrogare i dati usa `/api/mcp`.
 - [Assistente testuale](https://www.dovevannoinostrisoldi.com/assistente): interfaccia deterministica read-only con pochi intenti allowlisted; non usa provider LLM o voce e non conserva il prompt.
 - [API assistente](https://www.dovevannoinostrisoldi.com/api/assistant): `POST` JSON same-origin con `{ "prompt": "..." }`; una sola query, prompt massimo 500 caratteri e timeout bounded.
 - [Catalogo fonti via API](https://www.dovevannoinostrisoldi.com/api/fonti/stato): stato operativo delle fonti quando disponibile.
-- [API pagamenti comunali](https://www.dovevannoinostrisoldi.com/api/spese/comuni): pagamenti SIOPE dei Comuni, con periodo e filtri dichiarati.
+- [API pagamenti comunali](https://www.dovevannoinostrisoldi.com/api/spese/comuni): `GET` statico con aggregati SIOPE nazionali e regionali e i primi 100 Comuni per totale, pro capite o per km²; non accetta parametri di query e non isola un singolo Comune. Per i filtri dichiarati (anno, regione) usa `list_datasets`/`query_dataset` su `/api/mcp`.
+- Scheda ente via API: cerca il Codice IPA nel registro [Enti e società](https://www.dovevannoinostrisoldi.com/enti), poi usa `GET /api/enti/{CodiceIPA}`; per i Comuni la risposta include `municipalityProfile.siope` con i pagamenti di cassa SIOPE per anno, gli identificativi IPA/CF/ISTAT, la fonte e la completezza. Esempio verificato: [scheda del Comune di Bologna, Codice IPA c_a944](https://www.dovevannoinostrisoldi.com/api/enti/c_a944).
 - [API distribuzione comunale](https://www.dovevannoinostrisoldi.com/api/spese/comuni/distribuzione): aggregati completi pesati per residenti e per Comune, pubblicati solo dopo un refresh raw verificato; non restituisce righe comunali.
 - [API spesa invalidità civile](https://www.dovevannoinostrisoldi.com/api/spese/invalidita): contabilità INPS separata da SIOPE; spesa nazionale e granularità regionale verificata.
 - [API pensioni](https://www.dovevannoinostrisoldi.com/api/spese/pensioni): snapshot ISTAT del Casellario dei pensionati, interrogabile per anno; pensioni, pensionati e invalidità civile restano perimetri distinti.

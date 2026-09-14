@@ -140,6 +140,16 @@ export type DatasetSource = {
   rows?: number;
 };
 
+export type DatasetPublicMetadata = Readonly<{
+  period: readonly string[];
+  units: readonly string[];
+  coverage: string;
+  queryNotes: readonly string[];
+  references: readonly Readonly<{ label: string; url: string }>[];
+}>;
+
+export type DatasetLiveFallback = "snapshot";
+
 export type DatasetDescriptor = {
   id: DatasetId;
   title: string;
@@ -147,11 +157,14 @@ export type DatasetDescriptor = {
   sourceIds: SourceId[];
   sources: DatasetSource[];
   freshness: "snapshot" | "live";
+  /** When set, a freshness:"live" dataset may serve a committed snapshot on temporary source failure. */
+  liveFallback?: DatasetLiveFallback;
   integration: "active" | "configured";
   publicationCadence?: string;
   filters: string[];
   exampleQuery: DatasetQuery;
   caveat?: string;
+  publicMetadata?: DatasetPublicMetadata;
 };
 
 type DatasetDescriptorInput = Omit<DatasetDescriptor, "sources" | "exampleQuery" | "integration"> & {
@@ -296,20 +309,254 @@ const COMPANY_ATLAS_SOURCES: DatasetDescriptor["sources"] = Object.values(compan
 }));
 
 const datasetDescriptors: DatasetDescriptorInput[] = [
-  { id: "siope_inventario_enti", title: "SIOPE · inventario enti", summary: "Censimento nazionale SIOPE per tipo di ente e anno, con copertura dei join IPA e movimenti osservati.", sourceIds: ["siope", "ipa"], customSources: nonMunicipalSiopeSources, freshness: "snapshot", publicationCadence: "manuale", filters: ["year", "query", "limit", "offset", "cursor"], caveat: "È un inventario di copertura: non pubblica pagamenti per tipi diversi da ASL, Province, Regioni e Città metropolitane. Zero osservato, assenza di movimenti ed errore di join restano distinti; il 2026 è parziale." },
-  { id: "siope_asl", title: "SIOPE · pagamenti delle ASL", summary: "Movimenti mensili di cassa SIOPE delle aziende sanitarie locali 2024–2026, con voci del comparto SAN e join IPA esatto.", sourceIds: ["siope", "ipa"], customSources: nonMunicipalSiopeSources, freshness: "snapshot", publicationCadence: "manuale", filters: ["year", "region", "code", "query", "limit", "offset", "cursor"], caveat: "Solo enti di tipo ASL nel registro SIOPE, non tutti gli enti del SSN. Pagamenti di cassa, distinti dal conto economico OpenBDAP; nessuna somma tra i due perimetri. Il 2026 è parziale." },
-  { id: "siope_province", title: "SIOPE · pagamenti delle Province", summary: "Movimenti mensili di cassa SIOPE delle Province 2024–2026, con identità temporale e join IPA esatto.", sourceIds: ["siope", "ipa"], customSources: nonMunicipalSiopeSources, freshness: "snapshot", publicationCadence: "manuale", filters: ["year", "region", "code", "query", "limit", "offset", "cursor"], caveat: "Comparto PRO. Sono pagamenti di cassa dell'amministrazione, non spesa consolidata nel territorio né una classifica; il 2026 è parziale." },
-  { id: "siope_regioni", title: "SIOPE · pagamenti delle Regioni", summary: "Movimenti mensili di cassa SIOPE delle Regioni e Province autonome 2024–2026, separati dai Comuni.", sourceIds: ["siope", "ipa"], customSources: nonMunicipalSiopeSources, freshness: "snapshot", publicationCadence: "manuale", filters: ["year", "region", "code", "query", "limit", "offset", "cursor"], caveat: "Comparto REG; comprende le Province autonome registrate da SIOPE. Non è spesa sanitaria né una somma dei Comuni; il 2026 è parziale." },
-  { id: "siope_citta_metropolitane", title: "SIOPE · pagamenti delle Città metropolitane", summary: "Movimenti mensili di cassa SIOPE delle Città metropolitane 2024–2026, separati dalle Province.", sourceIds: ["siope", "ipa"], customSources: nonMunicipalSiopeSources, freshness: "snapshot", publicationCadence: "manuale", filters: ["year", "region", "code", "query", "limit", "offset", "cursor"], caveat: "Comparto PRO. Sono pagamenti di cassa dell'amministrazione, non spesa consolidata nel territorio né una classifica; il 2026 è parziale." },
+  {
+    id: "siope_inventario_enti",
+    title: "SIOPE · inventario enti",
+    summary: "Censimento nazionale SIOPE per tipo di ente e anno, con copertura dei join IPA e movimenti osservati.",
+    sourceIds: ["siope", "ipa"],
+    customSources: nonMunicipalSiopeSources,
+    freshness: "snapshot",
+    publicationCadence: "manuale",
+    filters: ["year", "query", "limit", "offset", "cursor"],
+    caveat: "È un inventario di copertura: non pubblica pagamenti per tipi diversi da ASL, Province, Regioni e Città metropolitane. Zero osservato, assenza di movimenti ed errore di join restano distinti; il 2026 è parziale.",
+    publicMetadata: {
+      period: [
+        "Snapshot acquisito il 2026-09-07: anni 2024, 2025 e 2026.",
+        "Il 2026 è un anno in corso e non va trattato come annualità completa.",
+      ],
+      units: [
+        "Conteggi di copertura (anagrafiche, codici SIOPE, mesi osservati, righe movimento) e importi noti in centesimi di euro: non sono pagamenti, salvo i quattro tipi/perimetri pubblicati.",
+        "Zero osservato, assenza di movimenti ed errore di join restano distinti; non sommare questo inventario con i dataset di pagamento.",
+      ],
+      coverage:
+        "201 righe pubbliche = 67 tipi di ente × 3 anni (2024–2026) su 20 colonne; il join IPA è riportato per conteggi e importi matched/unmatched/ambiguous, senza valori numerici qui.",
+      queryNotes: [
+        "Filtri: year, query, limit, offset e cursor; region e code non sono disponibili su questo dataset.",
+        "Usa cursor insieme a year/query; offset è ammesso solo senza quei filtri e non è compatibile con cursor.",
+        "Snapshot committed aggiornato manualmente; le righe non sono le righe movimento raw della fonte.",
+      ],
+      references: [],
+    },
+  },
+  { id: "siope_asl", title: "SIOPE · pagamenti delle ASL", summary: "Movimenti mensili di cassa SIOPE delle aziende sanitarie locali 2024–2026, con voci del comparto SAN e join IPA esatto.", sourceIds: ["siope", "ipa"], customSources: nonMunicipalSiopeSources, freshness: "snapshot", publicationCadence: "manuale", filters: ["year", "region", "code", "query", "limit", "offset", "cursor"], caveat: "Solo enti di tipo ASL nel registro SIOPE, non tutti gli enti del SSN. Pagamenti di cassa, distinti dal conto economico OpenBDAP; nessuna somma tra i due perimetri. Il 2026 è parziale.",
+    publicMetadata: {
+      period: [
+        "Snapshot acquisito il 2026-09-07: anni serviti 2024, 2025 e 2026.",
+        "Il 2026 è parziale e revisionabile: la fonte aggiorna il file dell'anno in corso, quindi i mesi osservati possono essere meno di dodici e il mese più recente può essere incompleto.",
+      ],
+      units: [
+        "Pagamenti di cassa in centesimi di euro (EUR-cent), flusso uscite: non bilancio, impegni o costo economico di competenza.",
+        "Movimenti di cassa del comparto SAN per ente, distinti dal conto economico OpenBDAP: nessuna somma fra i due perimetri.",
+      ],
+      coverage:
+        "334.479 movimenti mensili pubblici e paginati via MCP; 116 schede aggregate server-only con join IPA esatto; unmatched conservati, fuori-validità esclusi e diagnosticati. Solo enti di tipo ASL nel registro SIOPE, non tutti gli enti del SSN. Il 2024 e il 2025 coprono dodici mesi per la quasi totalità delle ASL; il 2026 è parziale.",
+      queryNotes: [
+        "Filtri: year (2024, 2025 o 2026), region (nome o codice risolto al nome canonico), code (codice IPA o codice fiscale), query (testo).",
+        "Usa cursor insieme a year/region/code/query per proseguire la scansione; offset è ammesso solo senza quei filtri e non è compatibile con cursor.",
+      ],
+      references: [],
+    },
+  },
+  {
+    id: "siope_province",
+    title: "SIOPE · pagamenti delle Province",
+    summary: "Movimenti mensili di cassa SIOPE delle Province 2024–2026, con identità temporale e join IPA esatto.",
+    sourceIds: ["siope", "ipa"],
+    customSources: nonMunicipalSiopeSources,
+    freshness: "snapshot",
+    publicationCadence: "manuale",
+    filters: ["year", "region", "code", "query", "limit", "offset", "cursor"],
+    caveat: "Comparto PRO. Sono pagamenti di cassa dell'amministrazione, non spesa consolidata nel territorio né una classifica; il 2026 è parziale.",
+    publicMetadata: {
+      period: [
+        "Snapshot acquisito il 2026-09-07: anni serviti 2024, 2025 e 2026.",
+        "2024: 84 province con dodici mesi e 4 fuori periodo. 2025: 84 con dodici mesi e 4 parziali (6-7 mesi). 2026: 9 mesi per tutte, parziale e revisionabile.",
+      ],
+      units: [
+        "Pagamenti di cassa in centesimi di euro (EUR-cent), flusso uscite: non bilancio, impegni o costo economico di competenza.",
+        "Enti di tipo PROVINCIA (comparto SIOPE PRO); le Città metropolitane sono escluse e pubblicate nel dataset separato siope_citta_metropolitane.",
+      ],
+      coverage:
+        "270.194 righe canoniche della proiezione; 88 schede server-only con join IPA esatto e un includedCode per ente. Eventuali movimenti unmatched o fuori validità restano diagnostici nell'audit di provenienza e non sono conteggiati per comparto. Sono pagamenti di cassa dell'amministrazione provinciale, non spesa consolidata nel territorio né una classifica.",
+      queryNotes: [
+        "Filtri: year (2024, 2025 o 2026), region (nome o codice risolto al nome canonico), code (codice IPA o codice fiscale), query (testo).",
+        "Usa cursor insieme a year/region/code/query per proseguire la scansione; offset è ammesso solo senza quei filtri e non è compatibile con cursor.",
+      ],
+      references: [],
+    },
+  },
+  {
+    id: "siope_regioni",
+    title: "SIOPE · pagamenti delle Regioni",
+    summary: "Movimenti mensili di cassa SIOPE delle Regioni e Province autonome 2024–2026, separati dai Comuni.",
+    sourceIds: ["siope", "ipa"],
+    customSources: nonMunicipalSiopeSources,
+    freshness: "snapshot",
+    publicationCadence: "manuale",
+    filters: ["year", "region", "code", "query", "limit", "offset", "cursor"],
+    caveat: "Comparto REG; comprende le Province autonome registrate da SIOPE. Non è spesa sanitaria né una somma dei Comuni; il 2026 è parziale.",
+    publicMetadata: {
+      period: [
+        "Snapshot acquisito il 2026-09-07: anni serviti 2024, 2025 e 2026.",
+        "2024 e 2025: tutti i 22 enti con dodici mesi. 2026: tutti i 22 con nove mesi, parziale e revisionabile.",
+      ],
+      units: [
+        "Pagamenti di cassa in centesimi di euro (EUR-cent), flusso uscite, comparto REG: non spesa sanitaria e non somma dei Comuni.",
+        "Movimenti mensili di uscita per ente: non bilancio, impegni o costo economico di competenza.",
+      ],
+      coverage:
+        "150.088 righe canoniche pubbliche contigue della proiezione; 22 schede server-only con join IPA esatto e un includedCode per ente. Tra i 22 enti figurano due Province autonome (Trento e Bolzano).",
+      queryNotes: [
+        "Filtri: year (2024, 2025 o 2026), region (nome o codice risolto al nome canonico), code (codice IPA o codice fiscale), query (testo).",
+        "Usa cursor insieme a year/region/code/query per proseguire la scansione; offset è ammesso solo senza quei filtri e non è compatibile con cursor.",
+        "Snapshot committed e aggiornato manualmente; eventuali movimenti non risolti restano diagnostici a livello globale e non sono attribuiti alle Regioni.",
+      ],
+      references: [],
+    },
+  },
+  {
+    id: "siope_citta_metropolitane",
+    title: "SIOPE · pagamenti delle Città metropolitane",
+    summary: "Movimenti mensili di cassa SIOPE delle Città metropolitane 2024–2026, separati dalle Province.",
+    sourceIds: ["siope", "ipa"],
+    customSources: nonMunicipalSiopeSources,
+    freshness: "snapshot",
+    publicationCadence: "manuale",
+    filters: ["year", "region", "code", "query", "limit", "offset", "cursor"],
+    caveat: "Comparto PRO. Sono pagamenti di cassa dell'amministrazione, non spesa consolidata nel territorio né una classifica; il 2026 è parziale.",
+    publicMetadata: {
+      period: [
+        "Snapshot acquisito il 2026-09-07: anni serviti 2024, 2025 e 2026.",
+        "2024: 14 enti con dodici mesi e 1 fuori periodo (Sassari). 2025: 14 con dodici mesi e Sassari con giugno-dicembre. 2026: 15 enti con nove mesi, parziale e revisionabile.",
+      ],
+      units: [
+        "Pagamenti di cassa in centesimi di euro (EUR-cent), flusso uscite, enti di tipo CITTA_METROP (comparto PRO): non spesa consolidata nel territorio né una classifica.",
+        "Movimenti mensili di uscita per ente: non bilancio, impegni o costo economico di competenza.",
+      ],
+      coverage:
+        "56.188 righe canoniche pubbliche della proiezione; 15 schede server-only con join IPA esatto e un includedCode ciascuna.",
+      queryNotes: [
+        "Filtri: year (2024, 2025 o 2026), region (nome o codice risolto al nome canonico), code (codice IPA o codice fiscale esatto), query (testo).",
+        "Usa cursor insieme a year/region/code/query per proseguire la scansione; offset è ammesso solo senza quei filtri e non è compatibile con cursor.",
+        "Snapshot committed e aggiornato manualmente.",
+      ],
+      references: [],
+    },
+  },
   { id: "siope_entrate_comuni", title: "Incassi dei Comuni", summary: "Incassi di cassa SIOPE 2024–2026, aggregati nazionali e regionali e dettaglio comunale completo paginato per codice fiscale o IPA.", sourceIds: ["siope", "ipa", "istat"], freshness: "snapshot", filters: ["year", "region", "code", "query", "limit", "offset"], caveat: "Incasso non è accertamento né entrata di competenza. Il 2026 può essere parziale: verificare period. Nessun saldo di bilancio, residuo fiscale o ranking di efficienza o spreco. national resta nazionale anche con filtri; selection riassume tutti i Comuni selezionati, non soltanto la pagina. Importi nazionali in euro, campi Cents in centesimi. Gli incassi senza Regione IPA restano nel totale nazionale; trasferimenti e partite di giro non sono consolidati." },
-  { id: "siope_comuni", title: "Pagamenti dei Comuni", summary: "Pagamenti di cassa SIOPE, serie mensile, titoli, regioni e principali Comuni, con normalizzazione territoriale ISTAT.", sourceIds: ["siope", "ipa", "istat"], freshness: "snapshot", filters: ["year", "region"], caveat: "I totali nazionali includono gli enti riconosciuti come Comuni in SIOPE; gli aggregati regionali coprono soltanto quelli abbinati tramite IPA e dichiarano conteggi e importi non regionalizzabili. Il campo distribution completo è disponibile solo nella risposta nazionale; le liste comunali contengono i primi 100 nazionali per totale, pro capite o km². Le normalizzazioni sono descrittive e non misurano efficienza, qualità o fabbisogno." },
+  {
+    id: "siope_comuni",
+    title: "Pagamenti dei Comuni",
+    summary: "Pagamenti di cassa SIOPE, serie mensile, titoli, regioni e principali Comuni, con normalizzazione territoriale ISTAT.",
+    sourceIds: ["siope", "ipa", "istat"],
+    freshness: "snapshot",
+    filters: ["year", "region"],
+    caveat:
+      "I totali nazionali includono gli enti riconosciuti come Comuni in SIOPE; gli aggregati regionali coprono soltanto quelli abbinati tramite IPA e dichiarano conteggi e importi non regionalizzabili. Il campo distribution completo è disponibile solo nella risposta nazionale; le liste comunali contengono i primi 100 nazionali per totale, pro capite o km². Le normalizzazioni sono descrittive e non misurano efficienza, qualità o fabbisogno. Il dataset MCP non isola un singolo Comune: per il dettaglio comunale cerca il Codice IPA nel registro /enti e usa GET /api/enti/{CodiceIPA}, disponibile per i Comuni con join esatto Codice IPA↔codice fiscale nello snapshot; resta un pagamento di cassa, distinto dal bilancio e dal servizio ricevuto.",
+    publicMetadata: {
+      period: [
+        "2024 e 2025 sono anni completi; il 2026 è aggiornato fino al mese presente nello snapshot ed è quindi potenzialmente parziale.",
+        "Il mese e la completezza esatti dipendono dalla risposta del dataset per anno: non vengono generalizzati.",
+      ],
+      units: [
+        "L'API espone totalCents, perCapitaCents e perSquareKmCents in centesimi di euro; la pagina rende gli importi in euro e chiarisce il valore per abitante e per km².",
+        "Quali misure siano presenti per un singolo anno dipende dalla risposta del dataset.",
+      ],
+      coverage:
+        "Il dettaglio per Comune copre solo gli enti con join esatto Codice IPA↔codice fiscale nello snapshot; i record senza IPA non sono raggiungibili per la scheda comunale. È un pagamento di cassa, distinto dal bilancio e dal servizio ricevuto. Gli aggregati MCP restano nazionali/regionali e top-100; completezza e dettaglio per anno dipendono dalla risposta del dataset.",
+      queryNotes: [
+        "Il dataset MCP siope_comuni accetta soltanto year e region.",
+        "Per un Comune cerca il Codice IPA nel registro /enti e poi usa GET /api/enti/{CodiceIPA}; non inventare code o q per siope_comuni.",
+      ],
+      references: [
+        {
+          label: "Registro enti: cerca il Codice IPA del Comune",
+          url: "https://www.dovevannoinostrisoldi.com/enti",
+        },
+      ],
+    },
+  },
   { id: "openbdap_spesa_stato", title: "Spesa dello Stato", summary: "Pagamenti dello Stato per missione, amministrazione e categoria economica; la query annuale preferisce il consuntivo ufficiale.", sourceIds: ["openbdap"], freshness: "live", filters: ["year", "month"], caveat: "I rilasci mensili sono cumulati dal 1° gennaio al mese indicato; il consuntivo annuale è una serie distinta e non viene mescolato con i mesi." },
   { id: "openbdap_amministrazione", title: "Spesa di una amministrazione statale", summary: "Dettaglio OpenBDAP di una amministrazione per missione e categoria, con consuntivo annuale o rilascio mensile coerente.", sourceIds: ["openbdap"], freshness: "live", filters: ["code", "year", "month"], caveat: "Una query annuale senza mese preferisce il consuntivo; una query con mese resta sul rilascio mensile corrispondente." },
   { id: "openbdap_opere_pubbliche", title: "Opere pubbliche per CUP", summary: "Stato, date, costi e finanziamenti delle opere pubbliche MOP.", sourceIds: ["openbdap"], freshness: "live", filters: ["cup"], caveat: "I segnali di qualità o ritardo richiedono verifica e non provano uno spreco." },
-  { id: "openbdap_ssn_conto_economico", title: "Conto Economico degli enti del SSN", summary: "Consuntivo 2024 OpenBDAP con aggregato nazionale, aggregati regionali e dettaglio di 232 enti; costo del personale, acquisti di servizi e voci ufficiali di consulenze, collaborazioni, interinale e altre prestazioni di lavoro.", sourceIds: ["openbdap"], freshness: "snapshot", filters: ["year", "region", "code", "limit", "offset"], caveat: "Il nazionale e le Regioni provengono da dataset ufficiali distinti dal dettaglio enti; le 21 righe codeSsn=999 non sono esposte per evitare doppio conteggio. Le voci sono categorie contabili: non equivalgono a gettonisti, cooperative, organico o pagamenti di cassa e non consentono classifiche di efficienza o inferenze sulla qualità sanitaria." },
-  { id: "openbdap_ssn_storico_nazionale", title: "Serie storica nazionale del Conto Economico SSN", summary: "Costi della produzione, personale, prestazioni di lavoro e acquisti di servizi a livello nazionale, dal 2012 al 2024.", sourceIds: ["openbdap"], freshness: "live", filters: [], caveat: "Solo livello nazionale: il dettaglio regionale e per ente resta disponibile soltanto per il 2024 in openbdap_ssn_conto_economico. Preferisce la lettura live OpenBDAP e, se i CSV annuali non sono disponibili, usa lo snapshot nazionale committed (dataMode snapshot). Voci di competenza economica, non pagamenti di cassa; non identificano gettonisti, cooperative o organico e non permettono classifiche di efficienza tra anni o Regioni." },
+  {
+    id: "openbdap_ssn_conto_economico",
+    title: "Conto Economico degli enti del SSN",
+    summary: "Consuntivo 2024 OpenBDAP con aggregato nazionale, aggregati regionali e dettaglio di 232 enti; costo del personale, acquisti di servizi e voci ufficiali di consulenze, collaborazioni, interinale e altre prestazioni di lavoro.",
+    sourceIds: ["openbdap"],
+    freshness: "snapshot",
+    filters: ["year", "region", "code", "limit", "offset"],
+    caveat: "Il nazionale e le Regioni provengono da dataset ufficiali distinti dal dettaglio enti; le 21 righe codeSsn=999 non sono esposte per evitare doppio conteggio. Le voci sono categorie contabili: non equivalgono a gettonisti, cooperative, organico o pagamenti di cassa e non consentono classifiche di efficienza o inferenze sulla qualità sanitaria.",
+    publicMetadata: {
+      period: [
+        "Consuntivo 2024: anno di riferimento 2024, rilevazione CONSUNTIVO di conto economico.",
+        "Pubblicazione della fonte: 2026-02-11; osservazione: 2026-02-10. Il dataset è disponibile solo per il 2024.",
+      ],
+      units: [
+        "Importi in centesimi di euro nell'artefatto; competenza economica (conto economico consuntivo), non flussi di cassa.",
+        "Il dataset MCP espone cinque metriche selezionate: BZ9999 Totale costi della produzione, BA2080 Totale costo del personale, BA1350 e BA1750 prestazioni di lavoro sanitarie e non sanitarie, BA0390 acquisti di servizi.",
+      ],
+      coverage:
+        "Dettaglio: 232 enti esposti (253 nella fonte, senza le righe aggregate codeSsn=999) su 21 aggregati territoriali regionali, con Trento e Bolzano mantenute separate. Nazionale (5 righe) e regionale (105 righe) sono query OData filtrate sulle stesse cinque metriche, non l'intero perimetro di 554 codici voce della fonte. I tre livelli sono ufficiali e distinti: non si sommano fra loro.",
+      queryNotes: [
+        "Il filtro year accetta solo il 2024; region e code selezionano il dettaglio, limit e offset paginano. Le metriche non sono filtrabili.",
+        "Il flag missing distingue l'assenza del valore da uno zero osservato: detailCoverage.present/missing riconciliano i 232 enti per metrica (es. productionCosts 232/0, personnelCost 218/14).",
+        "Le righe aggregate codeSsn=999 e i codici regionali 041/042 sono usati per la verifica di riconciliazione e non sono esposti come enti di dettaglio.",
+      ],
+      references: [
+        {
+          label: "Dettaglio enti SSN 2024 (OpenBDAP)",
+          url: "https://bdap-opendata.rgs.mef.gov.it/content/2024-modello-di-rilevazione-del-conto-economico-degli-enti-del-ssn",
+        },
+        {
+          label: "Conto Economico SSN 2024 · livello nazionale (OpenBDAP)",
+          url: "https://bdap-opendata.rgs.mef.gov.it/content/2024-modello-di-rilevazione-del-conto-economico-degli-enti-del-ssn-livello-nazionale",
+        },
+        {
+          label: "Conto Economico SSN 2024 · livello regionale (OpenBDAP)",
+          url: "https://bdap-opendata.rgs.mef.gov.it/content/2024-modello-di-rilevazione-del-conto-economico-degli-enti-del-ssn-livello-regionale",
+        },
+        {
+          label: "Licenza CC BY 3.0",
+          url: "https://creativecommons.org/licenses/by/3.0/",
+        },
+      ],
+    },
+  },
+  { id: "openbdap_ssn_storico_nazionale", title: "Serie storica nazionale del Conto Economico SSN", summary: "Costi della produzione, personale, prestazioni di lavoro e acquisti di servizi a livello nazionale, dal 2012 al 2024.", sourceIds: ["openbdap"], freshness: "live", liveFallback: "snapshot", filters: [], caveat: "Solo livello nazionale: il dettaglio regionale e per ente resta disponibile soltanto per il 2024 in openbdap_ssn_conto_economico. Preferisce la lettura live OpenBDAP e, se i CSV annuali non sono disponibili, usa lo snapshot nazionale committed (dataMode snapshot). Voci di competenza economica, non pagamenti di cassa; non identificano gettonisti, cooperative o organico e non permettono classifiche di efficienza tra anni o Regioni." },
   { id: "openbdap_spesa_legislature", title: "Spesa dello Stato per legislatura", summary: "Confronto descrittivo tra l'anno pre-elettorale e la media degli altri anni completi di ogni legislatura, sulla spesa OpenBDAP RGS per missione (2014-2025).", sourceIds: ["openbdap"], freshness: "live", filters: [], caveat: "Confronto puramente descrittivo, non un test di significatività statistica: due sole legislature complete osservate, la spesa statale cresce anche per motivi non elettorali (trend, inflazione) e il 2020-2021 include la spesa emergenziale COVID-19, dichiarata esplicitamente. La legislatura in corso espone gli anni completi già pubblicati dal consuntivo, senza anno pre-elettorale: l'elezione che la chiuderà non è ancora avvenuta. Non implica causalità né intento elettorale, non copre spesa comunale, regionale o europea." },
-  { id: "openbdap_legge_bilancio_storico", title: "Legge di Bilancio per missione, serie storica", summary: "Snapshot verificato degli stanziamenti di competenza per missione nelle Leggi di Bilancio 2017-2026; ultimi sei anni per default, fino a dieci disponibili con years, filtro mission sul nome esatto.", sourceIds: ["openbdap"], freshness: "snapshot", filters: ["years", "mission"], caveat: "È lo stanziamento pubblicato dalla Legge di Bilancio (competenza, primo anno), non le misure della manovra né un pagamento osservato. Euro correnti, non corretti per inflazione. L'MCP usa lo snapshot verificato senza download live; pagina Legge di Bilancio e API dichiarano separatamente l'eventuale modalità live. Ricerca e innovazione (017) comprende anche enti non universitari; Istruzione universitaria e formazione post-universitaria (023) resta una missione distinta. Non isola FFO, bilanci atenei o progetti PRIN/PNRR e non misura qualità o efficienza. Il dataset completo include il rimborso lordo del debito pubblico." },
+  {
+    id: "openbdap_legge_bilancio_storico",
+    title: "Legge di Bilancio per missione, serie storica",
+    summary: "Snapshot verificato degli stanziamenti di competenza per missione nelle Leggi di Bilancio 2017-2026; ultimi sei anni per default, fino a dieci disponibili con years, filtro mission sul nome esatto.",
+    sourceIds: ["openbdap"],
+    freshness: "snapshot",
+    filters: ["years", "mission"],
+    caveat: "È lo stanziamento pubblicato dalla Legge di Bilancio (competenza, primo anno), non le misure della manovra né un pagamento osservato. Euro correnti, non corretti per inflazione. L'MCP usa lo snapshot verificato senza download live; pagina Legge di Bilancio e API dichiarano separatamente l'eventuale modalità live. Ricerca e innovazione (017) comprende anche enti non universitari; Istruzione universitaria e formazione post-universitaria (023) resta una missione distinta. Non isola FFO, bilanci atenei o progetti PRIN/PNRR e non misura qualità o efficienza. Il dataset completo include il rimborso lordo del debito pubblico.",
+    publicMetadata: {
+      period: [
+        "Snapshot verificato: anni serviti 2017–2026 (10 anni consecutivi), osservato il 2026-08-28.",
+        "La tassonomia delle missioni è stabile dal 2017; gli anni precedenti non sono confrontabili per la rinomina delle missioni.",
+      ],
+      units: [
+        "Stanziamento di competenza del primo anno (CP A1) in euro correnti, non corretto per inflazione.",
+        "Importi stanziati dalla Legge di Bilancio pubblicata, non pagamenti di cassa: nessun confronto con SIOPE o col consuntivo è una riconciliazione.",
+      ],
+      coverage:
+        "Lo snapshot completo contiene 34 missioni × 10 anni (2017–2026), 340 allocazioni e 306 delta; la risposta è ridotta dai filtri years (finestra 2–20, default 6) e mission (nome esatto). La fonte AMPMA pubblica 13.876 righe incl. header su 15 colonne, aggregate per anno e missione su amministrazioni, programmi e macroaggregati: l'MCP espone solo l'aggregato anno×missione, non il dettaglio per amministrazione, programma o macroaggregato.",
+      queryNotes: [
+        "years è la lunghezza della finestra (2–20, default 6) sugli anni più recenti disponibili, non un anno singolo; lo snapshot copre 2017–2026.",
+        "mission richiede il nome esatto di una delle 34 missioni; una missione assente in un anno della finestra resta fuori per non mostrare uno zero falso.",
+        "L'MCP serve lo snapshot verificato (osservato il 2026-08-28) senza download live; la modalità live vale solo per pagina e API.",
+      ],
+      references: [
+        {
+          label: "Catalogo OpenBDAP · prodotto LBF_SPE_CRU_AMPMA_001",
+          url: "https://bdap-opendata.rgs.mef.gov.it/SpodCkanApi/api/3/action/package_search?q=LBF_SPE_CRU_AMPMA_001&rows=20",
+        },
+      ],
+    },
+  },
   { id: "opencivitas_fabbisogni", title: "Fabbisogni e servizi comunali", summary: "Spesa storica, spesa standard e livelli dei servizi dei Comuni coperti da OpenCivitas.", sourceIds: ["opencivitas"], freshness: "snapshot", filters: ["year", "region", "code", "limit", "offset"], caveat: "La differenza dalla spesa standard non è una misura automatica di spreco." },
   { id: "opencivitas_fabbisogni_2021", title: "Fabbisogni e servizi comunali 2021 (FC70TOT)", summary: "Spesa storica, spesa standard e livelli dei servizi dei Comuni RSO, annualità 2021, famiglia FC70TOT.", sourceIds: ["opencivitas"], freshness: "snapshot", filters: ["year", "region", "code", "limit", "offset"], caveat: "Contratto distinto da FC80TOT 2022: non sommare né confrontare in silenzio le due annualità. La differenza dalla spesa standard non è spreco. RSS fuori perimetro." },
   {
@@ -390,11 +637,67 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
       { id: "anac-cig-storico", name: "ANAC · CIG annuali 2007-2025", owner: "Autorità Nazionale Anticorruzione", url: "https://dati.anticorruzione.it/opendata/dataset?q=cig-+anno&organization=anticorruzione", cadence: "Snapshot annuali 2007-2025", period: "2007-2025 (dettaglio procedure CIG)", license: "CC BY-SA 4.0" },
     ],
     caveat: "Indice storico cross-temporale; non dichiara la popolazione nazionale corrente. Importi di aggiudicazione dichiarata, non pagamenti o incassi. Valore solo per operatore unico; schede con al massimo 15 CIG pubblicati. Ranking descrittivi, non prove di irregolarità. I riferimenti op-######## valgono nello snapshot consultato.",
+    publicMetadata: {
+      period: [
+        "Snapshot dell'indice operatori osservato il 2026-09-08; struttura cross-temporale, con anno minimo e massimo per operatore riportati nella risposta.",
+        "I campi procedura (oggetto, CPV, stazione appaltante) derivano dagli snapshot CIG annuali 2007-2025 e possono mancare se il CIG non compare in quei file.",
+      ],
+      units: [
+        "Importi di aggiudicazione dichiarata in euro (stringhe decimali), non pagamenti o incassi.",
+        "awardCount conta le aggiudicazioni, incluse quelle con più operatori; attributedValue attribuisce il valore solo alle aggiudicazioni con operatore unico risolto.",
+      ],
+      coverage:
+        "5.345.384 righe candidate, incluse 3.906 duplicazioni della chiave CIG/aggiudicazione/CF; 3.591 relazioni distinte unmatched; 5.337.887 relazioni distinte risolte. Su 5.437.334 righe eleggibili, 91.950 restano non risolte per codice fiscale non valido. L'indice copre 478.418 operatori con CF valido, 4.478.729 aggiudicazioni attribuite e 1.896.866 aggiudicazioni pubblicate (massimo 15 per operatore). La copertura nazionale corrente non è dichiarata: è uno snapshot cross-temporale, non un censimento.",
+      queryNotes: [
+        "Usa un solo selettore fra query (3-120 caratteri alfanumerici, ricerca per prefisso e sottostringa su denominazione normalizzata), code (riferimento op-######## dello snapshot) e measure (awardCount oppure attributedValue).",
+        "limit 1-10 limita le imprese in ricerca o classifica, oppure i CIG della scheda; le righe restituite non sono il totale e il campione pubblica al massimo 15 CIG per operatore.",
+        "I riferimenti op-######## valgono solo nello snapshot osservato e non sono identificativi stabili tra aggiornamenti.",
+      ],
+      references: [],
+    },
   },
   { id: "consip_ordini", title: "Acquisti Consip · ordini Convenzioni e MEPA", summary: "Righe ordinate su Convenzioni e MEPA 2024-2026 aggregate per regione e tipologia di amministrazione, con importi noti e celle soppresse dichiarate.", sourceIds: ["consip"], freshness: "snapshot", filters: ["year", "channel"], caveat: "Gli importi sono limiti inferiori: la fonte sopprime il valore in molte righe (nei file MEPA importo e numero ordini sono mutuamente esclusivi) e pubblica anche storni negativi. Ordinato non è pagato e Consip non è tutta la spesa per acquisti della PA: nessun confronto con ANAC o SIOPE è una riconciliazione." },
   { id: "eurostat_cofog", title: "Eurostat · spesa pubblica per funzione (COFOG)", summary: "Spesa delle Amministrazioni pubbliche per funzione COFOG dal 2014 al 2024, in milioni di euro e in quota di PIL, per UE27, area euro e trenta Stati.", sourceIds: ["eurostat-cofog"], freshness: "snapshot", filters: ["country", "year", "cofog"], caveat: "Competenza economica SEC 2010: non sono pagamenti di cassa, quindi nessun confronto con SIOPE è una riconciliazione e la spesa per funzione non misura efficienza o qualità del servizio. Il totale è quello pubblicato dalla fonte e differisce dalla somma delle dieci divisioni per solo arrotondamento. Le celle con flag «b» segnano una interruzione della serie storica e non sono confrontabili a cavallo; quelle con flag «p» sono provvisorie. Gli aggregati UE27 e area euro contengono già gli Stati membri e non vanno sommati a essi." },
-  { id: "istat_cofog", title: "ISTAT · consumi finali della PA per funzione (COFOG)", summary: "Consumi finali delle Amministrazioni pubbliche per funzione COFOG dal 1995 al 2023, a prezzi correnti, per Italia, ripartizioni e regioni.", sourceIds: ["istat-cofog"], freshness: "snapshot", filters: ["territory", "year", "cofog"], caveat: "Sono i consumi finali (P3), NON la spesa pubblica totale: nel 2023 circa 383 miliardi contro i circa 1149 della spesa totale delle AP. Nessun confronto o somma con Eurostat COFOG, SIOPE o le missioni del bilancio è una riconciliazione. L\u2019edizione è una revisione e resta fissata: fra due edizioni cambiano centinaia di celle. Le aree composite (Nord, Centro-nord, Mezzogiorno, Trentino Alto Adige) contengono già le loro parti e non vanno sommate a esse. Il dato territoriale è territorio di erogazione contabile, non quanto riceve un cittadino, e non misura efficienza o qualità del servizio." },
-  { id: "istat_epea", title: "ISTAT · spesa per la protezione dell'ambiente (EPEA)", summary: "Conti della spesa per la protezione dell'ambiente, edizione 2025M2, anni 2016–2022, per settore istituzionale e classe CEPA.", sourceIds: ["istat-epea"], freshness: "snapshot", filters: ["year", "sector", "cepa"], caveat: "Contabilità SEC di competenza: non è cassa SIOPE. Non sommare né confrontare in silenzio con RGS, PNRR Missione 2 o SAD/SAF. TOT_CEPA e totali settoriali non vanno sommati alle parti che già li compongono. Edizione 2025M2 fissata.", },
+  { id: "istat_cofog", title: "ISTAT · consumi finali della PA per funzione (COFOG)", summary: "Consumi finali delle Amministrazioni pubbliche per funzione COFOG dal 1995 al 2023, a prezzi correnti, per Italia, ripartizioni e regioni.", sourceIds: ["istat-cofog"], freshness: "snapshot", filters: ["territory", "year", "cofog"], caveat: "Sono i consumi finali (P3), NON la spesa pubblica totale: nel 2023 circa 383 miliardi contro i circa 1149 della spesa totale delle AP. Nessun confronto o somma con Eurostat COFOG, SIOPE o le missioni del bilancio è una riconciliazione. L\u2019edizione è una revisione e resta fissata: fra due edizioni cambiano centinaia di celle. Le aree composite (Nord, Centro-nord, Mezzogiorno, Trentino Alto Adige) contengono già le loro parti e non vanno sommate a esse. Il dato territoriale è territorio di erogazione contabile, non quanto riceve un cittadino, e non misura efficienza o qualità del servizio.",
+    publicMetadata: {
+      period: [
+        "Edizione fissata 2025M12: anni di riferimento 1995–2023.",
+        "Contabilità nazionale a prezzi correnti (valutazione V); le edizioni sono revisioni e non vanno mescolate: fra la 2025M1 e la 2025M12 cambiano 337 delle 704 celle confrontabili.",
+        "Osservazione dello snapshot: 2026-09-04.",
+      ],
+      units: [
+        "Consumi finali (P3) delle Amministrazioni pubbliche (S13): una componente della spesa, NON la spesa pubblica totale delle AP.",
+        "La fonte pubblica milioni di euro a prezzi correnti; il dataset espone importi in centesimi di euro e non aggiunge precisione.",
+      ],
+      coverage:
+        "Italia, ripartizioni e regioni, 1995–2023: 32 aree — incluse l'Extra-Regio (codice ITZ) e le composite —, totale G e dieci divisioni COFOG (G010–G100) su 29 anni, 10.208 celle attese e osservate. Le aree composite (Nord, Centro-nord, Mezzogiorno, Trentino Alto Adige) contengono già le loro parti e non vanno sommate a esse.",
+      queryNotes: [
+        "Filtri: year (1995–2023), territory (codice ISTAT dell'area pubblicata) e cofog (G oppure G010…G100); più filtri insieme si combinano in AND.",
+        "Consumi finali a competenza economica, non cassa SIOPE: nessun confronto o somma con SIOPE è una riconciliazione.",
+      ],
+      references: [],
+    },
+  },
+  { id: "istat_epea", title: "ISTAT · spesa per la protezione dell'ambiente (EPEA)", summary: "Conti della spesa per la protezione dell'ambiente, edizione 2025M2, anni 2016–2022, per settore istituzionale e classe CEPA.", sourceIds: ["istat-epea"], freshness: "snapshot", filters: ["year", "sector", "cepa"], caveat: "Contabilità SEC di competenza: non è cassa SIOPE. Non sommare né confrontare in silenzio con RGS, PNRR Missione 2 o SAD/SAF. TOT_CEPA e totali settoriali non vanno sommati alle parti che già li compongono. Edizione 2025M2 fissata.",
+    publicMetadata: {
+      period: [
+        "Edizione fissata 2025M2: anni di riferimento 2016–2022.",
+        "Contabilità SEC di competenza economica; le edizioni sono revisioni e non vanno mescolate.",
+      ],
+      units: [
+        "Valori in milioni di euro a prezzi correnti (UNIT_MEAS=EURO, UNIT_MULT=6) nella fonte; il dataset espone centesimi di euro (amountCents) e non aggiunge precisione.",
+        "Spesa per la protezione dell'ambiente per settore istituzionale e classe CEPA: contabilità di competenza, non cassa SIOPE.",
+      ],
+      coverage:
+        "Italia, 2016–2022: sette settori istituzionali (S1, S13_15, S14, S1K, S1K_ANC, S1K_SPASEC, S2) e otto classi CEPA (CEPA1, CEPA2, CEPA3, CEPA4, CEPA5, CEPA6, CEPA7_9, TOT_CEPA). Ogni riga porta anche l'aggregato contabile dataTypeAggr (17 valori): aggregati, settori e classi CEPA restano dimensioni distinte e non vanno sommati fra loro. TOT_CEPA e i totali settoriali contengono già le parti e non vanno sommati a esse.",
+      queryNotes: [
+        "Specificare almeno un filtro fra year (2016–2022), sector e cepa: la serie completa senza filtri viene rifiutata.",
+        "sector accetta i codici pubblicati; cepa accetta CEPA1…CEPA7_9 oppure TOT_CEPA.",
+        "dataTypeAggr è presente nelle righe (17 aggregati contabili) ma non è offerto come filtro: non è selezionabile.",
+      ],
+      references: [],
+    },
+  },
   { id: "istat_poverta_assoluta", title: "ISTAT · povertà assoluta", summary: "Indicatori ufficiali di povertà assoluta, serie corrente post-revisione, anni 2014–2024, per Italia e ripartizioni: incidenza familiare e individuale, intensità, composizione percentuale e conteggi in migliaia di famiglie e individui.", sourceIds: ["istat-poverta"], freshness: "snapshot", filters: ["territory", "year", "measure"], caveat: "NON è spesa pubblica: sono incidenze, intensità e conteggi, mai sommabili né accostabili a SIOPE, OpenBDAP o IRPEF. Incidenza, intensità e composizione sono misure diverse con unità diverse e non si sommano fra loro; famiglie e individui sono denominatori distinti. Solo i conteggi sono sommabili fra territori: sommare le incidenze delle ripartizioni non dà il valore nazionale. Le aree composite Nord e Mezzogiorno contengono già le loro parti. È la serie corrente dal 2014: le serie 34_201/34_202 finiscono nel 2013 e la 34_728 è interrotta, non vanno mai giuntate. ISTAT non pubblica la povertà a livello comunale. Il dato non misura efficacia di una manovra né responsabilità di un governo.", },
   { id: "istat_poverta_relativa", title: "ISTAT · povertà relativa", summary: "Indicatori ufficiali di povertà relativa, serie corrente post-revisione, anni 2014–2024, per Italia e ripartizioni: incidenza familiare e individuale, intensità, composizione percentuale e conteggi in migliaia di famiglie e individui.", sourceIds: ["istat-poverta-relativa"], freshness: "snapshot", filters: ["territory", "year", "measure"], caveat: "NON è la povertà assoluta e NON va sommata né confrontata con essa: la relativa misura la distanza dalla spesa media delle famiglie, l'assoluta il costo di un paniere di beni essenziali. Sono due definizioni diverse della stessa parola. NON è spesa pubblica: nessun accostamento a SIOPE, OpenBDAP o IRPEF. Incidenza, intensità e composizione hanno unità diverse e non si sommano fra loro; famiglie e individui sono denominatori distinti. Solo i conteggi sono sommabili fra territori. Le aree composite Nord e Mezzogiorno contengono già le loro parti. È la serie corrente dal 2014: 34_202 finisce nel 2013 e la 34_728 è interrotta, non vanno mai giuntate. ISTAT non pubblica la povertà a livello comunale.", },
   { id: "istat_bes_economico", title: "ISTAT · BES dei territori, benessere economico", summary: "Cinque indicatori del dominio benessere economico del BES dei territori, edizione 2025, per Italia, ripartizioni, regioni e 111 province: reddito medio disponibile pro capite, retribuzione media, importo medio dei redditi pensionistici, quota di pensionati con reddito basso e tasso di ingresso in sofferenza dei prestiti alle famiglie.", sourceIds: ["istat-bes-economico"], freshness: "snapshot", filters: ["territory", "year", "measure", "sex"], caveat: "NON è spesa pubblica: misura quanto le famiglie hanno, non quanto lo Stato spende. Nessuna somma o accostamento con SIOPE, OpenBDAP o IRPEF. Sono medie pro capite e percentuali, quindi NON sommabili fra territori: la media di una ripartizione non è la somma di quelle delle sue province. Il totale per sesso non è la somma di F e M, è la media sull'intera popolazione. Ogni indicatore ha il proprio periodo: non esiste un unico 2004-2024, e confrontare indicatori diversi agli estremi significa confrontare anni diversi. Le aree composite Nord e Mezzogiorno contengono già le loro parti. L'anagrafica delle province non è stabile: include province istituite dopo e le tre sarde soppresse nel 2016. Nessun indice composito e nessuna classifica di territori.", },
@@ -444,7 +747,50 @@ const datasetDescriptors: DatasetDescriptorInput[] = [
   { id: "istat_pensioni_prestazioni", title: "Pensioni ISTAT · prestazioni", summary: "Numero di prestazioni pensionistiche, importo lordo annuo e importo lordo medio per categoria, dal 2012 al 2022.", sourceIds: ["istat-casellario-pensioni"], freshness: "snapshot", filters: ["year", "territory"], caveat: "territory omesso restituisce IT; ITTOT comprende Italia, Estero e Non indicato e non coincide con IT. Le finestre delle province sarde differiscono fra i due flussi. Il denominatore è il numero di prestazioni, non il numero di persone. Gli importi sono lordi e nominali, espressi in migliaia di euro per i totali e in euro per la media; i conteggi delle categorie riconciliano esattamente, mentre i relativi importi possono differire dal totale di 1-2 migliaia di euro per arrotondamento della fonte. Non è sommabile con pensionati né con CIVDIS/invalidità civile INPS." },
   { id: "istat_pensionati_persone", title: "Pensionati ISTAT · persone", summary: "Numero di persone pensionate, reddito pensionistico lordo annuo e media lorda, dal 2012 al 2022.", sourceIds: ["istat-casellario-pensioni"], freshness: "snapshot", filters: ["year", "territory"], caveat: "territory omesso restituisce IT; ITTOT comprende Italia, Estero e Non indicato e non coincide con IT. Le finestre delle province sarde differiscono fra i due flussi. Il denominatore è il numero di persone pensionate, non il numero di prestazioni. Gli importi sono lordi e nominali, espressi in migliaia di euro per i totali e in euro per la media. Non è sommabile con le prestazioni pensionistiche né con CIVDIS/invalidità civile INPS; lo snapshot non è una serie INPS 2024." },
   { id: "cpt_finanza_regionale", title: "Entrate e spese pubbliche per territorio", summary: "Entrate, spese e saldo contabile territorializzato della PA consolidata CPT, con valori pro capite e per km² 2023.", sourceIds: ["cpt", "istat"], freshness: "snapshot", filters: ["year", "region"], caveat: "Il saldo è entrate meno spese nello stesso perimetro CPT PA. Le normalizzazioni ISTAT non misurano pressione fiscale, qualità dei servizi, merito politico o trasferimenti netti fra regioni e non sono il residuo fiscale di Banca d'Italia." },
-  { id: "mef_irpef_comunale", title: MEF_IRPEF_SOURCE.mcp.title, summary: MEF_IRPEF_SOURCE.mcp.summary, sourceIds: [MEF_IRPEF_SOURCE.id], freshness: "snapshot", filters: ["year", "level", "region", "province", "code", "query", "detail", "limit", "offset"], caveat: MEF_IRPEF_SOURCE.mcp.caveat },
+  {
+    id: "mef_irpef_comunale",
+    title: MEF_IRPEF_SOURCE.mcp.title,
+    summary: MEF_IRPEF_SOURCE.mcp.summary,
+    sourceIds: [MEF_IRPEF_SOURCE.id],
+    freshness: "snapshot",
+    filters: ["year", "level", "region", "province", "code", "query", "detail", "limit", "offset"],
+    caveat: MEF_IRPEF_SOURCE.mcp.caveat,
+    publicMetadata: {
+      period: [
+        "Anno d'imposta: 2024 — periodo economico delle variabili.",
+        "Dichiarazioni: 2025 — il MEF assegna il contribuente al Comune del domicilio fiscale al 31 dicembre dell'anno di presentazione della dichiarazione.",
+        "Pubblicazione della fonte MEF: 23 aprile 2026.",
+        "Osservazione dello snapshot: 2026-09-04T08:16:29Z.",
+      ],
+      units: [
+        "Contribuenti e frequenze: conteggi in unità di persone fisiche; il numero contribuenti non coincide con la frequenza del reddito complessivo.",
+        "Ammontari monetari: interi in centesimi di euro; la fonte pubblica importi in euro e la conversione è esatta, senza aggiungere precisione.",
+        "Variabili dichiarative MEF, non incassi di cassa.",
+        "Le celle oscurate per tutela statistica restano parziali: null non è zero e non viene stimato.",
+      ],
+      coverage:
+        "7896 Comuni, 107 Province e 20 Regioni; 7897 righe fonte con 1 riga Mancante/errata (5305 contribuenti) tenuta separata e non distribuita sui territori.",
+      queryNotes: [
+        "Il filtro year accetta solo l'anno d'imposta di riferimento (2024), non l'anno di dichiarazione.",
+        "Il filtro level accetta region, province oppure municipality.",
+        "Per i Comuni indica almeno uno fra code, query, region oppure province; code e query non insieme.",
+      ],
+      references: [
+        {
+          label: "Nota metodologica MEF 2024",
+          url: "https://www1.finanze.gov.it/finanze/analisi_stat/public/v_4_0_0/contenuti/nota_metodologica_2024.pdf",
+        },
+        {
+          label: "Definizioni delle variabili MEF 2024",
+          url: "https://www1.finanze.gov.it/finanze/analisi_stat/public/v_4_0_0/contenuti/definizione_variabili_2024_irpef.pdf",
+        },
+        {
+          label: "Licenza CC BY 3.0",
+          url: "https://creativecommons.org/licenses/by/3.0/it/",
+        },
+      ],
+    },
+  },
   { id: "ipa_enti", title: "Enti pubblici IPA", summary: "Ricerca e scheda degli enti nell’Indice PA.", sourceIds: ["ipa"], freshness: "live", filters: ["query", "code", "limit", "offset"] },
   { id: "ipa_struttura", title: "Struttura organizzativa IPA", summary: "Unità organizzative e aree organizzative omogenee di un ente.", sourceIds: ["ipa-struttura"], freshness: "live", filters: ["code", "limit", "offset"] },
   { id: "mef_partecipazioni", title: "Partecipazioni pubbliche", summary: "Aggregati della rilevazione annuale MEF sulle partecipazioni pubbliche.", sourceIds: ["partecipazioni-pubbliche"], freshness: "snapshot", filters: [] },

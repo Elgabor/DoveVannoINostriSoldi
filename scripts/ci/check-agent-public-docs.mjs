@@ -22,6 +22,28 @@ function escapeRegExp(value) {
 }
 
 /**
+ * Strips HTML comments, fenced code blocks and inline code so that link checks
+ * only see effective Markdown links, never links hidden in fences or comments.
+ */
+export function visibleMarkdown(markdown) {
+  let text = String(markdown ?? "");
+  text = text.replace(/<!--[\s\S]*?-->/g, "");
+  text = text.replace(
+    /^[ \t]*(?:`{3,}|~{3,})[^\n]*\n[\s\S]*?^[ \t]*(?:`{3,}|~{3,})[^\n]*$/gm,
+    "",
+  );
+  text = text.replace(/^[ \t]*(?:`{3,}|~{3,})[^\n]*[\s\S]*$/m, "");
+  text = text.replace(/`[^`\n]*`/g, "");
+  return text;
+}
+
+/** Targets of effective Markdown links, ignoring fences, comments and inline code. */
+export function markdownLinkTargets(markdown) {
+  const pattern = /\]\(([^)\s]+)\)/g;
+  return [...visibleMarkdown(markdown).matchAll(pattern)].map((match) => match[1]);
+}
+
+/**
  * Pure coverage/contract check over a snapshot derived from the renderer.
  * `snapshot.cards` are the projected docs, so this never queries data.
  */
@@ -75,8 +97,9 @@ export function checkAgentPublicDocs(snapshot) {
     );
   }
 
+  const indexLinkTargets = new Set(markdownLinkTargets(indexMarkdown));
   for (const path of requiredIndexLinks) {
-    if (!indexMarkdown.includes(`(${path})`)) {
+    if (!indexLinkTargets.has(path)) {
       add(null, "index-link", `link richiesto assente dall'indice: ${path}`);
     }
   }
@@ -118,6 +141,9 @@ export function checkAgentPublicDocs(snapshot) {
       add(id, "sources", "elenco fonti vuoto nonostante fonti dichiarate dal descriptor");
     }
     if (!Array.isArray(card?.references)) add(id, "references", "elenco riferimenti mancante");
+    if (typeof sanitizePublicUrl === "function" && sanitizePublicUrl(card?.methodologyUrl) !== "/metodologia") {
+      add(id, "methodology-link", "link di metodologia mancante o non ammesso: /metodologia");
+    }
 
     const routePath = `${datasetPathPrefix}${id}`;
     if (typeof sanitizePublicUrl === "function" && sanitizePublicUrl(routePath) === null) {
@@ -193,7 +219,7 @@ export function runAgentPublicDocsCheck(snapshot, io = {}) {
 
 export function parseAgentIndexIds(indexMarkdown, datasetPathPrefix) {
   const pattern = new RegExp(`\\]\\(${escapeRegExp(datasetPathPrefix)}([a-z0-9_]+)\\)`, "g");
-  return [...indexMarkdown.matchAll(pattern)].map((match) => match[1]);
+  return [...visibleMarkdown(indexMarkdown).matchAll(pattern)].map((match) => match[1]);
 }
 
 export async function buildAgentPublicDocsSnapshot() {

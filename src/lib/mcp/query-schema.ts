@@ -63,6 +63,9 @@ export const datasetQuerySchema = z.object({
   cofog: z.string().max(8)
     .describe("Funzione COFOG: per Eurostat TOTAL o GF01…GF10; per ISTAT il totale G oppure una divisione da G010 a G100.")
     .optional(),
+  cepa: z.string().max(8)
+    .describe("Classe CEPA della spesa per la protezione dell'ambiente (istat_epea), per esempio CEPA1 oppure TOT_CEPA; il dataset valida i valori ammessi.")
+    .optional(),
   period: z.string().max(20)
     .describe("Periodo dichiarato dal dataset, per esempio 2026-07-31 o 2026-Q2.")
     .optional(),

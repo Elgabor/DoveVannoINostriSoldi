@@ -247,7 +247,11 @@ function buildAgentPublicDoc(dataset: DatasetDescriptor): AgentPublicDoc {
     title: dataset.title,
     summary: dataset.summary,
     availability: `Integrazione attiva; ${
-      dataset.freshness === "snapshot" ? "snapshot verificato, senza query live nel rendering" : "fonte ufficiale live"
+      dataset.freshness === "snapshot"
+        ? "snapshot verificato, senza query live nel rendering"
+        : dataset.liveFallback === "snapshot"
+          ? "fonte ufficiale live con fallback allo snapshot verificato"
+          : "fonte ufficiale live"
     }${cadence}.`,
     period: facts?.period ?? [NO_STABLE_PERIOD],
     units: facts?.units ?? [NO_STABLE_UNITS],

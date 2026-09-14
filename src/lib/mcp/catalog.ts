@@ -309,7 +309,35 @@ const COMPANY_ATLAS_SOURCES: DatasetDescriptor["sources"] = Object.values(compan
 }));
 
 const datasetDescriptors: DatasetDescriptorInput[] = [
-  { id: "siope_inventario_enti", title: "SIOPE · inventario enti", summary: "Censimento nazionale SIOPE per tipo di ente e anno, con copertura dei join IPA e movimenti osservati.", sourceIds: ["siope", "ipa"], customSources: nonMunicipalSiopeSources, freshness: "snapshot", publicationCadence: "manuale", filters: ["year", "query", "limit", "offset", "cursor"], caveat: "È un inventario di copertura: non pubblica pagamenti per tipi diversi da ASL, Province, Regioni e Città metropolitane. Zero osservato, assenza di movimenti ed errore di join restano distinti; il 2026 è parziale." },
+  {
+    id: "siope_inventario_enti",
+    title: "SIOPE · inventario enti",
+    summary: "Censimento nazionale SIOPE per tipo di ente e anno, con copertura dei join IPA e movimenti osservati.",
+    sourceIds: ["siope", "ipa"],
+    customSources: nonMunicipalSiopeSources,
+    freshness: "snapshot",
+    publicationCadence: "manuale",
+    filters: ["year", "query", "limit", "offset", "cursor"],
+    caveat: "È un inventario di copertura: non pubblica pagamenti per tipi diversi da ASL, Province, Regioni e Città metropolitane. Zero osservato, assenza di movimenti ed errore di join restano distinti; il 2026 è parziale.",
+    publicMetadata: {
+      period: [
+        "Snapshot acquisito il 2026-09-07: anni 2024, 2025 e 2026.",
+        "Il 2026 è un anno in corso e non va trattato come annualità completa.",
+      ],
+      units: [
+        "Conteggi di copertura (anagrafiche, codici SIOPE, mesi osservati, righe movimento) e importi noti in centesimi di euro: non sono pagamenti, salvo i quattro tipi/perimetri pubblicati.",
+        "Zero osservato, assenza di movimenti ed errore di join restano distinti; non sommare questo inventario con i dataset di pagamento.",
+      ],
+      coverage:
+        "201 righe pubbliche = 67 tipi di ente × 3 anni (2024–2026) su 20 colonne; il join IPA è riportato per conteggi e importi matched/unmatched/ambiguous, senza valori numerici qui.",
+      queryNotes: [
+        "Filtri: year, query, limit, offset e cursor; region e code non sono disponibili su questo dataset.",
+        "Usa cursor insieme a query per proseguire la scansione; offset è ammesso solo senza ricerca testuale e non è compatibile con cursor.",
+        "Snapshot committed aggiornato manualmente; le righe non sono le righe movimento raw della fonte.",
+      ],
+      references: [],
+    },
+  },
   { id: "siope_asl", title: "SIOPE · pagamenti delle ASL", summary: "Movimenti mensili di cassa SIOPE delle aziende sanitarie locali 2024–2026, con voci del comparto SAN e join IPA esatto.", sourceIds: ["siope", "ipa"], customSources: nonMunicipalSiopeSources, freshness: "snapshot", publicationCadence: "manuale", filters: ["year", "region", "code", "query", "limit", "offset", "cursor"], caveat: "Solo enti di tipo ASL nel registro SIOPE, non tutti gli enti del SSN. Pagamenti di cassa, distinti dal conto economico OpenBDAP; nessuna somma tra i due perimetri. Il 2026 è parziale.",
     publicMetadata: {
       period: [

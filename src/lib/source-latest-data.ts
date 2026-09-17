@@ -4,7 +4,12 @@ import { cptRegionalFiscalSnapshot } from "@/lib/cpt-regional-fiscal-snapshot";
 import { inpsCivilInvaliditySnapshot } from "@/lib/inps-invalidity-snapshot";
 import { consipOrdiniData } from "@/lib/consip-ordini-snapshot";
 import { eurostatCofogData } from "@/lib/eurostat-cofog-snapshot";
+import { eurostatGovMainData } from "@/lib/eurostat-gov-main-snapshot";
 import { inpsNaspiData } from "@/lib/inps-naspi-snapshot";
+import { inpsAssegnoUnicoData } from "@/lib/inps-assegno-unico-snapshot";
+import { inpsIntegrazioniSalarialiData } from "@/lib/inps-integrazioni-salariali-snapshot";
+import { inpsCigFondiSolidarietaData } from "@/lib/inps-cig-fondi-solidarieta-snapshot";
+import { inlVigilanzaData } from "@/lib/inl-vigilanza-snapshot";
 import { mefIrpefDettaglioData } from "@/lib/mef-irpef-dettaglio-snapshot";
 import { mefIvaMetadata } from "@/lib/mef-iva-snapshot";
 import { euVatGapItalyData } from "@/lib/eu-vat-gap-italy-snapshot";
@@ -30,6 +35,8 @@ import { getPublicDebtSnapshot } from "@/lib/public-debt";
 import { eurostatHicpData } from "@/lib/eurostat-hicp-snapshot";
 import { eurostatGdpData } from "@/lib/eurostat-gdp-snapshot";
 import { mefTaxGapNazionaleData } from "@/lib/mef-tax-gap-nazionale-snapshot";
+import { eurostatTaxagData } from "@/lib/eurostat-taxag-snapshot";
+import { eurostatShaHealthData } from "@/lib/eurostat-sha-health-snapshot";
 import { oecdTaxingWagesData } from "@/lib/oecd-taxing-wages-snapshot";
 import { getGovernmentScorecardSourceSummary } from "@/lib/government-scorecard-governments";
 
@@ -72,6 +79,10 @@ const exhaustiveLatestDataBySlug = {
     kind: "period",
     label: `${eurostatCofogData.period.from}-${eurostatCofogData.period.to}`,
   },
+  "eurostat-gov-main": {
+    kind: "period",
+    label: `${eurostatGovMainData.period.from}-${eurostatGovMainData.period.to}`,
+  },
   "istat-cofog": {
     kind: "period",
     label: `${istatCofogData.period.from}-${istatCofogData.period.to}`,
@@ -108,9 +119,45 @@ const exhaustiveLatestDataBySlug = {
     kind: "period",
     label: "2011–2024; periodo distinto per indicatore",
   },
+  "istat-bes-politica": {
+    kind: "period",
+    label: "2004–2024; periodo distinto per indicatore",
+  },
+  "istat-bes-sicurezza": {
+    kind: "period",
+    label: "2004–2023; periodo distinto per indicatore",
+  },
+  "istat-bes-paesaggio": {
+    kind: "period",
+    label: "2004–2023; periodo distinto per indicatore",
+  },
+  "istat-bes-servizi": {
+    kind: "period",
+    label: "2004–2024; periodo distinto per indicatore",
+  },
+  "istat-bes-ambiente": {
+    kind: "period",
+    label: "2004–2023; periodo distinto per indicatore",
+  },
   "inps-naspi": {
     kind: "period",
     label: `${inpsNaspiData.period.from}-${inpsNaspiData.period.to}`,
+  },
+  "inps-assegno-unico": {
+    kind: "period",
+    label: `${inpsAssegnoUnicoData.period.from}-${inpsAssegnoUnicoData.period.to} (AUU a domanda, esclusi RdC)`,
+  },
+  "inps-integrazioni-salariali": {
+    kind: "period",
+    label: `${inpsIntegrazioniSalarialiData.period.from} (lavoratori/domande/mensilità; conteggi)`,
+  },
+  "inps-cig-fondi-solidarieta": {
+    kind: "period",
+    label: `${inpsCigFondiSolidarietaData.period.from}-${inpsCigFondiSolidarietaData.period.to} (ore autorizzate)`,
+  },
+  "inl-vigilanza": {
+    kind: "period",
+    label: `${inlVigilanzaData.period.from} (ispezioni/esiti/recuperi)`,
   },
   "mef-irpef-dettaglio": {
     kind: "period",
@@ -127,6 +174,14 @@ const exhaustiveLatestDataBySlug = {
   "mef-tax-gap-nazionale": {
     kind: "period",
     label: `${mefTaxGapNazionaleData.period.from}-${mefTaxGapNazionaleData.period.to} (2022 semi-definitivo)`,
+  },
+  "eurostat-taxag": {
+    kind: "period",
+    label: `${eurostatTaxagData.period.from}-${eurostatTaxagData.period.to}`,
+  },
+  "eurostat-sha-health": {
+    kind: "period",
+    label: `${eurostatShaHealthData.period.from}-${eurostatShaHealthData.period.to} (2025 provvisorio)`,
   },
   siope: {
     kind: "period",

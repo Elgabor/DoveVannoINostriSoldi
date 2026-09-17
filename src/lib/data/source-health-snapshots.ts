@@ -12,10 +12,26 @@ import { cptRegionalFiscalSnapshot } from "@/lib/cpt-regional-fiscal-snapshot";
 import { istatPensionsSnapshot } from "@/lib/istat-pensions-snapshot";
 import { consipOrdiniData, consipOrdiniMetadata } from "@/lib/consip-ordini-snapshot";
 import { eurostatCofogData, eurostatCofogMetadata } from "@/lib/eurostat-cofog-snapshot";
+import { eurostatGovMainData, eurostatGovMainMetadata } from "@/lib/eurostat-gov-main-snapshot";
 import { inpsNaspiData, inpsNaspiMetadata } from "@/lib/inps-naspi-snapshot";
+import { inpsAssegnoUnicoData, inpsAssegnoUnicoMetadata } from "@/lib/inps-assegno-unico-snapshot";
+import {
+  inpsIntegrazioniSalarialiData,
+  inpsIntegrazioniSalarialiMetadata,
+} from "@/lib/inps-integrazioni-salariali-snapshot";
+import {
+  inpsCigFondiSolidarietaData,
+  inpsCigFondiSolidarietaMetadata,
+} from "@/lib/inps-cig-fondi-solidarieta-snapshot";
+import {
+  inlVigilanzaData,
+  inlVigilanzaMetadata,
+} from "@/lib/inl-vigilanza-snapshot";
 import { mefIvaData, mefIvaMetadata } from "@/lib/mef-iva-snapshot";
 import { euVatGapItalyData, euVatGapItalyMetadata } from "@/lib/eu-vat-gap-italy-snapshot";
 import { mefTaxGapNazionaleData, mefTaxGapNazionaleMetadata } from "@/lib/mef-tax-gap-nazionale-snapshot";
+import { eurostatTaxagData, eurostatTaxagMetadata } from "@/lib/eurostat-taxag-snapshot";
+import { eurostatShaHealthData, eurostatShaHealthMetadata } from "@/lib/eurostat-sha-health-snapshot";
 import { mefIrpefDettaglioData, mefIrpefDettaglioMetadata } from "@/lib/mef-irpef-dettaglio-snapshot";
 import { istatCofogData, istatCofogMetadata } from "@/lib/istat-cofog-snapshot";
 import { istatEpeaData, istatEpeaMetadata } from "@/lib/istat-epea-snapshot";
@@ -26,6 +42,11 @@ import { istatBesSaluteData, istatBesSaluteMetadata } from "@/lib/istat-bes-salu
 import { istatBesIstruzioneData, istatBesIstruzioneMetadata } from "@/lib/istat-bes-istruzione-snapshot";
 import { istatBesLavoroData, istatBesLavoroMetadata } from "@/lib/istat-bes-lavoro-snapshot";
 import { istatBesRelazioniData, istatBesRelazioniMetadata } from "@/lib/istat-bes-relazioni-snapshot";
+import { istatBesPoliticaData, istatBesPoliticaMetadata } from "@/lib/istat-bes-politica-snapshot";
+import { istatBesSicurezzaData, istatBesSicurezzaMetadata } from "@/lib/istat-bes-sicurezza-snapshot";
+import { istatBesPaesaggioData, istatBesPaesaggioMetadata } from "@/lib/istat-bes-paesaggio-snapshot";
+import { istatBesServiziData, istatBesServiziMetadata } from "@/lib/istat-bes-servizi-snapshot";
+import { istatBesAmbienteData, istatBesAmbienteMetadata } from "@/lib/istat-bes-ambiente-snapshot";
 import { MEF_IRPEF_SOURCE } from "@/lib/data/mef-irpef-source";
 import pnrrProjectsMetadata from "@/data/generated/pnrr-projects-index/meta.json";
 import { PNRR_CHILDCARE_SOURCE } from "@/lib/data/pnrr-childcare-source";
@@ -339,8 +360,21 @@ function snapshotManagedEurostatCofog(): SourceHealth {
     reachability: "not-probed",
     freshness: freshnessFor("eurostat-cofog", eurostatCofogMetadata.coverage.observedAt),
     latencyMs: null,
-    detail: `Snapshot ETL attivo · spesa per funzione COFOG ${eurostatCofogData.period.from}-${eurostatCofogData.period.to} (${eurostatCofogMetadata.source.datasetCode}) · livello principale ${observedCells}/${observedCells} celle, dettaglio Italia GF01/GF02/GF03/GF08 ${detailCells}/${detailCells}, ${flagged} flag sul livello principale · ${artifact.bytes.toLocaleString("it-IT")} byte.`,
+    detail: `Snapshot ETL attivo · spesa per funzione COFOG ${eurostatCofogData.period.from}-${eurostatCofogData.period.to} (${eurostatCofogMetadata.source.datasetCode}) · livello principale ${observedCells}/${observedCells} celle, dettaglio Italia GF01–GF10 ${detailCells}/${detailCells}, ${flagged} flag sul livello principale · ${artifact.bytes.toLocaleString("it-IT")} byte.`,
     recordCount: eurostatCofogData.observations.length + detailCells,
+  };
+}
+
+function snapshotManagedEurostatGovMain(): SourceHealth {
+  const artifact = eurostatGovMainMetadata.integrity.dataArtifact;
+  const { flagged, observedCells } = eurostatGovMainData.coverage;
+  return {
+    ...baseHealth("eurostat-gov-main"),
+    reachability: "not-probed",
+    freshness: freshnessFor("eurostat-gov-main", eurostatGovMainMetadata.coverage.observedAt),
+    latencyMs: null,
+    detail: `Snapshot ETL attivo · entrate e uscite PA ${eurostatGovMainData.period.from}-${eurostatGovMainData.period.to} (${eurostatGovMainMetadata.source.datasetCode}) · ${eurostatGovMainData.items.length} voci, ${observedCells}/${observedCells} celle, ${flagged} flag · ${artifact.bytes.toLocaleString("it-IT")} byte.`,
+    recordCount: eurostatGovMainData.observations.length,
   };
 }
 
@@ -367,6 +401,55 @@ function snapshotManagedInpsNaspi(): SourceHealth {
     latencyMs: null,
     detail: `Snapshot ETL attivo · NASpI beneficiari e trattamenti ${inpsNaspiData.period.from}-${inpsNaspiData.period.to} · ${inpsNaspiData.tables.length} tabelle SDMX, ${observedObservations.toLocaleString("it-IT")} osservazioni di cui ${suppressed} soppresse per privacy · riconciliazioni esatte · ${artifact.bytes.toLocaleString("it-IT")} byte.`,
     recordCount: observedObservations,
+  };
+}
+
+function snapshotManagedInpsAssegnoUnico(): SourceHealth {
+  const artifact = inpsAssegnoUnicoMetadata.integrity.dataArtifact;
+  return {
+    ...baseHealth("inps-assegno-unico"),
+    reachability: "not-probed",
+    freshness: freshnessFor("inps-assegno-unico", inpsAssegnoUnicoMetadata.observedAt),
+    latencyMs: null,
+    detail: `Snapshot ETL attivo · Assegno Unico ${inpsAssegnoUnicoData.period.from}-${inpsAssegnoUnicoData.period.to} · ${inpsAssegnoUnicoData.coverage.observedRows.toLocaleString("it-IT")} righe provinciali (AUU a domanda, esclusi RdC) · importi in millesimi · ${artifact.bytes.toLocaleString("it-IT")} byte.`,
+    recordCount: inpsAssegnoUnicoData.coverage.observedRows,
+  };
+}
+
+function snapshotManagedInpsIntegrazioniSalariali(): SourceHealth {
+  const artifact = inpsIntegrazioniSalarialiMetadata.integrity.dataArtifact;
+  return {
+    ...baseHealth("inps-integrazioni-salariali"),
+    reachability: "not-probed",
+    freshness: freshnessFor("inps-integrazioni-salariali", inpsIntegrazioniSalarialiMetadata.observedAt),
+    latencyMs: null,
+    detail: `Snapshot ETL attivo · integrazioni salariali ${inpsIntegrazioniSalarialiData.period.from} · ${inpsIntegrazioniSalarialiData.coverage.observedRows.toLocaleString("it-IT")} righe (lavoratori/domande/mensilità) · conteggi, non euro · ${artifact.bytes.toLocaleString("it-IT")} byte.`,
+    recordCount: inpsIntegrazioniSalarialiData.coverage.observedRows,
+  };
+}
+
+
+function snapshotManagedInlVigilanza(): SourceHealth {
+  const artifact = inlVigilanzaMetadata.integrity.dataArtifact;
+  return {
+    ...baseHealth("inl-vigilanza"),
+    reachability: "not-probed",
+    freshness: freshnessFor("inl-vigilanza", inlVigilanzaMetadata.observedAt),
+    latencyMs: null,
+    detail: `Snapshot ETL attivo · vigilanza INL ${inlVigilanzaData.period.from} · ${inlVigilanzaData.coverage.observedRows.toLocaleString("it-IT")} righe · ${inlVigilanzaData.coverage.territories} territori · ${artifact.bytes.toLocaleString("it-IT")} byte.`,
+    recordCount: inlVigilanzaData.coverage.observedRows,
+  };
+}
+
+function snapshotManagedInpsCigFondiSolidarieta(): SourceHealth {
+  const artifact = inpsCigFondiSolidarietaMetadata.integrity.dataArtifact;
+  return {
+    ...baseHealth("inps-cig-fondi-solidarieta"),
+    reachability: "not-probed",
+    freshness: freshnessFor("inps-cig-fondi-solidarieta", inpsCigFondiSolidarietaMetadata.observedAt),
+    latencyMs: null,
+    detail: `Snapshot ETL attivo · CIG Fondi di Solidarietà ${inpsCigFondiSolidarietaData.period.from}-${inpsCigFondiSolidarietaData.period.to} · ${inpsCigFondiSolidarietaData.coverage.observedRows.toLocaleString("it-IT")} righe · ore autorizzate, non euro · ${artifact.bytes.toLocaleString("it-IT")} byte.`,
+    recordCount: inpsCigFondiSolidarietaData.coverage.observedRows,
   };
 }
 
@@ -413,6 +496,28 @@ function snapshotManagedMefTaxGapNazionale(): SourceHealth {
     latencyMs: null,
     detail: `Snapshot MEF tax gap nazionale ${mefTaxGapNazionaleData.period.from}–${mefTaxGapNazionaleData.period.to} (Tab. I.1/I.2 Relazione 2025): ${mefTaxGapNazionaleMetadata.coverage.taxRows} voci e ${mefTaxGapNazionaleMetadata.coverage.years} anni. Versione file ${mefTaxGapNazionaleMetadata.source.versionDate}; data di pubblicazione non verificata; acquisito ${mefTaxGapNazionaleMetadata.source.acquiredAt}; controllato ${mefTaxGapNazionaleMetadata.source.checkedAt}.`,
     recordCount: mefTaxGapNazionaleMetadata.coverage.taxRows * mefTaxGapNazionaleMetadata.coverage.years,
+  };
+}
+
+function snapshotManagedEurostatTaxag(): SourceHealth {
+  return {
+    ...baseHealth("eurostat-taxag"),
+    reachability: "not-probed",
+    freshness: freshnessFor("eurostat-taxag", eurostatTaxagMetadata.observedAt),
+    latencyMs: null,
+    detail: `Snapshot Eurostat gov_10a_taxag ${eurostatTaxagData.period.from}–${eurostatTaxagData.period.to}: ${eurostatTaxagData.coverage.publishedItems} voci, ${eurostatTaxagData.coverage.observedCells} celle osservate su ${eurostatTaxagData.coverage.totalCells}. Pubblicato ${eurostatTaxagMetadata.source.publicationDate}; acquisito ${eurostatTaxagMetadata.source.acquiredAt}; controllato ${eurostatTaxagMetadata.source.checkedAt}.`,
+    recordCount: eurostatTaxagData.coverage.observedCells,
+  };
+}
+
+function snapshotManagedEurostatShaHealth(): SourceHealth {
+  return {
+    ...baseHealth("eurostat-sha-health"),
+    reachability: "not-probed",
+    freshness: freshnessFor("eurostat-sha-health", eurostatShaHealthMetadata.observedAt),
+    latencyMs: null,
+    detail: `Snapshot Eurostat SHA hlth_sha11_hf ${eurostatShaHealthData.period.from}–${eurostatShaHealthData.period.to}: ${eurostatShaHealthData.coverage.publishedSchemes} schemi e ${eurostatShaHealthData.coverage.observedCells} celle (2025 provvisorio). Pubblicato ${eurostatShaHealthMetadata.source.publicationDate}; acquisito ${eurostatShaHealthMetadata.source.acquiredAt}; controllato ${eurostatShaHealthMetadata.source.checkedAt}.`,
+    recordCount: eurostatShaHealthData.coverage.observedCells,
   };
 }
 
@@ -517,6 +622,66 @@ function snapshotManagedIstatBesRelazioni(): SourceHealth {
   };
 }
 
+function snapshotManagedIstatBesPolitica(): SourceHealth {
+  const { source } = istatBesPoliticaMetadata;
+  return {
+    ...baseHealth("istat-bes-politica"),
+    reachability: "not-probed",
+    freshness: freshnessFor("istat-bes-politica", source.publicationDate),
+    latencyMs: null,
+    detail: "Sette indicatori BES_06 Politica e istituzioni, edizione 2025; 15.818 osservazioni e 139 territori, di cui 111 province. Periodi distinti fra 2004 e 2024; 2.115 celle senza valore. Solo SEX=T; indicatori non sommabili, non spesa pubblica né dato comunale.",
+    recordCount: istatBesPoliticaData.observations.length,
+  };
+}
+
+function snapshotManagedIstatBesSicurezza(): SourceHealth {
+  const { source } = istatBesSicurezzaMetadata;
+  return {
+    ...baseHealth("istat-bes-sicurezza"),
+    reachability: "not-probed",
+    freshness: freshnessFor("istat-bes-sicurezza", source.publicationDate),
+    latencyMs: null,
+    detail: "Sei indicatori BES_07 Sicurezza, edizione 2025; 14.481 osservazioni e 139 territori, di cui 111 province. Periodi distinti fra 2004 e 2023; 1 cella ignota. Solo SEX=T; indicatori non sommabili, non spesa COFOG GF03 né dato comunale.",
+    recordCount: istatBesSicurezzaData.observations.length,
+  };
+}
+
+function snapshotManagedIstatBesPaesaggio(): SourceHealth {
+  const { source } = istatBesPaesaggioMetadata;
+  return {
+    ...baseHealth("istat-bes-paesaggio"),
+    reachability: "not-probed",
+    freshness: freshnessFor("istat-bes-paesaggio", source.publicationDate),
+    latencyMs: null,
+    detail: "Tre indicatori BES_09 Paesaggio e patrimonio culturale, edizione 2025; 3.760 osservazioni e 139 territori, di cui 111 province. Periodi distinti fra 2004 e 2023; 3 celle non disponibili. Solo SEX=T; indicatori non sommabili, non spesa pubblica né dato comunale.",
+    recordCount: istatBesPaesaggioData.observations.length,
+  };
+}
+
+function snapshotManagedIstatBesServizi(): SourceHealth {
+  const { source } = istatBesServiziMetadata;
+  return {
+    ...baseHealth("istat-bes-servizi"),
+    reachability: "not-probed",
+    freshness: freshnessFor("istat-bes-servizi", source.publicationDate),
+    latencyMs: null,
+    detail: "Otto indicatori BES_12 Qualità dei servizi, edizione 2025; 15.858 osservazioni e 139 territori, di cui 111 province. Periodi distinti fra 2004 e 2024; 76 celle non disponibili. Solo SEX=T; indicatori non sommabili, non spesa pubblica né dato comunale.",
+    recordCount: istatBesServiziData.observations.length,
+  };
+}
+
+function snapshotManagedIstatBesAmbiente(): SourceHealth {
+  const { source } = istatBesAmbienteMetadata;
+  return {
+    ...baseHealth("istat-bes-ambiente"),
+    reachability: "not-probed",
+    freshness: freshnessFor("istat-bes-ambiente", source.publicationDate),
+    latencyMs: null,
+    detail: "Undici indicatori BES_10 Ambiente, edizione 2025; 13.423 osservazioni e 139 territori, di cui 111 province. Periodi distinti fra 2004 e 2023; 412 celle ignote. Solo SEX=T; indicatori non sommabili, non spesa pubblica né dato comunale.",
+    recordCount: istatBesAmbienteData.observations.length,
+  };
+}
+
 function snapshotManagedGovernmentScorecard(
   sourceId: "ameco" | "governi-presidenza",
 ): SourceHealth {
@@ -559,6 +724,7 @@ const SNAPSHOT_ADAPTERS: Partial<Record<SourceId, () => SourceHealth>> = {
   "eurostat-gdp": snapshotManagedEurostatGdp,
   "oecd-taxing-wages": snapshotManagedOecdTaxingWages,
   "eurostat-cofog": snapshotManagedEurostatCofog,
+  "eurostat-gov-main": snapshotManagedEurostatGovMain,
   "istat-cofog": snapshotManagedIstatCofog,
   "istat-epea": snapshotManagedIstatEpea,
   "istat-poverta": snapshotManagedIstatPoverta,
@@ -568,11 +734,22 @@ const SNAPSHOT_ADAPTERS: Partial<Record<SourceId, () => SourceHealth>> = {
   "istat-bes-istruzione": snapshotManagedIstatBesIstruzione,
   "istat-bes-lavoro": snapshotManagedIstatBesLavoro,
   "istat-bes-relazioni": snapshotManagedIstatBesRelazioni,
+  "istat-bes-politica": snapshotManagedIstatBesPolitica,
+  "istat-bes-sicurezza": snapshotManagedIstatBesSicurezza,
+  "istat-bes-paesaggio": snapshotManagedIstatBesPaesaggio,
+  "istat-bes-servizi": snapshotManagedIstatBesServizi,
+  "istat-bes-ambiente": snapshotManagedIstatBesAmbiente,
   "inps-naspi": snapshotManagedInpsNaspi,
+  "inps-assegno-unico": snapshotManagedInpsAssegnoUnico,
+  "inps-integrazioni-salariali": snapshotManagedInpsIntegrazioniSalariali,
+  "inps-cig-fondi-solidarieta": snapshotManagedInpsCigFondiSolidarieta,
+  "inl-vigilanza": snapshotManagedInlVigilanza,
   "mef-irpef-dettaglio": snapshotManagedMefIrpefDettaglio,
   "mef-iva": snapshotManagedMefIva,
   "eu-vat-gap-italy": snapshotManagedEuVatGapItaly,
   "mef-tax-gap-nazionale": snapshotManagedMefTaxGapNazionale,
+  "eurostat-taxag": snapshotManagedEurostatTaxag,
+  "eurostat-sha-health": snapshotManagedEurostatShaHealth,
 };
 
 export function buildSourceHealthSnapshots() {

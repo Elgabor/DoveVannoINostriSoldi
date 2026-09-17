@@ -487,6 +487,136 @@ ISTAT. Fonte + API + MCP, senza pagina UI.
 - [Contratto, pagine e verifiche](research/MEF_TAX_GAP_NAZIONALE.md).
 - [PDF ufficiale](https://www.mef.gov.it/export/sites/MEF/documenti-pubblicazioni/rapporti-relazioni/documenti/Relazione-evasione-fiscale-e-contributiva-2025_2310_ore1230.pdf).
 
+### Aggregati fiscali PA · Eurostat `gov_10a_taxag`
+
+**Issue #486 (epic #484).** Statistics API JSON-stat 2.0, Italia, settori
+`S13` / `S1311` / `S1313` / `S1314`, anni 2014–2025. Asset pinnato:
+60 453 byte, SHA-256
+`bf54d20f263e6e3083a19e2ca48580639cc2ec90930050c8bc6ec073884802a1`,
+`updated` 2026-07-21, struttura `GOV_10A_TAXAG` 68.0. Acquisizione e
+controllo 14 settembre 2026. Licenza `CC-BY-4.0`.
+
+Lo snapshot tipizzato espone 14 voci (totale imposte+contributi, gettito
+fiscale, IVA, imposte sul reddito persone/società, contributi, ecc.) in
+centesimi di euro. Le celle non pubblicate dalla fonte (es. imposte su
+`S1314`) restano assenti. Riconciliazioni fail-closed:
+`D2_D5_D91 = D2 + D5 + D91` e totale = tasse + `D61` dove entrambe le parti
+esistono.
+
+Non è cassa SIOPE `/entrate`, non sono dichiarazioni MEF, non è tax gap.
+`S1311` non significa denaro trattenuto a Roma. Fonte + API + MCP, senza UI.
+
+- API: `/api/tributi/taxag`, `/api/tributi/taxag?anno=2025&settore=S13&voce=D211`.
+- MCP: `query_dataset` con `dataset: "eurostat_taxag"` e filtri opzionali
+  `year` / `sector` / `tax`.
+- Source lock: `scripts/etl/specs/eurostat-taxag-2014-2025.source.json`.
+- Offline: `python3 scripts/etl/eurostat_taxag_snapshot.py --check`.
+- Guida API: [Eurostat API getting started](https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-getting-started).
+
+### Spesa sanitaria per schema di finanziamento · Eurostat `hlth_sha11_hf`
+
+**Issue #488 (epic #484).** Statistics API JSON-stat 2.0, Italia, unità
+`MIO_EUR`, anni 2014–2025. Asset pinnato: 5 951 byte, SHA-256
+`b9601fbbb402abbad1471a071c08eda56d0819d41a2add43ddc8d57236fd066e`,
+`updated` 2026-09-09T23:00:00+0200, struttura `HLTH_SHA11_HF` 70.0.
+Acquisizione e controllo 14 settembre 2026. Licenza `CC-BY-4.0`.
+
+Lo snapshot tipizzato espone 13 schemi pubblicati per l’Italia
+(`TOT_HF`, `HF1`…`HF3`, `HF_UNK`; non pubblicati: `HF31`, `HF32`, `HF4`)
+in centesimi di euro (156 celle). Riconciliazioni fail-closed:
+`TOT_HF = HF1+HF2+HF3+HF_UNK`, `HF1 = HF11+HF12_13`,
+`HF2 = HF21+HF22+HF23`. L’anno 2025 porta il flag Eurostat `p`
+(provvisorio).
+
+Distinto dal Conto Economico SSN OpenBDAP e da COFOG GF07: i tre
+perimetri non si sommano. UI: pannello su `/spese/sanita` allineato
+all’anno COFOG selezionato (2014–2024).
+
+- API: `/api/sanita/sha`, `/api/sanita/sha?anno=2024&schema=HF3`.
+- MCP: `query_dataset` con `dataset: "eurostat_sha_health"` e filtri
+  opzionali `year` / `code` (schema SHA).
+- Source lock: `scripts/etl/specs/eurostat-sha-health-2014-2025.source.json`.
+- Offline: `python3 scripts/etl/eurostat_sha_health_snapshot.py --check`.
+
+### Assegno Unico · INPS open data (nuclei e figli)
+
+**Issue #261 (seconda fetta dopo NASpI).** Due package CKAN
+`assegno-unico-nuclei-2022-2024` e
+`assegno-unico-figli-con-disabilita-2022-2024`, aggiornati
+2026-01-17. Licenza **`cc-by` per package** (non IODL 2.0 della fetta
+NASpI). Acquisizione CSV 14 settembre 2026.
+
+Asset pinnati:
+
+- nuclei: 46 264 byte, SHA-256
+  `327d3b10fa83bc932a17d6e77c6105fbe3afe4ab0c59caf7aaa68320ab58740d`
+- figli: 440 364 byte, SHA-256
+  `b4277d427bb455ed23c6953aa89fd769c65fdea1fd79923e722f4dc7b7e5001f`
+
+Perimetro dichiarato dalla fonte: **AUU a domanda — esclusi beneficiari
+RdC**. 106 province × anni 2022–2024; 636 + 3 816 = 4 452 righe. Importi
+erogati in **millesimi di euro** (49 valori non esatti in centesimi non
+vengono arrotondati). Nuclei, figli e mesi restano nature distinte; in
+`nuclei` la colonna `numero_figli` resta con unità non documentata dalla
+fonte. Superficie fonte + API + MCP, senza UI.
+
+- API: `/api/famiglia/assegno-unico`, filtri `anno` / `tabella` /
+  `provincia` / `regione`.
+- MCP: `query_dataset` con `dataset: "inps_assegno_unico"`.
+- Source lock: `scripts/etl/specs/inps-assegno-unico-2022-2024.source.json`.
+- Offline: `python3 scripts/etl/inps_assegno_unico_snapshot.py --check`.
+
+### Integrazioni salariali · INPS open data (lavoratori, domande, mensilità)
+
+**Issue #261 (terza fetta dopo NASpI e Assegno Unico).** Tre package CKAN
+del report annuale Ammortizzatori Sociali 2023:
+
+- `integrazioni-salariali-lavoratori-2023`
+- `integrazioni-salariali-domande-2023`
+- `integrazioni-salariali-mensilita-2023`
+
+Licenza **`cc-by` per package**. Acquisizione CSV 15 settembre 2026.
+Asset pinnati: 27 149 / 26 404 / 27 168 byte (SHA-256 nel source lock).
+
+Conteggi mensili per 20 regioni e sei tipi di intervento (`CIGD`, `CIGO`,
+`CIGS`, `FIS`, `FONDI_Centrali`, `FONDI_Territorio`). **Nessun importo**:
+lavoratori, domande e mensilità restano nature distinte e non si sommano.
+Copertura chiavi non identica fra tabelle (790 / 759 / 790). Superficie
+fonte + API + MCP, senza UI.
+
+- API: `/api/lavoro/integrazioni-salariali`, filtri `anno` / `tabella` /
+  `mese` / `regione` / `tipo`.
+- MCP: `query_dataset` con `dataset: "inps_integrazioni_salariali"`;
+  il mese italiano va in `period`, il tipo intervento in `code`.
+- Source lock: `scripts/etl/specs/inps-integrazioni-salariali-2023.source.json`.
+- Offline: `python3 scripts/etl/inps_integrazioni_salariali_snapshot.py --check`.
+
+### INPS · CIG Fondi di Solidarietà 2023–2024
+
+Ore autorizzate mensili per 20 regioni, gestioni `FIS` / `Altri fondi` e quattro
+rami di attività. **Nessun importo**: le ore non sono lavoratori, domande,
+mensilità né euro. Superficie fonte + API + MCP, senza UI.
+
+- API: `/api/lavoro/cig-fondi-solidarieta`, filtri `anno` / `mese` / `regione` /
+  `gestione` / `ramo`.
+- MCP: `query_dataset` con `dataset: "inps_cig_fondi_solidarieta"`;
+  il mese italiano va in `period`, la gestione fondi in `code`, il ramo in `sector`.
+- Source lock: `scripts/etl/specs/inps-cig-fondi-solidarieta-2023-2024.source.json`.
+- Offline: `python3 scripts/etl/inps_cig_fondi_solidarieta_snapshot.py --check`.
+
+### INL · Relazione annuale e rapporto vigilanza 2025
+
+Ispezioni e verifiche avviate, esiti con tasso di irregolarità e recuperi di
+contributi/premi dalla Relazione ufficiale INL. **Il tasso misura controlli
+mirati**, non la irregolarità dell’economia. Superficie fonte + API + MCP, senza UI.
+
+- API: `/api/lavoro/vigilanza-inl`, filtri `anno` / `tabella` / `territorio` /
+  `settore`.
+- MCP: `query_dataset` con `dataset: "inl_vigilanza"`; `table` =
+  `inspectionsStarted` | `inspectionsOutcome` | `recovery`.
+- Source lock: `scripts/etl/specs/inl-vigilanza-2025.source.json`.
+- Offline: `python3 scripts/etl/inl_vigilanza_snapshot.py --check`.
+
 ### Dati sui pagamenti art. 4-bis
 Nel 2026 ANAC ha pubblicato uno schema di riferimento per i dati sui pagamenti nella sezione “Amministrazione Trasparente”.
 
@@ -727,14 +857,55 @@ risultati dei controlli. Catalogo, API e MCP interrogano gli stessi dataset
 integrati. Vedi [source lock, licenza, schema e limiti](ISTAT_ECONOMIA_NON_OSSERVATA.md).
 
 
-### Eurostat COFOG · dettaglio italiano GF01, GF02, GF03 e GF08
+### Eurostat Dissemination API · epic #484 (chiuso)
+
+Backlog di coordinamento sulle aggregazioni Eurostat via Statistics API
+(JSON-stat 2.0). **Tutte le figlie sono pubblicate su `main`:**
+
+| Figlia | Snapshot / MCP | Stato |
+| --- | --- | --- |
+| #485 | `eurostat-gov-main` → `eurostat_conti_pa` | chiusa |
+| #486 | `eurostat-taxag` → `eurostat_taxag` | chiusa |
+| #487 | `eurostat-cofog` (sottofunzioni GF04–GF10 IT) | chiusa |
+| #488 | `eurostat-sha-health` → `eurostat_sha_health` | chiusa |
+
+Vincoli dell’epic rispettati: URL ufficiali + hash, `soldi`/`periodo`/`provenance`
+distinti, competenza SEC ≠ cassa SIOPE, superficie fonte + API + MCP (UI solo dove
+la figlia lo richiede). Regressione: `tests/eurostat-dissemination-epic.test.mjs`.
+
+### Eurostat gov_10a_main · entrate e uscite delle Amministrazioni pubbliche
+
+Lo snapshot `eurostat-gov-main-1995-2025` (#485, figlia dell'epic #484) usa `gov_10a_main` per
+l'Italia, settore S13, dal 1995 al 2025, in milioni di euro e in quota di PIL. Il lock blocca le
+due risposte intere della Statistics API, senza filtro su `na_item`; il contratto pubblica i
+totali `TR`, `TE` e `B9`, le 8 componenti di entrata e le 12 di spesa delle identità SEC e gli
+interessi `D41PAY` come voce «di cui» di `D4PAY`.
+
+Le identità `TR = Σ entrate`, `TE = Σ uscite` e `B9 = TR − TE` sono verificate entro 0,5 milioni
+di euro e 0,65 punti di PIL; su 1995-2025 lo scarto osservato è 0,1 milioni e 0,3 punti. I totali
+restano quelli della fonte. `D41PAY` e `TE` devono coincidere al centesimo con `public-debt.json`
+sugli anni in comune: è la stessa voce usata su `/debito`, non una seconda fonte.
+
+Competenza economica SEC: non è confrontabile con i pagamenti SIOPE di `/entrate` né sommabile a
+CPT, OpenBDAP o COFOG. Superficie v1: API `/api/finanza-pubblica/conti-pa` e dataset MCP
+`eurostat_conti_pa`, nessuna pagina.
+
+### Eurostat COFOG · dettaglio italiano delle dieci divisioni
 
 Lo snapshot `eurostat-cofog-2014-2024` usa `gov_10a_exp`, settore S13 e spesa totale TE.
-Dal rilascio acquisito e riverificato l'11 settembre 2026 conserva, oltre a totale e dieci
-divisioni per le geografie già pubblicate, le sottofunzioni ufficiali italiane di GF01
-(otto voci), GF02 (cinque), GF03 (sei) e GF08 (sei) dal 2014 al 2024. Le celle di dettaglio
-per unità sono obbligatorie e riconciliano con il rispettivo parent entro la sola tolleranza
-di arrotondamento; una cella assente ferma la pubblicazione.
+Oltre a totale e dieci divisioni per le geografie già pubblicate, conserva le sottofunzioni
+ufficiali italiane dal 2014 al 2024 di tutte le divisioni: GF01 (otto voci), GF02 (cinque),
+GF03 (sei), GF04 (nove), GF05 (sei), GF06 (sei), GF07 (sei), GF08 (sei), GF09 (otto) e
+GF10 (nove). GF01, GF02, GF03 e GF08 sono stati acquisiti l'11 settembre 2026, le altre
+sei divisioni il 14 settembre 2026 dallo stesso rilascio (`updated` 2026-07-21). Le celle di
+dettaglio per unità sono obbligatorie e riconciliano con il rispettivo parent entro la sola
+tolleranza di arrotondamento, 0,5 nell'unità della fonte: nove parti più il parent, arrotondati
+indipendentemente a un decimale. Una cella assente ferma la pubblicazione.
+
+`/api/spese/cofog` e il dataset MCP `eurostat_cofog` accettano nel filtro funzione anche un
+codice di secondo livello (per esempio `GF1002`, vecchiaia), solo per l'Italia. GF10 non è
+la sola spesa pensionistica, GF07 non si somma al Conto economico SSN e GF05 non si somma ai
+conti ambientali EPEA: sono classificazioni COFOG con perimetri propri.
 
 La pagina `/spese/servizi-generali` espone GF0101–GF0108 senza trasformare GF01 in «debito».
 In particolare GF0107, *Public debt transactions*, non coincide con la sola spesa per
@@ -820,3 +991,40 @@ territori (107 province), con periodi e unità propri. Solo `SEX=T` nel payload
 ufficiale; 8 celle non significative `n`, nessuna imputazione. Fonte
 `istat-bes-relazioni`, API/MCP paginati, nessuna UI in questa tranche.
 [Lock, definizioni e limiti](research/ISTAT_BES_RELAZIONI.md).
+
+### ISTAT BES dei territori — Politica e istituzioni
+
+Dominio BES_06, edizione 2025: sette indicatori, 15.818 osservazioni e 139
+territori (111 province), con periodi e unità propri. Solo `SEX=T` nel payload
+ufficiale; 2.115 celle senza valore restano null senza flag inventato. Fonte
+`istat-bes-politica`, API/MCP paginati, nessuna UI in questa tranche.
+[Lock, definizioni e limiti](research/ISTAT_BES_POLITICA.md).
+
+### ISTAT BES dei territori — Sicurezza
+
+Dominio BES_07, edizione 2025: sei indicatori, 14.481 osservazioni e 139
+territori (111 province), con periodi e unità propri. Solo `SEX=T` nel payload
+ufficiale; 1 cella ignota `g`, nessuna imputazione. Fonte
+`istat-bes-sicurezza`, API/MCP paginati, nessuna UI in questa tranche.
+[Lock, definizioni e limiti](research/ISTAT_BES_SICUREZZA.md).
+
+### ISTAT BES dei territori — Paesaggio e patrimonio culturale
+
+Dominio BES_09, edizione 2025: tre indicatori, 3.760 osservazioni e 139
+territori (111 province). Solo `SEX=T`; 3 celle `n`/`g`; valori in centesimi.
+Fonte `istat-bes-paesaggio`, API/MCP paginati, nessuna UI.
+[Lock, definizioni e limiti](research/ISTAT_BES_PAESAGGIO.md).
+
+### ISTAT BES dei territori — Qualità dei servizi
+
+Dominio BES_12, edizione 2025: otto indicatori, 15.858 osservazioni e 139
+territori (111 province). Solo `SEX=T`; 76 celle `n`/`g`; valori in decimi.
+Fonte `istat-bes-servizi`, API/MCP paginati, nessuna UI.
+[Lock, definizioni e limiti](research/ISTAT_BES_SERVIZI.md).
+
+### ISTAT BES dei territori — Ambiente
+
+Dominio BES_10, edizione 2025: undici indicatori, 13.423 osservazioni e 139
+territori (111 province). Solo `SEX=T`; 412 celle `g`; valori in centesimi.
+Fonte `istat-bes-ambiente`, API/MCP paginati, nessuna UI.
+[Lock, definizioni e limiti](research/ISTAT_BES_AMBIENTE.md).

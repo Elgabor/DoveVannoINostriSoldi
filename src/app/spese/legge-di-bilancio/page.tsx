@@ -115,13 +115,9 @@ export default async function LeggeDiBilancioPage({
         <div className="notice warning-notice">
           <strong>Nessun valore simulato è un dato reale</strong>
           <p>
-            Lo scenario che costruisci con lo slider è un&apos;ipotesi tua, non una proiezione
-            ufficiale né un annuncio di governo: nel treemap, nel grafico e nella tabella è sempre
-            disegnato con una trama a righe e marcato &laquo;ipotesi&raquo;, mai come lo stanziamento
-            osservato, e un solo bottone rimette tutto sul dato pubblicato. Il dato osservato è solo
-            lo stanziamento <em>enacted</em> pubblicato dalla Legge di Bilancio (competenza, primo
-            anno): non è né una misura della manovra (un fondo, un bonus, un&apos;aliquota nominati
-            nel testo di legge) né un pagamento realmente effettuato.
+            Lo scenario è un&apos;ipotesi dell&apos;utente, non una previsione ufficiale:
+            grafici e tabelle lo distinguono con una trama a righe. I dati osservati sono
+            stanziamenti di competenza pubblicati dalla Legge di Bilancio (primo anno), non pagamenti.
           </p>
         </div>
       ) : null}
@@ -176,13 +172,10 @@ export default async function LeggeDiBilancioPage({
 
       {series ? (
         <div className="notice">
-          <strong>Come leggere il treemap</strong>
+          <strong>Dimensioni e variazioni</strong>
           <p>
-            Ogni riquadro è una missione: più è grande, più pesa sullo stanziamento pubblicato
-            (somma su tutte le amministrazioni). Il numero sotto il nome è la variazione dello
-            stanziamento pubblicato rispetto all&apos;anno prima. Quando sposti lo slider, le voci
-            che tocchi restano segnate con una trama a righe e il treemap si ridisegna sulla nuova
-            ripartizione; &laquo;Ricomincia&raquo; azzera lo scenario.
+            Riquadri proporzionali agli stanziamenti per missione, sommati su tutte le amministrazioni.
+            Sotto il nome: variazione rispetto all’anno precedente.
           </p>
         </div>
       ) : null}
@@ -190,14 +183,11 @@ export default async function LeggeDiBilancioPage({
       <div className="notice">
         <strong>Cosa questo simulatore non dimostra</strong>
         <p>
-          Non individua una misura specifica della manovra (un fondo, un bonus, un&apos;aliquota
-          nominati nel testo di legge): quella lettura riga per riga richiede fonti come UPB o
-          Corte dei Conti e non è quello che facciamo qui. Il valore osservato è lo stanziamento
-          enacted, non un pagamento: per la spesa effettivamente pagata vedi{" "}
+          I totali per missione non identificano singoli fondi, bonus o aliquote.
+          La missione &laquo;Debito pubblico&raquo; include il rimborso lordo del debito.
+          Per i pagamenti vedi{" "}
           <Link href="/stato">Spese dello Stato</Link> e{" "}
-          <Link href="/stato/legislature">Spesa per legislatura</Link>. La missione &laquo;Debito
-          pubblico&raquo; include il rimborso lordo del debito, che ne domina l&apos;importo
-          indipendentemente dalle scelte di policy dell&apos;anno.
+          <Link href="/stato/legislature">Spesa per legislatura</Link>.
         </p>
       </div>
     </main>

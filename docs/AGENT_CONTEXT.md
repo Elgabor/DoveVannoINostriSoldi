@@ -88,7 +88,7 @@ a caso.
     `security`, `node`, `etl`, `production` e aggregatore `required`.
   - [docs/CAPACITY_AND_INCIDENTS.md](CAPACITY_AND_INCIDENTS.md): picchi e
     capacità, separati dai test deterministici.
-- **Invarianti**: `ci:static` include `agent-context:check`; il job `required`
+- **Invarianti**: `ci:static` include `agent-context:check` e `agent-public:check`; il job `required`
   dipende già dalla fase statica e i workflow non si modificano per questo. In CI
   servono soltanto file tracciati di prodotto: nessun file `.scratch`. Il network
   guard blocca le connessioni non-loopback; un `listen EPERM` è un limite

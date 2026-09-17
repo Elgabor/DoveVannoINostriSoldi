@@ -11,7 +11,7 @@ Questa cartella conserva sul fork la specifica, il tracker e il protocollo di ve
 
 ## Stato attuale
 
-La PR unica #8 sul fork riunisce il lavoro dei branch repository-context e public-access. Il prodotto è nel branch codex/agent-public-access-v2; il suo HEAD corrente è 8062b7e5. I check specifici dell'iniziativa risultano validi: il contesto agenti passa e la copertura pubblica è 61/61/61.
+La PR unica #8 sul fork riunisce il lavoro dei branch repository-context e public-access. Il prodotto è nel branch codex/agent-public-access-v2: `8062b7e5` è il commit storico che ha composto i due filoni, non il suo HEAD corrente. Il branch è stato poi riconciliato con `origin/main` tramite il merge `de39e185`, conservando il merge readiness `5fbd44ad`. I check specifici dell'iniziativa risultano validi: il contesto agenti passa e la copertura pubblica corrente è 73/73/73.
 
 Il confronto repository A/B ha verificato la correttezza degli orientamenti, ma non ha dimostrato un risparmio misurato di token. Il confronto pubblico A/B è NOT_RUN. Non va quindi dichiarata una percentuale di token risparmiati.
 

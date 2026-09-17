@@ -1,12 +1,11 @@
 "use client";
 
-import Link from "next/link";
+import { IntentLink } from "@/components/intent-link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { activeNavSection, flattenNavLinks, isNavChildActive } from "@/lib/site-navigation";
 import styles from "./section-nav.module.css";
 
-/** Related pages remain available after reading the current section. */
 export function SectionNav() {
   const pathname = usePathname();
   return (
@@ -35,7 +34,7 @@ function SectionNavContent({
       aria-label={`Altre pagine in ${section!.label}`}
     >
       <p className={styles.title}>
-        Continua in <strong>{section!.label}</strong>
+        <strong>{section!.label}</strong>
       </p>
       <ul className={styles.links}>
         {pages.map((page) => {
@@ -46,12 +45,11 @@ function SectionNavContent({
               {current ? (
                 <span className={styles.current} aria-current="page">
                   {page.label}
-                  <small>sei qui</small>
                 </span>
               ) : (
-                <Link className={styles.link} href={page.href}>
+                <IntentLink className={styles.link} href={page.href}>
                   {page.label}
-                </Link>
+                </IntentLink>
               )}
             </li>
           );

@@ -90,12 +90,13 @@ export const PRIMARY_NAV: readonly NavSection[] = [
     href: "/economia",
     label: "Economia",
     icon: "economy",
-    aliases: ["/inflazione", "/cuneo-fiscale", "/pil"],
+    aliases: ["/inflazione", "/cuneo-fiscale", "/pil", "/disuguaglianza"],
     children: [
       { href: "/economia", label: "Panoramica" },
       { href: "/inflazione", label: "Inflazione IPCA (prezzi)" },
       { href: "/cuneo-fiscale", label: "Cuneo fiscale (OECD)" },
       { href: "/pil", label: "PIL e conti nazionali" },
+      { href: "/disuguaglianza", label: "Disuguaglianza dei redditi" },
     ],
   },
   {
@@ -197,7 +198,7 @@ export const PRIMARY_NAV: readonly NavSection[] = [
       { href: "/metodologia", label: "Metodo" },
     ],
   },
-  { href: "/report", label: "Report mensili", icon: "news" },
+  { href: "/report", label: "Report", icon: "news" },
   { href: "/studi", label: "Studi", icon: "research", aliases: ["/paper"] },
 ] as const;
 
@@ -205,9 +206,10 @@ export const SITE_MAP_GROUPS: readonly { title: string; links: readonly NavLink[
   { title: "Home", links: [{ href: "/", label: "Home" }] },
   { title: "Studi", links: [{ href: "/studi", label: "Paper di ricerca" }] },
   {
-    title: "Report mensili",
+    title: "Report",
     links: [
       { href: "/report", label: "Archivio dei report" },
+      { href: "/report/bilancio-stato-2025", label: "Spesa pubblica: costi evitabili, anomalie ed errori" },
       { href: "/report/2026-08", label: "Agosto 2026: Imprese e territori" },
     ],
   },
@@ -264,6 +266,7 @@ export const SITE_MAP_GROUPS: readonly { title: string; links: readonly NavLink[
       { href: "/inflazione", label: "Inflazione IPCA (prezzi)" },
       { href: "/cuneo-fiscale", label: "Cuneo fiscale (OECD)" },
       { href: "/pil", label: "PIL e conti nazionali" },
+      { href: "/disuguaglianza", label: "Disuguaglianza dei redditi" },
     ],
   },
   {

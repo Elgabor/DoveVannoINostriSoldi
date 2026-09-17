@@ -28,6 +28,7 @@ export type SourceId =
   | "eurostat-gdp"
   | "oecd-taxing-wages"
   | "eurostat-cofog"
+  | "eurostat-gov-main"
   | "istat-cofog"
   | "istat-epea"
   | "istat-poverta"
@@ -35,9 +36,24 @@ export type SourceId =
   | "istat-bes-economico"
   | "istat-bes-salute"
   | "istat-bes-istruzione"
+  | "istat-bes-lavoro"
+  | "istat-bes-relazioni"
+  | "istat-bes-politica"
+  | "istat-bes-sicurezza"
+  | "istat-bes-paesaggio"
+  | "istat-bes-servizi"
+  | "istat-bes-ambiente"
   | "inps-naspi"
+  | "inps-assegno-unico"
+  | "inps-integrazioni-salariali"
+  | "inps-cig-fondi-solidarieta"
+  | "inl-vigilanza"
   | "mef-irpef-dettaglio"
   | "mef-iva"
+  | "eu-vat-gap-italy"
+  | "mef-tax-gap-nazionale"
+  | "eurostat-taxag"
+  | "eurostat-sha-health"
   | "ameco"
   | "governi-presidenza";
 
@@ -481,6 +497,21 @@ export const SOURCE_POLICIES: Readonly<Record<SourceId, SourcePolicy>> = {
     maxRetries: 1,
     tags: ["source:eurostat-cofog", "domain:public-spending"],
   },
+  "eurostat-gov-main": {
+    id: "eurostat-gov-main",
+    label: "Eurostat · entrate e uscite delle Amministrazioni pubbliche",
+    owner: "Eurostat (Commissione europea)",
+    sourceUrl: "https://ec.europa.eu/eurostat/databrowser/view/gov_10a_main/default/table?lang=en",
+    cadence: "annuale",
+    cadenceNote:
+      "I conti delle Amministrazioni pubbliche sono annuali e vengono rivisti: lo snapshot resta bloccato sui byte verificati e si aggiorna solo dopo nuova acquisizione e riconciliazione.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 540 * DAY,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    tags: ["source:eurostat-gov-main", "domain:public-finance"],
+  },
   "istat-cofog": {
     id: "istat-cofog",
     label: "ISTAT · consumi finali della PA per funzione",
@@ -584,6 +615,104 @@ export const SOURCE_POLICIES: Readonly<Record<SourceId, SourcePolicy>> = {
     maxRetries: 1,
     tags: ["source:istat-bes-istruzione", "domain:education"],
   },
+  "istat-bes-lavoro": {
+    id: "istat-bes-lavoro",
+    label: "ISTAT · BES dei territori, Lavoro",
+    owner: "ISTAT — Istituto nazionale di statistica",
+    sourceUrl: "https://www.istat.it/notizia/bes-dei-territori-edizione-2025/",
+    cadence: "annuale",
+    cadenceNote: "Edizione 2025; nuova acquisizione e verifica di dati e codelist prima di ogni aggiornamento.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 540 * DAY,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    tags: ["source:istat-bes-lavoro", "domain:work"],
+  },
+  "istat-bes-relazioni": {
+    id: "istat-bes-relazioni",
+    label: "ISTAT · BES dei territori, Relazioni sociali",
+    owner: "ISTAT — Istituto nazionale di statistica",
+    sourceUrl: "https://www.istat.it/notizia/bes-dei-territori-edizione-2025/",
+    cadence: "annuale",
+    cadenceNote: "Edizione 2025; nuova acquisizione e verifica di dati e codelist prima di ogni aggiornamento.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 540 * DAY,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    tags: ["source:istat-bes-relazioni", "domain:social-relationships"],
+  },
+  "istat-bes-politica": {
+    id: "istat-bes-politica",
+    label: "ISTAT · BES dei territori, Politica e istituzioni",
+    owner: "ISTAT — Istituto nazionale di statistica",
+    sourceUrl: "https://www.istat.it/notizia/bes-dei-territori-edizione-2025/",
+    cadence: "annuale",
+    cadenceNote: "Edizione 2025; nuova acquisizione e verifica di dati e codelist prima di ogni aggiornamento.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 540 * DAY,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    tags: ["source:istat-bes-politica", "domain:politics-institutions"],
+  },
+  "istat-bes-sicurezza": {
+    id: "istat-bes-sicurezza",
+    label: "ISTAT · BES dei territori, Sicurezza",
+    owner: "ISTAT — Istituto nazionale di statistica",
+    sourceUrl: "https://www.istat.it/notizia/bes-dei-territori-edizione-2025/",
+    cadence: "annuale",
+    cadenceNote: "Edizione 2025; nuova acquisizione e verifica di dati e codelist prima di ogni aggiornamento.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 540 * DAY,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    tags: ["source:istat-bes-sicurezza", "domain:safety"],
+  },
+  "istat-bes-paesaggio": {
+    id: "istat-bes-paesaggio",
+    label: "ISTAT · BES dei territori, Paesaggio e patrimonio culturale",
+    owner: "ISTAT — Istituto nazionale di statistica",
+    sourceUrl: "https://www.istat.it/notizia/bes-dei-territori-edizione-2025/",
+    cadence: "annuale",
+    cadenceNote: "Edizione 2025; nuova acquisizione e verifica di dati e codelist prima di ogni aggiornamento.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 540 * DAY,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    tags: ["source:istat-bes-paesaggio", "domain:landscape-heritage"],
+  },
+  "istat-bes-servizi": {
+    id: "istat-bes-servizi",
+    label: "ISTAT · BES dei territori, Qualità dei servizi",
+    owner: "ISTAT — Istituto nazionale di statistica",
+    sourceUrl: "https://www.istat.it/notizia/bes-dei-territori-edizione-2025/",
+    cadence: "annuale",
+    cadenceNote: "Edizione 2025; nuova acquisizione e verifica di dati e codelist prima di ogni aggiornamento.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 540 * DAY,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    tags: ["source:istat-bes-servizi", "domain:service-quality"],
+  },
+  "istat-bes-ambiente": {
+    id: "istat-bes-ambiente",
+    label: "ISTAT · BES dei territori, Ambiente",
+    owner: "ISTAT — Istituto nazionale di statistica",
+    sourceUrl: "https://www.istat.it/notizia/bes-dei-territori-edizione-2025/",
+    cadence: "annuale",
+    cadenceNote: "Edizione 2025; nuova acquisizione e verifica di dati e codelist prima di ogni aggiornamento.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 540 * DAY,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    tags: ["source:istat-bes-ambiente", "domain:environment"],
+  },
   "inps-naspi": {
     id: "inps-naspi",
     label: "INPS · NASpI beneficiari e trattamenti",
@@ -599,6 +728,66 @@ export const SOURCE_POLICIES: Readonly<Record<SourceId, SourcePolicy>> = {
     maxRetries: 1,
     tags: ["source:inps-naspi", "domain:social-benefits"],
   },
+  "inps-assegno-unico": {
+    id: "inps-assegno-unico",
+    label: "INPS · Assegno Unico (nuclei e figli)",
+    owner: "INPS — Istituto Nazionale della Previdenza Sociale",
+    sourceUrl: "https://opendata.inps.it/opendata",
+    cadence: "annuale",
+    cadenceNote:
+      "Due package CKAN 2022-2024 (AUU a domanda, esclusi RdC). Snapshot aggiornabile solo dopo nuova acquisizione CSV e validazione offline; licenza cc-by per package.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 540 * DAY,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    tags: ["source:inps-assegno-unico", "domain:social-benefits", "domain:family"],
+  },
+  "inps-integrazioni-salariali": {
+    id: "inps-integrazioni-salariali",
+    label: "INPS · integrazioni salariali (lavoratori, domande, mensilità)",
+    owner: "INPS — Istituto Nazionale della Previdenza Sociale",
+    sourceUrl: "https://opendata.inps.it/opendata",
+    cadence: "annuale",
+    cadenceNote:
+      "Tre package CKAN del report annuale 2023 Ammortizzatori Sociali. Snapshot aggiornabile solo dopo nuova acquisizione CSV e validazione offline; licenza cc-by per package. Conteggi, non euro.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 540 * DAY,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    tags: ["source:inps-integrazioni-salariali", "domain:social-benefits", "domain:labour"],
+  },
+  "inps-cig-fondi-solidarieta": {
+    id: "inps-cig-fondi-solidarieta",
+    label: "INPS · CIG Fondi di Solidarietà (ore autorizzate)",
+    owner: "INPS — Istituto Nazionale della Previdenza Sociale",
+    sourceUrl: "https://opendata.inps.it/opendata",
+    cadence: "annuale",
+    cadenceNote:
+      "Package CKAN cig-fondi-di-solidarieta-2023-2024. Snapshot aggiornabile solo dopo nuova acquisizione CSV e validazione offline; licenza cc-by per package. Ore autorizzate, non euro.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 540 * DAY,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    tags: ["source:inps-cig-fondi-solidarieta", "domain:social-benefits", "domain:labour"],
+  },
+  "inl-vigilanza": {
+    id: "inl-vigilanza",
+    label: "INL · vigilanza ispettiva 2025",
+    owner: "Ispettorato Nazionale del Lavoro",
+    sourceUrl: "https://www.ispettorato.gov.it/",
+    cadence: "annuale",
+    cadenceNote:
+      "Relazione annuale e rapporto vigilanza 2025 (PDF). Snapshot aggiornabile solo dopo nuova acquisizione PDF e validazione offline; licenza CC BY 3.0 IT.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 540 * DAY,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    tags: ["source:inl-vigilanza", "domain:labour", "domain:enforcement"],
+  },
   "mef-iva": {
     id: "mef-iva",
     label: "MEF · principali grandezze IVA",
@@ -612,6 +801,62 @@ export const SOURCE_POLICIES: Readonly<Record<SourceId, SourcePolicy>> = {
     timeoutMs: 20_000,
     maxRetries: 1,
     tags: ["source:mef-iva", "domain:taxation"],
+  },
+  "eu-vat-gap-italy": {
+    id: "eu-vat-gap-italy",
+    label: "DG TAXUD · VAT gap Italia",
+    owner: "Commissione europea, DG TAXUD",
+    sourceUrl: "https://taxation-customs.ec.europa.eu/taxation/vat/fight-against-vat-fraud/vat-gap_en",
+    cadence: "annuale",
+    cadenceNote: "Foglio IT del workbook Country Chapters 2025: 2019-2023 e 2024 stima rapida. Snapshot aggiornabile solo dopo nuova acquisizione e validazione offline.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 540 * DAY,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    tags: ["source:eu-vat-gap-italy", "domain:taxation"],
+  },
+  "mef-tax-gap-nazionale": {
+    id: "mef-tax-gap-nazionale",
+    label: "MEF · tax gap nazionale (Relazione evasione 2025)",
+    owner: "MEF — Commissione ex art. 10-bis.1 L. 196/2009",
+    sourceUrl: "https://www.mef.gov.it/documenti-pubblicazioni/rapporti-relazioni/",
+    cadence: "annuale",
+    cadenceNote: "Tab. I.1 e I.2 della Relazione 2025: gap e propensione 2018-2022 (2022 semi-definitivo). Snapshot aggiornabile solo dopo nuova acquisizione e validazione offline del PDF.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 540 * DAY,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    tags: ["source:mef-tax-gap-nazionale", "domain:taxation"],
+  },
+  "eurostat-taxag": {
+    id: "eurostat-taxag",
+    label: "Eurostat · aggregati fiscali PA (gov_10a_taxag)",
+    owner: "Eurostat (Commissione europea)",
+    sourceUrl: "https://ec.europa.eu/eurostat/databrowser/view/gov_10a_taxag/default/table?lang=en",
+    cadence: "annuale",
+    cadenceNote: "Gettito SEC 2010 Italia 2014-2025 per voce e sottosettore ESA. Snapshot aggiornabile solo dopo nuova acquisizione JSON-stat e validazione offline.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 540 * DAY,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    tags: ["source:eurostat-taxag", "domain:taxation", "domain:government-finance"],
+  },
+  "eurostat-sha-health": {
+    id: "eurostat-sha-health",
+    label: "Eurostat · spesa sanitaria SHA per schema di finanziamento",
+    owner: "Eurostat (Commissione europea)",
+    sourceUrl: "https://ec.europa.eu/eurostat/databrowser/view/hlth_sha11_hf/default/table?lang=en",
+    cadence: "annuale",
+    cadenceNote: "hlth_sha11_hf Italia 2014-2025 (2025 provvisorio). Snapshot aggiornabile solo dopo nuova acquisizione JSON-stat e validazione offline.",
+    discoveryRevalidateSeconds: DAY,
+    dataRevalidateSeconds: DAY,
+    staleAfterSeconds: 540 * DAY,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    tags: ["source:eurostat-sha-health", "domain:health"],
   },
   "mef-irpef-dettaglio": {
     id: "mef-irpef-dettaglio",

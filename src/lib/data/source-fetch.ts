@@ -64,12 +64,34 @@ const ALLOWED_HOSTS: Readonly<Record<SourceId, readonly string[]>> = {
   "istat-bes-economico": [],
   "istat-bes-salute": [],
   "istat-bes-istruzione": [],
+  "istat-bes-lavoro": [],
+  "istat-bes-relazioni": [],
+  "istat-bes-politica": [],
+  "istat-bes-sicurezza": [],
+  "istat-bes-paesaggio": [],
+  "istat-bes-servizi": [],
+  "istat-bes-ambiente": [],
   // Snapshot-only: le risposte SDMX-ML sono acquisite e vincolate dall'ETL, mai scaricate a runtime.
   "inps-naspi": [],
+  // Snapshot-only: i CSV AUU sono acquisiti e vincolati dall'ETL, mai scaricati a runtime.
+  "inps-assegno-unico": [],
+  // Snapshot-only: i CSV integrazioni salariali sono acquisiti e vincolati dall'ETL, mai scaricati a runtime.
+  "inps-integrazioni-salariali": [],
+  // Snapshot-only: il CSV CIG Fondi di Solidarietà è acquisito e vincolato dall'ETL, mai scaricato a runtime.
+  "inps-cig-fondi-solidarieta": [],
+  // Snapshot-only: il PDF INL è acquisito e vincolato dall'ETL, mai scaricato a runtime.
+  "inl-vigilanza": [],
   // Snapshot-only: i CSV sono acquisiti e vincolati dall'ETL, mai scaricati a runtime.
   "mef-irpef-dettaglio": [],
   // Snapshot-only: i CSV IVA sono acquisiti e vincolati dall'ETL.
   "mef-iva": [],
+  // Snapshot-only: il workbook DG TAXUD VAT gap è acquisito e vincolato dall'ETL.
+  "eu-vat-gap-italy": [],
+  "mef-tax-gap-nazionale": [],
+  // Snapshot-only: la risposta JSON-stat gov_10a_taxag è acquisita e vincolata dall'ETL.
+  "eurostat-taxag": [],
+  // Snapshot-only: la risposta JSON-stat hlth_sha11_hf è acquisita e vincolata dall'ETL.
+  "eurostat-sha-health": [],
   // Snapshot-only: i CSV Consip sono acquisiti e vincolati dall'ETL, mai scaricati a runtime.
   consip: [],
   "mef-irpef": MEF_IRPEF_SOURCE.allowedHosts,
@@ -106,6 +128,8 @@ const ALLOWED_HOSTS: Readonly<Record<SourceId, readonly string[]>> = {
   "oecd-taxing-wages": [],
   // Snapshot-only: le risposte JSON-stat sono acquisite e vincolate dall'ETL, mai scaricate a runtime.
   "eurostat-cofog": [],
+  // Snapshot-only: le risposte JSON-stat di gov_10a_main sono acquisite e vincolate dall'ETL, mai scaricate a runtime.
+  "eurostat-gov-main": [],
 };
 
 const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);

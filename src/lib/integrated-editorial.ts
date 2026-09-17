@@ -15,7 +15,7 @@ export type EditorialDatasetPreview = Readonly<{
 }>;
 
 export type EditorialSurfacePreview = Readonly<{
-  surface: "/partecipazioni" | "/spese/sanita" | "/dati" | "/enti" | "/appalti/ted" | "/pnrr";
+  surface: "/partecipazioni" | "/spese/sanita" | "/dati" | "/enti" | "/appalti/ted" | "/pnrr" | "/disuguaglianza";
   title: string;
   description: string;
   datasets: readonly EditorialDatasetPreview[];
@@ -990,6 +990,12 @@ export const EDITORIAL_TOPICS: readonly EditorialTopic[] = [
 
 export const EDITORIAL_SURFACE_PREVIEWS: readonly EditorialSurfacePreview[] = [
   {
+    surface: "/disuguaglianza",
+    title: "Distribuzione dei redditi in Italia",
+    description: "Gini e rapporto S80/S20, con anni dei redditi e della rilevazione distinti.",
+    datasets: [{ id: "eurostat-disuguaglianza-redditi", label: "Disuguaglianza dei redditi · Eurostat" }],
+  },
+  {
     surface: "/pnrr",
     title: "Tutti i progetti PNRR",
     description: "Registrazioni ReGiS di tutte le missioni, con finanziamenti e localizzazioni dichiarate al 13 giugno 2026.",
@@ -1019,6 +1025,16 @@ export const EDITORIAL_SURFACE_PREVIEWS: readonly EditorialSurfacePreview[] = [
       { id: "istat-misura-comune-vecchiaia", label: "Indice di vecchiaia" },
       { id: "istat-misura-comune-dipendenza-anziani", label: "Indice di dipendenza anziani" },
       { id: "istat-misura-comune-dipendenza-strutturale", label: "Indice di dipendenza strutturale" },
+    ],
+  },
+  {
+    surface: "/dati",
+    title: "Economia non osservata",
+    description: "Stime ISTAT nazionali 2011–2023 e incidenza territoriale 2023 sul valore aggiunto, con unità e denominatori distinti.",
+    datasets: [
+      { id: "istat-economia-non-osservata-componenti", label: "Componenti dell’economia non osservata" },
+      { id: "istat-economia-sommersa-branche", label: "Economia sommersa per branca" },
+      { id: "istat-economia-non-osservata-territori", label: "Incidenza territoriale 2023" },
     ],
   },
   {

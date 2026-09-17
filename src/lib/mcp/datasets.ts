@@ -288,6 +288,18 @@ export async function queryPublicDataset(
         offset: query.offset,
       }));
     }
+    case "opencivitas_fabbisogni_2017": {
+      const { queryOpenCivitas2017 } = await import("@/lib/opencivitas-2017-snapshot");
+      if (query.year !== undefined && query.year !== 2017) {
+        throw new Error("OpenCivitas FC40TOT è disponibile per il 2017. Le altre annualità restano nei rispettivi dataset.");
+      }
+      return jsonSafe(queryOpenCivitas2017({
+        region: query.region,
+        code: query.code,
+        limit: query.limit,
+        offset: query.offset,
+      }));
+    }
     case "opencivitas_fabbisogni_2018": {
       const { queryOpenCivitas2018 } = await import("@/lib/opencivitas-2018-snapshot");
       if (query.year !== undefined && query.year !== 2018) {
@@ -368,24 +380,53 @@ export async function queryPublicDataset(
     case "istat_pensioni_prestazioni":
     case "istat_pensionati_persone": {
       const { queryIstatPensions } = await import("@/lib/istat-pensions-snapshot");
-      const result = queryIstatPensions({ year: query.year });
+      const result = queryIstatPensions({ year: query.year, territory: query.territory });
       const { pensionBenefits, pensioners, ...shared } = result;
       return query.dataset === "istat_pensioni_prestazioni"
         ? jsonSafe({ ...shared, dataset: query.dataset, pensionBenefits })
         : jsonSafe({ ...shared, dataset: query.dataset, pensioners });
     }
     case "eurostat_cofog": {
-      const { queryEurostatCofog } = await import("@/lib/eurostat-cofog-snapshot");
+      const { queryEurostatCofogPublic } = await import("@/lib/eurostat-cofog-snapshot");
       return jsonSafe({
         dataset: query.dataset,
-        ...queryEurostatCofog({ geo: query.country, year: query.year, function: query.cofog }),
+        ...queryEurostatCofogPublic({ geo: query.country, year: query.year, function: query.cofog }),
       });
+    }
+    case "eurostat_conti_pa": {
+      const { queryEurostatGovMain } = await import("@/lib/eurostat-gov-main-snapshot");
+      return jsonSafe({ dataset: query.dataset, ...queryEurostatGovMain({ year: query.year, naItem: query.code }) });
     }
     case "mef_iva": {
       const { queryMefIva } = await import("@/lib/mef-iva-snapshot");
       return jsonSafe({ dataset: query.dataset, ...queryMefIva({
         year: query.year, breakdown: query.breakdown, limit: query.limit, offset: query.offset,
       }) });
+    }
+    case "eu_vat_gap_italy": {
+      const { queryEuVatGapItaly } = await import("@/lib/eu-vat-gap-italy-snapshot");
+      return jsonSafe({ dataset: query.dataset, ...queryEuVatGapItaly({ year: query.year }) });
+    }
+    case "mef_tax_gap_nazionale": {
+      const { queryMefTaxGapNazionale } = await import("@/lib/mef-tax-gap-nazionale-snapshot");
+      return jsonSafe({
+        dataset: query.dataset,
+        ...queryMefTaxGapNazionale({ year: query.year, tax: query.tax }),
+      });
+    }
+    case "eurostat_taxag": {
+      const { queryEurostatTaxag } = await import("@/lib/eurostat-taxag-snapshot");
+      return jsonSafe({
+        dataset: query.dataset,
+        ...queryEurostatTaxag({ year: query.year, sector: query.sector, tax: query.tax }),
+      });
+    }
+    case "eurostat_sha_health": {
+      const { queryEurostatShaHealth } = await import("@/lib/eurostat-sha-health-snapshot");
+      return jsonSafe({
+        dataset: query.dataset,
+        ...queryEurostatShaHealth({ year: query.year, scheme: query.code }),
+      });
     }
     case "mef_irpef_dettaglio": {
       const { queryMefIrpefDettaglio } = await import("@/lib/mef-irpef-dettaglio-snapshot");
@@ -399,6 +440,60 @@ export async function queryPublicDataset(
       return jsonSafe({
         dataset: query.dataset,
         ...queryInpsNaspi({ table: query.table, measure: query.measure, year: query.year, territory: query.territory }),
+      });
+    }
+    case "inps_assegno_unico": {
+      const { queryInpsAssegnoUnico } = await import("@/lib/inps-assegno-unico-snapshot");
+      return jsonSafe({
+        dataset: query.dataset,
+        ...queryInpsAssegnoUnico({
+          table: query.table,
+          year: query.year,
+          province: query.province,
+          region: query.region,
+        }),
+      });
+    }
+    case "inps_integrazioni_salariali": {
+      const { queryInpsIntegrazioniSalariali } = await import(
+        "@/lib/inps-integrazioni-salariali-snapshot"
+      );
+      return jsonSafe({
+        dataset: query.dataset,
+        ...queryInpsIntegrazioniSalariali({
+          table: query.table,
+          year: query.year,
+          month: query.period,
+          region: query.region,
+          interventionType: query.code,
+        }),
+      });
+    }
+    case "inps_cig_fondi_solidarieta": {
+      const { queryInpsCigFondiSolidarieta } = await import(
+        "@/lib/inps-cig-fondi-solidarieta-snapshot"
+      );
+      return jsonSafe({
+        dataset: query.dataset,
+        ...queryInpsCigFondiSolidarieta({
+          year: query.year,
+          month: query.period,
+          region: query.region,
+          fundManagement: query.code,
+          sector: query.sector,
+        }),
+      });
+    }
+    case "inl_vigilanza": {
+      const { queryInlVigilanza } = await import("@/lib/inl-vigilanza-snapshot");
+      return jsonSafe({
+        dataset: query.dataset,
+        ...queryInlVigilanza({
+          year: query.year,
+          table: query.table,
+          territory: query.territory,
+          sector: query.sector,
+        }),
       });
     }
     case "istat_cofog": {
@@ -455,6 +550,69 @@ export async function queryPublicDataset(
       return jsonSafe({
         dataset: query.dataset,
         ...queryIstatBesIstruzione({ territory: query.territory, year: query.year, indicator: query.measure,
+          sex: query.sex, limit: query.limit, offset: query.offset }, options),
+      });
+    }
+    case "istat_bes_lavoro": {
+      options.signal?.throwIfAborted();
+      const { queryIstatBesLavoro } = await import("@/lib/istat-bes-lavoro-snapshot");
+      return jsonSafe({
+        dataset: query.dataset,
+        ...queryIstatBesLavoro({ territory: query.territory, year: query.year, indicator: query.measure,
+          sex: query.sex, limit: query.limit, offset: query.offset }, options),
+      });
+    }
+    case "istat_bes_relazioni": {
+      options.signal?.throwIfAborted();
+      const { queryIstatBesRelazioni } = await import("@/lib/istat-bes-relazioni-snapshot");
+      return jsonSafe({
+        dataset: query.dataset,
+        ...queryIstatBesRelazioni({ territory: query.territory, year: query.year, indicator: query.measure,
+          sex: query.sex, limit: query.limit, offset: query.offset }, options),
+      });
+    }
+    case "istat_bes_politica": {
+      options.signal?.throwIfAborted();
+      const { queryIstatBesPolitica } = await import("@/lib/istat-bes-politica-snapshot");
+      return jsonSafe({
+        dataset: query.dataset,
+        ...queryIstatBesPolitica({ territory: query.territory, year: query.year, indicator: query.measure,
+          sex: query.sex, limit: query.limit, offset: query.offset }, options),
+      });
+    }
+    case "istat_bes_sicurezza": {
+      options.signal?.throwIfAborted();
+      const { queryIstatBesSicurezza } = await import("@/lib/istat-bes-sicurezza-snapshot");
+      return jsonSafe({
+        dataset: query.dataset,
+        ...queryIstatBesSicurezza({ territory: query.territory, year: query.year, indicator: query.measure,
+          sex: query.sex, limit: query.limit, offset: query.offset }, options),
+      });
+    }
+    case "istat_bes_paesaggio": {
+      options.signal?.throwIfAborted();
+      const { queryIstatBesPaesaggio } = await import("@/lib/istat-bes-paesaggio-snapshot");
+      return jsonSafe({
+        dataset: query.dataset,
+        ...queryIstatBesPaesaggio({ territory: query.territory, year: query.year, indicator: query.measure,
+          sex: query.sex, limit: query.limit, offset: query.offset }, options),
+      });
+    }
+    case "istat_bes_servizi": {
+      options.signal?.throwIfAborted();
+      const { queryIstatBesServizi } = await import("@/lib/istat-bes-servizi-snapshot");
+      return jsonSafe({
+        dataset: query.dataset,
+        ...queryIstatBesServizi({ territory: query.territory, year: query.year, indicator: query.measure,
+          sex: query.sex, limit: query.limit, offset: query.offset }, options),
+      });
+    }
+    case "istat_bes_ambiente": {
+      options.signal?.throwIfAborted();
+      const { queryIstatBesAmbiente } = await import("@/lib/istat-bes-ambiente-snapshot");
+      return jsonSafe({
+        dataset: query.dataset,
+        ...queryIstatBesAmbiente({ territory: query.territory, year: query.year, indicator: query.measure,
           sex: query.sex, limit: query.limit, offset: query.offset }, options),
       });
     }

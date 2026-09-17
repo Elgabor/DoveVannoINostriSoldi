@@ -16,16 +16,20 @@ BASE_URL="http://${NEXT_HOST}:${NEXT_PORT}"
 # production sequence auditable and fail before starting a server if it ever
 # exceeds that budget.
 MCP_WINDOW_POST_BUDGET=30
-MCP_CONTRACT_POSTS=29
+MCP_CONTRACT_POSTS=30
+MCP_PENSION_POSTS=6
+MCP_RELAZIONI_POSTS=1
+MCP_VAT_GAP_POSTS=1
+MCP_MEF_TAX_GAP_POSTS=1
 MCP_SUBSCRIPTION_POSTS=2
-MCP_LOAD_REQUESTS=15
+MCP_LOAD_REQUESTS=14
 MCP_IVA_POSTS=5
 if (( MCP_CONTRACT_POSTS > MCP_WINDOW_POST_BUDGET )); then
   echo "ERROR: MCP contract smoke declares ${MCP_CONTRACT_POSTS} POSTs, above the ${MCP_WINDOW_POST_BUDGET}-POST window budget." >&2
   exit 1
 fi
-if (( MCP_SUBSCRIPTION_POSTS + MCP_LOAD_REQUESTS + MCP_IVA_POSTS > MCP_WINDOW_POST_BUDGET )); then
-  echo "ERROR: MCP subscription + load + IVA declares $((MCP_SUBSCRIPTION_POSTS + MCP_LOAD_REQUESTS + MCP_IVA_POSTS)) POSTs, above the ${MCP_WINDOW_POST_BUDGET}-POST window budget." >&2
+if (( MCP_PENSION_POSTS + MCP_RELAZIONI_POSTS + MCP_VAT_GAP_POSTS + MCP_MEF_TAX_GAP_POSTS + MCP_SUBSCRIPTION_POSTS + MCP_LOAD_REQUESTS + MCP_IVA_POSTS > MCP_WINDOW_POST_BUDGET )); then
+  echo "ERROR: MCP pensions + relazioni + VAT gap + MEF tax gap + subscription + load + IVA declares $((MCP_PENSION_POSTS + MCP_RELAZIONI_POSTS + MCP_VAT_GAP_POSTS + MCP_MEF_TAX_GAP_POSTS + MCP_SUBSCRIPTION_POSTS + MCP_LOAD_REQUESTS + MCP_IVA_POSTS)) POSTs, above the ${MCP_WINDOW_POST_BUDGET}-POST window budget." >&2
   exit 1
 fi
 
@@ -131,12 +135,28 @@ npm run test:browser:papers
 echo "::endgroup::"
 
 echo "::group::MCP rate-limit window transition"
-# The 29 contract POSTs above share the local public-client window. Start the
+# The 30 contract POSTs above share the local public-client window. Start the
 # conservative residual interval only after that group completes: every POST is
-# known to predate this timestamp. The two subscriptions and 15-sample load then
-# occupy only 17 POSTs in the next window. Browser suites that already consumed
+# known to predate this timestamp. Pension, relazioni, VAT gap, MEF tax gap, subscription, load and IVA checks
+# occupy 30 POSTs in the next window. Browser suites that already consumed
 # the interval continue immediately.
 node scripts/ci/mcp-rate-limit-window.mjs "$MCP_CONTRACT_WINDOW_COMPLETED_MS"
+echo "::endgroup::"
+
+echo "::group::MCP pension territory smoke"
+npm run test:mcp:http -- --mode pensions
+echo "::endgroup::"
+
+echo "::group::MCP BesT social-relations smoke"
+npm run test:mcp:http -- --mode relazioni
+echo "::endgroup::"
+
+echo "::group::MCP VAT gap Italy smoke"
+npm run test:mcp:http -- --mode vat-gap
+echo "::endgroup::"
+
+echo "::group::MEF national tax gap API and MCP HTTP"
+npm run test:mcp:http -- --mode mef-tax-gap
 echo "::endgroup::"
 
 echo "::group::MCP subscription smoke"

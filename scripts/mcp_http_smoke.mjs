@@ -5,8 +5,8 @@ const baseUrl = new URL(process.env.DVNS_BASE_URL ?? "http://127.0.0.1:3000");
 const MAX_RESPONSE_BYTES = 750_000;
 const modeIndex = process.argv.indexOf("--mode");
 const mode = modeIndex === -1 ? "complete" : process.argv[modeIndex + 1];
-assert.ok(["contract", "subscription", "complete"].includes(mode),
-  "--mode deve essere contract, subscription oppure complete");
+assert.ok(["contract", "subscription", "pensions", "relazioni", "vat-gap", "mef-tax-gap", "complete"].includes(mode),
+  "--mode deve essere contract, subscription, pensions, relazioni, vat-gap, mef-tax-gap oppure complete");
 let contractPostCount = 0;
 
 function byteLength(value) {
@@ -65,6 +65,89 @@ async function mcpRequest(
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
   assert.equal(response.url, new URL(pathname, baseUrl).href, "MCP alias must not redirect");
   return text;
+}
+
+async function runMefTaxGapSmoke() {
+  const before = contractPostCount;
+  const response = await fetch(new URL("/api/tributi/tax-gap?anno=2022&imposta=totale-entrate-tributarie-e-contributive", baseUrl), { signal: AbortSignal.timeout(10_000) });
+  assert.equal(response.status, 200);
+  const api = await response.json();
+  const result = await mcpRequest({
+    jsonrpc: "2.0", id: "mef-tax-gap-range", method: "tools/call",
+    params: { name: "query_dataset", arguments: { dataset: "mef_tax_gap_nazionale", year: 2022, tax: "totale-entrate-tributarie-e-contributive" } },
+  });
+  const { dataset, ...projection } = successfulMcpToolResult(result, "mef_tax_gap_nazionale").data;
+  assert.equal(dataset, "mef_tax_gap_nazionale");
+  assert.deepEqual(projection, api);
+  assert.equal(api.taxRows.length, 1);
+  assert.equal(api.taxRows[0].series.length, 1);
+  assert.deepEqual(api.taxRows[0].series[0], {
+    year: 2022,
+    gap: { status: "observed", shape: "range", minCents: 98123 * 100_000_000, maxCents: 102482 * 100_000_000, valueCents: null },
+    propensione: { status: "absent", shape: "absent", minTenthsPp: null, maxTenthsPp: null, valueTenthsPp: null },
+  });
+  assert.equal(contractPostCount - before, 1);
+}
+
+async function runVatGapSmoke() {
+  const before = contractPostCount;
+  const response = await fetch(new URL("/api/tributi/vat-gap?anno=2024", baseUrl), { signal: AbortSignal.timeout(10_000) });
+  assert.equal(response.status, 200);
+  const api = await response.json();
+  const result = await mcpRequest({
+    jsonrpc: "2.0", id: "vat-gap-rapid-estimate", method: "tools/call",
+    params: { name: "query_dataset", arguments: { dataset: "eu_vat_gap_italy", year: 2024 } },
+  });
+  const { dataset, ...projection } = successfulMcpToolResult(result, "eu_vat_gap_italy").data;
+  assert.equal(dataset, "eu_vat_gap_italy");
+  assert.deepEqual(projection, api);
+  assert.equal(api.years.length, 1);
+  assert.equal(api.years[0].estimateKind, "rapid-estimate");
+  assert.ok(api.years[0].vttlComposition.every(row => row.amountCents.status === "unavailable" && row.amountCents.value === null));
+  assert.equal(api.years[0].vttlCents.value - api.years[0].vatRevenueCents.value, api.years[0].complianceGapCents.value);
+  assert.equal(contractPostCount - before, 1);
+}
+
+async function runRelazioniSmoke() {
+  const before = contractPostCount;
+  const response = await fetch(new URL("/api/territori/bes-relazioni?territorio=ITC33&indicatore=05REL007P&sesso=T&anno=2024", baseUrl), {
+    signal: AbortSignal.timeout(10_000),
+  });
+  assert.equal(response.status, 200);
+  const api = await response.json();
+  const result = await mcpRequest({
+    jsonrpc: "2.0", id: "bes-relazioni-null", method: "tools/call",
+    params: { name: "query_dataset", arguments: {
+      dataset: "istat_bes_relazioni", territory: "ITC33", measure: "05REL007P", sex: "T", year: 2024,
+    } },
+  });
+  const { dataset, ...projection } = successfulMcpToolResult(result, "istat_bes_relazioni").data;
+  assert.equal(dataset, "istat_bes_relazioni");
+  assert.deepEqual(projection, api);
+  assert.deepEqual(api.observations, [{ indicator: "05REL007P", territory: "ITC33", sex: "T", year: 2024, valueTenths: null, status: "n" }]);
+  assert.equal(contractPostCount - before, 1);
+}
+
+async function runPensionSmoke() {
+  const before = contractPostCount;
+  for (const territory of ["IT", "ITF3", "ITG29"]) {
+    const pensionApi = await fetch(new URL(`/api/spese/pensioni?anno=2022&territorio=${territory}`, baseUrl), { signal: AbortSignal.timeout(10_000) });
+    assert.equal(pensionApi.status, 200);
+    const pensionData = await pensionApi.json();
+    assert.equal(pensionData.territory, territory);
+    assert.equal(pensionData.inpsOsservatorio === null, territory !== "IT");
+    for (const [dataset, key] of [["istat_pensioni_prestazioni", "pensionBenefits"], ["istat_pensionati_persone", "pensioners"]]) {
+      const result = await mcpRequest({
+        jsonrpc: "2.0", id: `pensions-${territory}-${key}`, method: "tools/call",
+        params: { name: "query_dataset", arguments: { dataset, year: 2022, territory } },
+      });
+      const data = successfulMcpToolResult(result, dataset).data;
+      assert.equal(data.territory, territory);
+      assert.deepEqual(data[key], pensionData[key]);
+    }
+  }
+
+  assert.equal(contractPostCount - before, 6);
 }
 
 async function runSubscriptionSmoke() {
@@ -542,6 +625,20 @@ const modernData = successfulMcpToolResult(modernDataset, "mef_irpef_comunale", 
 assert.equal(modernData.level, "region");
 assert.equal(modernData.pagination.returned, 20);
 
+const fc40ApiResponse = await fetch(new URL("/api/spese/opencivitas-2017?codice=058091&anno=2017", baseUrl));
+assert.equal(fc40ApiResponse.status, 200);
+const fc40ApiData = JSON.parse(await responseText(fc40ApiResponse, "FC40 API"));
+const fc40McpResult = await mcpRequest({
+  jsonrpc: "2.0", id: "fc40-2017", method: "tools/call",
+  params: { name: "query_dataset", arguments: { dataset: "opencivitas_fabbisogni_2017", code: "058091", year: 2017 } },
+});
+const fc40McpData = successfulMcpToolResult(fc40McpResult, "opencivitas_fabbisogni_2017").data;
+assert.deepEqual(fc40McpData, fc40ApiData);
+assert.equal(fc40ApiData.referenceYear, 2017);
+assert.equal(fc40ApiData.family, "FC40TOT");
+assert.equal(fc40ApiData.coverage.municipalities, 6627);
+assert.equal(fc40ApiData.data[0].historicalSpendingCents, 302180645180);
+assert.equal(fc40ApiData.provenance.sha256.data, "266a1dd568df603039e0615cbbf6e9f9484abaeaa03b0dce0deca1ded35729d6");
 const fc50ApiResponse = await fetch(new URL("/api/spese/opencivitas-2018?codice=058091&anno=2018", baseUrl));
 assert.equal(fc50ApiResponse.status, 200);
 const fc50ApiData = JSON.parse(await responseText(fc50ApiResponse, "FC50 API"));
@@ -592,10 +689,22 @@ for (const year of [2020, 2021, 2022]) {
   assert.equal(invalidApi.headers.get("cache-control"), "no-store");
 }
 
-assert.equal(contractPostCount, 29, "contract smoke must keep exactly 29 POST requests");
+assert.equal(contractPostCount, 30, "contract smoke must keep exactly 30 POST requests");
 }
 
-if (mode === "subscription") {
+if (mode === "mef-tax-gap") {
+  await waitForServer();
+  await runMefTaxGapSmoke();
+} else if (mode === "vat-gap") {
+  await waitForServer();
+  await runVatGapSmoke();
+} else if (mode === "relazioni") {
+  await waitForServer();
+  await runRelazioniSmoke();
+} else if (mode === "pensions") {
+  await waitForServer();
+  await runPensionSmoke();
+} else if (mode === "subscription") {
   await waitForServer();
   await runSubscriptionSmoke();
 } else {
@@ -603,11 +712,23 @@ if (mode === "subscription") {
   if (mode === "complete") {
     // Let the existing public-client rate-limit window expire before the extra probes.
     await new Promise((resolve) => setTimeout(resolve, 60_100));
+    await runPensionSmoke();
+    await runRelazioniSmoke();
+    await runVatGapSmoke();
+    await runMefTaxGapSmoke();
     await runSubscriptionSmoke();
   }
 }
 
-const checks = mode === "subscription"
+const checks = mode === "mef-tax-gap"
+  ? ["mef-tax-gap-api-mcp-range-parity"]
+  : mode === "vat-gap"
+  ? ["vat-gap-api-mcp-parity"]
+  : mode === "relazioni"
+  ? ["bes-relazioni-api-mcp-parity"]
+  : mode === "pensions"
+  ? ["pension-territories-api-mcp-parity"]
+  : mode === "subscription"
   ? ["modern-subscriptions", "compatibility-modern-subscriptions"]
   : [
     "page",
@@ -623,9 +744,11 @@ const checks = mode === "subscription"
     "unsupported-detail-filter",
     "integrated-query",
     "education-query-pagination-provenance",
+    ...(mode === "complete" ? ["pension-territories-api-mcp-parity", "bes-relazioni-api-mcp-parity", "vat-gap-api-mcp-parity"] : []),
     "modern-discovery",
     "compatibility-modern-discovery",
     "modern-query",
+    "fc40-2017-api-mcp-provenance-year-separation",
     "fc50-2018-api-mcp-provenance-year-separation",
     "fc60-2019-api-mcp-provenance-year-separation",
     ...(mode === "complete" ? ["modern-subscriptions", "compatibility-modern-subscriptions"] : []),

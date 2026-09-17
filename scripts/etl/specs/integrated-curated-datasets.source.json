@@ -384,6 +384,62 @@
           "https://dati-coll.dfp.gov.it/dataset/80b49214-fa00-4e25-aafb-2c122a523df6/resource/f4e810e7-72d9-4041-9d63-9e819823e3e0/download/occupazione_2020.csv",
           "https://dati-coll.dfp.gov.it/dataset/occupazione"
         ]
+      },
+      "istat-economia-non-osservata-componenti": {
+        "holder": "Istituto nazionale di statistica (ISTAT)",
+        "referencePeriod": "Anni 2011-2023; valori nazionali correnti e incidenza sul PIL",
+        "publicationDate": "2025-10-17",
+        "acquisitionDate": "2026-09-12",
+        "checkedAt": "2026-09-12",
+        "updateFrequency": "annuale; acquisizione e promozione manuali",
+        "canonicalUrls": [
+          "https://www.istat.it/comunicato-stampa/economia-non-osservata-nei-conti-nazionali-anni-2020-2023/",
+          "https://www.istat.it/note-legali/",
+          "https://www.istat.it/wp-content/uploads/2025/10/Tavole-Economia-non-osservata_2025.xlsx"
+        ]
+      },
+      "istat-economia-sommersa-branche": {
+        "holder": "Istituto nazionale di statistica (ISTAT)",
+        "referencePeriod": "Anni 2011-2023; incidenza nazionale per branca di attività economica",
+        "publicationDate": "2025-10-17",
+        "acquisitionDate": "2026-09-12",
+        "checkedAt": "2026-09-12",
+        "updateFrequency": "annuale; acquisizione e promozione manuali",
+        "canonicalUrls": [
+          "https://www.istat.it/comunicato-stampa/economia-non-osservata-nei-conti-nazionali-anni-2020-2023/",
+          "https://www.istat.it/note-legali/",
+          "https://www.istat.it/wp-content/uploads/2025/10/Tavole-Economia-non-osservata_2025.xlsx"
+        ]
+      },
+      "istat-economia-non-osservata-territori": {
+        "holder": "Istituto nazionale di statistica (ISTAT)",
+        "referencePeriod": "Anno 2023; incidenza percentuale regionale e di ripartizione sul valore aggiunto totale",
+        "publicationDate": "2025-12-22",
+        "acquisitionDate": "2026-09-13",
+        "checkedAt": "2026-09-13",
+        "updateFrequency": "annuale; acquisizione e promozione manuali",
+        "canonicalUrls": [
+          "https://www.istat.it/comunicato-stampa/conti-economici-territoriali-2022-2024/",
+          "https://www.istat.it/note-legali/",
+          "https://www.istat.it/wp-content/uploads/2025/12/Tavole-allegate-2025-1.xlsx"
+        ]
+      },
+      "eurostat-disuguaglianza-redditi": {
+        "holder": "Eurostat (Commissione europea)",
+        "referencePeriod": "EU-SILC anni di indagine 2014-2025; redditi di riferimento 2013-2024 (Italia, t-1)",
+        "publicationDate": null,
+        "acquisitionDate": "2026-09-12",
+        "checkedAt": "2026-09-12",
+        "updateFrequency": "annuale; EU-SILC",
+        "canonicalUrls": [
+          "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/ilc_di11?format=JSON&lang=EN&freq=A&age=TOTAL&sex=T&unit=RAT&geo=IT&sinceTimePeriod=2014&untilTimePeriod=2025",
+          "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/ilc_di12?format=JSON&lang=EN&freq=A&age=TOTAL&statinfo=GINI_HND&geo=IT&sinceTimePeriod=2014&untilTimePeriod=2025",
+          "https://ec.europa.eu/eurostat/cache/metadata/en/ilc_sieusilc.htm",
+          "https://ec.europa.eu/eurostat/databrowser/view/ilc_di11/default/table?lang=en",
+          "https://ec.europa.eu/eurostat/databrowser/view/ilc_di12/default/table?lang=en",
+          "https://ec.europa.eu/eurostat/web/income-and-living-conditions/information-data",
+          "https://ec.europa.eu/eurostat/web/main/help/copyright-notice"
+        ]
       }
     }
   },
@@ -748,7 +804,28 @@
         "sha256": "9f36b8b9c0d8671205d78b3dcc0c8481bdf95af2f93446dc1b25ee4b78606979",
         "rows": 201,
         "columns": 20,
-        "headers": ["entityType", "year", "registryRows", "distinctSiopeCodes", "distinctTaxCodes", "validAtObservationCodes", "observedSiopeCodes", "withoutMovementsCodes", "observedMonths", "rawMovementRows", "knownAmountCents", "ipaMatched", "ipaUnmatched", "ipaAmbiguous", "ipaMatchedAmountCents", "ipaUnmatchedAmountCents", "ipaAmbiguousAmountCents", "coverageStatus", "coverageNote", "productStatus"]
+        "headers": [
+          "entityType",
+          "year",
+          "registryRows",
+          "distinctSiopeCodes",
+          "distinctTaxCodes",
+          "validAtObservationCodes",
+          "observedSiopeCodes",
+          "withoutMovementsCodes",
+          "observedMonths",
+          "rawMovementRows",
+          "knownAmountCents",
+          "ipaMatched",
+          "ipaUnmatched",
+          "ipaAmbiguous",
+          "ipaMatchedAmountCents",
+          "ipaUnmatchedAmountCents",
+          "ipaAmbiguousAmountCents",
+          "coverageStatus",
+          "coverageNote",
+          "productStatus"
+        ]
       }
     },
     {
@@ -814,8 +891,37 @@
       "evidenceLabel": "documented-fact",
       "sourceFields": [],
       "privateFields": [],
-      "caveats": ["Pagamenti di cassa delle amministrazioni provinciali, non spesa consolidata nel territorio.", "Il file 2026 è un anno in corso e non va trattato come annualità completa."],
-      "expected": {"bytes": 62793689, "sha256": "f99489aaae1716d50a8940a125ace96899e740fb9bcfbf634f78cdf7f17499e6", "rows": 270194, "columns": 19, "headers": ["entityCode", "taxCode", "codiceIpa", "entityType", "entityName", "validFrom", "validTo", "region", "province", "ipaJoinStatus", "regionJoinStatus", "year", "month", "managementCode", "compartment", "managementLabel", "titleCode", "titleLabel", "amountCents"]}
+      "caveats": [
+        "Pagamenti di cassa delle amministrazioni provinciali, non spesa consolidata nel territorio.",
+        "Il file 2026 è un anno in corso e non va trattato come annualità completa."
+      ],
+      "expected": {
+        "bytes": 62793689,
+        "sha256": "f99489aaae1716d50a8940a125ace96899e740fb9bcfbf634f78cdf7f17499e6",
+        "rows": 270194,
+        "columns": 19,
+        "headers": [
+          "entityCode",
+          "taxCode",
+          "codiceIpa",
+          "entityType",
+          "entityName",
+          "validFrom",
+          "validTo",
+          "region",
+          "province",
+          "ipaJoinStatus",
+          "regionJoinStatus",
+          "year",
+          "month",
+          "managementCode",
+          "compartment",
+          "managementLabel",
+          "titleCode",
+          "titleLabel",
+          "amountCents"
+        ]
+      }
     },
     {
       "id": "siope-uscite-regioni",
@@ -830,8 +936,38 @@
       "evidenceLabel": "documented-fact",
       "sourceFields": [],
       "privateFields": [],
-      "caveats": ["Comprende Regioni e Province autonome presenti nell'anagrafica SIOPE, non una somma dei Comuni.", "Pagamenti di cassa dell'amministrazione, non spesa sanitaria né spesa consolidata nel territorio.", "Il file 2026 è un anno in corso e non va trattato come annualità completa."],
-      "expected": {"bytes": 33742102, "sha256": "05bbb02bbba60e7e15da18c2dd193c7223fd6e865c2f82a0a0fc1896822e9c3a", "rows": 150088, "columns": 19, "headers": ["entityCode", "taxCode", "codiceIpa", "entityType", "entityName", "validFrom", "validTo", "region", "province", "ipaJoinStatus", "regionJoinStatus", "year", "month", "managementCode", "compartment", "managementLabel", "titleCode", "titleLabel", "amountCents"]}
+      "caveats": [
+        "Comprende Regioni e Province autonome presenti nell'anagrafica SIOPE, non una somma dei Comuni.",
+        "Pagamenti di cassa dell'amministrazione, non spesa sanitaria né spesa consolidata nel territorio.",
+        "Il file 2026 è un anno in corso e non va trattato come annualità completa."
+      ],
+      "expected": {
+        "bytes": 33742102,
+        "sha256": "05bbb02bbba60e7e15da18c2dd193c7223fd6e865c2f82a0a0fc1896822e9c3a",
+        "rows": 150088,
+        "columns": 19,
+        "headers": [
+          "entityCode",
+          "taxCode",
+          "codiceIpa",
+          "entityType",
+          "entityName",
+          "validFrom",
+          "validTo",
+          "region",
+          "province",
+          "ipaJoinStatus",
+          "regionJoinStatus",
+          "year",
+          "month",
+          "managementCode",
+          "compartment",
+          "managementLabel",
+          "titleCode",
+          "titleLabel",
+          "amountCents"
+        ]
+      }
     },
     {
       "id": "siope-uscite-citta-metropolitane",
@@ -846,8 +982,37 @@
       "evidenceLabel": "documented-fact",
       "sourceFields": [],
       "privateFields": [],
-      "caveats": ["Pagamenti di cassa delle Città metropolitane; comparto PRO, separato da Province e Comuni.", "Il file 2026 è un anno in corso e non va trattato come annualità completa."],
-      "expected": {"bytes": 12821784, "sha256": "50418065768722dc3b88ec5695f0383105832914d39582228ed7235eef6b55f5", "rows": 56188, "columns": 19, "headers": ["entityCode", "taxCode", "codiceIpa", "entityType", "entityName", "validFrom", "validTo", "region", "province", "ipaJoinStatus", "regionJoinStatus", "year", "month", "managementCode", "compartment", "managementLabel", "titleCode", "titleLabel", "amountCents"]}
+      "caveats": [
+        "Pagamenti di cassa delle Città metropolitane; comparto PRO, separato da Province e Comuni.",
+        "Il file 2026 è un anno in corso e non va trattato come annualità completa."
+      ],
+      "expected": {
+        "bytes": 12821784,
+        "sha256": "50418065768722dc3b88ec5695f0383105832914d39582228ed7235eef6b55f5",
+        "rows": 56188,
+        "columns": 19,
+        "headers": [
+          "entityCode",
+          "taxCode",
+          "codiceIpa",
+          "entityType",
+          "entityName",
+          "validFrom",
+          "validTo",
+          "region",
+          "province",
+          "ipaJoinStatus",
+          "regionJoinStatus",
+          "year",
+          "month",
+          "managementCode",
+          "compartment",
+          "managementLabel",
+          "titleCode",
+          "titleLabel",
+          "amountCents"
+        ]
+      }
     },
     {
       "id": "affidamenti-diretti",
@@ -5404,6 +5569,126 @@
       }
     },
     {
+      "id": "istat-economia-non-osservata-componenti",
+      "title": "ISTAT · economia non osservata · componenti nazionali",
+      "domain": "benchmarks",
+      "relativePath": "istat-economia-non-osservata-componenti.psv",
+      "dataKind": "delimited",
+      "delimiter": "pipe",
+      "authority": "official-primary",
+      "licenseStatus": "verified-open-cc-by-4.0",
+      "publication": "rows",
+      "evidenceLabel": "documented-fact",
+      "sourceFields": [
+        "URL fonte"
+      ],
+      "privateFields": [],
+      "caveats": [
+        "Stime ISTAT di contabilità nazionale: economia sommersa e attività illegali compongono l'economia non osservata. Non sono evasione fiscale accertata, esiti di controlli o somme recuperate.",
+        "Valori nazionali correnti in milioni di euro e incidenza percentuale sul PIL restano misure distinte. Valore aggiunto e PIL sono denominatori pubblicati dalla tavola; le loro celle di incidenza vuote restano vuote, non zero.",
+        "Le componenti Sottodichiarazione, Lavoro irregolare e Altro restano separate e riconciliate con Economia sommersa; questa e Attività illegali restano separate e riconciliate con Economia non osservata.",
+        "Serie 2011-2023 della Tavola 1 pubblicata il 17 ottobre 2025. I valori decimali sono conservati dalle celle XLSX senza arrotondamento DVNS.",
+        "Geografia esclusivamente nazionale. Nessun valore è distribuito fra regioni, province o Comuni e non esiste un incrocio territorio per settore.",
+        "Fonte ISTAT, CC BY 4.0 secondo le note legali del sito salvo diversa indicazione; proiezione DVNS in forma lunga con attribuzione e trasformazione dichiarate."
+      ],
+      "expected": {
+        "bytes": 18586,
+        "sha256": "38dc25d2dbb19415940b6da1712aa78c15907b32efe4a251e2b03a8882a0087b",
+        "rows": 104,
+        "columns": 8,
+        "headers": [
+          "Anno",
+          "Componente",
+          "Valore",
+          "Unità valore",
+          "Incidenza percentuale",
+          "Denominatore incidenza",
+          "Tavola",
+          "URL fonte"
+        ]
+      }
+    },
+    {
+      "id": "istat-economia-sommersa-branche",
+      "title": "ISTAT · economia sommersa · incidenza per branca",
+      "domain": "benchmarks",
+      "relativePath": "istat-economia-sommersa-branche.psv",
+      "dataKind": "delimited",
+      "delimiter": "pipe",
+      "authority": "official-primary",
+      "licenseStatus": "verified-open-cc-by-4.0",
+      "publication": "rows",
+      "evidenceLabel": "documented-fact",
+      "sourceFields": [
+        "URL fonte"
+      ],
+      "privateFields": [],
+      "caveats": [
+        "Stime ISTAT di contabilità nazionale sull'economia sommersa, non evasione fiscale accertata, esiti di controlli o somme recuperate. Le attività illegali non fanno parte di questa specifica tavola per branca.",
+        "Ogni valore è una percentuale del valore aggiunto totale della stessa branca; la riga Totale usa il valore aggiunto totale nazionale. Percentuali di branche diverse non si sommano e non sono quote territoriali.",
+        "Sottodichiarazione, Lavoro irregolare e Altro restano componenti distinte e sono riconciliate con Totale Economia sommersa per ciascuna branca e anno.",
+        "Serie 2011-2023 della Tavola 3, dodici righe sorgente incluso il totale nazionale. I valori decimali sono conservati dalle celle XLSX senza arrotondamento DVNS.",
+        "Le branche sono aggregati nazionali di attività economica. Non esiste geografia regionale, provinciale o comunale né un incrocio territorio per settore.",
+        "Fonte ISTAT, CC BY 4.0 secondo le note legali del sito salvo diversa indicazione; proiezione DVNS in forma lunga con attribuzione e trasformazione dichiarate."
+      ],
+      "expected": {
+        "bytes": 138498,
+        "sha256": "d1829a9763b2df88ddca9d7192cabd9999d0b80f24d0e7447e54a20966cda710",
+        "rows": 624,
+        "columns": 8,
+        "headers": [
+          "Anno",
+          "Branca",
+          "Componente",
+          "Incidenza percentuale",
+          "Unità",
+          "Denominatore",
+          "Tavola",
+          "URL fonte"
+        ]
+      }
+    },
+    {
+      "id": "istat-economia-non-osservata-territori",
+      "title": "ISTAT · economia non osservata · incidenza territoriale 2023",
+      "domain": "benchmarks",
+      "relativePath": "istat-economia-non-osservata-territori.psv",
+      "dataKind": "delimited",
+      "delimiter": "pipe",
+      "authority": "official-primary",
+      "licenseStatus": "verified-open-cc-by-4.0",
+      "publication": "rows",
+      "evidenceLabel": "documented-fact",
+      "sourceFields": [
+        "URL fonte"
+      ],
+      "privateFields": [],
+      "caveats": [
+        "Stime ISTAT di contabilità territoriale: incidenza percentuale dell'economia non osservata sul valore aggiunto totale. Non sono evasione fiscale accertata, esiti di controlli, tax gap MEF, VAT gap UE o risultati della vigilanza INL.",
+        "I valori sono percentuali, non importi in euro. Rivalutazione, Lavoro irregolare e Altro (nella fonte Altro*, con nota su attività illegale, mance, fitti in nero e integrazione domanda-offerta) restano componenti distinte e sono riconciliate con Totale per ciascun territorio.",
+        "Geografia pubblicata: 19 regioni, 2 province autonome, Italia e le ripartizioni Nord-ovest, Nord-est, Centro, Centro-nord e Mezzogiorno. Italia e le ripartizioni sono aggregati pubblicati dalla fonte: non vanno ricostruiti sommando le regioni e non esistono province o Comuni in questa tavola.",
+        "Distinto dal workbook nazionale sull'economia non osservata (Tavole 1 e 3): altra pubblicazione, altra unità di misura pubblicata qui (solo percentuali sul VA) e anno 2023 soltanto.",
+        "Tav. 6 dei Conti economici territoriali, pubblicazione ufficiale del 22 dicembre 2025. I valori decimali sono conservati dalle celle XLSX senza arrotondamento DVNS.",
+        "Fonte ISTAT, CC BY 4.0 secondo le note legali del sito salvo diversa indicazione; proiezione DVNS in forma lunga con attribuzione e trasformazione dichiarate."
+      ],
+      "expected": {
+        "bytes": 19521,
+        "sha256": "17518458dd77e7a8b244d4c837a1361b56281c14ab4b14510b0af5ae2456776e",
+        "rows": 108,
+        "columns": 8,
+        "headers": [
+          "Territorio",
+          "Componente",
+          "Incidenza percentuale",
+          "Unità",
+          "Denominatore",
+          "Anno",
+          "Tavola",
+          "URL fonte"
+        ]
+      }
+    },
+    {
       "id": "rgs-conto-annuale-costo-2020",
       "title": "Conto Annuale · costo del lavoro PA · 2020",
       "domain": "personnel",
@@ -5498,6 +5783,44 @@
           "Part time <50% donne",
           "Part time >50% uomini",
           "Part time >50% donne",
+          "URL fonte"
+        ]
+      }
+    },
+    {
+      "id": "eurostat-disuguaglianza-redditi",
+      "title": "Disuguaglianza del reddito · Italia · EU-SILC 2014-2025",
+      "domain": "social-conditions",
+      "relativePath": "eurostat-disuguaglianza-redditi.psv",
+      "dataKind": "delimited",
+      "delimiter": "pipe",
+      "authority": "official-primary",
+      "licenseStatus": "verified-open-eu-reuse",
+      "publication": "rows",
+      "evidenceLabel": "documented-fact",
+      "sourceFields": [
+        "URL fonte"
+      ],
+      "privateFields": [],
+      "caveats": [
+        "Sono due indicatori distinti della distribuzione del reddito disponibile equivalizzato: Gini (scala 0-100) e S80/S20 (rapporto). Non sono importi di spesa pubblica e non vanno sommati.",
+        "Anno rilevazione è l'anno di indagine EU-SILC; per l'Italia Anno redditi è l'anno solare precedente. Le 24 righe coprono Italia (IT), popolazione totale e anni 2014-2025.",
+        "La risposta API Eurostat dichiara sourceUpdated 2026-06-08; la data di pubblicazione della distribuzione non è dichiarata e publicationDate resta null.",
+        "Riuso limitato ai dati statistici Eurostat secondo la Decisione 2011/833/UE e il copyright notice; non si attribuisce ai contenuti editoriali una licenza CC BY.",
+        "La disuguaglianza del reddito resta separata dagli indicatori di povertà e BES. Il perimetro non contiene confronti territoriali, ranking o inferenze causali."
+      ],
+      "expected": {
+        "bytes": 5219,
+        "sha256": "0735449a829896d98a2fe46beb55e63d38877ffa6090e46a5b9720ba99797dfe",
+        "rows": 24,
+        "columns": 7,
+        "headers": [
+          "Indicatore",
+          "Anno rilevazione",
+          "Anno redditi",
+          "Valore",
+          "Unità",
+          "Stato",
           "URL fonte"
         ]
       }

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { inspectInequality } from "./inequality.mjs";
 import { inspectInflation } from "./inflation.mjs";
 import { inspectAnnouncements } from "./announcements.mjs";
 import { inspectReceipts } from "./receipts.mjs";
@@ -704,7 +705,12 @@ try {
   for (const width of [390, 1440]) {
     const label = `Annunci accessibili ${width}px`;
     await runScenario(browser, {
-      label, pathname: "/", width, validate: inspectAnnouncements,
+      label, pathname: "/", width,
+      // Timer behavior is shared across layouts; exercise real elapsed time once,
+      // while preserving interaction, visibility and reduced-motion checks in each.
+      validate: (page) => inspectAnnouncements(page, {
+        testTiming: width === 390 && (process.env.DVNS_COLOR_SCHEME ?? "light") === "light",
+      }),
     });
     completed.push(label);
   }
@@ -1958,7 +1964,7 @@ try {
           items.map((item) => item.textContent?.trim() ?? ""),
         );
         assert.ok(headings.includes("Imprese"), `${label}: sezione Imprese assente`);
-        assert.ok(headings.includes("Report mensili"), `${label}: sezione Report mensili assente`);
+        assert.ok(headings.includes("Report"), `${label}: sezione Report assente`);
         assert.ok(headings.includes("Istruzione"), `${label}: sezione Istruzione assente`);
         assert.ok(headings.includes("Povertà"), `${label}: sezione Povertà assente`);
         assert.ok(headings.includes("Economia"), `${label}: sezione Economia assente`);
@@ -2221,6 +2227,21 @@ try {
         await assertCohesionTracePanelContrast(page, label);
         await assertCohesionStatusLayout(page, label);
         await assertCohesionPathwayContrast(page, label);
+        const neighborHeight = () => page.$eval('section:has([role="tablist"]) + section', el => el.getBoundingClientRect().height);
+        const initialHeight = await neighborHeight();
+        await page.click('[role="tab"]::-p-text(Dati)');
+        assert.equal(await page.$$eval('[role="tabpanel"] tbody tr', rows => rows.length), 17);
+        await page.keyboard.press('ArrowRight');
+        assert.equal(await page.$$eval('[role="tabpanel"] tbody tr', rows => rows.length), 5);
+        assert.match(await page.$eval('[role="tabpanel"]', el => el.textContent), /Pagato \/ impegni/);
+        assert.ok(Math.abs(await neighborHeight() - initialHeight) < 1, `${label}: adjacent panel remains stable`);
+        await page.keyboard.press('Home');
+        assert.equal(await page.$eval('[role="tab"][aria-selected="true"]', el => el.textContent), 'Grafico');
+        if (width === 390) {
+          await page.setJavaScriptEnabled(false);
+          await page.reload({ waitUntil: 'domcontentloaded' });
+          assert.equal(await page.$$eval('noscript tbody tr', rows => rows.length), 17, 'annual data remains readable without JavaScript');
+        }
       },
     });
     completed.push(label);
@@ -2391,7 +2412,7 @@ try {
         await page.type("#assistant-prompt", "Quanto hanno speso i Comuni nel 2025?");
         await page.click('main form button[type="submit"]');
         await page.waitForSelector('dialog[open]');
-        assertTextMatches(await bodyText(page), /La tua AI, la tua chiave/i, label);
+        assertTextMatches(await bodyText(page), /Servizio AI personale/i, label);
         assert.equal(await page.$('[data-assistant-reply]'), null, "nessuna risposta prima del collegamento");
       },
     });
@@ -2558,6 +2579,14 @@ try {
     const label = `Catalogo progetti PNRR ${width}px`;
     await runScenario(browser, {
       label, pathname: "/pnrr", width, validate: inspectPnrrProjects,
+    });
+    completed.push(label);
+  }
+
+  for (const width of [390, 768, 1280]) {
+    const label = `Disuguaglianza dei redditi ${width}px`;
+    await runScenario(browser, {
+      label, pathname: "/disuguaglianza", width, validate: inspectInequality,
     });
     completed.push(label);
   }

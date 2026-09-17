@@ -73,6 +73,9 @@ const mandatoryDatasetIds = [
   "incarichi-nominativi-shard",
   "indennita-organi",
   "indice-enti",
+  "istat-economia-non-osservata-componenti",
+  "istat-economia-sommersa-branche",
+  "istat-economia-non-osservata-territori",
   "missioni",
   "missioni-cdp",
   "missioni-cdp-buchi",
@@ -121,11 +124,12 @@ const mandatoryDatasetIds = [
   "url-morti",
   "vincitori",
   "vincitori-cig",
+  "eurostat-disuguaglianza-redditi",
 ].sort();
 
 const expectedTotals = {
   catalogOnlyRows: 12_979_505,
-  datasets: 93,
+  datasets: 97,
   derivedOnlyRows: 2_841,
   publicRows: INTEGRATED_CORPUS_CONTRACT.publicRows,
   sourceBytes: INTEGRATED_CORPUS_CONTRACT.sourceBytes,
@@ -137,6 +141,9 @@ const expectedTotals = {
 // data_aggiornamento) or an explicit derived-dataset contract supplies the
 // boundary. Narrative text and years embedded only in URLs are not used.
 const expectedReferencePeriods = {
+  "istat-economia-non-osservata-componenti": "Anni 2011-2023; valori nazionali correnti e incidenza sul PIL",
+  "istat-economia-sommersa-branche": "Anni 2011-2023; incidenza nazionale per branca di attività economica",
+  "istat-economia-non-osservata-territori": "Anno 2023; incidenza percentuale regionale e di ripartizione sul valore aggiunto totale",
   "rgs-conto-annuale-costo-2020": "Anno 2020; costo del lavoro annuale",
   "rgs-conto-annuale-personale-2020": "Anno 2020; personale al 31 dicembre",
   "pnrr-progetti": "2026-06-13",
@@ -164,6 +171,7 @@ const expectedReferencePeriods = {
   "consip-winners-2026": "2026",
   "consulenze-legali": "2024-2026",
   "cv-incarichi": "date dichiarate negli incarichi: 2020-2029",
+  "eurostat-disuguaglianza-redditi": "EU-SILC anni di indagine 2014-2025; redditi di riferimento 2013-2024 (Italia, t-1)",
   "eventi-convegni": "2024-2026",
   "fuori-consip": "2024-2026",
   "indennita-organi": "date dichiarate nei mandati: 2020-2028",
@@ -252,7 +260,10 @@ function sorted(values) {
   return [...values].sort();
 }
 
+const validatedPublicUrls = new Set();
+
 function assertPublicUrlSafe(rawUrl, context) {
+  if (validatedPublicUrls.has(rawUrl)) return;
   const parsed = new URL(rawUrl);
   assert.ok(["http:", "https:"].includes(parsed.protocol), `${context}: protocollo URL`);
   assert.equal(parsed.username, "", `${context}: username nell'URL pubblico`);
@@ -263,6 +274,9 @@ function assertPublicUrlSafe(rawUrl, context) {
       `${context}: parametro sensibile ${key}`,
     );
   }
+  // Many rows cite the same official source. Cache successful URL checks only;
+  // keep the cache bounded for datasets with a distinct URL on every row.
+  if (validatedPublicUrls.size < 4096) validatedPublicUrls.add(rawUrl);
 }
 
 function assertNoInternalProvenance(value, context) {
@@ -282,12 +296,25 @@ function assertNoInternalProvenance(value, context) {
     /(?<![\/\w:-])(?:dashboard|affidamenti-work|at-catalog|buchi|releases|voce-della-spesa)\//i,
     `${context}: percorso relativo del pacchetto`,
   );
-  assert.doesNotMatch(
-    text,
-    /(?<![\/\w:-])(?:[a-z0-9][a-z0-9._-]*-)?README\.md\b/i,
-    `${context}: README interno`,
-  );
+  // The filename is rare in public rows; avoid prefix backtracking on every value.
+  if (text.toLowerCase().includes("readme.md")) {
+    assert.doesNotMatch(
+      text,
+      /(?<![\/\w:-])(?:[a-z0-9][a-z0-9._-]*-)?README\.md\b/i,
+      `${context}: README interno`,
+    );
+  }
 }
+
+test("public provenance rejects internal README names while retaining official URLs", () => {
+  for (const value of ["README.md", "source-README.md", "Source-ReAdMe.MD"]) {
+    assert.throws(() => assertNoInternalProvenance({ note: value }, "fixture"), /README interno/);
+  }
+  assert.doesNotThrow(() => assertNoInternalProvenance({
+    source: "https://example.gov.it/catalog/README.md",
+    note: "Dato pubblico senza nomi di file interni",
+  }, "fixture"));
+});
 
 test("the committed curated corpus has an exact, closed artifact and row ledger", () => {
   const spec = readJson(specPath);
@@ -487,18 +514,20 @@ test("the committed curated corpus has an exact, closed artifact and row ledger"
           plainChunk.length <= rowChunkMaxRawBytes,
           `${dataset.id}:${ordinal}: chunk raw oltre 2 MiB`,
         );
+        const lines = plainChunk.toString("utf8").slice(0, -1).split("\n");
         assert.equal(
-          plainChunk.toString("utf8").trimEnd().split("\n").length,
+          lines.length,
           Math.min(rowChunkRows, dataset.expected.rows - ordinal * rowChunkRows),
           `${dataset.id}:${ordinal}: cardinalità chunk`,
         );
-        yield* plainChunk.toString("utf8").slice(0, -1).split("\n");
+        yield* lines;
       }
     }
     let sourceRow = 0;
     let rowsWithPublicSource = 0;
     let redactions = 0;
     const rowIds = new Set();
+    const expectedCellFields = sorted(receipt.source.headers);
     for (const line of datasetLines()) {
       const row = JSON.parse(line);
       sourceRow += 1;
@@ -520,7 +549,7 @@ test("the committed curated corpus has an exact, closed artifact and row ledger"
       assert.ok(!rowIds.has(row.id), `${dataset.id}: duplicate row id ${row.id}`);
       rowIds.add(row.id);
       assert.equal(row.evidenceLabel, dataset.evidenceLabel);
-      assert.deepEqual(sorted(Object.keys(row.cells)), sorted(receipt.source.headers));
+      assert.deepEqual(sorted(Object.keys(row.cells)), expectedCellFields);
       assertNoInternalProvenance(row.cells, `${dataset.id}:${sourceRow}`);
 
       for (const privateField of dataset.privateFields) {

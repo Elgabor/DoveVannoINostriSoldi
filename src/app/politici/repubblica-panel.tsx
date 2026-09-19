@@ -9,6 +9,7 @@ import { longDate } from "./atlas-model";
 import type { NewsData, Resource } from "./atlas-data";
 import { Icon, PersonRow, Portrait, SourceLink, Status } from "./atlas-primitives";
 import { AttendanceRanking, EducationBlock, InstitutionalRelations, NewsBlock, ProfileFacts, ProgramBlock, VoteAttendance } from "./atlas-facts";
+import { JudicialBlock, type JudicialState } from "./atlas-judicial";
 import styles from "./politici.module.css";
 import extra from "./atlas-enhancements.module.css";
 
@@ -17,6 +18,7 @@ type PanelProps = {
   selection: GraphSelection;
   profiles: Resource<Record<string, RepublicProfile>>;
   news: Resource<NewsData>;
+  judicial: JudicialState | null;
   onSelect: (selection: GraphSelection) => void;
   onRetryProfiles: () => void;
   onRetryNews: () => void;
@@ -225,7 +227,7 @@ function GroupPanel({ map, id, onSelect }: Pick<PanelProps, "map" | "onSelect"> 
   </div>;
 }
 
-function PersonPanel({ personId, map, profiles, news, onSelect, onRetryProfiles, onRetryNews }: PanelProps & { personId: string; }) {
+function PersonPanel({ personId, map, profiles, news, judicial, onSelect, onRetryProfiles, onRetryNews }: PanelProps & { personId: string; }) {
   const [tab, setTab] = useState<"profilo" | "atti" | "notizie">("profilo");
   const person = map.people.find((candidate) => candidate.id === personId);
   if (!person) return <Status title="Persona non trovata" />;
@@ -291,6 +293,7 @@ function PersonPanel({ personId, map, profiles, news, onSelect, onRetryProfiles,
         </p>}
         <ProfileFacts profile={profile} map={map} />
       </> : profiles.status === "error" ? <Status kind="error" title="Scheda completa non disponibile" onRetry={onRetryProfiles}>Nome e incarico restano visibili dai dati della mappa.</Status> : profiles.status === "ready" ? <Status title="Scheda non presente nello snapshot">Il profilo aggiuntivo non è disponibile per questa persona.</Status> : <Status kind="loading" title="Caricamento della scheda…" />}
+      <JudicialBlock judicial={judicial} />
       {news.status === "error" ? <Status kind="error" title="Notizie non disponibili" onRetry={onRetryNews}>Puoi comunque consultare incarichi e fonti ufficiali.</Status>
         : news.status === "loading" || news.status === "idle" ? <Status kind="loading" title="Caricamento delle notizie…">Le co-citazioni sulla mappa compaiono quando l’indice risponde.</Status>
           : newsReady && newsReady.connections.length > 0 ? <section className={styles.factBlock} aria-label="Citati insieme nelle notizie">

@@ -1,7 +1,12 @@
+import type { GiudiziarioCase } from "@/lib/data/parlamento-giudiziario-contract";
 import type { RepublicProfile } from "@/lib/politici-repubblica";
 import { isSafeExternalUrl } from "@/app/politici/atlas-model";
 
 export type Resource<T> = { status: "idle" | "loading"; } | { status: "error"; } | { status: "ready"; data: T; };
+export type JudicialPayload = {
+  byPerson: Record<string, GiudiziarioCase[]>;
+  coverageNote: string;
+};
 export type NewsArticle = { title: string; url: string; source: string; publishedAt: string | null; };
 export type NewsConnection = {
   person: { id: string; name: string; chamber: string | null; groupId: string | null; groupLabel: string | null; };
@@ -110,5 +115,32 @@ export async function loadNews(personId: string, signal: AbortSignal, retryDelay
       throw new Error(`Notizie non disponibili (HTTP ${response.status})`);
     }
     throw new Error("Notizie non disponibili");
+  } finally { request.dispose(); }
+}
+
+export function parseJudicial(payload: unknown): JudicialPayload {
+  if (!object(payload) || payload.ok !== true || !text(payload.coverageNote) || !object(payload.byPerson)) return invalid();
+  for (const cases of Object.values(payload.byPerson)) {
+    if (!Array.isArray(cases)) return invalid();
+    for (const item of cases) {
+      if (!object(item) || !text(item.caseId) || !text(item.title) || !text(item.statusLabel)
+        || !text(item.statusAsOf) || !text(item.offence) || !text(item.outcomeBucket)
+        || !Array.isArray(item.events) || !Array.isArray(item.sources)) return invalid();
+      if (!item.sources.every((source) => object(source) && text(source.publisher) && isSafeExternalUrl(source.url))) return invalid();
+    }
+  }
+  return {
+    coverageNote: payload.coverageNote,
+    byPerson: payload.byPerson as Record<string, GiudiziarioCase[]>,
+  };
+}
+
+export async function loadJudicial(signal: AbortSignal): Promise<JudicialPayload> {
+  const request = requestDeadline(signal, 15_000);
+  try {
+    request.signal.throwIfAborted();
+    const response = await fetch("/api/politici/giudiziario", { signal: request.signal, headers: { Accept: "application/json" } });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return parseJudicial(await response.json());
   } finally { request.dispose(); }
 }

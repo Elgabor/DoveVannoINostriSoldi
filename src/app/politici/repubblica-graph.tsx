@@ -21,8 +21,8 @@ const subscribeReady = () => () => {};
 const clientReady = () => true;
 const serverReady = () => false;
 
-export function RepubblicaGraph({ map, initialState, invalidSelection = false, initialDetailsOpen = false }: {
-  map: RepublicMap; initialState: AtlasState; invalidSelection?: boolean; initialDetailsOpen?: boolean;
+export function RepubblicaGraph({ map, initialState, invalidSelection = false, initialDetailsOpen = false, judicialPersonIds = [] }: {
+  map: RepublicMap; initialState: AtlasState; invalidSelection?: boolean; initialDetailsOpen?: boolean; judicialPersonIds?: readonly string[];
 }) {
   const ready = useSyncExternalStore(subscribeReady, clientReady, serverReady);
   const rail = useAtlasRail();
@@ -36,7 +36,7 @@ export function RepubblicaGraph({ map, initialState, invalidSelection = false, i
   const matchingIds = useMemo(() => new Set(people.map((person) => person.id)), [people]);
   const selectedId = state.selection.kind === "person" ? state.selection.id : null;
   const selectedGroupId = state.selection.kind === "group" ? state.selection.id : null;
-  const data = useAtlasData(selectedId);
+  const data = useAtlasData(selectedId, judicialPersonIds);
   const selectionKey = state.selection.kind === "overview" ? "overview" : `${state.selection.kind}:${state.selection.id}`;
   const filterCount = Number(Boolean(state.family)) + Number(state.role !== "tutti") + Number(Boolean(state.query.trim()));
   const scopeLabel = SCOPES.find((item) => item.id === state.scope)!.label;
@@ -98,6 +98,7 @@ export function RepubblicaGraph({ map, initialState, invalidSelection = false, i
         selection={state.selection}
         profiles={data.profiles}
         news={data.news}
+        judicial={data.judicial}
         onSelect={select}
         onRetryProfiles={data.retryProfiles}
         onRetryNews={data.retryNews} />
@@ -198,6 +199,7 @@ export function RepubblicaGraph({ map, initialState, invalidSelection = false, i
               chamberId={state.scope}
               selection={state.selection}
               matchingIds={matchingIds}
+              judicialIds={data.judicialIds}
               onSelect={select}
               news={data.news} />
               : state.scope === "governo" ? <GovernmentView people={people} onSelect={select} />

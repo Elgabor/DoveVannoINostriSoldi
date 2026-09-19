@@ -22,11 +22,11 @@ workflow scrive su `main`.
 
 ## Riepilogo
 
-- Artefatti nel registro: 97
+- Artefatti nel registro: 98
 - PR automatica: 11 (data bot, branch `automation/data/*`, PR)
 - solo rilevamento: 3 (controlla l'upstream, non pubblica)
 - invalidazione cache: 3 (invalida tag, non tocca gli snapshot)
-- manuale: 80 (PR umana dopo revisione)
+- manuale: 81 (PR umana dopo revisione)
 
 ## Rollback per modo
 
@@ -140,6 +140,7 @@ La revisione e il merge restano umani.
 | `camera-atti-voti-xix` | non dichiarato nello snapshot | 2026-09-18T21:42:19+00:00 | https://dati.camera.it/ | nessuno | nessuno | manuale | `python3 scripts/etl/camera_atti_voti_xix_snapshot.py --check` |
 | `senato-atti-voti-xix` | non dichiarato nello snapshot | 2026-09-18T21:41:48+00:00 | https://dati.senato.it/ | nessuno | nessuno | manuale | `python3 scripts/etl/senato_atti_voti_xix_snapshot.py --check` |
 | `camera-trattamento-economico` | non dichiarato nello snapshot | 2026-09-18T07:54:38Z | https://www.camera.it/deputati/trattamento-economico | nessuno | nessuno | manuale | `python3 scripts/etl/camera_trattamento_economico_snapshot.py --check` |
+| `parlamento-giudiziario-xix` | XIX legislatura, dal 2022-10-13 | non dichiarato | https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi/issues/555 | nessuno | nessuno | manuale | `python3 scripts/etl/parlamento_giudiziario_xix_snapshot.py --check` |
 
 ## Prossimo passo
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { getParlamentoGiudiziario, graphPeopleWithDocumentedCases } from "@/lib/parlamento-giudiziario";
 import { getRepubblicaGraph, getRepubblicaMap } from "@/lib/politici-repubblica";
 import { PUBLIC_SITE_URL } from "@/lib/site";
 import { readAtlasState, longDate } from "./atlas-model";
@@ -17,6 +18,8 @@ type PoliticiPageProps = { searchParams: Promise<Record<string, string | string[
 export default async function PoliticiPage({ searchParams }: PoliticiPageProps) {
   const graph = getRepubblicaGraph();
   const map = getRepubblicaMap();
+  const judicial = getParlamentoGiudiziario();
+  const judicialPersonIds = graphPeopleWithDocumentedCases();
   const params = await searchParams;
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -50,6 +53,11 @@ export default async function PoliticiPage({ searchParams }: PoliticiPageProps) 
                   {source.gap}
                 </p> : null}
               </li>)}
+              <li>
+                Procedimenti giudiziari: raccolta curata su {judicial.coverage.membersExamined} parlamentari, verificata al{" "}
+                {judicial.coverage.checkedAt}. Ogni caso ha un atto pubblicato dell&apos;autorità competente oppure almeno due
+                editori indipendenti. {judicial.caveats[0]} {judicial.caveats[2]}
+              </li>
             </ul>
             <h3>Metodo e limiti</h3>
             <ul>
@@ -73,7 +81,8 @@ export default async function PoliticiPage({ searchParams }: PoliticiPageProps) 
         map={map}
         initialState={parsed.state}
         invalidSelection={parsed.invalidSelection}
-        initialDetailsOpen={!parsed.invalidSelection && ["person", "group", "deputy"].some((key) => query.has(key))} />
+        initialDetailsOpen={!parsed.invalidSelection && ["person", "group", "deputy"].some((key) => query.has(key))}
+        judicialPersonIds={judicialPersonIds} />
     </div>
     <noscript>
       <p className={styles.noScript}>Per esplorare persone e gruppi serve JavaScript. Le fonti ufficiali restano disponibili in «Fonti e limiti».</p>

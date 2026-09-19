@@ -11,11 +11,12 @@ import { Icon, Portrait } from "./atlas-primitives";
 import styles from "./politici.module.css";
 import extra from "./atlas-enhancements.module.css";
 
-export function Hemicycle({ map, chamberId, selection, matchingIds, onSelect, news }: {
+export function Hemicycle({ map, chamberId, selection, matchingIds, judicialIds, onSelect, news }: {
   map: RepublicMap;
   chamberId: ChamberId;
   selection: GraphSelection;
   matchingIds: Set<string>;
+  judicialIds?: Set<string>;
   onSelect: (selection: GraphSelection) => void;
   news?: Resource<NewsData>;
 }) {
@@ -121,6 +122,7 @@ export function Hemicycle({ map, chamberId, selection, matchingIds, onSelect, ne
             data-family={seat.family ?? undefined}
             data-selected={selected ? "true" : undefined}
             data-connected={connected ? "true" : undefined}
+            data-giudiziario={judicialIds?.has(person.id) ? "true" : "false"}
             data-dim={dim ? "true" : undefined}
             onClick={() => { preview.dismiss(); onSelect({ kind: "person", id: person.id }); }}
             onFocus={(event) => {
@@ -218,6 +220,9 @@ export function Hemicycle({ map, chamberId, selection, matchingIds, onSelect, ne
       <span aria-hidden="true" />
       Co-citazioni nelle notizie · {connections.length} {connections.length === 1 ? "persona" : "persone"} sulla mappa
     </p> : null}
+    <ul className={styles.markerLegend} aria-label="Segni sull’emiciclo">
+      <li><span className={styles.judicialSample} aria-hidden="true" /> Ha procedimenti giudiziari documentati: apri la scheda per stato e fonti. Il segno indica dove guardare, non una colpevolezza</li>
+    </ul>
     <div className={styles.legendHeading}>
       <h3>Gruppi parlamentari</h3>
       <span>{highlightedCount}/{scene.members} corrispondono ai filtri</span>

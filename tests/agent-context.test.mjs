@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import { mkdtempSync, mkdirSync, rmSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
@@ -50,6 +51,25 @@ function variantFixture(variantName) {
   const overrides = readFixture(variantName);
   return { ...files, ...overrides };
 }
+
+test("context reads the validated file when its pathname is replaced", (t) => {
+  const root = mkdtempSync(join(tmpdir(), "dvns-agent-context-race-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  writeFixture(root, baseFixture());
+  const stat = fs.fstatSync;
+  let replaced = false;
+  t.mock.method(fs, "fstatSync", (descriptor) => {
+    const result = stat(descriptor);
+    if (!replaced) {
+      replaced = true;
+      fs.renameSync(join(root, "AGENTS.md"), join(root, "AGENTS.previous.md"));
+      writeFileSync(join(root, "AGENTS.md"), "invalid replacement");
+    }
+    return result;
+  });
+  assert.deepEqual(checkAgentContext({ root }), []);
+  assert.equal(replaced, true);
+});
 
 test("repository context passes", () => {
   const violations = checkAgentContext({ root: repoRoot });

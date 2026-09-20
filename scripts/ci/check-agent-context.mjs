@@ -139,15 +139,27 @@ function readOwnedDocuments(root, violations) {
   for (const relative of OWNED_DOCUMENTS) {
     const absolute = path.join(root, relative);
     const real = safeRealpath(absolute) ?? absolute;
-    if (!fs.existsSync(absolute) || !fs.statSync(absolute).isFile()) {
-      violations.push({ file: relative, line: 1, message: `documento posseduto mancante: ${relative}` });
-      continue;
-    }
     if (!isWithin(realRoot, real)) {
       violations.push({ file: relative, line: 1, message: `documento posseduto fuori dalla root: ${relative}` });
       continue;
     }
-    const content = fs.readFileSync(absolute, "utf8");
+    let descriptor;
+    let content;
+    try {
+      descriptor = fs.openSync(real, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW | fs.constants.O_NONBLOCK);
+      if (!fs.fstatSync(descriptor).isFile()) {
+        violations.push({ file: relative, line: 1, message: `documento posseduto mancante: ${relative}` });
+        continue;
+      }
+      // Validate and read the same open file, even if its pathname is replaced.
+      content = fs.readFileSync(descriptor, "utf8");
+    } catch (error) {
+      if (!["ENOENT", "ENOTDIR", "ELOOP"].includes(error.code)) throw error;
+      violations.push({ file: relative, line: 1, message: `documento posseduto mancante: ${relative}` });
+      continue;
+    } finally {
+      if (descriptor !== undefined) fs.closeSync(descriptor);
+    }
     documents.set(relative, {
       absolute,
       content,

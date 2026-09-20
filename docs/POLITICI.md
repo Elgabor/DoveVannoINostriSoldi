@@ -23,7 +23,8 @@ snapshot e contratti rimandano ai documenti specialistici collegati.
   contratti degli atti firmati e delle votazioni finali dei due rami.
 - [src/lib/parlamento-giudiziario.ts](../src/lib/parlamento-giudiziario.ts) e
   [src/lib/data/parlamento-giudiziario-contract.ts](../src/lib/data/parlamento-giudiziario-contract.ts):
-  accesso e contratto dello snapshot curato dei procedimenti documentati.
+  accesso e contratto dello snapshot curato dei procedimenti documentati; lo
+  snapshot alimenta pagina e API, ma non è esposto come dataset MCP.
 
 ## Superfici UI e API
 
@@ -35,7 +36,7 @@ snapshot e contratti rimandano ai documenti specialistici collegati.
 - [src/app/politici/foto/[id]/route.ts](../src/app/politici/foto/%5Bid%5D/route.ts):
   proxy per i ritratti ufficiali.
 - [src/app/api/politici/profili/route.ts](../src/app/api/politici/profili/route.ts):
-  elenco profili e profilo singolo.
+  bundle completo dei profili; il client seleziona il profilo per ID.
 - [src/app/api/politici/[id]/news/route.ts](../src/app/api/politici/%5Bid%5D/news/route.ts):
   notizie per profilo.
 - [src/app/api/politici/[id]/atti/route.ts](../src/app/api/politici/%5Bid%5D/atti/route.ts):

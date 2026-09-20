@@ -59,12 +59,16 @@ test("repository context passes", () => {
 test("politicians context tracks the current legislative and judicial surfaces", () => {
   const map = readFileSync(join(repoRoot, "docs", "AGENT_CONTEXT.md"), "utf8");
   const guide = readFileSync(join(repoRoot, "docs", "POLITICI.md"), "utf8");
+  const judicialModule = readFileSync(join(repoRoot, "src", "lib", "parlamento-giudiziario.ts"), "utf8");
   for (const document of [map, guide]) {
     assert.match(document, /senato-atti-voti-contract\.ts/);
     assert.match(document, /parlamento-giudiziario-contract\.ts/);
     assert.match(document, /api\/politici\/giudiziario/);
     assert.doesNotMatch(document, /CAMERA_ATTI_VOTI\.md/);
   }
+  assert.match(guide, /bundle completo dei profili/u);
+  assert.match(guide, /non è esposto come dataset MCP/u);
+  assert.doesNotMatch(judicialModule, /MCP dataset/u);
 });
 
 test("fixture with valid context passes", (t) => {

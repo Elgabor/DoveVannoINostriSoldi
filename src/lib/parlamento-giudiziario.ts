@@ -7,8 +7,8 @@ import {
 } from "@/lib/data/parlamento-giudiziario-contract";
 
 /**
- * Single domain module for the judicial dataset: the page, the API route and the
- * MCP dataset all read from here, so the three surfaces cannot drift apart.
+ * Single domain module for the judicial snapshot: the page and API route both
+ * read from here. The snapshot is not exposed through the MCP catalog.
  */
 
 let cached: ParlamentoGiudiziarioSnapshot | null = null;

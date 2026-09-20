@@ -66,7 +66,9 @@ test("RegionCrest usa asset locali, label semantiche e fallback accessibile", as
   assert.ok(component.includes('from "next/image"'));
   assert.ok(component.includes("src={entry.asset}"));
   assert.ok(component.includes("unoptimized"));
-  assert.ok(component.includes('loading="eager"'));
+  assert.ok(component.includes('loading={loading}'));
+  assert.ok(component.includes('loading?: "eager" | "lazy"'));
+  assert.ok(component.includes('loading = "eager"'));
   assert.ok(component.includes('alt={decorative ? "" :'));
   assert.ok(component.includes("Bandiera regionale"));
   assert.ok(component.includes("data-region-crest-type"));

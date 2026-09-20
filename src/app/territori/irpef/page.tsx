@@ -466,6 +466,7 @@ export default async function MefIrpefPage({
                             regionCode={record.territory.code}
                             regionName={record.territory.name}
                             decorative
+                            loading="lazy"
                           />
                         ) : null}{" "}
                         {territoryName(record)}

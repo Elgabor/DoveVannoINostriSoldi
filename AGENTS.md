@@ -1,3 +1,7 @@
+## Continuità del lavoro
+
+Prima di fermarti, chiediti: “C’è un prossimo passo che l’utente vorrebbe che io facessi?” Se sì, continua: il lavoro non è finito.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
@@ -10,32 +14,36 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Lavorare in questo repository
 
-- Leggi `docs/ARCHITECTURE.md` per i percorsi reali del dato e `CONTRIBUTING.md`
-  per setup e comandi. Non servono database, Docker o credenziali per avviare il sito.
-- Pagine/API: `src/app/`; UI condivisa: `src/components/`; adapter e aggregazioni:
-  `src/lib/`; contratti: `src/lib/data/`; acquisizione: `scripts/etl/`.
-- Mantieni validazione e provenance al confine degli snapshot. Il corpus
-  integrato pubblico passa da `integrated-public-view.ts`; non importare righe
-  raw nei Client Component. Non confondere zero, dato mancante e cella oscurata.
-- Parti da `git status --short --branch`. Per lavoro isolato usa un worktree
-  con `node_modules`, `.venv`, `.next` e porta propri. Non copiare `.env` o
-  condividere la directory `.next` tra checkout.
-- Test Node mirato: `node --experimental-strip-types --test tests/NOME.test.mjs`.
-  Per un singolo caso aggiungi `--test-name-pattern='testo'` prima del file.
-- Test ETL mirato, con virtualenv attivo:
+- Se la task è in un dominio mappato, leggi solo la sua sezione in
+  `docs/AGENT_CONTEXT.md`. Per una task non mappata parti da
+  [ARCHITECTURE.md](docs/ARCHITECTURE.md) (percorsi del dato) e
+  [CONTRIBUTING.md](CONTRIBUTING.md) (setup e gate). Non servono database, Docker o credenziali.
+- MCP/API: leggi [MCP e API](docs/AGENT_CONTEXT.md#mcp-e-api) prima di toccare
+  `src/lib/mcp/`. `/api/dati/[dataset]` è il corpus integrato, non un ID MCP.
+- Percorsi: pagine/API `src/app/`; UI `src/components/`; adapter e aggregazioni
+  `src/lib/`; contratti `src/lib/data/`; acquisizione `scripts/etl/`. Per le
+  route del corpus integrato, il confine pubblico è `integrated-public-view.ts`
+  e niente righe raw nei Client Component; per snapshot tipizzati e fonti live
+  vedi la sezione pertinente di `docs/AGENT_CONTEXT.md`.
+- Validazione e provenance restano al confine degli snapshot; zero, mancante e
+  oscurato restano distinti.
+- Parti da `git status --short --branch`. Per lavoro isolato usa un worktree con
+  `node_modules`, `.venv`, `.next` e porta propri. Non copiare `.env` o
+  condividere `.next`.
+- Test mirati: `node --experimental-strip-types --test tests/NOME.test.mjs`
+  (`--test-name-pattern='testo'` per un caso); ETL con virtualenv attivo:
   `DVNS_OFFLINE_GUARD=1 PYTHONPATH=scripts/etl:scripts/ci python -m unittest discover -s tests/etl -p 'test_NOME.py'`.
-- `npm run typecheck` genera prima i tipi Next: funziona anche senza aver
-  avviato `next dev`. Leggi le guide della versione installata indicate sopra.
-- Prima della consegna: `npm run ci:static`, `npm run ci:action-pins`,
-  `npm test`, `npm run test:etl`, `npm run test:snapshots`, `npm run build`,
+- `npm run typecheck` genera i tipi Next anche senza `next dev`; leggi le guide
+  installate nel blocco Next.
+- Prima della consegna: `npm run ci:static`, `npm run ci:action-pins`, `npm test`,
+  `npm run test:etl`, `npm run test:snapshots`, `npm run build`,
   `NEXT_PORT=PORTA_LIBERA npm run test:production`, `git diff --check`.
-  Per ETL e snapshot attiva il network guard come descritto in CONTRIBUTING.
-- Il runner di produzione possiede il proprio server e lo termina anche in caso
-  di errore. Log: `artifacts/production/next.log`; errori browser e screenshot:
-  `artifacts/browser/`; misure Lighthouse: `.lighthouseci/`.
-- I test con socket e Chromium richiedono loopback disponibile. Un errore
-  `listen EPERM` è un limite dell'ambiente, non prova di regressione.
-  Il build scarica Geist da Google Fonts. Distingui problemi di rete da errori
-  di contratto; non disattivare i controlli per ottenere un esito verde.
+  Per ETL e snapshot attiva il network guard (CONTRIBUTING).
+- Il runner di produzione possiede e termina il proprio server anche in errore.
+  Log: `artifacts/production/next.log`; browser e screenshot: `artifacts/browser/`;
+  Lighthouse: `.lighthouseci/`.
+- Socket e Chromium richiedono loopback. `listen EPERM` è un limite d'ambiente,
+  non una regressione; il build scarica Geist da Google Fonts. Distingui rete da
+  contratti; non disattivare i gate per un verde.
 - `npm run bench:runtime` misura gli hot path offline. Confronta revisioni sullo
-  stesso runtime e a macchina libera; conserva anche i digest dei risultati.
+  stesso runtime e a macchina libera, conservando i digest.

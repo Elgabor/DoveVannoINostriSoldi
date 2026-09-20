@@ -14,6 +14,37 @@ function canonical(value: unknown): string {
 const digest = (value: unknown) => createHash("sha256").update(canonical(value)).digest("hex");
 const locked = <T>(expected: T) => z.custom<T>((value) => canonical(value) === canonical(expected), "Campo diverso dal lock BesT Innovazione");
 const SIGNED_INDICATORS = new Set(["11RIC025"]);
+const SCALE_FACTOR = 10;
+
+const indicatorUnitLabels = sourceLock.indicators.map((item) => (item.unitLabel as string).toLowerCase());
+const besSexes = new Set<string>();
+for (const item of sourceLock.indicators) {
+  for (const sex of item.sexes as string[]) besSexes.add(sex);
+}
+if (besSexes.size !== 1) {
+  throw new Error("Snapshot BesT Innovazione: public metadata supports a single published sex.");
+}
+const [besSex] = besSexes;
+const nullNote = sourceLock.nullCells.length > 0 ? `${sourceLock.nullCells.length} cella/e n/g` : "nessuna cella n/g";
+const signedIndicators = [...SIGNED_INDICATORS].sort().join(", ");
+
+const expectedPublicMetadata = {
+  period: [
+    `Edizione ${sourceLock.semantics.provenance.publicationEdition} del BES dei territori`,
+    `Periodo di riferimento ${sourceLock.semantics.periodo.referencePeriod}`,
+    `Dataflow aggiornato ${sourceLock.source.dataflowLastUpdate.slice(0, 10)}; acquisizione ${sourceLock.source.acquisitionDate}`,
+  ],
+  units: [
+    `Unità propria di ciascun indicatore: ${indicatorUnitLabels.join(", ")}`,
+    `Valori esposti in decimi (scale factor ${SCALE_FACTOR}); ${signedIndicators} pubblica saldi anche negativi`,
+  ],
+  coverage:
+    `Dati provinciali ISTAT nel dominio ${sourceLock.domain.code} ${sourceLock.domain.label}; solo SEX=${besSex}; ${nullNote}. ${sourceLock.periodNote}`,
+  references: sourceLock.source.reuseTermsEvidence.map((url) => ({
+    label: url.includes("open-data") ? "ISTAT · Open Data" : "ISTAT · Note legali",
+    url,
+  })),
+};
 const observationSchema = z.object({
   indicator: z.string(),
   territory: z.string(),
@@ -34,7 +65,7 @@ const dataSchema = z.object({
   flags: locked(sourceLock.flags),
   caveats: locked(sourceLock.caveats),
   reconciliation: locked(sourceLock.reconciliation),
-  scale: z.object({ factor: z.literal(10), note: z.string().min(1) }).strict(),
+  scale: z.object({ factor: z.literal(SCALE_FACTOR), note: z.string().min(1) }).strict(),
   observations: z.array(observationSchema).length(sourceLock.observations),
 }).strict();
 
@@ -58,6 +89,7 @@ export function validateIstatBesInnovazioneBundle(data: unknown, metadata: unkno
     acquiredAt: sourceLock.source.acquisitionDate,
     source: sourceLock.source,
     semantics: sourceLock.semantics,
+    publicMetadata: expectedPublicMetadata,
     integrity,
   };
   if (canonical(metadata) !== canonical(expectedMetadata)) {

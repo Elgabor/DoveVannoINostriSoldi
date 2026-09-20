@@ -63,6 +63,9 @@ export const datasetQuerySchema = z.object({
   cofog: z.string().max(8)
     .describe("Funzione COFOG: per Eurostat TOTAL, GF01…GF10 oppure, solo per l’Italia, una sottofunzione da GF0101 a GF1009; per ISTAT il totale G oppure una divisione da G010 a G100.")
     .optional(),
+  cepa: z.string().max(8)
+    .describe("Classe CEPA della spesa per la protezione dell'ambiente (istat_epea), per esempio CEPA1 oppure TOT_CEPA; il dataset valida i valori ammessi.")
+    .optional(),
   period: z.string().max(20)
     .describe("Periodo dichiarato dal dataset, per esempio 2026-07-31 o 2026-Q2.")
     .optional(),
@@ -70,7 +73,7 @@ export const datasetQuerySchema = z.object({
     .describe("Modalità di sesso per i dataset che la espongono: F, M oppure T (totale, che NON è la somma di F e M).")
     .optional(),
   sector: z.string().max(20)
-    .describe("Codice settore: ATECO per imprese, CEPA/EPEA per ambiente, oppure ESA S13/S1311/S1313/S1314 per Eurostat taxag.")
+    .describe("Codice settore: una sezione ATECO per imprese, un settore istituzionale (per esempio S1 o S13_15) per ISTAT EPEA, oppure ESA S13/S1311/S1313/S1314 per Eurostat taxag.")
     .optional(),
   band: z.string().max(30)
     .describe("Codice fascia (produzione imprese) oppure ampiezza demografica (es. 2, INH_OTH_UN5000) per istat_poverta_soglia_assoluta.")

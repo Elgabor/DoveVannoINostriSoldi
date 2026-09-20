@@ -19,6 +19,7 @@ DATA = ROOT / "src/data/generated/istat-bes-innovazione-2004-2023.data.json"
 META = ROOT / "src/data/generated/istat-bes-innovazione-2004-2023.meta.json"
 DATASET = "istat-bes-innovazione"
 SIGNED_INDICATORS = frozenset({"11RIC025"})
+SCALE_FACTOR = 10
 
 
 class SnapshotError(ValueError):
@@ -55,7 +56,7 @@ def value_tenths(raw: str, *, allow_negative: bool) -> int:
         require(value.is_finite(), "invalid innovation-domain value")
         if not allow_negative:
             require(value >= 0, "unexpected negative innovation-domain value")
-        scaled = value * 10
+        scaled = value * SCALE_FACTOR
         require(scaled == scaled.to_integral_value(), "value has more than one decimal")
         return int(scaled)
     except (InvalidOperation, ValueError) as error:
@@ -95,7 +96,7 @@ def build_data(payload: bytes, spec: dict) -> dict:
         "territories", "flags", "caveats", "reconciliation",
     )}
     data.update(
-        scale={"factor": 10, "note": "Valori esatti in decimi dell'unità dichiarata per ogni indicatore."},
+        scale={"factor": SCALE_FACTOR, "note": "Valori esatti in decimi dell'unità dichiarata per ogni indicatore."},
         observations=observations,
     )
     validate_data(data, spec)
@@ -106,7 +107,7 @@ def validate_data(data: dict, spec: dict) -> None:
     for key in ("schemaVersion", "datasetId", "domain", "period", "periodNote", "indicators",
                 "territories", "flags", "caveats", "reconciliation"):
         require(data[key] == spec[key], f"public {key} differs from source lock")
-    require(data["scale"]["factor"] == 10, "scale differs")
+    require(data["scale"]["factor"] == SCALE_FACTOR, "scale differs")
     territories = {item["code"]: item for item in data["territories"]}
     indicators = {item["code"]: item for item in data["indicators"]}
     require(len(territories) == 135 and len(indicators) == 4, "duplicate/missing dictionary entry")
@@ -146,6 +147,45 @@ def validate_data(data: dict, spec: dict) -> None:
         require(actual == indicator["coverage"], "coverage per sex/year differs")
 
 
+def public_metadata(spec: dict) -> dict:
+    provenance = spec["semantics"]["provenance"]
+    source = spec["source"]
+    indicators = spec["indicators"]
+    require(indicators, "indicators required for public metadata")
+    unit_labels, sexes = [], set()
+    for indicator in indicators:
+        unit_label = indicator.get("unitLabel")
+        require(unit_label, f"indicator {indicator.get('code')} missing unitLabel")
+        unit_labels.append(unit_label.lower())
+        for sex in indicator.get("sexes", []):
+            sexes.add(sex)
+    require(len(sexes) == 1, "public metadata supports a single published sex")
+    sex = next(iter(sexes))
+    null_cells = spec["nullCells"]
+    null_note = f"{len(null_cells)} cella/e n/g" if null_cells else "nessuna cella n/g"
+    require(SIGNED_INDICATORS, "signed indicators required for public metadata")
+    signed_indicators = ", ".join(sorted(SIGNED_INDICATORS))
+    return {
+        "period": [
+            f"Edizione {provenance['publicationEdition']} del BES dei territori",
+            f"Periodo di riferimento {spec['semantics']['periodo']['referencePeriod']}",
+            f"Dataflow aggiornato {source['dataflowLastUpdate'][:10]}; acquisizione {source['acquisitionDate']}",
+        ],
+        "units": [
+            f"Unità propria di ciascun indicatore: {', '.join(unit_labels)}",
+            f"Valori esposti in decimi (scale factor {SCALE_FACTOR}); {signed_indicators} pubblica saldi anche negativi",
+        ],
+        "coverage": (
+            f"Dati provinciali ISTAT nel dominio {spec['domain']['code']} {spec['domain']['label']}; "
+            f"solo SEX={sex}; {null_note}. {spec['periodNote']}"
+        ),
+        "references": [
+            {"label": "ISTAT · Open Data" if "open-data" in url else "ISTAT · Note legali", "url": url}
+            for url in source["reuseTermsEvidence"]
+        ],
+    }
+
+
 def metadata(spec: dict, data_bytes: bytes) -> dict:
     return {
         "schemaVersion": 1,
@@ -154,6 +194,7 @@ def metadata(spec: dict, data_bytes: bytes) -> dict:
         "acquiredAt": spec["source"]["acquisitionDate"],
         "source": spec["source"],
         "semantics": spec["semantics"],
+        "publicMetadata": public_metadata(spec),
         "integrity": {
             "sourceLockSha256": lock_hash(spec),
             "dataArtifact": {

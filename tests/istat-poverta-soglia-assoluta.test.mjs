@@ -83,6 +83,18 @@ test("public entry points require bounded supported filters", async () => {
   assert.ok((await queryPublicDataset(descriptor.exampleQuery)).observations.length > 0);
 });
 
+test("catalog publicMetadata derives from generated metadata projection", () => {
+  const descriptor = datasetCatalog.find((item) => item.id === "istat_poverta_soglia_assoluta");
+  assert.ok(metadata.publicMetadata, "publicMetadata projection missing in generated metadata");
+  assert.ok(!Object.hasOwn(metadata.publicMetadata, "queryNotes"));
+  const { queryNotes, ...sourceProjection } = descriptor.publicMetadata;
+  assert.deepEqual(sourceProjection, metadata.publicMetadata);
+  assert.deepEqual(queryNotes, [
+    "Specificare almeno un filtro fra territory, year, family e band; limit massimo 100 righe per pagina.",
+    "Celle vuote restano null ≠ zero; riga assente è distinta sia da null che da zero.",
+  ]);
+});
+
 test("runtime rejects value, geography and provenance tampering", () => {
   for (const mutate of [
     (copy) => { copy.observations[0].valueHundredths = (copy.observations[0].valueHundredths ?? 0) + 1; },

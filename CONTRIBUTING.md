@@ -103,8 +103,9 @@ Eseguilo soltanto con rete disponibile per diagnosticare le fonti. Non fa parte
 dei gate offline della PR e un suo fallimento non sostituisce una regressione
 deterministica riproducibile.
 
-`ci:static` esegue lint, typecheck, design:check e brand:check.
-`typecheck` genera i tipi Next anche in una checkout appena installata.
+`ci:static` esegue lint, typecheck, `reports:check`, `design:check`, `brand:check`,
+`agent-context:check` e `agent-public:check` in quest'ordine. `typecheck` genera
+i tipi Next anche in una checkout appena installata.
 Se il tuo interprete Python non si chiama `python3`, indicalo con `PYTHON`
 (per esempio `PYTHON=python npm run test:node`): i test che attraversano il
 confine ETL usano quel nome, il default resta `python3`.
@@ -258,6 +259,36 @@ Una modifica UI richiede anche verifica Browser a 390, 768 e 1280 px, tastiera,
 focus, stati di errore/caricamento/vuoto, console e overflow. Una modifica MCP
 richiede smoke test sul server HTTP reale e casi negativi. Specifica sempre ciò
 che non hai potuto eseguire.
+
+### Allineamento dopo un aggiornamento upstream
+
+Dopo ogni integrazione upstream (merge o rebase su `origin/main`) esegui una
+procedura mirata invece di una revisione generale del repository:
+
+1. **Diff integrato e risoluzioni**: esegui `git diff HEAD~1 --stat` (o lo
+   storico della merge) e rileggi i file dove hai risolto conflitti. Non
+   assumere che una risoluzione automatica sia corretta su documenti, contratti
+   o fixture.
+2. **Valuta l'impatto**: per ogni file modificato upstream chiedi se tocca un
+   percorso mappato in `docs/AGENT_CONTEXT.md`, un contratto in
+   `src/lib/data/`, un artifact versionato, un workflow CI o una superficie
+   pubblica (`/politici`, `/for-agents`, `/dati`, `/api/mcp`). Segna i domini
+   coinvolti.
+3. **Aggiornamento mirato**: aggiorna solo il contesto coinvolto:
+   - se cambia un contratto, verifica adapter, test e documento specialistico;
+   - se cambia una route del corpus integrato, verifica
+     `integrated-public-view.ts` e i test del confine pubblico;
+   - se cambia il catalogo MCP, verifica anche `/for-agents` e
+     `agent-public:check`;
+   - se cambia un workflow, verifica `generated-artifacts.json` e i gate statici.
+4. **Deterministico prima, semantico dopo**: esegui prima i checker deterministici
+   (`ci:static`, `agent-context:check`, `agent-public:check`, test del dominio).
+   Il verde dei checker non sostituisce una revisione semantica mirata sui
+   sottopercorsi toccati.
+5. **Verifica**: riesegui i gate del dominio modificato e `git diff --check`.
+   Se un aggiornamento upstream modifica `docs/AGENT_CONTEXT.md`,
+   `AGENTS.md` o `CLAUDE.md`, esegui `npm run agent-context:check` e
+   `npm run agent-public:check` anche se il tuo lavoro non li tocca.
 
 ## Licenza dei contributi
 

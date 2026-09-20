@@ -67,3 +67,11 @@ test("MEF IRPEF route distinguishes invalid requests from missing territories", 
   assert.equal(missing.status, 404);
   assert.equal(missing.headers.get("cache-control"), "private, no-store");
 });
+
+test("MEF IRPEF route rejects MCP parameter names copied into the URL", async () => {
+  const response = get("?year=2024&level=municipality&code=001019");
+  assert.equal(response.status, 400);
+  const payload = await response.json();
+  assert.equal(payload.error.code, "invalid_query");
+  assert.equal(response.headers.get("cache-control"), "private, no-store");
+});

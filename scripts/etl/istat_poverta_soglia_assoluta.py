@@ -18,6 +18,7 @@ SPEC = ROOT / "scripts/etl/specs/istat-poverta-soglia-assoluta-2005-2024.source.
 DATA = ROOT / "src/data/generated/istat-poverta-soglia-assoluta-2005-2024.data.json"
 META = ROOT / "src/data/generated/istat-poverta-soglia-assoluta-2005-2024.meta.json"
 DATASET = "istat-poverta-soglia-assoluta"
+SCALE_FACTOR = 100
 
 
 class SnapshotError(ValueError):
@@ -54,7 +55,7 @@ def value_hundredths(raw: str) -> int:
     try:
         value = Decimal(raw)
         require(value.is_finite() and value >= 0, "invalid threshold value")
-        scaled = value * 100
+        scaled = value * SCALE_FACTOR
         require(scaled == scaled.to_integral_value(), "value has more than two decimals")
         return int(scaled)
     except (InvalidOperation, ValueError) as error:
@@ -111,7 +112,7 @@ def build_data(payload: bytes, spec: dict) -> dict:
     )}
     data.update(
         scale={
-            "factor": 100,
+            "factor": SCALE_FACTOR,
             "note": "Soglie mensili esatte in centesimi di euro (valueHundredths).",
         },
         observations=observations,
@@ -127,7 +128,7 @@ def validate_data(data: dict, spec: dict) -> None:
         "reconciliation",
     ):
         require(data[key] == spec[key], f"public {key} differs from source lock")
-    require(data["scale"]["factor"] == 100, "scale differs")
+    require(data["scale"]["factor"] == SCALE_FACTOR, "scale differs")
     territories = {item["code"]: item for item in data["territories"]}
     households = {item["code"] for item in data["householdTypologies"]}
     municipalities = {item["code"] for item in data["municipalitySizes"]}
@@ -179,6 +180,35 @@ def validate_data(data: dict, spec: dict) -> None:
     require(len(seen) == indicators["SOGLIA_POVASS"]["observations"], "indicator coverage differs")
 
 
+def public_metadata(spec: dict) -> dict:
+    source = spec["source"]
+    indicators = spec["indicators"]
+    require(
+        len(indicators) == 1 and indicators[0].get("code") == "SOGLIA_POVASS",
+        "SOGLIA_POVASS must be the only indicator in public metadata",
+    )
+    indicator = indicators[0]
+    require(spec["semantics"]["soldi"]["present"] is True, "monetary threshold must declare soldi")
+    unit = indicator.get("unit")
+    unit_note = "UNIT_MEAS assente nel payload" if unit == "" else f"UNIT_MEAS={unit}"
+    return {
+        "period": [
+            f"Anni {spec['period']['from']}–{spec['period']['to']}",
+            spec["semantics"]["periodo"]["note"],
+            f"Dataflow aggiornato {source['dataflowLastUpdate'][:10]}; acquisizione {source['acquisitionDate']}",
+        ],
+        "units": [
+            f"Soglia monetaria mensile in centesimi di euro (scale factor {SCALE_FACTOR})",
+            unit_note,
+        ],
+        "coverage": f"{spec['periodNote']} Celle vuote restano null, distinte da zero e da riga assente.",
+        "references": [
+            {"label": "ISTAT · Open Data" if "open-data" in url else "ISTAT · Note legali", "url": url}
+            for url in source["reuseTermsEvidence"]
+        ],
+    }
+
+
 def metadata(spec: dict, data_bytes: bytes) -> dict:
     return {
         "schemaVersion": 1,
@@ -187,6 +217,7 @@ def metadata(spec: dict, data_bytes: bytes) -> dict:
         "acquiredAt": spec["source"]["acquisitionDate"],
         "source": spec["source"],
         "semantics": spec["semantics"],
+        "publicMetadata": public_metadata(spec),
         "integrity": {
             "sourceLockSha256": lock_hash(spec),
             "dataArtifact": {

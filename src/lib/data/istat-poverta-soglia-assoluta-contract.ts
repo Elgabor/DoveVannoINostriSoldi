@@ -14,6 +14,33 @@ function canonical(value: unknown): string {
 const digest = (value: unknown) => createHash("sha256").update(canonical(value)).digest("hex");
 const locked = <T>(expected: T) =>
   z.custom<T>((value) => canonical(value) === canonical(expected), "Campo diverso dal lock soglia povertà assoluta");
+const SCALE_FACTOR = 100;
+
+const sogliaIndicator = sourceLock.indicators[0];
+if (sourceLock.indicators.length !== 1 || sogliaIndicator?.code !== "SOGLIA_POVASS"
+  || sourceLock.semantics.soldi.present !== true) {
+  throw new Error("Snapshot soglia povertà assoluta: public metadata requires soldi present and one indicator.");
+}
+const sogliaUnit = sogliaIndicator.unit as string;
+const sogliaUnitNote = sogliaUnit === "" ? "UNIT_MEAS assente nel payload" : `UNIT_MEAS=${sogliaUnit}`;
+
+const expectedPublicMetadata = {
+  period: [
+    `Anni ${sourceLock.period.from}–${sourceLock.period.to}`,
+    sourceLock.semantics.periodo.note,
+    `Dataflow aggiornato ${sourceLock.source.dataflowLastUpdate.slice(0, 10)}; acquisizione ${sourceLock.source.acquisitionDate}`,
+  ],
+  units: [
+    `Soglia monetaria mensile in centesimi di euro (scale factor ${SCALE_FACTOR})`,
+    sogliaUnitNote,
+  ],
+  coverage:
+    `${sourceLock.periodNote} Celle vuote restano null, distinte da zero e da riga assente.`,
+  references: sourceLock.source.reuseTermsEvidence.map((url) => ({
+    label: url.includes("open-data") ? "ISTAT · Open Data" : "ISTAT · Note legali",
+    url,
+  })),
+};
 
 const observationSchema = z.object({
   territory: z.string(),
@@ -37,7 +64,7 @@ const dataSchema = z.object({
   flags: locked(sourceLock.flags),
   caveats: locked(sourceLock.caveats),
   reconciliation: locked(sourceLock.reconciliation),
-  scale: z.object({ factor: z.literal(100), note: z.string().min(1) }).strict(),
+  scale: z.object({ factor: z.literal(SCALE_FACTOR), note: z.string().min(1) }).strict(),
   observations: z.array(observationSchema).length(sourceLock.observations),
 }).strict();
 
@@ -61,6 +88,7 @@ export function validateIstatPovertaSogliaAssolutaBundle(data: unknown, metadata
     acquiredAt: sourceLock.source.acquisitionDate,
     source: sourceLock.source,
     semantics: sourceLock.semantics,
+    publicMetadata: expectedPublicMetadata,
     integrity,
   };
   if (canonical(metadata) !== canonical(expectedMetadata)) {

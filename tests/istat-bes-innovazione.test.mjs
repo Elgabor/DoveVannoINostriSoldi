@@ -83,6 +83,18 @@ test("public entry points require bounded supported filters", async () => {
   assert.ok((await queryPublicDataset(descriptor.exampleQuery)).observations.length > 0);
 });
 
+test("catalog publicMetadata derives from generated metadata projection", () => {
+  const descriptor = datasetCatalog.find((item) => item.id === "istat_bes_innovazione");
+  assert.ok(metadata.publicMetadata, "publicMetadata projection missing in generated metadata");
+  assert.ok(!Object.hasOwn(metadata.publicMetadata, "queryNotes"));
+  const { queryNotes, ...sourceProjection } = descriptor.publicMetadata;
+  assert.deepEqual(sourceProjection, metadata.publicMetadata);
+  assert.deepEqual(queryNotes, [
+    "Specificare almeno un filtro fra territory, year, measure e sex; limit massimo 100 righe per pagina.",
+    "Ogni indicatore conserva definizione, unità e periodo propri: recuperarli dalla risposta o dalle definizioni del dataflow.",
+  ]);
+});
+
 test("runtime rejects value, geography, unit and provenance tampering", () => {
   for (const mutate of [
     (copy) => { copy.observations[0].valueTenths = (copy.observations[0].valueTenths ?? 0) + 1; },

@@ -105,6 +105,57 @@ class PovertaSogliaAssolutaTests(unittest.TestCase):
         self.assertFalse(data["reconciliation"]["territorialSum"])
         self.assertFalse(data["reconciliation"]["householdSum"])
 
+    def test_public_metadata_projection_from_source_lock(self):
+        meta = soglia.metadata(self.spec, b"")
+        self.assertIn("publicMetadata", meta)
+        pm = meta["publicMetadata"]
+        self.assertEqual(pm["period"][0], f"Anni {self.spec['period']['from']}–{self.spec['period']['to']}")
+        self.assertEqual(pm["period"][1], self.spec["semantics"]["periodo"]["note"])
+        self.assertIn(self.spec["source"]["dataflowLastUpdate"][:10], pm["period"][2])
+        self.assertIn(self.spec["source"]["acquisitionDate"], pm["period"][2])
+        self.assertEqual(pm["units"], [
+            "Soglia monetaria mensile in centesimi di euro (scale factor 100)",
+            "UNIT_MEAS assente nel payload",
+        ])
+        self.assertEqual(
+            pm["coverage"],
+            f"{self.spec['periodNote']} Celle vuote restano null, distinte da zero e da riga assente.",
+        )
+        self.assertNotIn("queryNotes", pm)
+        self.assertEqual(pm["references"], [
+            {"label": "ISTAT · Open Data", "url": "https://www.istat.it/dati/open-data/"},
+            {"label": "ISTAT · Note legali", "url": "https://www.istat.it/note-legali/"},
+        ])
+
+    def test_public_metadata_reacts_to_source_lock_mutations(self):
+        base = soglia.public_metadata(self.spec)
+        # unit drift changes units
+        spec = copy.deepcopy(self.spec)
+        spec["indicators"][0]["unit"] = "EURO"
+        mutated = soglia.public_metadata(spec)
+        self.assertNotEqual(mutated["units"], base["units"])
+        # period/coverage drift changes coverage
+        spec = copy.deepcopy(self.spec)
+        spec["periodNote"] = "Copertura mutata"
+        mutated = soglia.public_metadata(spec)
+        self.assertIn("Copertura mutata", mutated["coverage"])
+        self.assertNotEqual(mutated["coverage"], base["coverage"])
+        # fail-closed: soldi not present
+        spec = copy.deepcopy(self.spec)
+        spec["semantics"]["soldi"]["present"] = False
+        with self.assertRaises(soglia.SnapshotError):
+            soglia.public_metadata(spec)
+        # fail-closed: missing indicator
+        spec = copy.deepcopy(self.spec)
+        spec["indicators"] = []
+        with self.assertRaises(soglia.SnapshotError):
+            soglia.public_metadata(spec)
+        # fail-closed: additional indicators are outside this one-indicator projection
+        spec = copy.deepcopy(self.spec)
+        spec["indicators"].append(copy.deepcopy(spec["indicators"][0]))
+        with self.assertRaises(soglia.SnapshotError):
+            soglia.public_metadata(spec)
+
     def test_metadata_and_data_tampering_fail_closed(self):
         with tempfile.TemporaryDirectory() as directory:
             data_path, meta_path = Path(directory) / "data.json", Path(directory) / "meta.json"

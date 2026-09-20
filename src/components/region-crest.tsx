@@ -27,6 +27,12 @@ export type RegionCrestProps = {
   /** Use when the adjacent table or link already names the region. */
   decorative?: boolean;
   className?: string;
+  /**
+   * Image loading strategy. "eager" keeps the symbol visible immediately;
+   * "lazy" defers it until near the viewport. Tables with many crests should
+   * use "lazy" to avoid preloading dozens of SVGs ahead of critical text.
+   */
+  loading?: "eager" | "lazy";
 };
 
 export function RegionCrest({
@@ -35,6 +41,7 @@ export function RegionCrest({
   size = "sm",
   decorative = false,
   className,
+  loading = "eager",
 }: RegionCrestProps) {
   const entry = regionCode ? entries[regionCode] : undefined;
   const name = regionName ?? entry?.name ?? "regione";
@@ -74,7 +81,7 @@ export function RegionCrest({
         height={entry.height}
         alt={decorative ? "" : `${symbolLabel} di ${name}`}
         unoptimized
-        loading="eager"
+        loading={loading}
         decoding="async"
       />
     </span>

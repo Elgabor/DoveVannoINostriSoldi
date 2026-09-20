@@ -29,6 +29,26 @@ test("the IRPEF page is server-rendered, bounded, and semantically explicit", as
   assert.match(page, /Definizioni ufficiali delle variabili/);
 });
 
+test("the IRPEF regional table defers crest images to avoid blocking critical text paint", async () => {
+  const page = await source("../src/app/territori/irpef/page.tsx");
+  const component = await source("../src/components/region-crest.tsx");
+
+  assert.match(component, /loading\?: "eager" \| "lazy"/);
+  assert.match(component, /loading = "eager"/);
+  assert.match(component, /loading=\{loading\}/);
+
+  // The table renders 20 region crests at once; only the first few are in the
+  // initial viewport. Eagerly preloading all of them competes with the web font
+  // and can push text LCP past the budget, so the table must ask for lazy load.
+  const tableRegionMatch = page.match(
+    /<HorizontalScrollRegion[\s\S]*?className=\{`table-scroll \$\{styles\.tableRegion\}`\}[\s\S]*?<\/HorizontalScrollRegion>/,
+  );
+  assert.ok(tableRegionMatch, "table region not found");
+  const tableRegionCode = tableRegionMatch[0];
+  assert.match(tableRegionCode, /<RegionCrest[\s\S]*?loading="lazy"/);
+  assert.doesNotMatch(tableRegionCode, /<RegionCrest[\s\S]*?loading="eager"/);
+});
+
 test("the IRPEF layout keeps every grid bounded at narrow widths", async () => {
   const css = await source("../src/app/territori/irpef/irpef.module.css");
 

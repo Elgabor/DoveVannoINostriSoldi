@@ -1,6 +1,6 @@
 import type { RepublicActSummary, RepublicLegislativeSource } from "@/lib/politici-repubblica";
 import { OWN_VOTE_LABELS } from "@/lib/politici-vote-states";
-import { requestDeadline } from "@/app/politici/atlas-data";
+import { count, object, requestDeadline, text } from "@/app/politici/atlas-data";
 import { isSafeExternalUrl, normalizeSearch } from "@/app/politici/atlas-model";
 
 export type LegislativeData = {
@@ -12,10 +12,7 @@ export type LegislativeData = {
 };
 
 export { OWN_VOTE_LABELS } from "@/lib/politici-vote-states";
-const object = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === "object" && !Array.isArray(v);
-const text = (v: unknown): v is string => typeof v === "string";
 const nullableText = (v: unknown) => v === null || text(v);
-const count = (v: unknown) => Number.isSafeInteger(v) && Number(v) >= 0;
 const invalid = (): never => { throw new Error("Risposta degli atti non valida"); };
 
 function validAct(

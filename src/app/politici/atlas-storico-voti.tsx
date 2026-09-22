@@ -13,8 +13,7 @@ import {
   republicVoteTone,
   type RepublicVoteStateCounts,
 } from "@/lib/politici-vote-states";
-import type { Resource } from "./atlas-data";
-import { requestDeadline } from "./atlas-data";
+import { count, object, requestDeadline, text, type Resource } from "./atlas-data";
 import { parseActHeadline } from "./atlas-act-headline";
 import {
   DEFAULT_THEME_ID,
@@ -96,9 +95,6 @@ type ThemeHistoryData = {
   caveats: string[];
 };
 
-const object = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === "object" && !Array.isArray(v);
-const text = (v: unknown): v is string => typeof v === "string";
-const count = (v: unknown) => Number.isSafeInteger(v) && Number(v) >= 0;
 const expressedVoteKeys = (["F", "C", "A"] as const)
   .map((code) => REPUBLIC_VOTE_STATE_META[code].countKey);
 

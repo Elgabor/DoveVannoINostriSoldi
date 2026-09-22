@@ -13,8 +13,7 @@ import {
   type RepublicVoteStateCounts,
 } from "@/lib/politici-vote-states";
 import { VOTE_THEMES } from "@/lib/politici-voti-tema-catalog";
-import type { Resource } from "./atlas-data";
-import { requestDeadline } from "./atlas-data";
+import { count, object, requestDeadline, text, type Resource } from "./atlas-data";
 import { longDate } from "./atlas-model";
 import { Icon, SourceLink, Status } from "./atlas-primitives";
 import styles from "./politici.module.css";
@@ -65,10 +64,6 @@ type ThemeVotesData = {
   themes: ThemeOption[];
   caveats: string[];
 };
-
-const object = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === "object" && !Array.isArray(v);
-const text = (v: unknown): v is string => typeof v === "string";
-const count = (v: unknown) => Number.isSafeInteger(v) && Number(v) >= 0;
 
 function parseThemeVotes(payload: unknown, personId: string): ThemeVotesData {
   if (!object(payload) || payload.ok !== true || payload.personId !== personId) throw new Error("invalid");

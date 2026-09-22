@@ -165,6 +165,19 @@ test("atlas: institutional graph scope restores the radial overview map", async 
   assert.match(styles, /\.graphBoard/);
 });
 
+test("vote participation copy keeps official states distinct without inventing presence or absence", async () => {
+  const [themeVotes, storico, voteStates] = await Promise.all([
+    read("src/app/politici/atlas-theme-votes.tsx"),
+    read("src/app/politici/atlas-storico-voti.tsx"),
+    read("src/lib/politici-vote-states.ts"),
+  ]);
+  assert.doesNotMatch(themeVotes, /Presente in aula sul tema/);
+  assert.doesNotMatch(storico, /inclusi assenti/);
+  for (const label of ["Mancata partecipazione", "Presente senza voto", "Missione o congedo", "Dato non rilevato", "Fuori mandato"]) {
+    assert.match(themeVotes + storico + voteStates, new RegExp(label));
+  }
+});
+
 test("storico voti parses camera act headlines into lead and title", async () => {
   await import("./helpers/register-ts-alias.mjs");
   const { parseActHeadline } = await import("../src/app/politici/atlas-act-headline.ts");

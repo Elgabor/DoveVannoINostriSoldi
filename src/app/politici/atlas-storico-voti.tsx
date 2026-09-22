@@ -3,9 +3,18 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { VOTE_THEMES } from "@/lib/politici-voti-tema-catalog";
 import type { RepublicActVote, RepublicMap } from "@/lib/politici-repubblica";
+import {
+  compactRepublicVoteStateCounts,
+  countRepublicVoteStates,
+  isRepublicActVote,
+  isRepublicVoteStateCounts,
+  OWN_VOTE_LABELS,
+  REPUBLIC_VOTE_STATE_META,
+  republicVoteTone,
+  type RepublicVoteStateCounts,
+} from "@/lib/politici-vote-states";
 import type { Resource } from "./atlas-data";
 import { requestDeadline } from "./atlas-data";
-import { OWN_VOTE_LABELS } from "./atlas-legislation";
 import { parseActHeadline } from "./atlas-act-headline";
 import {
   DEFAULT_THEME_ID,
@@ -18,15 +27,11 @@ import { Icon, Portrait, SourceLink, Status } from "./atlas-primitives";
 import styles from "./politici.module.css";
 import extra from "./atlas-enhancements.module.css";
 
-type YearBucket = {
+type YearBucket = RepublicVoteStateCounts & {
   year: string;
   events: number;
   cameraEvents: number;
   senatoEvents: number;
-  favorevoli: number;
-  contrari: number;
-  astenuti: number;
-  nonVotato: number;
 };
 
 type EventVoter = {
@@ -72,15 +77,11 @@ type ThemeHistoryData = {
     chamber: "camera" | "senato";
     groupLabel: string | null;
     expressedVotes: number;
-    summary: {
+    summary: RepublicVoteStateCounts & {
       totale: number;
-      favorevoli: number;
-      contrari: number;
-      astenuti: number;
-      nonVotato: number;
-      altro: number;
     };
     years: YearBucket[];
+    otherVotes: Record<string, Exclude<RepublicActVote, "F" | "C" | "A" | "non-rilevato">>;
   }>;
   themes: Array<{ id: string; label: string; description: string; chamberVotes: number }>;
   caveats: string[];
@@ -88,6 +89,18 @@ type ThemeHistoryData = {
 
 const object = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === "object" && !Array.isArray(v);
 const text = (v: unknown): v is string => typeof v === "string";
+const count = (v: unknown) => Number.isSafeInteger(v) && Number(v) >= 0;
+const expressedVoteKeys = (["F", "C", "A"] as const)
+  .map((code) => REPUBLIC_VOTE_STATE_META[code].countKey);
+
+function validVoters(value: unknown): boolean {
+  return object(value) && expressedVoteKeys.every((key) => Array.isArray(value[key])
+    && value[key].every((voter) => object(voter)
+      && text(voter.personId) && text(voter.name)
+      && (voter.groupLabel === null || text(voter.groupLabel))
+      && isRepublicActVote(voter.ownVote)
+      && REPUBLIC_VOTE_STATE_META[voter.ownVote].countKey === key));
+}
 
 function parseHistory(payload: unknown): ThemeHistoryData {
   if (!object(payload) || payload.ok !== true) throw new Error("invalid");
@@ -99,7 +112,16 @@ function parseHistory(payload: unknown): ThemeHistoryData {
     || !Array.isArray(payload.members)
     || !Array.isArray(payload.themes)
     || !Array.isArray(payload.caveats)
-    || !payload.caveats.every(text)) {
+    || !payload.caveats.every(text)
+    || !payload.events.every((event) => object(event) && validVoters(event.voters))
+    || !payload.years.every((year) => object(year) && isRepublicVoteStateCounts(year))
+    || !payload.members.every((member) => object(member) && object(member.summary)
+      && count(member.summary.totale) && isRepublicVoteStateCounts(member.summary)
+      && countRepublicVoteStates(member.summary) === member.summary.totale
+      && Array.isArray(member.years) && member.years.every(isRepublicVoteStateCounts)
+      && object(member.otherVotes) && Object.values(member.otherVotes).every((vote) => (
+        isRepublicActVote(vote) && vote !== "F" && vote !== "C" && vote !== "A" && vote !== "non-rilevato"
+      )))) {
     throw new Error("invalid");
   }
   return payload as ThemeHistoryData;
@@ -133,13 +155,6 @@ async function loadHistory(
   }
 }
 
-function voteTone(ownVote: RepublicActVote): "for" | "against" | "abstain" | "absent" {
-  if (ownVote === "F") return "for";
-  if (ownVote === "C") return "against";
-  if (ownVote === "A") return "abstain";
-  return "absent";
-}
-
 function actNumberLabel(chamber: "camera" | "senato", actNumber: string): string {
   if (chamber === "senato" || actNumber.startsWith("S.")) return actNumber;
   return `A.C. ${actNumber}`;
@@ -170,14 +185,14 @@ function ActHeadline({
   </div>;
 }
 
-function ownVoteOnEvent(
+function expressedVoteOnEvent(
   event: ThemeHistoryData["events"][number],
   personId: string,
-): RepublicActVote {
+): "F" | "C" | "A" | null {
   if (event.voters.favorevoli.some((voter) => voter.personId === personId)) return "F";
   if (event.voters.contrari.some((voter) => voter.personId === personId)) return "C";
   if (event.voters.astenuti.some((voter) => voter.personId === personId)) return "A";
-  return "N";
+  return null;
 }
 
 function memberVoteTrail(
@@ -186,15 +201,19 @@ function memberVoteTrail(
 ) {
   return events
     .filter((event) => event.chamber === member.chamber)
-    .map((event) => ({
-      voteId: event.voteId,
-      date: event.date,
-      actNumber: event.actNumber,
-      actTitle: event.actTitle,
-      officialPage: event.officialPage,
-      approved: event.approved,
-      ownVote: ownVoteOnEvent(event, member.personId),
-    }));
+    .map((event) => {
+      return {
+        voteId: event.voteId,
+        date: event.date,
+        actNumber: event.actNumber,
+        actTitle: event.actTitle,
+        officialPage: event.officialPage,
+        approved: event.approved,
+        ownVote: expressedVoteOnEvent(event, member.personId)
+          ?? member.otherVotes[event.voteId]
+          ?? "non-rilevato",
+      };
+    });
 }
 
 function YearBars({ years, mode }: { years: YearBucket[]; mode: "events" | "votes"; }) {
@@ -202,13 +221,13 @@ function YearBars({ years, mode }: { years: YearBucket[]; mode: "events" | "vote
   const max = Math.max(1, ...years.map((year) => (
     mode === "events"
       ? year.events
-      : year.favorevoli + year.contrari + year.astenuti + year.nonVotato
+      : countRepublicVoteStates(year)
   )));
   return <ol className={extra.yearBars} aria-label="Andamento per anno">
     {years.map((year) => {
       const value = mode === "events"
         ? year.events
-        : year.favorevoli + year.contrari + year.astenuti + year.nonVotato;
+        : countRepublicVoteStates(year);
       const width = Math.max(4, Math.round((value / max) * 100));
       return <li key={year.year}>
         <span className={extra.yearLabel}>{year.year}</span>
@@ -218,7 +237,7 @@ function YearBars({ years, mode }: { years: YearBucket[]; mode: "events" | "vote
         <span className={extra.yearMeta}>
           {mode === "events"
             ? `${year.events} votazioni · Camera ${year.cameraEvents} · Senato ${year.senatoEvents}`
-            : `F ${year.favorevoli} · C ${year.contrari} · A ${year.astenuti} · N ${year.nonVotato}`}
+            : compactRepublicVoteStateCounts(year)}
         </span>
       </li>;
     })}
@@ -409,7 +428,7 @@ export function ThemeVoteHistoryDirectory({
           {themeChamber === "camera" ? "Solo Camera. " : themeChamber === "senato" ? "Solo Senato. " : null}
           {data.periodLabel}. Rilevazione: {longDate(data.observedDate)}.
           {" "}{data.events.length} votazioni in aula · {members.length} parlamentari
-          {themeExpressedOnly ? " con voto espresso" : " (inclusi assenti)"}.
+          {themeExpressedOnly ? " con voto espresso" : " con tutti gli stati disponibili"}.
         </p>
 
         {data.years.length > 0 ? (
@@ -522,12 +541,11 @@ export function ThemeVoteHistoryDirectory({
                       </span>
                       <span className={styles.convictionMeta}>
                         {member.groupLabel ? `${member.groupLabel} · ` : ""}
-                        {member.expressedVotes} voti espressi · F {member.summary.favorevoli} · C {member.summary.contrari} · A {member.summary.astenuti}
-                        {member.summary.nonVotato > 0 ? ` · non votato ${member.summary.nonVotato}` : ""}
+                        {member.expressedVotes} voti espressi · {compactRepublicVoteStateCounts(member.summary)}
                       </span>
                       {member.years.length > 0 ? (
                         <span className={styles.convictionTitle}>
-                          Anni: {member.years.map((year) => `${year.year} (F${year.favorevoli}/C${year.contrari}/A${year.astenuti}/N${year.nonVotato})`).join(" · ")}
+                          Anni: {member.years.map((year) => `${year.year} (${compactRepublicVoteStateCounts(year)})`).join(" · ")}
                         </span>
                       ) : (
                         <span className={styles.convictionTitle}>
@@ -546,10 +564,10 @@ export function ThemeVoteHistoryDirectory({
                       </div>
                       <ol className={extra.memberVoteList}>
                         {votes.map((vote) => (
-                          <li key={vote.voteId} data-tone={voteTone(vote.ownVote)}>
+                          <li key={vote.voteId} data-tone={republicVoteTone(vote.ownVote)}>
                             <div className={extra.themeTimelineMeta}>
                               <time dateTime={vote.date}>{longDate(vote.date)}</time>
-                              <span className={extra.themeVotePill} data-tone={voteTone(vote.ownVote)}>
+                              <span className={extra.themeVotePill} data-tone={republicVoteTone(vote.ownVote)}>
                                 {OWN_VOTE_LABELS[vote.ownVote]}
                               </span>
                             </div>

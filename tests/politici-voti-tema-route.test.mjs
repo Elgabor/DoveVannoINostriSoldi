@@ -12,6 +12,7 @@ const {
   getThemeVoteHistory,
   VOTE_THEMES,
 } = await import("../src/lib/politici-voti-tema.ts");
+const { countRepublicVoteStates } = await import("../src/lib/politici-vote-states.ts");
 
 const graph = getRepubblicaGraph();
 const deputyId = graph.people.find((person) => person.chamberId === "camera").id;
@@ -35,9 +36,13 @@ test("theme catalog exposes curated themes with person-specific chip stats", () 
   assert.ok(chip.chamberVotes >= 1);
   assert.equal(chip.chamberVotes, lavoro.summary.totale);
   assert.equal(chip.expressedVotes, lavoro.summary.favorevoli + lavoro.summary.contrari + lavoro.summary.astenuti);
-  assert.equal(chip.nonVotato, lavoro.summary.nonVotato);
   assert.equal(lavoro.summary.totale, lavoro.votes.length);
+  assert.equal(countRepublicVoteStates(lavoro.summary), lavoro.summary.totale);
+  assert.equal(lavoro.summary.fuoriMandato, null);
+  assert.equal(Object.hasOwn(lavoro.summary, "nonVotato"), false);
+  assert.equal(Object.hasOwn(lavoro.summary, "altro"), false);
   assert.ok(Array.isArray(lavoro.years));
+  assert.ok(lavoro.years.every((year) => countRepublicVoteStates(year) === year.events));
   assert.ok(lavoro.votes.every((vote) => vote.actTitle.length > 0 && vote.date.length === 10));
   assert.ok(lavoro.votes.every((vote) => vote.matchedNeedles.length > 0));
 });
@@ -48,9 +53,42 @@ test("Meloni chip counts are expressed votes, not chamber inventory alone", () =
   const chip = lavoro.themes.find((theme) => theme.id === "lavoro");
   assert.ok(chip.chamberVotes >= 1);
   assert.equal(chip.expressedVotes, 0);
-  assert.equal(chip.nonVotato, chip.chamberVotes);
-  assert.equal(lavoro.summary.nonVotato, lavoro.summary.totale);
-  assert.ok(lavoro.years.every((year) => year.nonVotato >= 1 || year.events >= 1));
+  assert.equal(lavoro.summary.mancatePartecipazioni, lavoro.summary.totale);
+  assert.equal(lavoro.summary.datiNonRilevati, 0);
+  assert.ok(lavoro.years.every((year) => year.mancatePartecipazioni === year.events));
+});
+
+test("Senate presence, mission and missing data remain separate in summaries and event trails", () => {
+  const castellone = getRepubblicaThemeVotes({ personId: "sen-s32600", themeId: "europa" });
+  assert.equal(castellone.summary.presenzeSenzaVoto, 1);
+  assert.equal(castellone.summary.datiNonRilevati, 1);
+  assert.equal(countRepublicVoteStates(castellone.summary), castellone.summary.totale);
+
+  const salvini = getRepubblicaThemeVotes({ personId: "sen-s25407", themeId: "lavoro" });
+  assert.equal(salvini.summary.missioniOCongedi, 1);
+  assert.equal(salvini.summary.totale, 1);
+
+  const laRussa = getRepubblicaThemeVotes({ personId: "sen-s1275", themeId: "lavoro" });
+  assert.equal(laRussa.summary.datiNonRilevati, 1);
+  assert.equal(laRussa.summary.mancatePartecipazioni, 0);
+
+  const europaHistory = getThemeVoteHistory({
+    themeId: "europa",
+    personQuery: "castellone",
+    chamber: "senato",
+    expressedOnly: false,
+  });
+  const castelloneHistory = europaHistory.members.find((member) => member.personId === "sen-s32600");
+  assert.equal(castelloneHistory.otherVotes["19-40-29"], "P");
+
+  const lavoroHistory = getThemeVoteHistory({
+    themeId: "lavoro",
+    personQuery: "salvini",
+    chamber: "senato",
+    expressedOnly: false,
+  });
+  const salviniHistory = lavoroHistory.members.find((member) => member.personId === "sen-s25407");
+  assert.equal(salviniHistory.otherVotes["19-40-18"], "M");
 });
 
 test("free-text theme search finds equo compenso votes for a deputy", () => {
@@ -121,6 +159,7 @@ test("theme history indexes votes once and supports chamber / expressed filters"
   const byName = getThemeVoteHistory({ themeId: "lavoro", personQuery: "giorgia meloni", expressedOnly: false });
   const meloni = byName.members.find((member) => member.personId === meloniId);
   assert.ok(meloni && meloni.expressedVotes === 0);
+  assert.equal(meloni.summary.mancatePartecipazioni, meloni.summary.totale);
   assert.ok(meloni.years.length >= 1);
   assert.ok(byName.events.every((event) => (
     !event.voters.favorevoli.some((voter) => voter.personId === meloniId)

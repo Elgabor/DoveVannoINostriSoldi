@@ -187,7 +187,7 @@
 .themeVotePill[data-tone="for"] { background: color-mix(in srgb, #2f7d57 16%, transparent); color: #246647; }
 .themeVotePill[data-tone="against"] { background: color-mix(in srgb, #b44a3c 16%, transparent); color: #8f3a30; }
 .themeVotePill[data-tone="abstain"] { background: color-mix(in srgb, #b08a2e 18%, transparent); color: #8a6a1d; }
-.themeVotePill[data-tone="absent"] { color: var(--atlas-muted); }
+.themeVotePill[data-tone="neutral"] { color: var(--atlas-muted); }
 :global(html[data-theme="dark"]) .themeVotePill[data-tone="for"] { color: #9fd4b4; }
 :global(html[data-theme="dark"]) .themeVotePill[data-tone="against"] { color: #e3a59c; }
 :global(html[data-theme="dark"]) .themeVotePill[data-tone="abstain"] { color: #e0c57a; }

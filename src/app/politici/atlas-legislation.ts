@@ -1,4 +1,5 @@
-import type { RepublicActSummary, RepublicActVote, RepublicLegislativeSource } from "@/lib/politici-repubblica";
+import type { RepublicActSummary, RepublicLegislativeSource } from "@/lib/politici-repubblica";
+import { OWN_VOTE_LABELS } from "@/lib/politici-vote-states";
 import { requestDeadline } from "@/app/politici/atlas-data";
 import { isSafeExternalUrl, normalizeSearch } from "@/app/politici/atlas-model";
 
@@ -10,16 +11,7 @@ export type LegislativeData = {
   voted: RepublicActSummary[];
 };
 
-export const OWN_VOTE_LABELS: Record<RepublicActVote, string> = {
-  F: "Favorevole",
-  C: "Contrario",
-  A: "Astenuto/a",
-  N: "Non ha votato",
-  V: "Voto segreto",
-  P: "Presente non votante",
-  M: "In congedo o missione",
-  "non-rilevato": "Voto non rilevato nella fonte",
-};
+export { OWN_VOTE_LABELS } from "@/lib/politici-vote-states";
 const object = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === "object" && !Array.isArray(v);
 const text = (v: unknown): v is string => typeof v === "string";
 const nullableText = (v: unknown) => v === null || text(v);

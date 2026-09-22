@@ -10,6 +10,12 @@ import {
   type RepublicActVote,
 } from "@/lib/politici-repubblica";
 import {
+  addRepublicVoteState,
+  emptyRepublicVoteStateCounts,
+  REPUBLIC_VOTE_STATE_META,
+  type RepublicVoteStateCounts,
+} from "@/lib/politici-vote-states";
+import {
   VOTE_THEMES,
   type VoteThemeDefinition,
 } from "@/lib/politici-voti-tema-catalog";
@@ -39,30 +45,20 @@ export type ThemeVoteRow = {
   matchedNeedles: string[];
 };
 
-export type ThemeVoteSummary = {
+export type ThemeVoteSummary = RepublicVoteStateCounts & {
   totale: number;
-  favorevoli: number;
-  contrari: number;
-  astenuti: number;
-  nonVotato: number;
-  altro: number;
 };
 
 export type ThemeOptionStats = VoteThemeDefinition & {
   chamberVotes: number;
   expressedVotes: number;
-  nonVotato: number;
 };
 
-export type ThemeYearBucket = {
+export type ThemeYearBucket = RepublicVoteStateCounts & {
   year: string;
   events: number;
   cameraEvents: number;
   senatoEvents: number;
-  favorevoli: number;
-  contrari: number;
-  astenuti: number;
-  nonVotato: number;
 };
 
 export type ThemeVotesResult = {
@@ -122,6 +118,7 @@ export type ThemeHistoryMember = {
   summary: ThemeVoteSummary;
   expressedVotes: number;
   years: ThemeYearBucket[];
+  otherVotes: Record<string, Exclude<RepublicActVote, "F" | "C" | "A" | "non-rilevato">>;
 };
 
 export type ThemeChamberFilter = "tutti" | "camera" | "senato";
@@ -191,16 +188,12 @@ function titleMatches(
 }
 
 function emptySummary(): ThemeVoteSummary {
-  return { totale: 0, favorevoli: 0, contrari: 0, astenuti: 0, nonVotato: 0, altro: 0 };
+  return { totale: 0, ...emptyRepublicVoteStateCounts() };
 }
 
 function accumulate(summary: ThemeVoteSummary, ownVote: RepublicActVote): void {
   summary.totale += 1;
-  if (ownVote === "F") summary.favorevoli += 1;
-  else if (ownVote === "C") summary.contrari += 1;
-  else if (ownVote === "A") summary.astenuti += 1;
-  else if (ownVote === "N" || ownVote === "P" || ownVote === "M" || ownVote === "non-rilevato") summary.nonVotato += 1;
-  else summary.altro += 1;
+  addRepublicVoteState(summary, ownVote);
 }
 
 function yearOf(date: string): string | null {
@@ -214,10 +207,7 @@ function emptyYearBucket(year: string): ThemeYearBucket {
     events: 0,
     cameraEvents: 0,
     senatoEvents: 0,
-    favorevoli: 0,
-    contrari: 0,
-    astenuti: 0,
-    nonVotato: 0,
+    ...emptyRepublicVoteStateCounts(),
   };
 }
 
@@ -229,10 +219,7 @@ function accumulateYear(
   bucket.events += 1;
   if (chamber === "camera") bucket.cameraEvents += 1;
   if (chamber === "senato") bucket.senatoEvents += 1;
-  if (ownVote === "F") bucket.favorevoli += 1;
-  else if (ownVote === "C") bucket.contrari += 1;
-  else if (ownVote === "A") bucket.astenuti += 1;
-  else if (ownVote === "N" || ownVote === "P" || ownVote === "M" || ownVote === "non-rilevato") bucket.nonVotato += 1;
+  if (ownVote !== null) addRepublicVoteState(bucket, ownVote);
 }
 
 function yearsFromRows(
@@ -385,7 +372,6 @@ function themeStatsForPerson(
       ...theme,
       chamberVotes: indexed.length,
       expressedVotes: expressedCount(summary),
-      nonVotato: summary.nonVotato,
     };
   });
 }
@@ -430,7 +416,9 @@ const CAVEATS = [
   "I temi raggruppano votazioni finali il cui titolo ufficiale contiene le parole chiave del tema: non sono una classificazione ufficiale di Camera o Senato.",
   "Sono incluse solo le votazioni finali sugli atti di iniziativa parlamentare già nello snapshot della XIX legislatura; i disegni a prima firma del Governo restano fuori perimetro.",
   "Una ricerca senza votazioni finali collegate non prova assenza di attività sul tema: molte proposte non arrivano al voto d’aula nello snapshot.",
-  "Il voto individuale segue i codici ufficiali della fonte; «non ha votato» / «non rilevato» non equivale a un giudizio di merito e non va confuso con il conteggio delle votazioni in aula sul tema.",
+  "Il voto individuale segue i codici ufficiali della fonte: mancata partecipazione, presenza senza voto, missione o congedo e dato non rilevato restano stati distinti.",
+  "Se una persona non compare nelle liste nominali della votazione, il dato resta «non rilevato»: non viene trasformato in assenza o mancata partecipazione.",
+  "Gli snapshot non includono uno storico completo dei mandati: «fuori mandato» resta non disponibile, distinto dallo zero e dal dato non rilevato.",
 ] as const;
 
 export function listVoteThemesForChamber(chamber: "camera" | "senato") {
@@ -503,7 +491,7 @@ export function getThemeVoteHistory(options: {
   const personTokens = personQueryRaw
     ? normalizeNeedle(personQueryRaw).split(/\s+/u).filter(Boolean)
     : [];
-  // Default: only expressed voters, unless searching a name (include absences) or explicitly disabled.
+  // Default: only expressed voters, unless searching a name (include every state) or explicitly disabled.
   const expressedOnly = options.expressedOnly === false
     ? false
     : options.expressedOnly === true
@@ -526,10 +514,18 @@ export function getThemeVoteHistory(options: {
   const members: ThemeHistoryMember[] = [];
   const votersByEvent = new Map<string, ThemeHistoryEvent["voters"]>();
 
+  function emptyVoters(): ThemeHistoryEvent["voters"] {
+    return {
+      favorevoli: [],
+      contrari: [],
+      astenuti: [],
+    };
+  }
+
   function ensureVoters(key: string): ThemeHistoryEvent["voters"] {
     const existing = votersByEvent.get(key);
     if (existing) return existing;
-    const created = { favorevoli: [], contrari: [], astenuti: [] } satisfies ThemeHistoryEvent["voters"];
+    const created = emptyVoters();
     votersByEvent.set(key, created);
     return created;
   }
@@ -539,9 +535,10 @@ export function getThemeVoteHistory(options: {
     ownVote: RepublicActVote,
     voter: ThemeEventVoter,
   ): void {
-    if (ownVote === "F") bucket.favorevoli.push(voter);
-    else if (ownVote === "C") bucket.contrari.push(voter);
-    else if (ownVote === "A") bucket.astenuti.push(voter);
+    const field = REPUBLIC_VOTE_STATE_META[ownVote].countKey;
+    if (field === "favorevoli" || field === "contrari" || field === "astenuti") {
+      bucket[field].push(voter);
+    }
   }
 
   for (const person of graph.people) {
@@ -558,6 +555,7 @@ export function getThemeVoteHistory(options: {
     if (indexed.length === 0) continue;
 
     const summary = emptySummary();
+    const otherVotes: ThemeHistoryMember["otherVotes"] = {};
     const yearRows: Array<{ date: string; ownVote: RepublicActVote; chamber: "camera" | "senato" }> = [];
     const group = person.groupId ? groups.get(person.groupId) : null;
     const groupLabel = group?.shortLabel ?? group?.label ?? null;
@@ -565,6 +563,9 @@ export function getThemeVoteHistory(options: {
     for (const item of indexed) {
       const ownVote = (item.votesByNumericId[numericId] ?? "non-rilevato") as RepublicActVote;
       accumulate(summary, ownVote);
+      if (ownVote !== "F" && ownVote !== "C" && ownVote !== "A" && ownVote !== "non-rilevato") {
+        otherVotes[item.event.voteId] = ownVote;
+      }
       yearRows.push({ date: item.event.date, ownVote, chamber: person.chamberId });
     }
     const expressed = expressedCount(summary);
@@ -592,6 +593,7 @@ export function getThemeVoteHistory(options: {
       summary,
       expressedVotes: expressed,
       years: yearsFromRows(yearRows),
+      otherVotes,
     });
   }
 
@@ -601,7 +603,7 @@ export function getThemeVoteHistory(options: {
     || left.personId.localeCompare(right.personId));
 
   for (const bucket of votersByEvent.values()) {
-    for (const list of [bucket.favorevoli, bucket.contrari, bucket.astenuti]) {
+    for (const list of Object.values(bucket)) {
       list.sort((left, right) => left.name.localeCompare(right.name, "it", { sensitivity: "base" })
         || left.personId.localeCompare(right.personId));
     }
@@ -611,7 +613,7 @@ export function getThemeVoteHistory(options: {
     .map((item) => ({
       ...item.event,
       voters: votersByEvent.get(`${item.event.chamber}:${item.event.voteId}`)
-        ?? { favorevoli: [], contrari: [], astenuti: [] },
+        ?? emptyVoters(),
     }))
     .sort((left, right) => {
       const byDate = right.date.localeCompare(left.date);

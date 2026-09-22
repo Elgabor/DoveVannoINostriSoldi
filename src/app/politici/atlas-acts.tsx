@@ -35,7 +35,9 @@ export function LegislativeActs({
 
 function ActsBrowser({ data, activity }: { data: LegislativeData; activity: RepublicLegislativeActivity | null }) {
   const id = useId();
-  const [role, setRole] = useState<"firstSigned" | "coSigned">("firstSigned");
+  const [role, setRole] = useState<"voted" | "firstSigned" | "coSigned">(
+    data.voted.length ? "voted" : "firstSigned",
+  );
   const [query, setQuery] = useState("");
   const [outcome, setOutcome] = useState("");
   const [limit, setLimit] = useState(8);
@@ -45,10 +47,11 @@ function ActsBrowser({ data, activity }: { data: LegislativeData; activity: Repu
   const chamberLabel = data.source.chamber === "senato" ? "Senato" : "Camera";
   const comparison = activity?.comparison ?? null;
   const becameLaw = activity?.counts.becameLaw;
-  return <section className={extra.actsSection} aria-label="Proposte di legge firmate" data-legislative-person={data.personId} data-legislative-chamber={data.source.chamber}>
-    <div className={styles.sectionHeading}><h3>Proposte di legge</h3><span className={styles.tag}>{chamberLabel}</span></div>
+  return <section className={extra.actsSection} aria-label="Votazioni finali e proposte di legge" data-legislative-person={data.personId} data-legislative-chamber={data.source.chamber}>
+    <div className={styles.sectionHeading}><h3>Voti finali e proposte di legge</h3><span className={styles.tag}>{chamberLabel}</span></div>
     <p className={styles.note}>{data.source.periodLabel}. Rilevazione: {longDate(data.source.observedDate)}.</p>
     <dl className={styles.metrics}>
+      {data.voted.length ? <div><dt>Atti con voto finale</dt><dd>{data.voted.length}</dd></div> : null}
       <div><dt>A prima firma</dt><dd>{data.firstSigned.length}</dd></div>
       <div><dt>Cofirmate</dt><dd>{data.coSigned.length}</dd></div>
       {becameLaw !== undefined ? <div><dt>Arrivate in fondo</dt><dd>{becameLaw}</dd></div> : null}
@@ -66,8 +69,12 @@ function ActsBrowser({ data, activity }: { data: LegislativeData; activity: Repu
           : ""}
         .
       </p> : null}
-    <p className={styles.note}>Atti di iniziativa parlamentare del perimetro indicato dalla fonte. Il numero di firme non misura qualità o efficacia dell’attività parlamentare.</p>
-    <div className={extra.actRoleSwitch} role="group" aria-label="Tipo di firma">
+    <p className={styles.note}>{data.source.chamber === "camera"
+      ? "Le votazioni finali Camera comprendono atti di iniziativa parlamentare e governativa nel perimetro verificato. "
+      : "Gli atti firmati seguono il perimetro Senato indicato dalla fonte. "}
+      Il numero di firme non misura qualità o efficacia dell’attività parlamentare.</p>
+    <div className={extra.actRoleSwitch} role="group" aria-label="Vista degli atti">
+      {data.voted.length ? <button type="button" aria-pressed={role === "voted"} onClick={() => { setRole("voted"); setLimit(8); }}>Votazioni finali</button> : null}
       <button type="button" aria-pressed={role === "firstSigned"} onClick={() => { setRole("firstSigned"); setLimit(8); }}>Prima firma</button>
       <button type="button" aria-pressed={role === "coSigned"} onClick={() => { setRole("coSigned"); setLimit(8); }}>Cofirme</button>
     </div>
@@ -103,6 +110,9 @@ function ActCard({ act }: { act: RepublicActSummary }) {
       <span className={extra.actState}>{act.currentState ?? "Stato dell’iter non disponibile"}</span>
     </summary>
     <div className={extra.actBody}>
+      {act.initiative ? <p className={styles.note}>Iniziativa: <strong>{act.initiative.label}</strong>.</p> : null}
+      {act.proposer ? <p className={styles.note}>Proponente formale: <strong>{act.proposer.label}</strong>.</p> : null}
+      {act.initiative?.kind === "government" ? <p className={styles.note}>Governo responsabile: <strong>{act.responsibleGovernment?.label ?? "non disponibile nella relazione ufficiale"}</strong>.</p> : null}
       {act.currentStateDate ? <p className={styles.note}>Stato dell’iter al {longDate(act.currentStateDate)}.</p> : null}
       <p className={styles.note}>{act.coSignerCount} cofirmatari nella fonte.</p>
       {act.finalVotes.length ? <ul className={extra.actVotes}>{act.finalVotes.map((vote) => <li key={vote.id}>
@@ -110,7 +120,7 @@ function ActCard({ act }: { act: RepublicActSummary }) {
         <p>{vote.approved ? "Approvata" : "Non approvata"}{vote.confidenceVote ? " · con questione di fiducia" : ""}</p>
         <p className={extra.ownVote}>Voto individuale: <strong>{OWN_VOTE_LABELS[vote.ownVote]}</strong></p>
         <dl className={extra.voteCounts}><div><dt>Favorevoli</dt><dd>{vote.favorevoli}</dd></div><div><dt>Contrari</dt><dd>{vote.contrari}</dd></div><div><dt>Astenuti</dt><dd>{vote.astenuti}</dd></div></dl>
-        <p className={styles.note}>Esito della votazione al {siteLabel}, non necessariamente approvazione definitiva della legge.</p>
+        <p className={styles.note}>È il voto sull’atto nel suo complesso: non prova sostegno o opposizione a ogni singola misura contenuta nel testo. L’esito al {siteLabel} non equivale necessariamente all’approvazione definitiva della legge.</p>
       </li>)}</ul> : <p className={styles.note}>Nessuna votazione finale collegata nello snapshot. Non equivale a una bocciatura.</p>}
       <SourceLink href={act.officialPage}>Atto e iter sul sito del {siteLabel}</SourceLink>
     </div>

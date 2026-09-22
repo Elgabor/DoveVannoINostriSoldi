@@ -7,6 +7,7 @@ export type LegislativeData = {
   source: RepublicLegislativeSource;
   firstSigned: RepublicActSummary[];
   coSigned: RepublicActSummary[];
+  voted: RepublicActSummary[];
 };
 
 export const OWN_VOTE_LABELS: Record<RepublicActVote, string> = {
@@ -26,7 +27,26 @@ const count = (v: unknown) => Number.isSafeInteger(v) && Number(v) >= 0;
 const invalid = (): never => { throw new Error("Risposta degli atti non valida"); };
 
 function validAct(value: unknown, role: RepublicActSummary["role"]): boolean {
-  return object(value) && ["id", "number", "natureId"].every((key) => text(value[key]))
+  if (!object(value) || !["id", "number", "natureId"].every((key) => text(value[key]))) return false;
+  const initiative = value.initiative;
+  const proposer = value.proposer;
+  const responsibleGovernment = value.responsibleGovernment;
+  const senateMetadata = initiative === null && proposer === null && responsibleGovernment === null;
+  const proposerMatchesInitiative = object(initiative) && object(proposer) && (
+    (initiative.kind === "parliamentary" && proposer.kind === "deputy"
+      && text(proposer.id) && responsibleGovernment === null)
+    || (initiative.kind === "government" && proposer.kind === "government")
+  );
+  const cameraMetadata = object(initiative)
+    && (initiative.kind === "parliamentary" || initiative.kind === "government")
+    && text(initiative.label)
+    && object(proposer)
+    && proposerMatchesInitiative
+    && text(proposer.label)
+    && (responsibleGovernment === null || (object(responsibleGovernment)
+      && text(responsibleGovernment.id) && text(responsibleGovernment.label)
+      && isSafeExternalUrl(responsibleGovernment.uri)));
+  return (senateMetadata || cameraMetadata)
     && ["title", "presentedDate", "currentState", "currentStateDate", "outcomeClass"].every((key) => nullableText(value[key]))
     && value.role === role && count(value.coSignerCount) && isSafeExternalUrl(value.officialPage)
     && Array.isArray(value.finalVotes) && value.finalVotes.every((vote) => object(vote)
@@ -43,10 +63,12 @@ export function parseLegislation(payload: unknown, personId: string): Legislativ
     || !isSafeExternalUrl(source.sourceUrl) || !Array.isArray(source.caveats) || !source.caveats.every(text)
     || !Array.isArray(source.outcomeClasses) || !source.outcomeClasses.every((item) => object(item) && text(item.id) && text(item.label))
     || !Array.isArray(payload.firstSigned) || !payload.firstSigned.every((act) => validAct(act, "primo-firmatario"))
-    || !Array.isArray(payload.coSigned) || !payload.coSigned.every((act) => validAct(act, "cofirmatario"))) return invalid();
+    || !Array.isArray(payload.coSigned) || !payload.coSigned.every((act) => validAct(act, "cofirmatario"))
+    || !Array.isArray(payload.voted) || !payload.voted.every((act) => validAct(act, "votante"))) return invalid();
   const all = [...payload.firstSigned, ...payload.coSigned] as RepublicActSummary[];
-  if (new Set(all.map((act) => act.id)).size !== all.length) return invalid();
-  return { personId, source, firstSigned: payload.firstSigned, coSigned: payload.coSigned } as LegislativeData;
+  if (new Set(all.map((act) => act.id)).size !== all.length
+    || new Set(payload.voted.map((act) => act.id)).size !== payload.voted.length) return invalid();
+  return { personId, source, firstSigned: payload.firstSigned, coSigned: payload.coSigned, voted: payload.voted } as LegislativeData;
 }
 
 export function filterActs(acts: RepublicActSummary[], query: string, outcome: string): RepublicActSummary[] {

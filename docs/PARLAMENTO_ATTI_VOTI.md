@@ -1,11 +1,11 @@
 # Parlamento: atti firmati, iter e votazioni finali (XIX legislatura)
 
-Due snapshot tipizzati, uno per ramo, che alimentano la sezione "Proposte di
-legge" del profilo persona in `/politici` e l'endpoint
+Due snapshot tipizzati, uno per ramo, che alimentano la sezione "Voti finali e
+proposte di legge" del profilo persona in `/politici` e l'endpoint
 `/api/politici/<id>/atti`. Rispondono alla issue #545.
 
-- `src/data/generated/camera-atti-voti-xix.json`: proposte di iniziativa
-  parlamentare firmate dai deputati, iter e votazioni finali con voto nominale.
+- `src/data/generated/camera-atti-voti-xix.json`: atti di iniziativa
+  parlamentare e governativa, iter e votazioni finali con voto nominale.
 - `src/data/generated/senato-atti-voti-xix.json`: disegni di legge a prima
   firma senatore, fasi dell'iter e votazioni finali con voto nominale.
 
@@ -16,8 +16,9 @@ OCD, `dati.senato.it` usa OSR) e soprattutto contano in modo diverso: alla
 Camera gli astenuti risultano presenti ma non votanti
 (`presenti = votanti + astenuti`), al Senato gli astenuti contano fra i votanti
 (`votanti = favorevoli + contrari + astenuti`). Anche il perimetro differisce:
-alla Camera entrano gli atti a prima firma deputato, al Senato i disegni la cui
-fase iniziale è "presentato" al ramo Senato con primo firmatario senatore.
+alla Camera entrano gli atti di iniziativa parlamentare e governativa con
+relazioni ufficiali verificabili, al Senato i disegni la cui fase iniziale è
+"presentato" al ramo Senato con primo firmatario senatore.
 Confrontare i numeri dei due rami (conteggi, mediane, percentili) non ha
 significato: statistiche e percentile sono calcolati sempre dentro il roster
 del proprio ramo.
@@ -31,8 +32,9 @@ Fonte unica: endpoint SPARQL ufficiale `https://dati.camera.it/sparql`
 Cinque risposte, tutte lockate in `provenance.responses` con bytes, righe e
 SHA-256 cumulativo:
 
-1. `acts` — atti XIX con `ocd:primo_firmatario` (SELECT DISTINCT, paginata
-   `LIMIT 5000 OFFSET k`).
+1. `acts` — atti XIX con `ocd:primo_firmatario`; per l'iniziativa governativa
+   acquisisce anche la relazione ufficiale al Governo responsabile quando
+   disponibile (SELECT DISTINCT, paginata `LIMIT 5000 OFFSET k`).
 2. `coSigners` — `ocd:altro_firmatario` degli stessi atti. La risposta supera il
    limite dell'endpoint sui risultati ordinati (OFFSET + LIMIT ≤ 10.000), quindi
    pagina per chiave: `FILTER(STR(?atto) >= <ultimo atto>)` e dedup delle coppie
@@ -40,7 +42,7 @@ SHA-256 cumulativo:
 3. `iterStates` — `ocd:rif_statoIter` con `dc:title` e `dc:date` (paginata).
 4. `finalVotes` — votazioni con etichetta contenente "finale" collegate a un
    atto (paginata).
-5. `nominalVotes` — una query per votazione finale tenuta: `?dep ?tipo` per i
+5. `nominalVotes` — una query per votazione finale collegabile: `?dep ?tipo` per i
    record `ocd:voto` (ThreadPoolExecutor, 4 worker, digest cumulativo).
 
 Ogni risposta con esattamente 10.000 righe fallisce chiusa
@@ -48,13 +50,19 @@ Ogni risposta con esattamente 10.000 righe fallisce chiusa
 
 ### Perimetro
 
-Entrano solo gli atti il cui primo firmatario è un deputato XIX
-(`deputato.rdf/d<num>_19`): 2.585 atti. I 337 disegni di legge a prima firma di
-un membro del Governo (blank node con `ocd:rif_membroGoverno`) sono esclusi e
-conteggiati in `coverage.actsWithGovernmentFirstSigner`; le loro votazioni
-finali sono conteggiate in `coverage.finalVotesOnOtherActs` e non incluse. Gli
-atti con numero suffisso (`ac19_1038-B`, `-bis`, …) restano: `number` è stringa,
-`baseNumber` intero per l'ordinamento.
+Entrano gli atti di iniziativa parlamentare e governativa. Per i primi il
+proponente è il deputato indicato da `deputato.rdf/d<num>_19`; per i secondi il
+proponente formale è il Governo, senza trasformare i membri del Governo
+elencati nei blank node in autori individuali. Il Governo responsabile resta
+un campo distinto e può essere `null` quando la relazione non è esposta.
+`coverage.actsByInitiative` riconcilia i due perimetri. Gli atti con numero
+suffisso (`ac19_1038-B`, `-bis`, …) restano: `number` è stringa, `baseNumber`
+intero per l'ordinamento.
+
+Le votazioni finali osservate si riconciliano sempre come
+`finalVotesObserved = finalVotes + finalVotesExcluded`. Restano fuori dal
+corpus verificato le votazioni prive di un atto risolvibile e quelle i cui
+conteggi nominali non coincidono con i totali ufficiali dichiarati.
 
 ### Classi di esito
 
@@ -77,16 +85,19 @@ Sui conteggi ufficiali della Camera gli astenuti sono presenti ma non votanti:
 
 I tipi di voto osservati sono `Favorevole`, `Contrario`, `Astensione`,
 `Non ha votato`, `Ha votato` (votazione segreta), codificati `F C A N V`.
-Qualsiasi altro valore ferma l'import.
+Qualsiasi altro valore ferma l'import. Una votazione con relazione incompleta o
+conteggi non riconciliati non entra nel corpus pubblicabile e incrementa
+`coverage.finalVotesExcluded`; le votazioni incluse rispettano tutte le
+identità sopra.
 
 ### Cosa non misura
 
 La firma non è paternità del testo finale; i conteggi non misurano
 produttività o merito; "Non ha votato" non distingue assenza, missione o
-scelta; le votazioni segrete non espongono il voto individuale; le finali su
-disegni di legge governativi sono fuori perimetro; il Senato ha uno snapshot
-separato con ontologia e regole di conteggio proprie; nessun importo è
-presente.
+scelta; le votazioni segrete non espongono il voto individuale; una votazione
+finale riguarda l'atto nel suo complesso e non ogni singola misura contenuta;
+il Senato ha uno snapshot separato con ontologia e regole di conteggio proprie;
+nessun importo è presente.
 
 ### Verifica e refresh
 

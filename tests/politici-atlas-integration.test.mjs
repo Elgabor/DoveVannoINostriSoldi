@@ -66,6 +66,7 @@ test("every published deputy and senator's legislative payload validates without
     const parsed = parseLegislation({ ok: true, personId: person.id, source, ...acts }, person.id);
     assert.deepEqual(parsed.firstSigned, acts.firstSigned, person.id);
     assert.deepEqual(parsed.coSigned, acts.coSigned, person.id);
+    assert.deepEqual(parsed.voted, acts.voted, person.id);
     assert.deepEqual(parsed.source, source);
   }
 });

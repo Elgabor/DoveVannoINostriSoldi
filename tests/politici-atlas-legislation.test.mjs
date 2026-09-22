@@ -14,9 +14,14 @@ test("acts retain records, votes, source, date and missing data", () => {
   payload.firstSigned[0].title = null;
   payload.firstSigned[0].currentState = null;
   assert.equal(parseLegislation(payload, "dep-1").firstSigned[0].title, null);
+  const voted = parseLegislation(payload, "dep-1").voted[0];
+  assert.equal(voted.role, "votante");
+  assert.equal(voted.initiative.kind, "government");
+  assert.equal(voted.proposer.label, "Governo");
+  assert.equal(voted.responsibleGovernment.id, "g202");
 });
 test("acts fail closed on stale person, unsafe source, duplicates, wrong role and malformed votes", () => {
-  for (const mutate of [p => p.personId = "dep-2", p => p.source.sourceUrl = "javascript:alert(1)", p => p.firstSigned.push(p.firstSigned[0]), p => p.firstSigned[0].role = "cofirmatario", p => p.firstSigned[0].finalVotes[0].ownVote = "__proto__", p => p.firstSigned[0].finalVotes[0].favorevoli = -1, p => p.firstSigned[0].officialPage = "data:text/html,x", p => delete p.source.caveats]) {
+  for (const mutate of [p => p.personId = "dep-2", p => p.source.sourceUrl = "javascript:alert(1)", p => p.firstSigned.push(p.firstSigned[0]), p => p.firstSigned[0].role = "cofirmatario", p => p.voted[0].role = "primo-firmatario", p => p.voted[0].responsibleGovernment.uri = "javascript:alert(1)", p => p.firstSigned[0].finalVotes[0].ownVote = "__proto__", p => p.firstSigned[0].finalVotes[0].favorevoli = -1, p => p.firstSigned[0].officialPage = "data:text/html,x", p => delete p.source.caveats]) {
     const payload = legislationFixture(); mutate(payload);
     assert.throws(() => parseLegislation(payload, "dep-1"));
   }

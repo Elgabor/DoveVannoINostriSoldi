@@ -7,7 +7,8 @@ import "./helpers/register-ts-alias.mjs";
 const { GET } = await import("../src/app/api/politici/[id]/atti/route.ts");
 const { getRepubblicaGraph } = await import("../src/lib/politici-repubblica.ts");
 
-const signerNumericId = attiVotiJson.acts[0].firstSignerId.replace(/^d/, "").replace(/_19$/, "");
+const firstParliamentaryAct = attiVotiJson.acts.find((act) => act.proposer.kind === "deputy");
+const signerNumericId = firstParliamentaryAct.proposer.deputyId.replace(/^d/, "").replace(/_19$/, "");
 const deputyId = `dep-${signerNumericId}`;
 const senatorId = `sen-s${senatoAttiVotiJson.acts[0].firstSignerId}`;
 const nonParliamentarianId = getRepubblicaGraph().people.find(
@@ -33,6 +34,7 @@ test("politici atti serves the signed acts of a Camera deputy", async () => {
   assert.ok(Array.isArray(body.source.caveats));
   assert.ok(Array.isArray(body.firstSigned));
   assert.ok(Array.isArray(body.coSigned));
+  assert.ok(Array.isArray(body.voted));
   assert.ok(body.firstSigned.length > 0);
   assert.equal(body.firstSigned[0].role, "primo-firmatario");
   const voteCodes = new Set(["F", "C", "A", "N", "V", "non-rilevato"]);
@@ -40,6 +42,12 @@ test("politici atti serves the signed acts of a Camera deputy", async () => {
     assert.equal(act.chamber, "camera");
     assert.match(act.id, /^ac19_\d+(?:-[A-Za-z]+)?$/);
     for (const vote of act.finalVotes) assert.ok(voteCodes.has(vote.ownVote), vote.id);
+  }
+  for (const act of body.voted) {
+    assert.equal(act.role, "votante");
+    assert.equal(act.chamber, "camera");
+    assert.ok(act.finalVotes.length > 0);
+    assert.ok(act.finalVotes.every((vote) => vote.ownVote !== "non-rilevato"));
   }
 });
 
@@ -58,6 +66,7 @@ test("politici atti serves the signed acts of a Senato member", async () => {
   assert.ok(Array.isArray(body.source.outcomeClasses));
   assert.ok(Array.isArray(body.source.caveats));
   assert.ok(body.firstSigned.length > 0);
+  assert.deepEqual(body.voted, []);
   assert.equal(body.firstSigned[0].role, "primo-firmatario");
   const voteCodes = new Set(["F", "C", "A", "P", "M", "non-rilevato"]);
   for (const act of [...body.firstSigned, ...body.coSigned]) {

@@ -127,7 +127,11 @@ try {
     }
   }
 
-  const deputy = map.people.find((item) => item.chamberId === "camera" && (getRepubblicaLegislativeActs(item.id)?.firstSigned.length ?? 0) > 0);
+  const deputy = map.people.find((item) => {
+    if (item.chamberId !== "camera") return false;
+    const acts = getRepubblicaLegislativeActs(item.id);
+    return (acts?.firstSigned.length ?? 0) > 0 && (acts?.voted.length ?? 0) > 0;
+  });
   for (const width of [390, 1280]) {
     await scenario(`legislative-acts-${width}`, urls[0], width, async (page) => {
       await page.type('input[role="combobox"]', deputy.name);
@@ -138,13 +142,15 @@ try {
       await clickText(page, "Atti e voti");
       await page.waitForSelector(`[data-legislative-person="${deputy.id}"]`);
       const acts = getRepubblicaLegislativeActs(deputy.id);
-      assert.equal(await page.$$eval("[data-act-id]", (elements) => elements.length), Math.min(8, acts.firstSigned.length));
-      assert.equal(await page.$eval("[data-act-id]", (element) => element.dataset.actId), acts.firstSigned[0].id);
+      assert.equal(await page.$$eval("[data-act-id]", (elements) => elements.length), Math.min(8, acts.voted.length));
+      assert.equal(await page.$eval("[data-act-id]", (element) => element.dataset.actId), acts.voted[0].id);
       await page.click("[data-act-id] > summary");
       await page.waitForSelector("[data-act-id][open]");
-      await page.type('[aria-label="Proposte di legge firmate"] input[type="search"]', "zzznontrovato98765");
+      await page.type('[aria-label="Votazioni finali e proposte di legge"] input[type="search"]', "zzznontrovato98765");
       await page.waitForFunction(() => document.body.textContent.includes("Nessun atto corrisponde ai filtri"));
       await page.evaluate(() => [...document.querySelectorAll("button")].find((button) => button.textContent.includes("Azzera ricerca negli atti")).click());
+      await clickText(page, "Prima firma");
+      assert.equal(await page.$$eval("[data-act-id]", (elements) => elements.length), Math.min(8, acts.firstSigned.length));
       await clickText(page, "Cofirme");
       assert.equal(await page.$$eval("[data-act-id]", (elements) => elements.length), Math.min(8, acts.coSigned.length));
     });

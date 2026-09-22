@@ -106,6 +106,9 @@ test("atlas: legislative acts define «arrivate in fondo» from the official leg
   assert.match(acts, /Camera e Senato usano snapshot e regole/);
   assert.doesNotMatch(acts, /produttivit[àa]|merito politico/);
   assert.doesNotMatch(acts, /firstSignedPercentile|peerCount|più proposte a prima firma del/);
+  assert.match(acts, /Votazioni finali/);
+  assert.match(acts, /atto nel suo complesso/);
+  assert.match(acts, /Proponente formale/);
 });
 
 test("atlas: local foto and simboli proxies skip the next/image optimizer", async () => {

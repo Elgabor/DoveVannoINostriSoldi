@@ -367,6 +367,5 @@
 }
 
 .statusContent { font-size: 13px; line-height: 1.7; color: var(--atlas-muted); }
-.attendanceRow { grid-template-columns: minmax(0, 1fr) auto; }
 .seatTooltip > div > strong { min-width: 0; }
 @media (prefers-reduced-motion: reduce) { .portrait[data-loaded] img { transition: none; } }

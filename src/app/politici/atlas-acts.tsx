@@ -43,7 +43,6 @@ function ActsBrowser({ data, activity }: { data: LegislativeData; activity: Repu
   const filtered = Boolean(query.trim() || outcome);
   const reset = () => { setQuery(""); setOutcome(""); setLimit(8); };
   const chamberLabel = data.source.chamber === "senato" ? "Senato" : "Camera";
-  const membersLabel = data.source.chamber === "senato" ? "senatori" : "deputati";
   const comparison = activity?.comparison ?? null;
   const becameLaw = activity?.counts.becameLaw;
   return <section className={extra.actsSection} aria-label="Proposte di legge firmate" data-legislative-person={data.personId} data-legislative-chamber={data.source.chamber}>
@@ -60,19 +59,13 @@ function ActsBrowser({ data, activity }: { data: LegislativeData; activity: Repu
       in aula e non è confrontabile con l&apos;altro ramo: Camera e Senato usano snapshot e regole
       di conteggio distinti.
     </p> : null}
-    {comparison ? <>
-      <p className={styles.note}>
+    {comparison ? <p className={styles.note}>
         Mediana {chamberLabel}: {comparison.chamberMedianFirstSigned.toLocaleString("it-IT")} a prima firma
         {comparison.groupMedianFirstSigned !== null && comparison.groupLabel
           ? ` · mediana ${comparison.groupLabel}: ${comparison.groupMedianFirstSigned.toLocaleString("it-IT")}`
           : ""}
         .
-      </p>
-      {data.firstSigned.length > 0 ? <p className={styles.note}>
-        Ha presentato più proposte a prima firma del {comparison.firstSignedPercentile}% degli altri{" "}
-        {comparison.peerCount} {membersLabel} in carica. Non è una classifica di qualità o efficacia.
       </p> : null}
-    </> : null}
     <p className={styles.note}>Atti di iniziativa parlamentare del perimetro indicato dalla fonte. Il numero di firme non misura qualità o efficacia dell’attività parlamentare.</p>
     <div className={extra.actRoleSwitch} role="group" aria-label="Tipo di firma">
       <button type="button" aria-pressed={role === "firstSigned"} onClick={() => { setRole("firstSigned"); setLimit(8); }}>Prima firma</button>

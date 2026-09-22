@@ -60,18 +60,9 @@ test("senator profiles expose senato legislative activity", () => {
     0,
   );
   assert.equal(byOutcomeSum, activity.counts.total);
-  assert.ok(activity.comparison.firstSignedPercentile >= 0);
-  assert.ok(activity.comparison.firstSignedPercentile <= 100);
-  // percentile = share of the OTHER roster members with fewer first-signed acts
-  const senatoCounts = Object.values(profiles)
-    .filter((candidate) => candidate.legislativeActivity?.chamber === "senato")
-    .map((candidate) => candidate.legislativeActivity.counts.firstSigned);
-  const expectedPercentile = Math.round(
-    (100 * senatoCounts.filter((count) => count < activity.counts.firstSigned).length) /
-      (senatoCounts.length - 1),
-  );
-  assert.equal(activity.comparison.firstSignedPercentile, expectedPercentile);
-  assert.equal(activity.comparison.peerCount, senatoCounts.length - 1);
+  assert.equal("firstSignedPercentile" in activity.comparison, false);
+  assert.equal("peerCount" in activity.comparison, false);
+  assert.ok(activity.comparison.chamberMedianFirstSigned >= 0);
   assert.ok(activity.recentFirstSigned.length <= 3);
   assert.ok(activity.recentFirstSigned.every((act) => act.phases === undefined));
 
@@ -85,13 +76,6 @@ test("senator profiles expose senato legislative activity", () => {
     for (const vote of act.finalVotes) assert.ok(voteCodes.has(vote.ownVote), vote.id);
   }
 
-  const zeroFirstSigned = Object.values(profiles).find(
-    (candidate) =>
-      candidate.legislativeActivity?.chamber === "senato" &&
-      candidate.legislativeActivity.counts.firstSigned === 0,
-  );
-  assert.ok(zeroFirstSigned);
-  assert.equal(zeroFirstSigned.legislativeActivity.comparison.firstSignedPercentile, 0);
 });
 
 test("tampered snapshot with a broken tally fails the parse", () => {

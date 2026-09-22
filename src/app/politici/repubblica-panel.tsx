@@ -9,7 +9,7 @@ import type { GraphSelection } from "./atlas-model";
 import { longDate } from "./atlas-model";
 import type { NewsData, Resource } from "./atlas-data";
 import { Icon, PersonRow, Portrait, SourceLink, Status } from "./atlas-primitives";
-import { AttendanceRanking, EducationBlock, InstitutionalRelations, NewsBlock, ProfileFacts, ProgramBlock, VoteAttendance } from "./atlas-facts";
+import { EducationBlock, InstitutionalRelations, NewsBlock, ProfileFacts, ProgramBlock, VoteAttendance } from "./atlas-facts";
 import { JudicialBlock, type JudicialState } from "./atlas-judicial";
 import styles from "./politici.module.css";
 import extra from "./atlas-enhancements.module.css";
@@ -64,7 +64,6 @@ export function RepubblicaPanel(props: PanelProps) {
       </button>)}
     </nav>
     <EducationBlock distribution={map.education.all} scopeLabel="mappa" />
-    <AttendanceRanking ranking={map.cameraAttendanceRanking} onSelect={onSelect} />
     <p className={styles.note}>Una persona con più incarichi è contata una sola volta. La mappa non misura influenza politica.</p>
     <p className={styles.note}>Rilevazione più recente: {longDate(map.updatedAt)}. Le date delle singole fonti possono differire.</p>
   </div>;
@@ -136,7 +135,6 @@ function InstitutionPanel({ map, id, onSelect }: Pick<PanelProps, "map" | "onSel
       </ul>
     </details> : null}
     {distribution ? <EducationBlock distribution={distribution} scopeLabel={institution.shortLabel} /> : null}
-    {id === "camera" ? <AttendanceRanking ranking={map.cameraAttendanceRanking} onSelect={onSelect} /> : null}
     {id === "senato" ? <p className={styles.note}>Nella base dati non è disponibile una tabella del Senato equivalente alla partecipazione al voto della Camera.</p> : null}
     {id === "governo" ? <details className={styles.disclosure}>
       <summary>Ministeri e deleghe <span>

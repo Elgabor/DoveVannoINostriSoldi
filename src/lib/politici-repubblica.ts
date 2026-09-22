@@ -986,8 +986,6 @@ export type RepublicMap = {
   partyFamilies: PoliticiRepubblicaGraph["partyFamilies"];
   edges: PoliticiRepubblicaGraph["edges"];
   people: RepublicMapPerson[];
-  /** Official Camera ranking only; Senato has no equivalent published table. */
-  cameraAttendanceRanking: CameraAttendanceRanking;
   /** Formation areas from official profession notes (#549). */
   education: {
     all: EducationDistribution;
@@ -995,30 +993,6 @@ export type RepublicMap = {
     senato: EducationDistribution;
     governo: EducationDistribution;
   };
-};
-
-export type CameraAttendanceRankRow = {
-  rank: number;
-  personId: string;
-  name: string;
-  groupLabel: string;
-  presencePercent: string;
-  presenceTotal: number;
-  absences: number;
-  absencesPercent: string;
-};
-
-export type CameraAttendanceRanking = {
-  chamber: "camera";
-  periodLabel: string;
-  observedDate: string;
-  sourceUrl: string;
-  sourceLabel: string;
-  matchedCount: number;
-  unmatchedRows: number;
-  rosterWithoutRow: number;
-  caveat: string;
-  rows: CameraAttendanceRankRow[];
 };
 
 export type RepublicVoteAttendance = {
@@ -1037,9 +1011,6 @@ export type RepublicVoteAttendance = {
   justifiedAbsencesPercent: string;
   sourceUrl: string;
   sourceLabel: string;
-  /** 1 = most present among matched Camera deputies with an official row. */
-  rank: number;
-  rankedAmong: number;
 };
 
 /** Nominal vote position. N/V only exist at the Camera, P/M only at the Senato;
@@ -1113,10 +1084,6 @@ export type RepublicLegislativeActivity = {
     groupSize: number | null;
     groupMedianFirstSigned: number | null;
     groupMedianCoSigned: number | null;
-    /** Share of the roster's other members with firstSigned < the person's, 0-100. */
-    firstSignedPercentile: number;
-    /** Members of the chamber's roster other than the person (chamberSize - 1). */
-    peerCount: number;
   };
   recentFirstSigned: RepublicActSummary[];
 };
@@ -1149,70 +1116,11 @@ export type RepublicProfile = {
   legislativeActivity: RepublicLegislativeActivity | null;
 };
 
-function parsePresencePercent(value: string): number {
-  const parsed = Number.parseFloat(value.replaceAll("%", "").replace(",", "."));
-  require(Number.isFinite(parsed), `percentuale presenza non numerica: ${value}`);
-  return parsed;
-}
-
-function buildCameraAttendanceRanking(peopleById: Map<string, RepublicPerson>): CameraAttendanceRanking {
-  const ranked = cameraAttendance.deputies
-    .filter((row): row is CameraPartecipazioneDeputy & { numericId: string } => row.numericId !== null)
-    .map((row) => {
-      const personId = `dep-${row.numericId}`;
-      const person = peopleById.get(personId);
-      if (!person) return null;
-      return {
-        personId,
-        name: person.displayName,
-        groupLabel: row.groupLabel,
-        presencePercent: row.presencePercent,
-        presenceTotal: row.presenceTotal,
-        absences: row.absences,
-        absencesPercent: row.absencesPercent,
-        presenceValue: parsePresencePercent(row.presencePercent),
-      };
-    })
-    .filter((row): row is NonNullable<typeof row> => row !== null)
-    .sort((left, right) => {
-      if (right.presenceValue !== left.presenceValue) return right.presenceValue - left.presenceValue;
-      return left.name.localeCompare(right.name, "it");
-    })
-    .map((row, index) => ({
-      personId: row.personId,
-      name: row.name,
-      groupLabel: row.groupLabel,
-      presencePercent: row.presencePercent,
-      presenceTotal: row.presenceTotal,
-      absences: row.absences,
-      absencesPercent: row.absencesPercent,
-      rank: index + 1,
-    }));
-
-  return {
-    chamber: "camera",
-    periodLabel: cameraAttendance.period.label,
-    observedDate: cameraAttendance.period.observedDate,
-    sourceUrl: cameraAttendance.source.pageUrl,
-    sourceLabel: "Camera dei deputati — partecipazione al voto",
-    matchedCount: ranked.length,
-    unmatchedRows: cameraAttendance.coverage.unmatchedRows,
-    rosterWithoutRow: cameraAttendance.coverage.rosterDeputiesWithoutRow,
-    caveat:
-      "Classifica solo sui deputati della Camera con riga ufficiale collegata. Il Senato non pubblica una tabella equivalente: i senatori non compaiono. Misura le votazioni elettroniche in Aula (voto o missione), non le commissioni.",
-    rows: ranked,
-  };
-}
-
-function profileAttendanceFor(
-  person: RepublicPerson,
-  rankingByPersonId: Map<string, CameraAttendanceRankRow>,
-): RepublicVoteAttendance | null {
+function profileAttendanceFor(person: RepublicPerson): RepublicVoteAttendance | null {
   if (person.chamberId !== "camera" || !person.id.startsWith("dep-")) return null;
   const numericId = person.id.slice("dep-".length);
   const row = attendanceByNumericId.get(numericId);
-  const ranked = rankingByPersonId.get(person.id);
-  if (!row || !ranked) return null;
+  if (!row) return null;
   return {
     chamber: "camera",
     periodLabel: cameraAttendance.period.label,
@@ -1229,8 +1137,6 @@ function profileAttendanceFor(
     justifiedAbsencesPercent: row.justifiedAbsencesPercent,
     sourceUrl: cameraAttendance.source.pageUrl,
     sourceLabel: "Camera dei deputati — partecipazione al voto",
-    rank: ranked.rank,
-    rankedAmong: rankingByPersonId.size,
   };
 }
 
@@ -1261,8 +1167,6 @@ function medianOf(values: number[]): number {
 type LegislativeIndex<A> = {
   firstActsByNumericId: Map<string, A[]>;
   coActsByNumericId: Map<string, A[]>;
-  firstCounts: number[];
-  firstCountByNumericId: Map<string, number>;
   groupStats: Map<string, { size: number; medianFirst: number; medianCo: number }>;
   chamberMedianFirst: number;
   chamberMedianCo: number;
@@ -1294,14 +1198,12 @@ function buildLegislativeIndex<A extends { firstSignerId: string; coSignerIds: s
   for (const list of firstActsByNumericId.values()) list.sort(compare);
   for (const list of coActsByNumericId.values()) list.sort(compare);
 
-  const firstCountByNumericId = new Map<string, number>();
   const firstCounts: number[] = [];
   const coCounts: number[] = [];
   const byGroup = new Map<string, { first: number[]; co: number[] }>();
   for (const member of roster) {
     const first = firstActsByNumericId.get(member.numericId)?.length ?? 0;
     const co = coActsByNumericId.get(member.numericId)?.length ?? 0;
-    firstCountByNumericId.set(member.numericId, first);
     firstCounts.push(first);
     coCounts.push(co);
     const bucket = byGroup.get(member.groupId) ?? { first: [], co: [] };
@@ -1320,8 +1222,6 @@ function buildLegislativeIndex<A extends { firstSignerId: string; coSignerIds: s
   return {
     firstActsByNumericId,
     coActsByNumericId,
-    firstCounts,
-    firstCountByNumericId,
     groupStats,
     chamberMedianFirst: medianOf(firstCounts),
     chamberMedianCo: medianOf(coCounts),
@@ -1528,10 +1428,6 @@ function profileLegislativeActivity(person: RepublicPerson): RepublicLegislative
     byOutcome.set(summary.outcomeClass, bucket);
   }
   const group = index.groupStats.get(rosterGroupId!) ?? null;
-  const myFirst = index.firstCountByNumericId.get(numericId) ?? 0;
-  const peerCount = Math.max(index.firstCounts.length - 1, 0);
-  const strictlyBelow = index.firstCounts.filter((count) => count < myFirst).length;
-
   return {
     chamber,
     counts: {
@@ -1556,8 +1452,6 @@ function profileLegislativeActivity(person: RepublicPerson): RepublicLegislative
       groupSize: group?.size ?? null,
       groupMedianFirstSigned: group?.medianFirst ?? null,
       groupMedianCoSigned: group?.medianCo ?? null,
-      firstSignedPercentile: peerCount > 0 ? Math.round((100 * strictlyBelow) / peerCount) : 0,
-      peerCount,
     },
     // Phases stay on the /atti route payload; the profile only shows the
     // current state and its branch for the recent acts.
@@ -1569,8 +1463,6 @@ function profileLegislativeActivity(person: RepublicPerson): RepublicLegislative
 
 export function getRepubblicaMap(): RepublicMap {
   const graph = getRepubblicaGraph();
-  const peopleById = new Map(graph.people.map((person) => [person.id, person]));
-  const cameraAttendanceRanking = buildCameraAttendanceRanking(peopleById);
   const educationPeople = graph.people.map((person) => ({
     profession: person.profession,
     biography: person.biography,
@@ -1626,7 +1518,6 @@ export function getRepubblicaMap(): RepublicMap {
       groupLeader: person.isGroupLeader,
       photo: person.photoUrl !== null,
     })),
-    cameraAttendanceRanking,
     education: {
       all: buildEducationDistribution(educationPeople),
       camera: buildEducationDistribution(educationPeople.filter((person) => person.chamberId === "camera")),
@@ -1638,10 +1529,6 @@ export function getRepubblicaMap(): RepublicMap {
 
 export function getRepubblicaProfiles(): Record<string, RepublicProfile> {
   const graph = getRepubblicaGraph();
-  const peopleById = new Map(graph.people.map((person) => [person.id, person]));
-  const rankingByPersonId = new Map(
-    buildCameraAttendanceRanking(peopleById).rows.map((row) => [row.personId, row]),
-  );
   const entries = graph.people.map((person) => [
     person.id,
     {
@@ -1665,7 +1552,7 @@ export function getRepubblicaProfiles(): Record<string, RepublicProfile> {
       socialLinks: person.socialLinks,
       biography: person.biography,
       education: classifyEducation(person.profession, person.biography),
-      voteAttendance: profileAttendanceFor(person, rankingByPersonId),
+      voteAttendance: profileAttendanceFor(person),
       legislativeActivity: profileLegislativeActivity(person),
     } satisfies RepublicProfile,
   ]);

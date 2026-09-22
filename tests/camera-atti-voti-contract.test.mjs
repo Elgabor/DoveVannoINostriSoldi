@@ -68,18 +68,9 @@ test("deputy profiles expose camera legislative activity", () => {
     (act) => act.currentState !== null,
   ).length;
   assert.equal(byOutcomeSum, withState);
-  assert.ok(activity.comparison.firstSignedPercentile >= 0);
-  assert.ok(activity.comparison.firstSignedPercentile <= 100);
-  // percentile = share of the OTHER roster members with fewer first-signed acts
-  const cameraCounts = Object.values(profiles)
-    .filter((candidate) => candidate.legislativeActivity?.chamber === "camera")
-    .map((candidate) => candidate.legislativeActivity.counts.firstSigned);
-  const expectedPercentile = Math.round(
-    (100 * cameraCounts.filter((count) => count < activity.counts.firstSigned).length) /
-      (cameraCounts.length - 1),
-  );
-  assert.equal(activity.comparison.firstSignedPercentile, expectedPercentile);
-  assert.equal(activity.comparison.peerCount, cameraCounts.length - 1);
+  assert.equal("firstSignedPercentile" in activity.comparison, false);
+  assert.equal("peerCount" in activity.comparison, false);
+  assert.ok(activity.comparison.chamberMedianFirstSigned >= 0);
   assert.ok(activity.recentFirstSigned.length <= 3);
   assert.ok(activity.recentFirstSigned.every((act) => act.phases === undefined));
   assert.equal(acts.firstSigned.length, activity.counts.firstSigned);
@@ -87,12 +78,6 @@ test("deputy profiles expose camera legislative activity", () => {
   for (const act of [...acts.firstSigned, ...acts.coSigned]) {
     for (const vote of act.finalVotes) assert.ok(voteCodes.has(vote.ownVote), vote.id);
   }
-
-  const zeroFirstSigned = Object.values(profiles).find(
-    (candidate) => candidate.legislativeActivity && candidate.legislativeActivity.counts.firstSigned === 0,
-  );
-  assert.ok(zeroFirstSigned);
-  assert.equal(zeroFirstSigned.legislativeActivity.comparison.firstSignedPercentile, 0);
 
   const senator = Object.entries(profiles).find(([, candidate]) =>
     candidate.roles.some((role) => role.kind === "senatore" || role.kind === "senatore-a-vita"),

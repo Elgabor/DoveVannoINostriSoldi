@@ -41,7 +41,8 @@ export function parseProfiles(payload: unknown): Record<string, RepublicProfile>
       || !optionalText(profile.education.evidence)) return invalid();
     const attendance = profile.voteAttendance;
     if (attendance !== null && (!object(attendance)
-      || !["votesCast", "missions", "presenceTotal", "absences", "justifiedAbsences", "rank", "rankedAmong"].every((key) => count(attendance[key]))
+      || "rank" in attendance || "rankedAmong" in attendance
+      || !["votesCast", "missions", "presenceTotal", "absences", "justifiedAbsences"].every((key) => count(attendance[key]))
       || !["periodLabel", "observedDate", "sourceLabel", "votesCastPercent", "missionsPercent", "presencePercent", "absencesPercent", "justifiedAbsencesPercent"].every((key) => text(attendance[key]))
       || !isSafeExternalUrl(attendance.sourceUrl))) return invalid();
   }

@@ -154,6 +154,7 @@ test("atlas: institutional graph scope restores the radial overview map", async 
   const storico = await read("src/app/politici/atlas-storico-voti.tsx");
   assert.match(storico, /Cosa si è votato/);
   assert.match(storico, /Chi ha votato/);
+  assert.match(storico, /Voti espressi per gruppo/);
   assert.match(storico, /parseActHeadline/);
   assert.match(storico, /themeTimelineRail/);
   const europa = await read("src/app/politici/europa/page.tsx");

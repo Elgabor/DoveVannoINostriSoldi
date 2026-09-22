@@ -4,6 +4,7 @@ import {
 import {
   parseSenatoAttiVotiSnapshot,
 } from "@/lib/data/senato-atti-voti-contract";
+import { parsePoliticiCameraSnapshot } from "@/lib/data/politici-camera-contract";
 import {
   findRepublicPerson,
   getRepubblicaGraph,
@@ -20,14 +21,20 @@ import {
   type VoteThemeDefinition,
 } from "@/lib/politici-voti-tema-catalog";
 import cameraAttiVotiJson from "@/data/generated/camera-atti-voti-xix.json";
+import cameraPeopleJson from "@/data/generated/politici-camera-xix.json";
 import senatoAttiVotiJson from "@/data/generated/senato-atti-voti-xix.json";
 
 export { VOTE_THEMES, type VoteThemeDefinition } from "@/lib/politici-voti-tema-catalog";
 
 const cameraSnapshot = parseCameraAttiVotiSnapshot(cameraAttiVotiJson);
+const cameraPeopleSnapshot = parsePoliticiCameraSnapshot(cameraPeopleJson);
 const senatoSnapshot = parseSenatoAttiVotiSnapshot(senatoAttiVotiJson);
 const cameraVoteById = new Map(cameraSnapshot.finalVotes.map((vote) => [vote.id, vote]));
 const senatoVoteById = new Map(senatoSnapshot.finalVotes.map((vote) => [vote.id, vote]));
+const cameraMembershipsByDeputy = Map.groupBy(
+  cameraPeopleSnapshot.groupMemberships,
+  (membership) => membership.deputyId,
+);
 
 export type ThemeVoteRow = {
   voteId: string;
@@ -108,6 +115,15 @@ export type ThemeHistoryEvent = ThemeHistoryEventBase & {
     contrari: ThemeEventVoter[];
     astenuti: ThemeEventVoter[];
   };
+  groupVotes: ThemeGroupVote[] | null;
+};
+
+export type ThemeGroupVote = {
+  groupId: string | null;
+  groupLabel: string;
+  favorevoli: number;
+  contrari: number;
+  astenuti: number;
 };
 
 export type ThemeHistoryMember = {
@@ -266,6 +282,13 @@ function expressedCount(summary: ThemeVoteSummary): number {
   return summary.favorevoli + summary.contrari + summary.astenuti;
 }
 
+function cameraGroupAt(numericId: string, date: string): string | null {
+  const matches = (cameraMembershipsByDeputy.get(`d${numericId}_19`) ?? [])
+    .filter((membership) => membership.startDate <= date
+      && (membership.endDate === null || date < membership.endDate));
+  return matches.length === 1 ? matches[0]!.groupId : null;
+}
+
 /** Index matching final votes once; reuse vote maps for every parliamentarian. */
 function indexChamberVotes(
   chamber: "camera" | "senato",
@@ -419,6 +442,8 @@ const CAVEATS = [
   "Il voto individuale segue i codici ufficiali della fonte: mancata partecipazione, presenza senza voto, missione o congedo e dato non rilevato restano stati distinti.",
   "Se una persona non compare nelle liste nominali della votazione, il dato resta «non rilevato»: non viene trasformato in assenza o mancata partecipazione.",
   "Gli snapshot non includono uno storico completo dei mandati: «fuori mandato» resta non disponibile, distinto dallo zero e dal dato non rilevato.",
+  "La distribuzione per gruppo è disponibile per la Camera e usa l'adesione ufficiale valida alla data del voto; le etichette dei gruppi vengono dal roster corrente e possono riflettere denominazioni successive. Il Senato resta senza distribuzione finché lo storico equivalente non è integrato.",
+  "La distribuzione Camera conta tutti i voti nominali, anche degli ex deputati; l'elenco delle persone mostra soltanto il roster corrente nel perimetro dei filtri.",
 ] as const;
 
 export function listVoteThemesForChamber(chamber: "camera" | "senato") {
@@ -514,6 +539,35 @@ export function getThemeVoteHistory(options: {
   const members: ThemeHistoryMember[] = [];
   const votersByEvent = new Map<string, ThemeHistoryEvent["voters"]>();
 
+  function historicalCameraGroupLabel(groupId: string | null, compact = false): string {
+    if (groupId === null) return "Gruppo non determinato";
+    const group = groups.get(`camera-${groupId}`);
+    return (compact ? group?.shortLabel : group?.label) ?? "Gruppo non determinato";
+  }
+
+  function cameraGroupVotes(item: IndexedVote): ThemeGroupVote[] {
+    const buckets = new Map<string, ThemeGroupVote>();
+    for (const [numericId, vote] of Object.entries(item.votesByNumericId)) {
+      if (vote !== "F" && vote !== "C" && vote !== "A") continue;
+      const groupId = cameraGroupAt(numericId, item.event.date);
+      const key = groupId ?? "unknown";
+      const bucket = buckets.get(key) ?? {
+        groupId,
+        groupLabel: historicalCameraGroupLabel(groupId),
+        favorevoli: 0,
+        contrari: 0,
+        astenuti: 0,
+      };
+      bucket[REPUBLIC_VOTE_STATE_META[vote].countKey] += 1;
+      buckets.set(key, bucket);
+    }
+    return [...buckets.values()].sort((left, right) => (
+      (right.favorevoli + right.contrari + right.astenuti)
+      - (left.favorevoli + left.contrari + left.astenuti)
+      || left.groupLabel.localeCompare(right.groupLabel, "it")
+    ));
+  }
+
   function emptyVoters(): ThemeHistoryEvent["voters"] {
     return {
       favorevoli: [],
@@ -573,13 +627,16 @@ export function getThemeVoteHistory(options: {
 
     for (const item of indexed) {
       const ownVote = (item.votesByNumericId[numericId] ?? "non-rilevato") as RepublicActVote;
+      const eventGroupLabel = person.chamberId === "camera"
+        ? historicalCameraGroupLabel(cameraGroupAt(numericId, item.event.date), true)
+        : groupLabel;
       pushVoter(
         ensureVoters(`${item.event.chamber}:${item.event.voteId}`),
         ownVote,
         {
           personId: person.id,
           name: person.displayName,
-          groupLabel,
+          groupLabel: eventGroupLabel,
           ownVote,
         },
       );
@@ -612,6 +669,7 @@ export function getThemeVoteHistory(options: {
   const events = [...indexedByKey.values()]
     .map((item) => ({
       ...item.event,
+      groupVotes: item.event.chamber === "camera" ? cameraGroupVotes(item) : null,
       voters: votersByEvent.get(`${item.event.chamber}:${item.event.voteId}`)
         ?? emptyVoters(),
     }))
@@ -650,3 +708,5 @@ export function __testOnly_indexSize(themeId: string, chamber: "camera" | "senat
   if (!theme) return 0;
   return indexChamberVotes(chamber, theme.needles).length;
 }
+
+export const __testOnly_cameraGroupAt = cameraGroupAt;

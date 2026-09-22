@@ -11,6 +11,7 @@ const {
   getRepubblicaThemeVotes,
   getThemeVoteHistory,
   VOTE_THEMES,
+  __testOnly_cameraGroupAt,
 } = await import("../src/lib/politici-voti-tema.ts");
 const { countRepublicVoteStates } = await import("../src/lib/politici-vote-states.ts");
 
@@ -149,6 +150,39 @@ test("theme history indexes votes once and supports chamber / expressed filters"
   )));
   assert.ok(history.events.some((event) => event.actTitle.length > 0 && event.officialPage.length > 0));
 
+  const cameraEvents = history.events.filter((event) => event.chamber === "camera");
+  assert.ok(cameraEvents.length >= 1);
+  assert.ok(cameraEvents.every((event) => Array.isArray(event.groupVotes)));
+  assert.ok(history.events.filter((event) => event.chamber === "senato")
+    .every((event) => event.groupVotes === null));
+  assert.ok(cameraEvents.every((event) => event.groupVotes.every((group) => (
+    Number.isInteger(group.favorevoli)
+    && Number.isInteger(group.contrari)
+    && Number.isInteger(group.astenuti)
+    && !Object.hasOwn(group, "unanimous")
+  ))));
+  assert.ok(cameraEvents.every((event) => {
+    const totals = event.groupVotes.reduce((result, group) => ({
+      favorevoli: result.favorevoli + group.favorevoli,
+      contrari: result.contrari + group.contrari,
+      astenuti: result.astenuti + group.astenuti,
+    }), { favorevoli: 0, contrari: 0, astenuti: 0 });
+    return totals.favorevoli === event.favorevoli
+      && totals.contrari === event.contrari
+      && totals.astenuti === event.astenuti;
+  }));
+  assert.equal(__testOnly_cameraGroupAt("300480", "2023-11-19"), "gr4135");
+  assert.equal(__testOnly_cameraGroupAt("300480", "2023-11-20"), "gr4211");
+  assert.equal(__testOnly_cameraGroupAt("300480", "2022-10-17"), null);
+
+  const voterAt = (voteId, personId) => {
+    const event = history.events.find((item) => item.voteId === voteId);
+    return [...event.voters.favorevoli, ...event.voters.contrari, ...event.voters.astenuti]
+      .find((voter) => voter.personId === personId);
+  };
+  assert.equal(voterAt("vs19_192_032", "dep-300480").groupLabel, "Az");
+  assert.equal(voterAt("vs19_214_001", "dep-300480").groupLabel, "IV");
+
   const cameraOnly = getThemeVoteHistory({ themeId: "lavoro", chamber: "camera" });
   assert.ok(cameraOnly.members.every((member) => member.chamber === "camera"));
   assert.ok(cameraOnly.events.every((event) => event.chamber === "camera"));
@@ -224,6 +258,7 @@ test("politici storico voti-tema API serves directory with ramo/espressi", async
   assert.ok(body.events.length >= 1);
   assert.ok(body.years.length >= 1);
   assert.ok(body.events.every((event) => object(event.voters)));
+  assert.ok(body.events.every((event) => Array.isArray(event.groupVotes)));
   assert.ok(body.members.some((member) => /meloni/i.test(member.name)));
 
   const missingTheme = await getThemeHistory(

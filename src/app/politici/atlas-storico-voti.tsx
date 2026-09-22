@@ -41,6 +41,14 @@ type EventVoter = {
   ownVote: RepublicActVote;
 };
 
+type GroupVote = {
+  groupId: string | null;
+  groupLabel: string;
+  favorevoli: number;
+  contrari: number;
+  astenuti: number;
+};
+
 type ThemeHistoryData = {
   theme: { id: string; label: string; description: string } | null;
   query: string | null;
@@ -69,6 +77,7 @@ type ThemeHistoryData = {
       contrari: EventVoter[];
       astenuti: EventVoter[];
     };
+    groupVotes: GroupVote[] | null;
   }>;
   years: YearBucket[];
   members: Array<{
@@ -102,6 +111,15 @@ function validVoters(value: unknown): boolean {
       && REPUBLIC_VOTE_STATE_META[voter.ownVote].countKey === key));
 }
 
+function validGroupVotes(value: unknown): boolean {
+  return Array.isArray(value) && value.every((group) => object(group)
+    && (group.groupId === null || text(group.groupId))
+    && text(group.groupLabel)
+    && count(group.favorevoli)
+    && count(group.contrari)
+    && count(group.astenuti));
+}
+
 function parseHistory(payload: unknown): ThemeHistoryData {
   if (!object(payload) || payload.ok !== true) throw new Error("invalid");
   if (!["periodLabel", "observedDate", "cameraSourceUrl", "cameraSourceLabel", "senatoSourceUrl", "senatoSourceLabel"].every((key) => text(payload[key]))
@@ -113,7 +131,10 @@ function parseHistory(payload: unknown): ThemeHistoryData {
     || !Array.isArray(payload.themes)
     || !Array.isArray(payload.caveats)
     || !payload.caveats.every(text)
-    || !payload.events.every((event) => object(event) && validVoters(event.voters))
+    || !payload.events.every((event) => object(event) && validVoters(event.voters)
+      && (event.chamber === "camera"
+        ? validGroupVotes(event.groupVotes)
+        : event.chamber === "senato" && event.groupVotes === null))
     || !payload.years.every((year) => object(year) && isRepublicVoteStateCounts(year))
     || !payload.members.every((member) => object(member) && object(member.summary)
       && count(member.summary.totale) && isRepublicVoteStateCounts(member.summary)
@@ -271,6 +292,22 @@ function VoterGroup({
         </li>
       ))}
     </ul>
+  </details>;
+}
+
+function GroupVotes({ groups }: { groups: GroupVote[] }) {
+  if (!groups.length) return null;
+  return <details className={extra.voterGroup}>
+    <summary>
+      <span className={extra.themeVotePill} data-tone="neutral">Voti espressi per gruppo · Camera intera</span>
+      <span className={styles.tag}>{groups.length}</span>
+    </summary>
+    <dl className={extra.groupVoteList}>
+      {groups.map((group) => <div key={group.groupId ?? "unknown"}>
+        <dt>{group.groupLabel}</dt>
+        <dd>Favorevoli {group.favorevoli} · Contrari {group.contrari} · Astenuti {group.astenuti}</dd>
+      </div>)}
+    </dl>
   </details>;
 }
 
@@ -474,6 +511,7 @@ export function ThemeVoteHistoryDirectory({
                       <div><dt>Contrari</dt><dd>{event.contrari}</dd></div>
                       <div><dt>Astenuti</dt><dd>{event.astenuti}</dd></div>
                     </dl>
+                    {event.groupVotes ? <GroupVotes groups={event.groupVotes} /> : null}
                     <a href={event.officialPage} target="_blank" rel="noreferrer">Atto ufficiale <Icon name="arrow" size={14} /></a>
                     <div className={extra.whoVoted}>
                       <p className={extra.whoVotedLead}>

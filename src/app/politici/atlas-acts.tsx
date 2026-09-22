@@ -71,7 +71,7 @@ function ActsBrowser({ data, activity }: { data: LegislativeData; activity: Repu
       </p> : null}
     <p className={styles.note}>{data.source.chamber === "camera"
       ? "Le votazioni finali Camera comprendono atti di iniziativa parlamentare e governativa nel perimetro verificato. "
-      : "Gli atti firmati seguono il perimetro Senato indicato dalla fonte. "}
+      : `Lo snapshot Senato include ${data.source.coverage.finalVotesIncluded.toLocaleString("it-IT")} votazioni finali sugli atti a prima firma senatore; ${data.source.coverage.finalVotesExcluded.toLocaleString("it-IT")} votazioni osservate su altri atti sono escluse. Non è una copertura completa degli atti governativi. `}
       Il numero di firme non misura qualità o efficacia dell’attività parlamentare.</p>
     <div className={extra.actRoleSwitch} role="group" aria-label="Vista degli atti">
       {data.voted.length ? <button type="button" aria-pressed={role === "voted"} onClick={() => { setRole("voted"); setLimit(8); }}>Votazioni finali</button> : null}

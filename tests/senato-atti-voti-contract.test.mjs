@@ -78,6 +78,34 @@ test("senator profiles expose senato legislative activity", () => {
 
 });
 
+test("senators expose their verified final votes with parliamentary attribution", () => {
+  const snapshot = parseSenatoAttiVotiSnapshot(attiVotiJson);
+  const profiles = getRepubblicaProfiles();
+  const act = snapshot.acts.find((candidate) => candidate.finalVoteIds.some((voteId) => {
+    const vote = snapshot.finalVotes.find((item) => item.id === voteId);
+    return vote && Object.keys(vote.votes).some((numericId) => profiles[`sen-s${numericId}`]);
+  }));
+  assert.ok(act, "atto con voto nominale e senatore nel roster");
+  const linkedVotes = act.finalVoteIds.map((voteId) => snapshot.finalVotes.find((vote) => vote.id === voteId));
+  const numericId = linkedVotes.flatMap((vote) => Object.keys(vote?.votes ?? {})).find(
+    (candidate) => profiles[`sen-s${candidate}`],
+  );
+  assert.ok(numericId, "senatore votante nel roster");
+
+  const acts = getRepubblicaLegislativeActs(`sen-s${numericId}`);
+  assert.ok(acts);
+  const voted = acts.voted.find((candidate) => candidate.id === act.id);
+  assert.ok(voted, act.id);
+  assert.equal(voted.role, "votante");
+  assert.deepEqual(voted.initiative, { kind: "parliamentary", label: "Parlamentare" });
+  assert.equal(voted.proposer?.kind, "senator");
+  assert.equal(voted.proposer?.id, `sen-s${act.firstSignerId}`);
+  assert.ok(voted.proposer?.label.length > 0);
+  assert.equal(voted.responsibleGovernment, null);
+  assert.ok(voted.finalVotes.length > 0);
+  assert.ok(voted.finalVotes.every((vote) => vote.ownVote !== "non-rilevato"));
+});
+
 test("tampered snapshot with a broken tally fails the parse", () => {
   const snapshot = parseSenatoAttiVotiSnapshot(attiVotiJson);
   const mutated = structuredClone(snapshot);

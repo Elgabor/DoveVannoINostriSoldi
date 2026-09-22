@@ -9,6 +9,11 @@ proposte di legge" del profilo persona in `/politici` e l'endpoint
 - `src/data/generated/senato-atti-voti-xix.json`: disegni di legge a prima
   firma senatore, fasi dell'iter e votazioni finali con voto nominale.
 
+Nel profilo persona, la vista iniziale privilegia le votazioni finali quando
+esistono voti nominali per il parlamentare. Prima firma e cofirme restano viste
+separate. La risposta API espone anche atti e votazioni incluse ed escluse,
+così il client non deve dedurre la completezza dal numero di risultati.
+
 ## Perché due adapter e perché i rami non si confrontano
 
 Camera e Senato pubblicano i dati con ontologie diverse (`dati.camera.it` usa
@@ -19,9 +24,8 @@ Camera gli astenuti risultano presenti ma non votanti
 alla Camera entrano gli atti di iniziativa parlamentare e governativa con
 relazioni ufficiali verificabili, al Senato i disegni la cui fase iniziale è
 "presentato" al ramo Senato con primo firmatario senatore.
-Confrontare i numeri dei due rami (conteggi, mediane, percentili) non ha
-significato: statistiche e percentile sono calcolati sempre dentro il roster
-del proprio ramo.
+Confrontare i numeri dei due rami (conteggi e mediane) non ha significato: le
+statistiche sono calcolate sempre dentro il roster del proprio ramo.
 
 ## Camera
 
@@ -125,10 +129,17 @@ Spec sorgente: `scripts/etl/specs/camera-atti-voti-xix.source.json`.
 
 Fonte unica: endpoint SPARQL ufficiale `https://dati.senato.it/sparql`
 (Open Data Senato, ontologia OSR, licenza CC BY 3.0 IT, landing
-`https://dati.senato.it/`). L'endpoint accetta solo richieste GET (il POST è
-rifiutato con 403) e il WAF rifiuta query con `BIND`/`IF`; i literal sono
-tipizzati, quindi i filtri confrontano `STR(?x)`. Sei risposte lockate in
+`https://dati.senato.it/`). Al momento dell'acquisizione l'endpoint accettava
+solo richieste GET (il POST era rifiutato con 403) e il WAF rifiutava query con
+`BIND`/`IF`; i literal sono tipizzati, quindi i filtri confrontano `STR(?x)`.
+Sei risposte sono lockate in
 `provenance.responses` con bytes, righe e SHA-256 cumulativo:
+
+Lo snapshot verificato corrente è stato acquisito il 18 settembre 2026. Al 22
+settembre 2026 anche richieste GET minime ricevono HTTP 403: il refresh deve
+quindi fallire senza sostituire l'artifact. Il corpus pubblicabile corrente
+resta quello validato, con 66 votazioni finali incluse e 181 votazioni finali
+osservate su atti fuori perimetro.
 
 1. `phases` — nodi `osr:Ddl` XIX con iniziativa a primo firmatario senatore:
    `idDdl`, `idFase`, `fase`, `ramo`, `progressivoIter`,

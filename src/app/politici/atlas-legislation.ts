@@ -26,18 +26,22 @@ const nullableText = (v: unknown) => v === null || text(v);
 const count = (v: unknown) => Number.isSafeInteger(v) && Number(v) >= 0;
 const invalid = (): never => { throw new Error("Risposta degli atti non valida"); };
 
-function validAct(value: unknown, role: RepublicActSummary["role"]): boolean {
+function validAct(
+  value: unknown,
+  role: RepublicActSummary["role"],
+  chamber: RepublicLegislativeSource["chamber"],
+): boolean {
   if (!object(value) || !["id", "number", "natureId"].every((key) => text(value[key]))) return false;
   const initiative = value.initiative;
   const proposer = value.proposer;
   const responsibleGovernment = value.responsibleGovernment;
-  const senateMetadata = initiative === null && proposer === null && responsibleGovernment === null;
   const proposerMatchesInitiative = object(initiative) && object(proposer) && (
-    (initiative.kind === "parliamentary" && proposer.kind === "deputy"
+    (initiative.kind === "parliamentary"
+      && proposer.kind === (chamber === "camera" ? "deputy" : "senator")
       && text(proposer.id) && responsibleGovernment === null)
-    || (initiative.kind === "government" && proposer.kind === "government")
+    || (chamber === "camera" && initiative.kind === "government" && proposer.kind === "government")
   );
-  const cameraMetadata = object(initiative)
+  const attributionMetadata = object(initiative)
     && (initiative.kind === "parliamentary" || initiative.kind === "government")
     && text(initiative.label)
     && object(proposer)
@@ -46,7 +50,7 @@ function validAct(value: unknown, role: RepublicActSummary["role"]): boolean {
     && (responsibleGovernment === null || (object(responsibleGovernment)
       && text(responsibleGovernment.id) && text(responsibleGovernment.label)
       && isSafeExternalUrl(responsibleGovernment.uri)));
-  return (senateMetadata || cameraMetadata)
+  return attributionMetadata
     && ["title", "presentedDate", "currentState", "currentStateDate", "outcomeClass"].every((key) => nullableText(value[key]))
     && value.role === role && count(value.coSignerCount) && isSafeExternalUrl(value.officialPage)
     && Array.isArray(value.finalVotes) && value.finalVotes.every((vote) => object(vote)
@@ -58,13 +62,16 @@ function validAct(value: unknown, role: RepublicActSummary["role"]): boolean {
 export function parseLegislation(payload: unknown, personId: string): LegislativeData {
   if (!object(payload) || payload.ok !== true || payload.personId !== personId || !object(payload.source)) return invalid();
   const source = payload.source;
-  if ((source.chamber !== "camera" && source.chamber !== "senato")
-    || !["periodLabel", "observedDate", "sourceLabel", "licenseLabel"].every((key) => text(source[key]))
+  if (source.chamber !== "camera" && source.chamber !== "senato") return invalid();
+  const chamber = source.chamber;
+  const coverage = source.coverage;
+  if (!["periodLabel", "observedDate", "sourceLabel", "licenseLabel"].every((key) => text(source[key]))
+    || !object(coverage) || !["acts", "finalVotesIncluded", "finalVotesExcluded"].every((key) => count(coverage[key]))
     || !isSafeExternalUrl(source.sourceUrl) || !Array.isArray(source.caveats) || !source.caveats.every(text)
     || !Array.isArray(source.outcomeClasses) || !source.outcomeClasses.every((item) => object(item) && text(item.id) && text(item.label))
-    || !Array.isArray(payload.firstSigned) || !payload.firstSigned.every((act) => validAct(act, "primo-firmatario"))
-    || !Array.isArray(payload.coSigned) || !payload.coSigned.every((act) => validAct(act, "cofirmatario"))
-    || !Array.isArray(payload.voted) || !payload.voted.every((act) => validAct(act, "votante"))) return invalid();
+    || !Array.isArray(payload.firstSigned) || !payload.firstSigned.every((act) => validAct(act, "primo-firmatario", chamber))
+    || !Array.isArray(payload.coSigned) || !payload.coSigned.every((act) => validAct(act, "cofirmatario", chamber))
+    || !Array.isArray(payload.voted) || !payload.voted.every((act) => validAct(act, "votante", chamber))) return invalid();
   const all = [...payload.firstSigned, ...payload.coSigned] as RepublicActSummary[];
   if (new Set(all.map((act) => act.id)).size !== all.length
     || new Set(payload.voted.map((act) => act.id)).size !== payload.voted.length) return invalid();

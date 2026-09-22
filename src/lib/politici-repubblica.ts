@@ -1028,6 +1028,7 @@ export type RepublicActSummary = {
   initiative: { kind: "parliamentary" | "government"; label: string } | null;
   proposer:
     | { kind: "deputy"; id: string; label: string }
+    | { kind: "senator"; id: string; label: string }
     | { kind: "government"; label: string }
     | null;
   responsibleGovernment: { id: string; label: string; uri: string } | null;
@@ -1068,6 +1069,11 @@ export type RepublicLegislativeSource = {
   sourceUrl: string;
   sourceLabel: string;
   licenseLabel: string;
+  coverage: {
+    acts: number;
+    finalVotesIncluded: number;
+    finalVotesExcluded: number;
+  };
   outcomeClasses: Array<{ id: string; label: string }>;
   caveats: string[];
 };
@@ -1246,6 +1252,7 @@ const senateRoster = senate.senators.map((senator) => ({
 let cameraLegislativeIndex: LegislativeIndex<CameraAct> | null = null;
 let senatoLegislativeIndex: LegislativeIndex<SenatoAct> | null = null;
 let cameraVotedActsByNumericId: Map<string, CameraAct[]> | null = null;
+let senatoVotedActsByNumericId: Map<string, SenatoAct[]> | null = null;
 
 function getCameraLegislativeIndex(): LegislativeIndex<CameraAct> {
   cameraLegislativeIndex ??= buildLegislativeIndex(
@@ -1259,35 +1266,45 @@ function getCameraLegislativeIndex(): LegislativeIndex<CameraAct> {
 }
 
 function getCameraVotedActsByNumericId(): Map<string, CameraAct[]> {
-  if (cameraVotedActsByNumericId) return cameraVotedActsByNumericId;
-  const index = new Map<string, Map<string, CameraAct>>();
-  for (const act of cameraAttiVoti.acts) {
+  cameraVotedActsByNumericId ??= buildVotedActsByNumericId(
+    cameraAttiVoti.acts,
+    cameraVoteById,
+    (act) => act.baseNumber,
+  );
+  return cameraVotedActsByNumericId;
+}
+
+function buildVotedActsByNumericId<
+  A extends { id: string; finalVoteIds: string[]; number: string },
+  V extends { date: string; votes: Record<string, unknown> },
+>(acts: A[], voteById: Map<string, V>, sortNumber: (act: A) => number): Map<string, A[]> {
+  const index = new Map<string, Map<string, A>>();
+  for (const act of acts) {
     for (const voteId of act.finalVoteIds) {
-      const vote = cameraVoteById.get(voteId);
+      const vote = voteById.get(voteId);
       require(vote !== undefined, `votazione finale non risolta: ${voteId}`);
       for (const numericId of Object.keys(vote!.votes)) {
-        const acts = index.get(numericId) ?? new Map<string, CameraAct>();
-        acts.set(act.id, act);
-        index.set(numericId, acts);
+        const memberActs = index.get(numericId) ?? new Map<string, A>();
+        memberActs.set(act.id, act);
+        index.set(numericId, memberActs);
       }
     }
   }
-  const latestVoteDate = (act: CameraAct): string => act.finalVoteIds.reduce((latest, voteId) => {
-    const vote = cameraVoteById.get(voteId);
+  const latestVoteDate = (act: A): string => act.finalVoteIds.reduce((latest, voteId) => {
+    const vote = voteById.get(voteId);
     require(vote !== undefined, `votazione finale non risolta: ${voteId}`);
     return vote!.date > latest ? vote!.date : latest;
   }, "");
-  cameraVotedActsByNumericId = new Map(
-    [...index].map(([numericId, acts]) => [
+  return new Map(
+    [...index].map(([numericId, memberActs]) => [
       numericId,
-      [...acts.values()].sort((left, right) =>
+      [...memberActs.values()].sort((left, right) =>
         latestVoteDate(right).localeCompare(latestVoteDate(left)) ||
-        right.baseNumber - left.baseNumber ||
+        sortNumber(right) - sortNumber(left) ||
         right.number.localeCompare(left.number),
       ),
     ]),
   );
-  return cameraVotedActsByNumericId;
 }
 
 function getSenatoLegislativeIndex(): LegislativeIndex<SenatoAct> {
@@ -1299,6 +1316,15 @@ function getSenatoLegislativeIndex(): LegislativeIndex<SenatoAct> {
     (act) => Number.parseInt(act.number.slice(2), 10),
   );
   return senatoLegislativeIndex;
+}
+
+function getSenatoVotedActsByNumericId(): Map<string, SenatoAct[]> {
+  senatoVotedActsByNumericId ??= buildVotedActsByNumericId(
+    senatoAttiVoti.acts,
+    senatoVoteById,
+    (act) => Number.parseInt(act.number.slice(2), 10),
+  );
+  return senatoVotedActsByNumericId;
 }
 
 function cameraActSummary(
@@ -1353,9 +1379,10 @@ function cameraActSummary(
 
 function senatoActSummary(
   act: SenatoAct,
-  role: "primo-firmatario" | "cofirmatario",
+  role: "primo-firmatario" | "cofirmatario" | "votante",
   numericId: string,
 ): RepublicActSummary {
+  const firstSigner = senatorByNumericId.get(act.firstSignerId);
   return {
     id: act.id,
     chamber: "senato",
@@ -1364,8 +1391,12 @@ function senatoActSummary(
     natureId: act.natureId,
     presentedDate: act.presentedDate,
     role,
-    initiative: null,
-    proposer: null,
+    initiative: { kind: "parliamentary", label: "Parlamentare" },
+    proposer: {
+      kind: "senator",
+      id: `sen-s${act.firstSignerId}`,
+      label: firstSigner?.displayName ?? `Parlamentare del Senato ${act.firstSignerId}`,
+    },
     responsibleGovernment: null,
     currentState: act.currentPhase.state,
     currentStateDate: act.currentPhase.stateDate,
@@ -1381,10 +1412,11 @@ function senatoActSummary(
       state: phase.state,
       stateDate: phase.stateDate,
     })),
-    finalVotes: act.finalVoteIds.map((voteId) => {
+    finalVotes: act.finalVoteIds.flatMap((voteId) => {
       const vote = senatoVoteById.get(voteId);
       require(vote !== undefined, `votazione finale non risolta: ${voteId}`);
-      return {
+      if (role === "votante" && !Object.hasOwn(vote!.votes, numericId)) return [];
+      return [{
         id: vote!.id,
         date: vote!.date,
         approved: vote!.approved,
@@ -1394,7 +1426,7 @@ function senatoActSummary(
         astenuti: vote!.astenuti,
         voteType: vote!.voteType,
         ownVote: (vote!.votes[numericId] ?? "non-rilevato") as RepublicActVote,
-      };
+      }];
     }),
   };
 }
@@ -1433,7 +1465,9 @@ export function getRepubblicaLegislativeActs(
       coSigned: (index.coActsByNumericId.get(numericId) ?? []).map((act) =>
         senatoActSummary(act, "cofirmatario", numericId),
       ),
-      voted: [],
+      voted: (getSenatoVotedActsByNumericId().get(numericId) ?? []).map((act) =>
+        senatoActSummary(act, "votante", numericId),
+      ),
     };
   }
   return null;
@@ -1451,6 +1485,11 @@ export function getRepubblicaLegislativeSources(): {
       sourceUrl: cameraAttiVoti.provenance.landingUrl,
       sourceLabel: cameraAttiVoti.provenance.title,
       licenseLabel: cameraAttiVoti.provenance.license,
+      coverage: {
+        acts: cameraAttiVoti.coverage.acts,
+        finalVotesIncluded: cameraAttiVoti.coverage.finalVotes,
+        finalVotesExcluded: cameraAttiVoti.coverage.finalVotesExcluded,
+      },
       outcomeClasses: cameraAttiVoti.outcomeClasses.map(({ id, label }) => ({ id, label })),
       caveats: cameraAttiVoti.caveats,
     },
@@ -1461,6 +1500,11 @@ export function getRepubblicaLegislativeSources(): {
       sourceUrl: senatoAttiVoti.provenance.landingUrl,
       sourceLabel: senatoAttiVoti.provenance.title,
       licenseLabel: senatoAttiVoti.provenance.license,
+      coverage: {
+        acts: senatoAttiVoti.coverage.acts,
+        finalVotesIncluded: senatoAttiVoti.coverage.finalVotes,
+        finalVotesExcluded: senatoAttiVoti.coverage.finalVotesOnOtherActs,
+      },
       outcomeClasses: senatoAttiVoti.outcomeClasses.map(({ id, label }) => ({ id, label })),
       caveats: senatoAttiVoti.caveats,
     },

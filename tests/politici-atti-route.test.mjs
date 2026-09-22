@@ -11,6 +11,11 @@ const firstParliamentaryAct = attiVotiJson.acts.find((act) => act.proposer.kind 
 const signerNumericId = firstParliamentaryAct.proposer.deputyId.replace(/^d/, "").replace(/_19$/, "");
 const deputyId = `dep-${signerNumericId}`;
 const senatorId = `sen-s${senatoAttiVotiJson.acts[0].firstSignerId}`;
+const senateVoterId = getRepubblicaGraph().people.find(
+  (person) => person.chamberId === "senato"
+    && person.id.startsWith("sen-s")
+    && senatoAttiVotiJson.finalVotes.some((vote) => Object.hasOwn(vote.votes, person.id.slice("sen-s".length))),
+)?.id;
 const nonParliamentarianId = getRepubblicaGraph().people.find(
   (person) => person.chamberId === null,
 ).id;
@@ -65,8 +70,13 @@ test("politici atti serves the signed acts of a Senato member", async () => {
   assert.ok(body.source.sourceUrl.startsWith("https://"));
   assert.ok(Array.isArray(body.source.outcomeClasses));
   assert.ok(Array.isArray(body.source.caveats));
+  assert.deepEqual(body.source.coverage, {
+    acts: senatoAttiVotiJson.coverage.acts,
+    finalVotesIncluded: senatoAttiVotiJson.coverage.finalVotes,
+    finalVotesExcluded: senatoAttiVotiJson.coverage.finalVotesOnOtherActs,
+  });
   assert.ok(body.firstSigned.length > 0);
-  assert.deepEqual(body.voted, []);
+  assert.ok(Array.isArray(body.voted));
   assert.equal(body.firstSigned[0].role, "primo-firmatario");
   const voteCodes = new Set(["F", "C", "A", "P", "M", "non-rilevato"]);
   for (const act of [...body.firstSigned, ...body.coSigned]) {
@@ -78,6 +88,27 @@ test("politici atti serves the signed acts of a Senato member", async () => {
       assert.ok(voteCodes.has(vote.ownVote), vote.id);
       assert.equal(typeof vote.voteType, "string");
     }
+  }
+});
+
+test("politici atti serves the verified final votes of a Senato member", async () => {
+  assert.ok(senateVoterId, "senatore votante nel grafo pubblico");
+  const response = await GET(
+    new Request(`http://localhost/api/politici/${senateVoterId}/atti`),
+    { params: Promise.resolve({ id: senateVoterId }) },
+  );
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.ok(body.voted.length > 0);
+  for (const act of body.voted) {
+    assert.equal(act.chamber, "senato");
+    assert.equal(act.role, "votante");
+    assert.deepEqual(act.initiative, { kind: "parliamentary", label: "Parlamentare" });
+    assert.equal(act.proposer.kind, "senator");
+    assert.match(act.proposer.id, /^sen-s\d+$/);
+    assert.equal(act.responsibleGovernment, null);
+    assert.ok(act.finalVotes.length > 0);
+    assert.ok(act.finalVotes.every((vote) => vote.ownVote !== "non-rilevato"));
   }
 });
 

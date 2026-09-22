@@ -109,6 +109,8 @@ test("atlas: legislative acts define «arrivate in fondo» from the official leg
   assert.match(acts, /Votazioni finali/);
   assert.match(acts, /atto nel suo complesso/);
   assert.match(acts, /Proponente formale/);
+  assert.match(acts, /finalVotesExcluded/);
+  assert.match(acts, /Non è una copertura completa degli atti governativi/);
 });
 
 test("atlas: local foto and simboli proxies skip the next/image optimizer", async () => {

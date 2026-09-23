@@ -4,7 +4,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { VOTE_THEMES } from "@/lib/politici-voti-tema-catalog";
 import { compareGroupVoteEvents, type GroupChoice } from "@/lib/politici-group-patterns";
 import type { RepublicActVote, RepublicMap } from "@/lib/politici-repubblica";
-import type { CuratedComparison } from "@/lib/politici-voti-tema";
+import type { CuratedComparison, ThemeHistoryCoverage } from "@/lib/politici-voti-tema";
 import {
   compactRepublicVoteStateCounts,
   countRepublicVoteStates,
@@ -56,8 +56,7 @@ type ThemeHistoryData = {
   personQuery: string | null;
   chamber: ThemeChamberFilter;
   expressedOnly: boolean;
-  periodLabel: string;
-  observedDate: string;
+  coverage: ThemeHistoryCoverage;
   cameraSourceUrl: string;
   cameraSourceLabel: string;
   senatoSourceUrl: string;
@@ -135,7 +134,14 @@ function validComparison(value: unknown): boolean {
 
 function parseHistory(payload: unknown): ThemeHistoryData {
   if (!object(payload) || payload.ok !== true) throw new Error("invalid");
-  if (!["periodLabel", "observedDate", "cameraSourceUrl", "cameraSourceLabel", "senatoSourceUrl", "senatoSourceLabel", "senatoGroupSourceUrl", "senatoGroupSourceLabel"].every((key) => text(payload[key]))
+  const coverage = payload.coverage;
+  if (!["cameraSourceUrl", "cameraSourceLabel", "senatoSourceUrl", "senatoSourceLabel", "senatoGroupSourceUrl", "senatoGroupSourceLabel"].every((key) => text(payload[key]))
+    || !object(coverage)
+    || !(["camera", "senato"] as const).every((chamber) => {
+      const item = coverage[chamber];
+      return object(item) && ["periodLabel", "observedDate", "acquiredAt"].every((key) => text(item[key]))
+        && count(item.included) && count(item.excluded);
+    })
     || (payload.chamber !== "tutti" && payload.chamber !== "camera" && payload.chamber !== "senato")
     || typeof payload.expressedOnly !== "boolean"
     || !Array.isArray(payload.events)
@@ -321,13 +327,14 @@ function VoterGroup({
   people: EventVoter[];
   onSelectPerson: (personId: string) => void;
 }) {
+  const [open, setOpen] = useState(people.length <= 12);
   if (!people.length) return null;
-  return <details className={extra.voterGroup} open={people.length <= 12}>
+  return <details className={extra.voterGroup} open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
     <summary>
       <span className={extra.themeVotePill} data-tone={tone}>{label}</span>
       <span className={styles.tag}>{people.length}</span>
     </summary>
-    <ul className={extra.voterList}>
+    {open ? <ul className={extra.voterList}>
       {people.map((voter) => (
         <li key={voter.personId}>
           <button type="button" onClick={() => onSelectPerson(voter.personId)}>
@@ -336,7 +343,7 @@ function VoterGroup({
           </button>
         </li>
       ))}
-    </ul>
+    </ul> : null}
   </details>;
 }
 
@@ -362,8 +369,8 @@ function groupChoiceLabel(choice: GroupChoice): string {
   return OWN_VOTE_LABELS[choice];
 }
 
-function GroupPatternComparison({ data }: { data: ThemeHistoryData }) {
-  const [selectedA, setSelectedA] = useState("");
+function GroupPatternComparison({ data, initialGroupId }: { data: ThemeHistoryData; initialGroupId: string | null }) {
+  const [selectedA, setSelectedA] = useState<string | null>(null);
   const [selectedB, setSelectedB] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
   const chamber = data.chamber;
@@ -380,7 +387,10 @@ function GroupPatternComparison({ data }: { data: ThemeHistoryData }) {
   }
   const groups = [...groupsById.values()].sort((a, b) => a.label.localeCompare(b.label, "it"));
   const years = [...new Set(chamberEvents.map((event) => event.date.slice(0, 4)))].sort();
-  const groupAId = groupsById.has(selectedA) ? selectedA : "";
+  const initialSourceId = initialGroupId?.startsWith(`${chamber}-`)
+    ? initialGroupId.slice(chamber.length + 1) : "";
+  const preferredA = selectedA ?? initialSourceId;
+  const groupAId = groupsById.has(preferredA) ? preferredA : "";
   const groupBId = groupsById.has(selectedB) ? selectedB : "";
   const year = years.includes(selectedYear) ? selectedYear : "";
   const comparison = (chamber === "camera" || chamber === "senato") && groupAId && groupBId
@@ -451,6 +461,7 @@ export function ThemeVoteHistoryDirectory({
   themeChamber,
   themeExpressedOnly,
   selectedId,
+  selectedGroupId,
   onThemeId,
   onThemeChamber,
   onThemeExpressedOnly,
@@ -462,6 +473,7 @@ export function ThemeVoteHistoryDirectory({
   themeChamber: ThemeChamberFilter;
   themeExpressedOnly: boolean;
   selectedId: string | null;
+  selectedGroupId: string | null;
   onThemeId: (themeId: string) => void;
   onThemeChamber: (chamber: ThemeChamberFilter) => void;
   onThemeExpressedOnly: (value: boolean) => void;
@@ -501,6 +513,24 @@ export function ThemeVoteHistoryDirectory({
       return localTokens.every((token) => haystack.includes(token));
     });
   }, [data, localTokens]);
+
+  useEffect(() => {
+    if (!data || !window.location.hash.startsWith("#voto-")) return;
+    const target = window.location.hash.slice(1);
+    const frame = window.requestAnimationFrame(() => {
+      const event = document.getElementById(target);
+      const pane = event?.closest(`.${styles.workspaceScroll}`);
+      if (!event || !(pane instanceof HTMLElement)) return;
+      if (getComputedStyle(pane).overflowY === "auto") {
+        pane.scrollTop += event.getBoundingClientRect().top - pane.getBoundingClientRect().top - 12;
+        window.scrollTo(0, 0);
+      } else {
+        const sticky = document.querySelector(`.${styles.topBar}`)?.getBoundingClientRect().height ?? 0;
+        window.scrollBy(0, event.getBoundingClientRect().top - sticky - 12);
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [data]);
 
   // Drop stale expansion when the open person leaves the filtered list.
   const openMemberIdSafe = openMemberId && members.some((member) => member.personId === openMemberId)
@@ -596,10 +626,13 @@ export function ThemeVoteHistoryDirectory({
           {data.query ? <>Titolo «{data.query}». </> : null}
           {query.trim() ? <>Persona «{query.trim()}». </> : null}
           {themeChamber === "camera" ? "Solo Camera. " : themeChamber === "senato" ? "Solo Senato. " : null}
-          {data.periodLabel}. Rilevazione: {longDate(data.observedDate)}.
           {" "}{data.events.length} votazioni in aula · {members.length} parlamentari
           {themeExpressedOnly ? " con voto espresso" : " con tutti gli stati disponibili"}.
         </p>
+        <section className={styles.note} aria-label="Copertura delle fonti per ramo">
+          <p>Camera · {data.coverage.camera.periodLabel}. Osservata il {longDate(data.coverage.camera.observedDate)}, acquisita il {longDate(data.coverage.camera.acquiredAt)}. {data.coverage.camera.included} votazioni finali incluse; {data.coverage.camera.excluded} non incluse dopo la verifica dei collegamenti e dei conteggi.</p>
+          <p>Senato · {data.coverage.senato.periodLabel}. Osservato il {longDate(data.coverage.senato.observedDate)}, acquisito il {longDate(data.coverage.senato.acquiredAt)}. {data.coverage.senato.included} votazioni finali incluse; {data.coverage.senato.excluded} osservate su atti fuori dal perimetro a prima firma di un senatore.</p>
+        </section>
 
         {data.years.length > 0 ? (
           <section className={extra.yearSection} aria-label="Storico per anno">
@@ -611,7 +644,7 @@ export function ThemeVoteHistoryDirectory({
           </section>
         ) : null}
 
-        <GroupPatternComparison data={data} />
+        <GroupPatternComparison key={selectedGroupId ?? "overview"} data={data} initialGroupId={selectedGroupId} />
 
         <section className={extra.storicoEvents} aria-label="Cosa si è votato">
           <div className={styles.sectionHeading}>

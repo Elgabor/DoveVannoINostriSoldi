@@ -1,12 +1,21 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { makeMap } from "./fixtures/politici-atlas.mjs";
-import { atlasUrl, belongsToScope, defaultSelection, filteredPeople, initialsOf, isSafeExternalUrl, longDate, matchesRole, normalizeSearch, readAtlasState, searchAtlas, selectionPeople, validSelection } from "../src/app/politici/atlas-model.ts";
+import { atlasUrl, belongsToScope, defaultSelection, filteredPeople, initialsOf, isSafeExternalUrl, longDate, matchesRole, normalizeSearch, readAtlasState, SCOPES, searchAtlas, selectionPeople, validSelection } from "../src/app/politici/atlas-model.ts";
 import { adjacentSeat, allocateRows, buildChamberScene, buildSeatGrid, CHAMBER } from "../src/app/politici/graph-geometry.ts";
 import { buildOverviewGeometry, overviewAnchor } from "../src/app/politici/overview-geometry.ts";
 
 const map = makeMap();
 const state = readAtlasState(new URLSearchParams(), map).state;
+
+test("votes lead navigation and a group's vote history survives a deep link", () => {
+  assert.equal(SCOPES[0].id, "storico-voti");
+  const group = map.groups.find((item) => item.chamberId === "senato");
+  const parsed = readAtlasState(new URLSearchParams(`vista=storico-voti&group=${group.id}&ramo=senato&tema=lavoro`), map);
+  assert.equal(parsed.state.scope, "storico-voti");
+  assert.equal(parsed.state.selection.id, group.id);
+  assert.equal(parsed.state.themeChamber, "senato");
+});
 
 test("default is Camera, all controls derive from the same state", () => {
   assert.equal(state.scope, "camera"); assert.deepEqual(state.selection, defaultSelection("camera"));

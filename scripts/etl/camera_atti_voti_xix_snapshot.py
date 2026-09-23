@@ -26,6 +26,8 @@ from html import unescape
 from pathlib import Path
 from typing import Any
 
+from atomic_snapshot import write_atomic
+
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = ROOT / "scripts/etl/specs/camera-atti-voti-xix.source.json"
 OUTPUT = ROOT / "src/data/generated/camera-atti-voti-xix.json"
@@ -1014,12 +1016,8 @@ def validate_snapshot(payload: dict[str, Any], locks: dict[str, Any] | None = No
 # --------------------------------------------------------------------------- #
 
 
-def check_committed(spec: dict[str, Any]) -> None:
-    payload = json.loads(OUTPUT.read_text(encoding="utf-8"))
-    locks = (spec.get("source") or {}).get("committedResponses") or None
-    validate_snapshot(payload, locks=locks)
+def require_coverage_floor(coverage: dict[str, Any], spec: dict[str, Any]) -> None:
     floor = spec.get("coverageFloor") or {}
-    coverage = payload["coverage"]
     require(coverage["acts"] >= int(floor.get("acts", 2500)), "coverage acts sotto floor")
     require(coverage["finalVotes"] >= int(floor.get("finalVotes", 50)), "coverage finalVotes sotto floor")
     require(
@@ -1030,6 +1028,14 @@ def check_committed(spec: dict[str, Any]) -> None:
         coverage["deputiesAsFirstSigner"] >= int(floor.get("deputiesAsFirstSigner", 300)),
         "coverage deputiesAsFirstSigner sotto floor",
     )
+
+
+def check_committed(spec: dict[str, Any]) -> None:
+    payload = json.loads(OUTPUT.read_text(encoding="utf-8"))
+    locks = (spec.get("source") or {}).get("committedResponses") or None
+    validate_snapshot(payload, locks=locks)
+    coverage = payload["coverage"]
+    require_coverage_floor(coverage, spec)
     print(
         f"OK camera-atti-voti-xix: {coverage['acts']} atti, {coverage['finalVotes']} votazioni finali, "
         f"{coverage['deputiesAsFirstSigner']} primi firmatari, {coverage['nominalVotes']} voti nominali"
@@ -1066,8 +1072,9 @@ def main() -> int:
         return 0
 
     snapshot = refresh()
+    require_coverage_floor(snapshot["coverage"], spec)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    write_atomic(OUTPUT, json.dumps(snapshot, ensure_ascii=False, indent=2) + "\n")
     print(f"written {OUTPUT.relative_to(ROOT)} ({snapshot['coverage']['acts']} acts)")
     return 0
 

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import "./helpers/register-ts-alias.mjs";
 
@@ -21,6 +22,21 @@ const deputyId = graph.people.find((person) => person.chamberId === "camera").id
 const senatorId = graph.people.find((person) => person.chamberId === "senato").id;
 const nonParliamentarianId = graph.people.find((person) => person.chamberId === null).id;
 const meloniId = "dep-302103";
+
+test("public theme history keeps each chamber's verified date and coverage", async () => {
+  const response = await getThemeHistory(new Request("http://localhost/api/politici/voti-tema?tema=lavoro"));
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  for (const chamber of ["camera", "senato"]) {
+    const snapshot = JSON.parse(readFileSync(new URL(`../src/data/generated/${chamber}-atti-voti-xix.json`, import.meta.url)));
+    assert.equal(body.coverage[chamber].periodLabel, snapshot.period.label);
+    assert.equal(body.coverage[chamber].observedDate, snapshot.period.observedDate);
+    assert.equal(body.coverage[chamber].acquiredAt, snapshot.provenance.acquiredAt);
+    assert.equal(body.coverage[chamber].included, snapshot.coverage.finalVotes);
+    assert.equal(body.coverage[chamber].excluded, chamber === "camera"
+      ? snapshot.coverage.finalVotesExcluded : snapshot.coverage.finalVotesOnOtherActs);
+  }
+});
 
 test("atlas known theme ids stay aligned with the vote theme catalog", async () => {
   const { KNOWN_THEME_IDS } = await import("../src/app/politici/atlas-model.ts");

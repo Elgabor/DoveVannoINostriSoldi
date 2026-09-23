@@ -23,6 +23,7 @@ type PanelProps = {
   initialTab?: "profilo" | "atti" | "temi" | "notizie" | null;
   themeId?: string | null;
   onSelect: (selection: GraphSelection) => void;
+  onExploreGroupVotes: (groupId: string, chamber: "camera" | "senato") => void;
   onRetryProfiles: () => void;
   onRetryNews: () => void;
 };
@@ -30,7 +31,7 @@ type PanelProps = {
 export function RepubblicaPanel(props: PanelProps) {
   const { map, selection, onSelect } = props;
   if (selection.kind === "person") return <PersonPanel {...props} personId={selection.id} />;
-  if (selection.kind === "group") return <GroupPanel map={map} id={selection.id} onSelect={onSelect} />;
+  if (selection.kind === "group") return <GroupPanel map={map} id={selection.id} onSelect={onSelect} onExploreGroupVotes={props.onExploreGroupVotes} />;
   if (selection.kind === "institution") return <InstitutionPanel map={map} id={selection.id} onSelect={onSelect} />;
   return <div className={styles.panelContent}>
     <p className={styles.eyebrow}>Le istituzioni italiane</p>
@@ -155,7 +156,7 @@ function InstitutionPanel({ map, id, onSelect }: Pick<PanelProps, "map" | "onSel
   </div>;
 }
 
-function GroupPanel({ map, id, onSelect }: Pick<PanelProps, "map" | "onSelect"> & { id: string; }) {
+function GroupPanel({ map, id, onSelect, onExploreGroupVotes }: Pick<PanelProps, "map" | "onSelect" | "onExploreGroupVotes"> & { id: string; }) {
   const [limit, setLimit] = useState(25);
   const group = map.groups.find((item) => item.id === id);
   if (!group) return <Status title="Gruppo non trovato" />;
@@ -175,6 +176,9 @@ function GroupPanel({ map, id, onSelect }: Pick<PanelProps, "map" | "onSelect"> 
     {group.label !== group.shortLabel ? <p className={styles.panelLead}>
       {group.label}
     </p> : null}
+    <button type="button" className={styles.secondaryButton} onClick={() => onExploreGroupVotes(group.id, group.chamberId)}>
+      Esplora i voti del gruppo <Icon name="arrow" size={16} />
+    </button>
     <dl className={styles.metrics}>
       <div>
         <dt>Componenti</dt>
@@ -268,13 +272,13 @@ function PersonPanel({ personId, map, profiles, news, judicial, initialTab = nul
       {institution?.shortLabel ?? "Gruppo non disponibile"}
     </span>}
     <div className={styles.panelTabs} role="group" aria-label="Contenuto della scheda">
-      <button type="button" aria-pressed={tab === "profilo"} onClick={() => setTab("profilo")}>Profilo e incarichi</button>
-      {hasChamberActs
-        ? <button type="button" aria-pressed={tab === "atti"} onClick={() => setTab("atti")}>Atti e voti</button>
-        : null}
       {hasChamberActs
         ? <button type="button" aria-pressed={tab === "temi"} onClick={() => setTab("temi")}>Voti per tema</button>
         : null}
+      {hasChamberActs
+        ? <button type="button" aria-pressed={tab === "atti"} onClick={() => setTab("atti")}>Atti e voti</button>
+        : null}
+      <button type="button" aria-pressed={tab === "profilo"} onClick={() => setTab("profilo")}>Profilo e incarichi</button>
       <button type="button" aria-pressed={tab === "notizie"} onClick={() => setTab("notizie")}>
         Notizie
         {newsReady && newsReady.articles.length > 0 ? <span className={styles.countMark}>{newsReady.articles.length}</span> : null}

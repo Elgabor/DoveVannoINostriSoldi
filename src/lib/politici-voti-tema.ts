@@ -171,14 +171,21 @@ export type ThemeHistoryMember = {
 
 export type ThemeChamberFilter = "tutti" | "camera" | "senato";
 
+export type ThemeHistoryCoverage = Record<"camera" | "senato", {
+  periodLabel: string;
+  observedDate: string;
+  acquiredAt: string;
+  included: number;
+  excluded: number;
+}>;
+
 export type ThemeHistoryResult = {
   theme: VoteThemeDefinition | null;
   query: string | null;
   personQuery: string | null;
   chamber: ThemeChamberFilter;
   expressedOnly: boolean;
-  periodLabel: string;
-  observedDate: string;
+  coverage: ThemeHistoryCoverage;
   cameraSourceUrl: string;
   cameraSourceLabel: string;
   senatoSourceUrl: string;
@@ -806,17 +813,28 @@ export function getThemeVoteHistory(options: {
       return left.actNumber.localeCompare(right.actNumber, "it");
     });
 
-  const observedDates = [cameraSnapshot.period.observedDate, senatoSnapshot.period.observedDate]
-    .sort();
-
   return {
     theme,
     query: queryRaw,
     personQuery: personQueryRaw,
     chamber,
     expressedOnly,
-    periodLabel: cameraSnapshot.period.label,
-    observedDate: observedDates.at(-1) ?? cameraSnapshot.period.observedDate,
+    coverage: {
+      camera: {
+        periodLabel: cameraSnapshot.period.label,
+        observedDate: cameraSnapshot.period.observedDate,
+        acquiredAt: cameraSnapshot.provenance.acquiredAt,
+        included: cameraSnapshot.coverage.finalVotes,
+        excluded: cameraSnapshot.coverage.finalVotesExcluded,
+      },
+      senato: {
+        periodLabel: senatoSnapshot.period.label,
+        observedDate: senatoSnapshot.period.observedDate,
+        acquiredAt: senatoSnapshot.provenance.acquiredAt,
+        included: senatoSnapshot.coverage.finalVotes,
+        excluded: senatoSnapshot.coverage.finalVotesOnOtherActs,
+      },
+    },
     cameraSourceUrl: cameraSnapshot.provenance.landingUrl,
     cameraSourceLabel: cameraSnapshot.provenance.title,
     senatoSourceUrl: senatoSnapshot.provenance.landingUrl,

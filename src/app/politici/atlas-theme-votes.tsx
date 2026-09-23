@@ -257,7 +257,7 @@ export function ThemeVotes({ personId, initialThemeId = null }: { personId: stri
 
         {data.summary.totale === 0 ? (
           <Status title="Nessuna votazione finale per questo tema">
-            Nello snapshot non risultano votazioni finali su atti di iniziativa parlamentare
+            Nello snapshot non risultano votazioni finali sugli atti inclusi
             il cui titolo richiama il tema. Non significa assenza di proposte o di lavoro in commissione.
           </Status>
         ) : data.summary.favorevoli + data.summary.contrari + data.summary.astenuti === 0 ? (
@@ -293,6 +293,9 @@ export function ThemeVotes({ personId, initialThemeId = null }: { personId: stri
                   <div><dt>Astenuti</dt><dd>{vote.astenuti}</dd></div>
                 </dl>
                 <a href={vote.officialPage} target="_blank" rel="noreferrer">Atto ufficiale <Icon name="arrow" size={14} /></a>
+                {data.theme ? <a href={`?vista=storico-voti&tema=${data.theme.id}&ramo=${data.chamber}#voto-${data.chamber}-${vote.voteId}`}>
+                  Vedi gruppi e confronti <Icon name="arrow" size={14} />
+                </a> : null}
               </li>;
             })}
           </ol>

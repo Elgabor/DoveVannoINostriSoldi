@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Any
 
 from atomic_snapshot import write_atomic
+from parliament_snapshot_json import serialize_snapshot
 
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = ROOT / "scripts/etl/specs/camera-atti-voti-xix.source.json"
@@ -865,8 +866,10 @@ def validate_snapshot(payload: dict[str, Any], locks: dict[str, Any] | None = No
         vid = vote.get("id")
         require(isinstance(vid, str) and vid not in vote_ids, f"votazione duplicata: {vid}")
         vote_ids.add(str(vid))
+    vote_act_by_id = {vote["id"]: vote.get("actId") for vote in final_votes}
 
     act_ids: set[str] = set()
+    linked_vote_ids: set[str] = set()
     iter_less = 0
     previous_key: tuple[int, str] | None = None
     for act in acts:
@@ -934,7 +937,11 @@ def validate_snapshot(payload: dict[str, Any], locks: dict[str, Any] | None = No
             require(current["state"] in class_states[outcome], f"{aid}: stato fuori dalla classe dichiarata")
         for vid in act.get("finalVoteIds") or []:
             require(vid in vote_ids, f"{aid}: finalVoteId sconosciuto {vid}")
+            require(vote_act_by_id[vid] == aid and vid not in linked_vote_ids,
+                    f"{aid}: finalVoteId attribuito a un altro atto o ripetuto {vid}")
+            linked_vote_ids.add(vid)
         require(act.get("officialPage") == ACT_PAGE_BASE.format(number=act["number"]), f"{aid}: officialPage")
+    require(linked_vote_ids == vote_ids, "votazioni senza atto collegato")
     require(iter_less <= int(len(acts) * MAX_ITER_LESS_SHARE), f"atti senza iter oltre soglia: {iter_less}")
 
     for vote in final_votes:
@@ -1074,7 +1081,7 @@ def main() -> int:
     snapshot = refresh()
     require_coverage_floor(snapshot["coverage"], spec)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    write_atomic(OUTPUT, json.dumps(snapshot, ensure_ascii=False, indent=2) + "\n")
+    write_atomic(OUTPUT, serialize_snapshot(snapshot))
     print(f"written {OUTPUT.relative_to(ROOT)} ({snapshot['coverage']['acts']} acts)")
     return 0
 

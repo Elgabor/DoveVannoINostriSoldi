@@ -106,6 +106,23 @@ test("senators expose their verified final votes with parliamentary attribution"
   assert.ok(voted.finalVotes.every((vote) => vote.ownVote !== "non-rilevato"));
 });
 
+test("a government bill reaches the senator vote trail with official attribution", () => {
+  const snapshot = parseSenatoAttiVotiSnapshot(attiVotiJson);
+  const act = snapshot.acts.find((item) => item.id === "ddl-52421");
+  const vote = snapshot.finalVotes.find((item) => item.id === "19-98-11");
+  assert.ok(act?.finalVoteIds.includes(vote?.id));
+  const profiles = getRepubblicaProfiles();
+  const numericId = Object.keys(vote.votes).find((id) => profiles[`sen-s${id}`]);
+  assert.ok(numericId);
+  const voted = getRepubblicaLegislativeActs(`sen-s${numericId}`).voted
+    .find((item) => item.id === act.id);
+  assert.deepEqual(voted.initiative, { kind: "government", label: "Governativa" });
+  assert.equal(voted.proposer.kind, "government");
+  assert.match(voted.proposer.label, /Giancarlo Giorgetti/u);
+  assert.equal(voted.responsibleGovernment.label, "Governo Meloni-I");
+  assert.ok(voted.finalVotes.some((item) => item.id === vote.id));
+});
+
 test("tampered snapshot with a broken tally fails the parse", () => {
   const snapshot = parseSenatoAttiVotiSnapshot(attiVotiJson);
   const mutated = structuredClone(snapshot);

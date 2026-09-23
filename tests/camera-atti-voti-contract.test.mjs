@@ -167,3 +167,22 @@ test("tampered snapshot with an unlinked final vote fails the parse", () => {
   linked.finalVoteIds = [];
   assert.throws(() => parseCameraAttiVotiSnapshot(mutated));
 });
+
+test("duplicate final vote IDs fail even when coverage is adjusted", () => {
+  const mutated = structuredClone(attiVotiJson);
+  mutated.finalVotes.push(structuredClone(mutated.finalVotes[0]));
+  mutated.coverage.finalVotes += 1;
+  mutated.coverage.finalVotesObserved += 1;
+  assert.throws(() => parseCameraAttiVotiSnapshot(mutated));
+});
+
+test("a final vote links once and only to its declared act", () => {
+  const vote = attiVotiJson.finalVotes[0];
+  const wrongAct = structuredClone(attiVotiJson);
+  wrongAct.acts.find((act) => act.id !== vote.actId).finalVoteIds.push(vote.id);
+  assert.throws(() => parseCameraAttiVotiSnapshot(wrongAct));
+
+  const repeatedLink = structuredClone(attiVotiJson);
+  repeatedLink.acts.find((act) => act.id === vote.actId).finalVoteIds.push(vote.id);
+  assert.throws(() => parseCameraAttiVotiSnapshot(repeatedLink));
+});

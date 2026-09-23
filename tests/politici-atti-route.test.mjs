@@ -103,10 +103,15 @@ test("politici atti serves the verified final votes of a Senato member", async (
   for (const act of body.voted) {
     assert.equal(act.chamber, "senato");
     assert.equal(act.role, "votante");
-    assert.deepEqual(act.initiative, { kind: "parliamentary", label: "Parlamentare" });
-    assert.equal(act.proposer.kind, "senator");
-    assert.match(act.proposer.id, /^sen-s\d+$/);
-    assert.equal(act.responsibleGovernment, null);
+    if (act.initiative.kind === "government") {
+      assert.equal(act.proposer.kind, "government");
+      assert.ok(act.proposer.label.includes("(Gov. "));
+      assert.ok(act.responsibleGovernment.label.startsWith("Governo "));
+    } else {
+      assert.equal(act.proposer.kind, "senator");
+      assert.match(act.proposer.id, /^sen-s\d+$/);
+      assert.equal(act.responsibleGovernment, null);
+    }
     assert.ok(act.finalVotes.length > 0);
     assert.ok(act.finalVotes.every((vote) => vote.ownVote !== "non-rilevato"));
   }

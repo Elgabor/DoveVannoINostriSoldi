@@ -108,6 +108,17 @@ class CameraAttiVotiXixSnapshotTest(unittest.TestCase):
         with self.assertRaises(SnapshotError):
             validate_snapshot(payload)
 
+    def test_validate_rejects_repeated_or_foreign_final_vote_link(self) -> None:
+        for repeated in (False, True):
+            with self.subTest(repeated=repeated):
+                payload = committed()
+                vote = payload["finalVotes"][0]
+                act = next(act for act in payload["acts"]
+                           if (act["id"] == vote["actId"]) == repeated)
+                act["finalVoteIds"].append(vote["id"])
+                with self.assertRaises(SnapshotError):
+                    validate_snapshot(payload)
+
 
 if __name__ == "__main__":
     unittest.main()

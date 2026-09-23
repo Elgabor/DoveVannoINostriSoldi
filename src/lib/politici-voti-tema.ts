@@ -36,6 +36,14 @@ const senatoSnapshot = parseSenatoAttiVotiSnapshot(senatoAttiVotiJson);
 const senatoPeopleSnapshot = parsePoliticiSenatoSnapshot(senatoPeopleJson);
 const cameraVoteById = new Map(cameraSnapshot.finalVotes.map((vote) => [vote.id, vote]));
 const senatoVoteById = new Map(senatoSnapshot.finalVotes.map((vote) => [vote.id, vote]));
+const senatoActsByVoteId = new Map<string, typeof senatoSnapshot.acts>();
+for (const act of senatoSnapshot.acts) {
+  for (const voteId of act.finalVoteIds) {
+    const linked = senatoActsByVoteId.get(voteId) ?? [];
+    linked.push(act);
+    senatoActsByVoteId.set(voteId, linked);
+  }
+}
 const cameraMembershipsByDeputy = Map.groupBy(
   cameraPeopleSnapshot.groupMemberships,
   (membership) => membership.deputyId,
@@ -82,6 +90,14 @@ export type ThemeVoteRow = {
   astenuti: number;
   ownVote: RepublicActVote;
   matchedNeedles: string[];
+  linkedActs?: ThemeLinkedAct[];
+};
+
+export type ThemeLinkedAct = {
+  id: string;
+  number: string;
+  title: string;
+  officialPage: string;
 };
 
 export type ThemeVoteSummary = RepublicVoteStateCounts & {
@@ -138,6 +154,7 @@ export type ThemeHistoryEventBase = {
   contrari: number;
   astenuti: number;
   matchedNeedles: string[];
+  linkedActs?: ThemeLinkedAct[];
 };
 
 export type ThemeHistoryEvent = ThemeHistoryEventBase & {
@@ -411,13 +428,26 @@ export type CuratedComparison = ReturnType<typeof parseCuratedComparisonCatalog>
 const curatedComparisons = parseCuratedComparisonCatalog(curatedComparisonsJson);
 
 /** Index matching final votes once; reuse vote maps for every parliamentarian. */
+const fixedThemeVoteIndexes = new Map<string, readonly IndexedVote[]>();
+
 function indexChamberVotes(
   chamber: "camera" | "senato",
   needles: readonly string[],
   refineNeedles: readonly string[] = [],
-): IndexedVote[] {
+): readonly IndexedVote[] {
   if (needles.length === 0) return [];
+  const fixedTheme = refineNeedles.length === 0
+    ? VOTE_THEMES.find((theme) => theme.needles === needles)
+    : null;
+  const cacheKey = fixedTheme ? `${chamber}:${fixedTheme.id}` : null;
+  const cached = cacheKey ? fixedThemeVoteIndexes.get(cacheKey) : undefined;
+  if (cached) return cached;
   const indexed = new Map<string, IndexedVote>();
+  const finish = () => {
+    const result = [...indexed.values()];
+    if (cacheKey) fixedThemeVoteIndexes.set(cacheKey, result);
+    return result;
+  };
   if (chamber === "camera") {
     for (const act of cameraSnapshot.acts) {
       if (!act.title || act.finalVoteIds.length === 0) continue;
@@ -446,7 +476,7 @@ function indexChamberVotes(
         });
       }
     }
-    return [...indexed.values()];
+    return finish();
   }
   for (const act of senatoSnapshot.acts) {
     if (!act.title || act.finalVoteIds.length === 0) continue;
@@ -455,6 +485,11 @@ function indexChamberVotes(
     for (const voteId of act.finalVoteIds) {
       const vote = senatoVoteById.get(voteId);
       if (!vote) continue;
+      const previous = indexed.get(vote.id);
+      if (previous) {
+        previous.event.matchedNeedles = [...new Set([...previous.event.matchedNeedles, ...matched])];
+        continue;
+      }
       indexed.set(vote.id, {
         event: {
           voteId: vote.id,
@@ -470,35 +505,29 @@ function indexChamberVotes(
           contrari: vote.contrari,
           astenuti: vote.astenuti,
           matchedNeedles: matched,
+          linkedActs: (senatoActsByVoteId.get(voteId) ?? []).map((linked) => ({
+            id: linked.id,
+            number: linked.number,
+            title: stripMarkup(linked.title ?? `Disegno ${linked.number}`),
+            officialPage: linked.officialPage,
+          })),
         },
         votesByNumericId: vote.votes,
       });
     }
   }
-  return [...indexed.values()];
+  return finish();
 }
 
-function cameraRows(
+function personRows(
+  chamber: "camera" | "senato",
   numericId: string,
   needles: readonly string[],
   refineNeedles: readonly string[] = [],
 ): ThemeVoteRow[] {
-  return indexChamberVotes("camera", needles, refineNeedles).map((item) => ({
+  return indexChamberVotes(chamber, needles, refineNeedles).map((item) => ({
     ...item.event,
     ownVote: (item.votesByNumericId[numericId] ?? "non-rilevato") as RepublicActVote,
-    confidenceVote: item.event.confidenceVote,
-  }));
-}
-
-function senatoRows(
-  numericId: string,
-  needles: readonly string[],
-  refineNeedles: readonly string[] = [],
-): ThemeVoteRow[] {
-  return indexChamberVotes("senato", needles, refineNeedles).map((item) => ({
-    ...item.event,
-    ownVote: (item.votesByNumericId[numericId] ?? "non-rilevato") as RepublicActVote,
-    confidenceVote: false,
   }));
 }
 
@@ -535,7 +564,7 @@ function chamberThemeInventory(): Array<VoteThemeDefinition & { chamberVotes: nu
 
 function resolveNeedles(themeId: string | null, queryRaw: string | null): {
   theme: VoteThemeDefinition | null;
-  needles: string[];
+  needles: readonly string[];
   refineNeedles: string[];
 } | null {
   const theme = themeId ? VOTE_THEMES.find((item) => item.id === themeId) ?? null : null;
@@ -545,7 +574,7 @@ function resolveNeedles(themeId: string | null, queryRaw: string | null): {
     : [];
   // Theme needles are OR'd; a free-text `q` with a theme *refines* (AND), it does not widen.
   if (theme) {
-    return { theme, needles: [...theme.needles], refineNeedles: queryNeedles };
+    return { theme, needles: theme.needles, refineNeedles: queryNeedles };
   }
   return { theme: null, needles: queryNeedles, refineNeedles: [] };
 }
@@ -558,7 +587,7 @@ function numericIdFor(personId: string, chamber: "camera" | "senato"): string | 
 
 const CAVEATS = [
   "I temi raggruppano votazioni finali il cui titolo ufficiale contiene le parole chiave del tema: non sono una classificazione ufficiale di Camera o Senato.",
-  "Sono incluse solo le votazioni finali sugli atti di iniziativa parlamentare già nello snapshot della XIX legislatura; i disegni a prima firma del Governo restano fuori perimetro.",
+  "Gli snapshot della XIX legislatura includono votazioni finali su atti parlamentari e governativi verificati; al Senato restano fuori gli altri tipi di iniziativa e gli atti senza una fase Senato ammissibile.",
   "Una ricerca senza votazioni finali collegate non prova assenza di attività sul tema: molte proposte non arrivano al voto d’aula nello snapshot.",
   "Il voto individuale segue i codici ufficiali della fonte: mancata partecipazione, presenza senza voto, missione o congedo e dato non rilevato restano stati distinti.",
   "Se una persona non compare nelle liste nominali della votazione, il dato resta «non rilevato»: non viene trasformato in assenza o mancata partecipazione.",
@@ -593,11 +622,7 @@ export function getRepubblicaThemeVotes(options: {
 
   const votes = needles.length === 0
     ? []
-    : sortVotes(
-      chamber === "camera"
-        ? cameraRows(numericId, needles, refineNeedles)
-        : senatoRows(numericId, needles, refineNeedles),
-    );
+    : sortVotes(personRows(chamber, numericId, needles, refineNeedles));
 
   const summary = summarizeRows(votes);
   const source = chamber === "camera" ? cameraSnapshot.provenance : senatoSnapshot.provenance;
@@ -715,17 +740,6 @@ export function getThemeVoteHistory(options: {
     return created;
   }
 
-  function pushVoter(
-    bucket: ThemeHistoryEvent["voters"],
-    ownVote: RepublicActVote,
-    voter: ThemeEventVoter,
-  ): void {
-    const field = REPUBLIC_VOTE_STATE_META[ownVote].countKey;
-    if (field === "favorevoli" || field === "contrari" || field === "astenuti") {
-      bucket[field].push(voter);
-    }
-  }
-
   for (const person of graph.people) {
     if (person.chamberId !== "camera" && person.chamberId !== "senato") continue;
     if (chamber !== "tutti" && person.chamberId !== chamber) continue;
@@ -752,29 +766,24 @@ export function getThemeVoteHistory(options: {
         otherVotes[item.event.voteId] = ownVote;
       }
       yearRows.push({ date: item.event.date, ownVote, chamber: person.chamberId });
-    }
-    const expressed = expressedCount(summary);
-    if (expressedOnly && expressed === 0) continue;
-
-    for (const item of indexed) {
-      const ownVote = (item.votesByNumericId[numericId] ?? "non-rilevato") as RepublicActVote;
-      const eventGroupLabel = groupLabelAt(
-        person.chamberId,
-        groupAt(person.chamberId, numericId, item.event.date),
-        item.event.date,
-        true,
-      );
-      pushVoter(
-        ensureVoters(`${item.event.chamber}:${item.event.voteId}`),
-        ownVote,
-        {
+      if (ownVote === "F" || ownVote === "C" || ownVote === "A") {
+        const eventGroupLabel = groupLabelAt(
+          person.chamberId,
+          groupAt(person.chamberId, numericId, item.event.date),
+          item.event.date,
+          true,
+        );
+        const voters = ensureVoters(`${item.event.chamber}:${item.event.voteId}`);
+        voters[REPUBLIC_VOTE_STATE_META[ownVote].countKey].push({
           personId: person.id,
           name: person.displayName,
           groupLabel: eventGroupLabel,
           ownVote,
-        },
-      );
+        });
+      }
     }
+    const expressed = expressedCount(summary);
+    if (expressedOnly && expressed === 0) continue;
 
     members.push({
       personId: person.id,

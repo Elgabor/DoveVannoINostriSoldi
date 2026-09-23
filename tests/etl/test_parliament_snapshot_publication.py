@@ -43,6 +43,8 @@ class ParliamentSnapshotPublicationTest(unittest.TestCase):
                         "finalVotes": 288,
                         "finalVotesObserved": 318,
                         "finalVotesOnOtherActs": 181,
+                        "finalVotesOnGovernmentActs": 166,
+                        "actsByInitiative": {"government": 336},
                         "deputiesAsFirstSigner": 341,
                         "senatorsAsFirstSigner": 174,
                     }}),

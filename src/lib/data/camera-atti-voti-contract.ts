@@ -198,21 +198,32 @@ export const cameraAttiVotiSnapshotSchema = z
     if (value.coverage.finalVotes !== value.finalVotes.length) {
       ctx.addIssue({ code: "custom", message: "coverage.finalVotes", path: ["coverage", "finalVotes"] });
     }
-    const voteIds = new Set(value.finalVotes.map((vote) => vote.id));
+    const voteActById = new Map(value.finalVotes.map((vote) => [vote.id, vote.actId]));
+    if (voteActById.size !== value.finalVotes.length) {
+      ctx.addIssue({ code: "custom", message: "votazione duplicata", path: ["finalVotes"] });
+    }
     const actIds = new Set<string>();
+    const linkedVoteIds = new Set<string>();
     for (const [index, act] of value.acts.entries()) {
       if (actIds.has(act.id)) {
         ctx.addIssue({ code: "custom", message: "atto duplicato", path: ["acts", index, "id"] });
       }
       actIds.add(act.id);
       for (const linked of act.finalVoteIds) {
-        if (!voteIds.has(linked)) {
+        if (!voteActById.has(linked)) {
           ctx.addIssue({
             code: "custom",
             message: "finalVoteId irrisolto",
             path: ["acts", index, "finalVoteIds"],
           });
+        } else if (voteActById.get(linked) !== act.id || linkedVoteIds.has(linked)) {
+          ctx.addIssue({
+            code: "custom",
+            message: "finalVoteId attribuito a un altro atto o ripetuto",
+            path: ["acts", index, "finalVoteIds"],
+          });
         }
+        linkedVoteIds.add(linked);
       }
       const coSigners = new Set(act.coSignerIds);
       if (
@@ -268,9 +279,8 @@ export const cameraAttiVotiSnapshotSchema = z
         ctx.addIssue({ code: "custom", message: "flag secret incoerente", path: ["finalVotes", index, "secret"] });
       }
     }
-    const referencedVoteIds = new Set(value.acts.flatMap((act) => act.finalVoteIds));
     for (const [index, vote] of value.finalVotes.entries()) {
-      if (!referencedVoteIds.has(vote.id)) {
+      if (!linkedVoteIds.has(vote.id)) {
         ctx.addIssue({ code: "custom", message: "votazione non referenziata da alcun atto", path: ["finalVotes", index, "id"] });
       }
     }

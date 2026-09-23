@@ -1031,7 +1031,7 @@ export type RepublicActSummary = {
     | { kind: "senator"; id: string; label: string }
     | { kind: "government"; label: string }
     | null;
-  responsibleGovernment: { id: string; label: string; uri: string } | null;
+  responsibleGovernment: { id: string; label: string; uri: string } | { label: string } | null;
   currentState: string | null;
   currentStateDate: string | null;
   /** Senato only: branch (S/C) of the current phase, so the UI can say "alla Camera". */
@@ -1200,15 +1200,18 @@ function buildLegislativeIndex<A extends { coSignerIds: string[]; presentedDate:
   };
   const firstActsByNumericId = new Map<string, A[]>();
   const coActsByNumericId = new Map<string, A[]>();
+  const appendAct = (index: Map<string, A[]>, key: string, act: A): void => {
+    const list = index.get(key);
+    if (list) list.push(act);
+    else index.set(key, [act]);
+  };
   for (const act of acts) {
     const firstSigner = firstSignerId(act);
     if (firstSigner !== null) {
-      const firstKey = signerNumericId(firstSigner);
-      firstActsByNumericId.set(firstKey, [...(firstActsByNumericId.get(firstKey) ?? []), act]);
+      appendAct(firstActsByNumericId, signerNumericId(firstSigner), act);
     }
     for (const signerId of act.coSignerIds) {
-      const key = signerNumericId(signerId);
-      coActsByNumericId.set(key, [...(coActsByNumericId.get(key) ?? []), act]);
+      appendAct(coActsByNumericId, signerNumericId(signerId), act);
     }
   }
   for (const list of firstActsByNumericId.values()) list.sort(compare);
@@ -1382,7 +1385,8 @@ function senatoActSummary(
   role: "primo-firmatario" | "cofirmatario" | "votante",
   numericId: string,
 ): RepublicActSummary {
-  const firstSigner = senatorByNumericId.get(act.firstSignerId);
+  const firstSigner = act.firstSignerId ? senatorByNumericId.get(act.firstSignerId) : null;
+  const government = act.initiativeKind === "government";
   return {
     id: act.id,
     chamber: "senato",
@@ -1391,13 +1395,16 @@ function senatoActSummary(
     natureId: act.natureId,
     presentedDate: act.presentedDate,
     role,
-    initiative: { kind: "parliamentary", label: "Parlamentare" },
-    proposer: {
-      kind: "senator",
-      id: `sen-s${act.firstSignerId}`,
-      label: firstSigner?.displayName ?? `Parlamentare del Senato ${act.firstSignerId}`,
-    },
-    responsibleGovernment: null,
+    initiative: government
+      ? { kind: "government", label: "Governativa" }
+      : { kind: "parliamentary", label: "Parlamentare" },
+    proposer: government
+      ? { kind: "government", label: act.formalProposers.join("; ") }
+      : {
+          kind: "senator", id: `sen-s${act.firstSignerId}`,
+          label: firstSigner?.displayName ?? `Parlamentare del Senato ${act.firstSignerId}`,
+        },
+    responsibleGovernment: government ? { label: act.governmentLabels.join(", ") } : null,
     currentState: act.currentPhase.state,
     currentStateDate: act.currentPhase.stateDate,
     currentStateRamo: act.currentPhase.ramo,

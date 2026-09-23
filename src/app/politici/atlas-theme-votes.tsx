@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import type { RepublicActVote } from "@/lib/politici-repubblica";
+import type { ThemeVotesResult } from "@/lib/politici-voti-tema";
 import {
   compactRepublicVoteStateCounts,
   countRepublicVoteStates,
@@ -10,60 +10,16 @@ import {
   OWN_VOTE_LABELS,
   REPUBLIC_VOTE_COUNT_META,
   republicVoteTone,
-  type RepublicVoteStateCounts,
 } from "@/lib/politici-vote-states";
 import { VOTE_THEMES } from "@/lib/politici-voti-tema-catalog";
 import { count, object, requestDeadline, text, type Resource } from "./atlas-data";
 import { longDate } from "./atlas-model";
+import { OfficialActLinks, validLinkedActs } from "./atlas-official-acts";
 import { Icon, SourceLink, Status } from "./atlas-primitives";
 import styles from "./politici.module.css";
 import extra from "./atlas-enhancements.module.css";
 
-type ThemeOption = {
-  id: string;
-  label: string;
-  description: string;
-  chamberVotes: number;
-  expressedVotes: number;
-};
-
-type ThemeVoteRow = {
-  voteId: string;
-  actId: string;
-  actNumber: string;
-  actTitle: string;
-  officialPage: string;
-  date: string;
-  approved: boolean;
-  confidenceVote: boolean;
-  favorevoli: number;
-  contrari: number;
-  astenuti: number;
-  ownVote: RepublicActVote;
-  matchedNeedles: string[];
-};
-
-type ThemeVotesData = {
-  personId: string;
-  chamber: "camera" | "senato";
-  theme: { id: string; label: string; description: string } | null;
-  query: string | null;
-  periodLabel: string;
-  observedDate: string;
-  sourceUrl: string;
-  sourceLabel: string;
-  licenseLabel: string;
-  summary: RepublicVoteStateCounts & {
-    totale: number;
-  };
-  votes: ThemeVoteRow[];
-  years: Array<RepublicVoteStateCounts & {
-    year: string;
-    events: number;
-  }>;
-  themes: ThemeOption[];
-  caveats: string[];
-};
+type ThemeVotesData = ThemeVotesResult;
 
 function parseThemeVotes(payload: unknown, personId: string): ThemeVotesData {
   if (!object(payload) || payload.ok !== true || payload.personId !== personId) throw new Error("invalid");
@@ -90,6 +46,7 @@ function parseThemeVotes(payload: unknown, personId: string): ThemeVotesData {
       && typeof vote.confidenceVote === "boolean"
       && ["favorevoli", "contrari", "astenuti"].every((key) => count(vote[key]))
       && isRepublicActVote(vote.ownVote)
+      && validLinkedActs(vote.linkedActs)
       && Array.isArray(vote.matchedNeedles)
       && vote.matchedNeedles.every(text))) {
     throw new Error("invalid");
@@ -292,7 +249,7 @@ export function ThemeVotes({ personId, initialThemeId = null }: { personId: stri
                   <div><dt>Contrari</dt><dd>{vote.contrari}</dd></div>
                   <div><dt>Astenuti</dt><dd>{vote.astenuti}</dd></div>
                 </dl>
-                <a href={vote.officialPage} target="_blank" rel="noreferrer">Atto ufficiale <Icon name="arrow" size={14} /></a>
+                <OfficialActLinks officialPage={vote.officialPage} linkedActs={vote.linkedActs} />
                 {data.theme ? <a href={`?vista=storico-voti&tema=${data.theme.id}&ramo=${data.chamber}#voto-${data.chamber}-${vote.voteId}`}>
                   Vedi gruppi e confronti <Icon name="arrow" size={14} />
                 </a> : null}

@@ -28,7 +28,7 @@ function validAct(
     (initiative.kind === "parliamentary"
       && proposer.kind === (chamber === "camera" ? "deputy" : "senator")
       && text(proposer.id) && responsibleGovernment === null)
-    || (chamber === "camera" && initiative.kind === "government" && proposer.kind === "government")
+    || (initiative.kind === "government" && proposer.kind === "government")
   );
   const attributionMetadata = object(initiative)
     && (initiative.kind === "parliamentary" || initiative.kind === "government")
@@ -37,8 +37,10 @@ function validAct(
     && proposerMatchesInitiative
     && text(proposer.label)
     && (responsibleGovernment === null || (object(responsibleGovernment)
-      && text(responsibleGovernment.id) && text(responsibleGovernment.label)
-      && isSafeExternalUrl(responsibleGovernment.uri)));
+      && text(responsibleGovernment.label)
+      && (chamber === "senato" && initiative.kind === "government"
+        ? responsibleGovernment.id === undefined && responsibleGovernment.uri === undefined
+        : text(responsibleGovernment.id) && isSafeExternalUrl(responsibleGovernment.uri))));
   return attributionMetadata
     && ["title", "presentedDate", "currentState", "currentStateDate", "outcomeClass"].every((key) => nullableText(value[key]))
     && value.role === role && count(value.coSignerCount) && isSafeExternalUrl(value.officialPage)

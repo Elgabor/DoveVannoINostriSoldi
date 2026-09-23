@@ -3,8 +3,14 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { VOTE_THEMES } from "@/lib/politici-voti-tema-catalog";
 import { compareGroupVoteEvents, type GroupChoice } from "@/lib/politici-group-patterns";
-import type { RepublicActVote, RepublicMap } from "@/lib/politici-repubblica";
-import type { CuratedComparison, ThemeHistoryCoverage } from "@/lib/politici-voti-tema";
+import type { RepublicMap } from "@/lib/politici-repubblica";
+import type {
+  CuratedComparison,
+  ThemeEventVoter,
+  ThemeGroupVote,
+  ThemeHistoryResult,
+  ThemeYearBucket,
+} from "@/lib/politici-voti-tema";
 import {
   compactRepublicVoteStateCounts,
   countRepublicVoteStates,
@@ -13,10 +19,10 @@ import {
   OWN_VOTE_LABELS,
   REPUBLIC_VOTE_STATE_META,
   republicVoteTone,
-  type RepublicVoteStateCounts,
 } from "@/lib/politici-vote-states";
 import { count, object, requestDeadline, text, type Resource } from "./atlas-data";
 import { parseActHeadline } from "./atlas-act-headline";
+import { OfficialActLinks, validLinkedActs } from "./atlas-official-acts";
 import {
   DEFAULT_THEME_ID,
   longDate,
@@ -28,76 +34,10 @@ import { Icon, Portrait, SourceLink, Status } from "./atlas-primitives";
 import styles from "./politici.module.css";
 import extra from "./atlas-enhancements.module.css";
 
-type YearBucket = RepublicVoteStateCounts & {
-  year: string;
-  events: number;
-  cameraEvents: number;
-  senatoEvents: number;
-};
-
-type EventVoter = {
-  personId: string;
-  name: string;
-  groupLabel: string | null;
-  ownVote: RepublicActVote;
-};
-
-type GroupVote = {
-  groupId: string | null;
-  groupLabel: string;
-  favorevoli: number;
-  contrari: number;
-  astenuti: number;
-};
-
-type ThemeHistoryData = {
-  theme: { id: string; label: string; description: string } | null;
-  query: string | null;
-  personQuery: string | null;
-  chamber: ThemeChamberFilter;
-  expressedOnly: boolean;
-  coverage: ThemeHistoryCoverage;
-  cameraSourceUrl: string;
-  cameraSourceLabel: string;
-  senatoSourceUrl: string;
-  senatoSourceLabel: string;
-  senatoGroupSourceUrl: string;
-  senatoGroupSourceLabel: string;
-  events: Array<{
-    voteId: string;
-    chamber: "camera" | "senato";
-    actNumber: string;
-    actTitle: string;
-    officialPage: string;
-    date: string;
-    approved: boolean;
-    favorevoli: number;
-    contrari: number;
-    astenuti: number;
-    voters: {
-      favorevoli: EventVoter[];
-      contrari: EventVoter[];
-      astenuti: EventVoter[];
-    };
-    groupVotes: GroupVote[];
-  }>;
-  comparisons: CuratedComparison[];
-  years: YearBucket[];
-  members: Array<{
-    personId: string;
-    name: string;
-    chamber: "camera" | "senato";
-    groupLabel: string | null;
-    expressedVotes: number;
-    summary: RepublicVoteStateCounts & {
-      totale: number;
-    };
-    years: YearBucket[];
-    otherVotes: Record<string, Exclude<RepublicActVote, "F" | "C" | "A" | "non-rilevato">>;
-  }>;
-  themes: Array<{ id: string; label: string; description: string; chamberVotes: number }>;
-  caveats: string[];
-};
+type YearBucket = ThemeYearBucket;
+type EventVoter = ThemeEventVoter;
+type GroupVote = ThemeGroupVote;
+type ThemeHistoryData = ThemeHistoryResult;
 
 const expressedVoteKeys = (["F", "C", "A"] as const)
   .map((code) => REPUBLIC_VOTE_STATE_META[code].countKey);
@@ -154,6 +94,7 @@ function parseHistory(payload: unknown): ThemeHistoryData {
     || !payload.caveats.every(text)
     || !payload.events.every((event) => object(event) && validVoters(event.voters)
       && (event.chamber === "camera" || event.chamber === "senato")
+      && validLinkedActs(event.linkedActs)
       && validGroupVotes(event.groupVotes))
     || !payload.years.every((year) => object(year) && isRepublicVoteStateCounts(year))
     || !payload.members.every((member) => object(member) && object(member.summary)
@@ -280,6 +221,7 @@ function memberVoteTrail(
         actNumber: event.actNumber,
         actTitle: event.actTitle,
         officialPage: event.officialPage,
+        linkedActs: event.linkedActs,
         approved: event.approved,
         ownVote: expressedVoteOnEvent(event, member.personId)
           ?? member.otherVotes[event.voteId]
@@ -683,7 +625,7 @@ export function ThemeVoteHistoryDirectory({
                     <GroupVotes groups={event.groupVotes} chamber={event.chamber} />
                     {data.comparisons.filter((comparison) => comparison.chamber === event.chamber && comparison.voteId === event.voteId)
                       .map((comparison) => <CuratedEvidence key={comparison.id} comparison={comparison} event={event} />)}
-                    <a href={event.officialPage} target="_blank" rel="noreferrer">Atto ufficiale <Icon name="arrow" size={14} /></a>
+                    <OfficialActLinks officialPage={event.officialPage} linkedActs={event.linkedActs} />
                     <div className={extra.whoVoted}>
                       <p className={extra.whoVotedLead}>
                         Chi ha votato
@@ -786,7 +728,7 @@ export function ThemeVoteHistoryDirectory({
                               actNumber={vote.actNumber}
                               approved={vote.approved}
                             />
-                            <a href={vote.officialPage} target="_blank" rel="noreferrer">Atto ufficiale <Icon name="arrow" size={14} /></a>
+                            <OfficialActLinks officialPage={vote.officialPage} linkedActs={vote.linkedActs} />
                           </li>
                         ))}
                       </ol>

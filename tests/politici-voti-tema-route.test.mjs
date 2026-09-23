@@ -12,6 +12,7 @@ const {
   getThemeVoteHistory,
   VOTE_THEMES,
   __testOnly_cameraGroupAt,
+  __testOnly_senatoGroupAt,
 } = await import("../src/lib/politici-voti-tema.ts");
 const { countRepublicVoteStates } = await import("../src/lib/politici-vote-states.ts");
 
@@ -152,16 +153,14 @@ test("theme history indexes votes once and supports chamber / expressed filters"
 
   const cameraEvents = history.events.filter((event) => event.chamber === "camera");
   assert.ok(cameraEvents.length >= 1);
-  assert.ok(cameraEvents.every((event) => Array.isArray(event.groupVotes)));
-  assert.ok(history.events.filter((event) => event.chamber === "senato")
-    .every((event) => event.groupVotes === null));
-  assert.ok(cameraEvents.every((event) => event.groupVotes.every((group) => (
+  assert.ok(history.events.every((event) => Array.isArray(event.groupVotes)));
+  assert.ok(history.events.every((event) => event.groupVotes.every((group) => (
     Number.isInteger(group.favorevoli)
     && Number.isInteger(group.contrari)
     && Number.isInteger(group.astenuti)
     && !Object.hasOwn(group, "unanimous")
   ))));
-  assert.ok(cameraEvents.every((event) => {
+  assert.ok(history.events.every((event) => {
     const totals = event.groupVotes.reduce((result, group) => ({
       favorevoli: result.favorevoli + group.favorevoli,
       contrari: result.contrari + group.contrari,
@@ -275,4 +274,23 @@ test("politici storico voti-tema API serves directory with ramo/espressi", async
     new Request("http://localhost/api/politici/voti-tema?tema=lavoro&ramo=europa"),
   );
   assert.equal(badRamo.status, 400);
+});
+
+test("Senate vote history attributes members and distributions to their group on the vote date", () => {
+  assert.equal(__testOnly_senatoGroupAt("29293", "2023-04-25"), "g49");
+  assert.equal(__testOnly_senatoGroupAt("29293", "2023-04-26"), "g91");
+  assert.equal(__testOnly_senatoGroupAt("29293", "2022-10-17"), null);
+  const history = getThemeVoteHistory({ themeId: "sicurezza", chamber: "senato" });
+  const event = (id) => history.events.find((item) => item.voteId === id);
+  const groupOf = (id, personId) => {
+    const voters = event(id).voters;
+    return [...voters.favorevoli, ...voters.contrari, ...voters.astenuti]
+      .find((voter) => voter.personId === personId)?.groupLabel;
+  };
+
+  assert.equal(groupOf("19-40-18", "sen-s29293"), "PD-IDP");
+  assert.equal(groupOf("19-86-14", "sen-s29293"), "Az-IV-RE");
+  assert.equal(history.senatoGroupSourceUrl, "https://dati.senato.it/sparql");
+  const vote = event("19-86-14");
+  assert.ok(vote.groupVotes.some((group) => group.groupLabel === "Azione-ItaliaViva-RenewEurope"));
 });

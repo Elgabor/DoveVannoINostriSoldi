@@ -5,6 +5,7 @@ import {
   parseSenatoAttiVotiSnapshot,
 } from "@/lib/data/senato-atti-voti-contract";
 import { parsePoliticiCameraSnapshot } from "@/lib/data/politici-camera-contract";
+import { parsePoliticiSenatoSnapshot } from "@/lib/data/politici-senato-contract";
 import {
   findRepublicPerson,
   getRepubblicaGraph,
@@ -23,17 +24,27 @@ import {
 import cameraAttiVotiJson from "@/data/generated/camera-atti-voti-xix.json";
 import cameraPeopleJson from "@/data/generated/politici-camera-xix.json";
 import senatoAttiVotiJson from "@/data/generated/senato-atti-voti-xix.json";
+import senatoPeopleJson from "@/data/generated/politici-senato-xix.json";
 
 export { VOTE_THEMES, type VoteThemeDefinition } from "@/lib/politici-voti-tema-catalog";
 
 const cameraSnapshot = parseCameraAttiVotiSnapshot(cameraAttiVotiJson);
 const cameraPeopleSnapshot = parsePoliticiCameraSnapshot(cameraPeopleJson);
 const senatoSnapshot = parseSenatoAttiVotiSnapshot(senatoAttiVotiJson);
+const senatoPeopleSnapshot = parsePoliticiSenatoSnapshot(senatoPeopleJson);
 const cameraVoteById = new Map(cameraSnapshot.finalVotes.map((vote) => [vote.id, vote]));
 const senatoVoteById = new Map(senatoSnapshot.finalVotes.map((vote) => [vote.id, vote]));
 const cameraMembershipsByDeputy = Map.groupBy(
   cameraPeopleSnapshot.groupMemberships,
   (membership) => membership.deputyId,
+);
+const senatoMembershipsBySenator = Map.groupBy(
+  senatoPeopleSnapshot.groupMemberships,
+  (membership) => membership.senatorId,
+);
+const senatoNamesByGroup = Map.groupBy(
+  senatoPeopleSnapshot.groupNames,
+  (name) => name.groupId,
 );
 
 export type ThemeVoteRow = {
@@ -115,7 +126,7 @@ export type ThemeHistoryEvent = ThemeHistoryEventBase & {
     contrari: ThemeEventVoter[];
     astenuti: ThemeEventVoter[];
   };
-  groupVotes: ThemeGroupVote[] | null;
+  groupVotes: ThemeGroupVote[];
 };
 
 export type ThemeGroupVote = {
@@ -151,6 +162,8 @@ export type ThemeHistoryResult = {
   cameraSourceLabel: string;
   senatoSourceUrl: string;
   senatoSourceLabel: string;
+  senatoGroupSourceUrl: string;
+  senatoGroupSourceLabel: string;
   events: ThemeHistoryEvent[];
   years: ThemeYearBucket[];
   members: ThemeHistoryMember[];
@@ -287,6 +300,21 @@ function cameraGroupAt(numericId: string, date: string): string | null {
     .filter((membership) => membership.startDate <= date
       && (membership.endDate === null || date < membership.endDate));
   return matches.length === 1 ? matches[0]!.groupId : null;
+}
+
+function senatoGroupAt(numericId: string, date: string): string | null {
+  const matches = new Set((senatoMembershipsBySenator.get(numericId) ?? [])
+    .filter((membership) => membership.startDate <= date
+      && (membership.endDate === null || date <= membership.endDate))
+    .map((membership) => membership.groupId));
+  return matches.size === 1 ? [...matches][0]! : null;
+}
+
+function senatoGroupLabel(groupId: string | null, date: string, compact = false): string {
+  const labels = (senatoNamesByGroup.get(groupId ?? "") ?? [])
+    .filter((name) => name.startDate <= date && (name.endDate === null || date <= name.endDate));
+  if (labels.length !== 1) return "Gruppo non determinato";
+  return (compact ? labels[0]!.shortLabel : labels[0]!.label) ?? labels[0]!.label;
 }
 
 /** Index matching final votes once; reuse vote maps for every parliamentarian. */
@@ -442,8 +470,8 @@ const CAVEATS = [
   "Il voto individuale segue i codici ufficiali della fonte: mancata partecipazione, presenza senza voto, missione o congedo e dato non rilevato restano stati distinti.",
   "Se una persona non compare nelle liste nominali della votazione, il dato resta «non rilevato»: non viene trasformato in assenza o mancata partecipazione.",
   "Gli snapshot non includono uno storico completo dei mandati: «fuori mandato» resta non disponibile, distinto dallo zero e dal dato non rilevato.",
-  "La distribuzione per gruppo è disponibile per la Camera e usa l'adesione ufficiale valida alla data del voto; le etichette dei gruppi vengono dal roster corrente e possono riflettere denominazioni successive. Il Senato resta senza distribuzione finché lo storico equivalente non è integrato.",
-  "La distribuzione Camera conta tutti i voti nominali, anche degli ex deputati; l'elenco delle persone mostra soltanto il roster corrente nel perimetro dei filtri.",
+  "La distribuzione per gruppo usa le appartenenze ufficiali alla data del voto: Camera e Senato conservano le rispettive semantiche temporali. Le denominazioni Camera vengono dal roster corrente e possono riflettere nomi successivi; quelle Senato sono storiche.",
+  "La distribuzione conta tutti i voti nominali, anche di ex parlamentari; l'elenco delle persone mostra soltanto il roster corrente nel perimetro dei filtri. Il gruppo nell'elenco è corrente, quello accanto a un voto è storico.",
 ] as const;
 
 export function listVoteThemesForChamber(chamber: "camera" | "senato") {
@@ -545,15 +573,25 @@ export function getThemeVoteHistory(options: {
     return (compact ? group?.shortLabel : group?.label) ?? "Gruppo non determinato";
   }
 
-  function cameraGroupVotes(item: IndexedVote): ThemeGroupVote[] {
+  function groupAt(chamber: "camera" | "senato", numericId: string, date: string): string | null {
+    return chamber === "camera" ? cameraGroupAt(numericId, date) : senatoGroupAt(numericId, date);
+  }
+
+  function groupLabelAt(chamber: "camera" | "senato", groupId: string | null, date: string, compact = false): string {
+    return chamber === "camera"
+      ? historicalCameraGroupLabel(groupId, compact)
+      : senatoGroupLabel(groupId, date, compact);
+  }
+
+  function groupVotes(item: IndexedVote): ThemeGroupVote[] {
     const buckets = new Map<string, ThemeGroupVote>();
     for (const [numericId, vote] of Object.entries(item.votesByNumericId)) {
       if (vote !== "F" && vote !== "C" && vote !== "A") continue;
-      const groupId = cameraGroupAt(numericId, item.event.date);
+      const groupId = groupAt(item.event.chamber, numericId, item.event.date);
       const key = groupId ?? "unknown";
       const bucket = buckets.get(key) ?? {
         groupId,
-        groupLabel: historicalCameraGroupLabel(groupId),
+        groupLabel: groupLabelAt(item.event.chamber, groupId, item.event.date),
         favorevoli: 0,
         contrari: 0,
         astenuti: 0,
@@ -627,9 +665,12 @@ export function getThemeVoteHistory(options: {
 
     for (const item of indexed) {
       const ownVote = (item.votesByNumericId[numericId] ?? "non-rilevato") as RepublicActVote;
-      const eventGroupLabel = person.chamberId === "camera"
-        ? historicalCameraGroupLabel(cameraGroupAt(numericId, item.event.date), true)
-        : groupLabel;
+      const eventGroupLabel = groupLabelAt(
+        person.chamberId,
+        groupAt(person.chamberId, numericId, item.event.date),
+        item.event.date,
+        true,
+      );
       pushVoter(
         ensureVoters(`${item.event.chamber}:${item.event.voteId}`),
         ownVote,
@@ -669,7 +710,7 @@ export function getThemeVoteHistory(options: {
   const events = [...indexedByKey.values()]
     .map((item) => ({
       ...item.event,
-      groupVotes: item.event.chamber === "camera" ? cameraGroupVotes(item) : null,
+      groupVotes: groupVotes(item),
       voters: votersByEvent.get(`${item.event.chamber}:${item.event.voteId}`)
         ?? emptyVoters(),
     }))
@@ -694,6 +735,8 @@ export function getThemeVoteHistory(options: {
     cameraSourceLabel: cameraSnapshot.provenance.title,
     senatoSourceUrl: senatoSnapshot.provenance.landingUrl,
     senatoSourceLabel: senatoSnapshot.provenance.title,
+    senatoGroupSourceUrl: senatoPeopleSnapshot.source.groupHistory.endpointUrl,
+    senatoGroupSourceLabel: `Senato · storico gruppi parlamentari (acquisito il ${senatoPeopleSnapshot.source.groupHistory.observedDate})`,
     events,
     years: yearsFromEvents(events),
     members,
@@ -710,3 +753,4 @@ export function __testOnly_indexSize(themeId: string, chamber: "camera" | "senat
 }
 
 export const __testOnly_cameraGroupAt = cameraGroupAt;
+export const __testOnly_senatoGroupAt = senatoGroupAt;

@@ -141,6 +141,22 @@ quindi fallire senza sostituire l'artifact. Il corpus pubblicabile corrente
 resta quello validato, con 66 votazioni finali incluse e 181 votazioni finali
 osservate su atti fuori perimetro.
 
+Il 23 settembre 2026 due query GET circoscritte allo storico dei gruppi sono
+nuovamente riuscite; questo non dimostra che il refresh completo degli atti sia
+sbloccato. I tre export del roster corrente possono ancora ricevere un blocco
+WAF, quindi il suo snapshot puntuale resta quello del 17 settembre.
+
+Lo storico dei gruppi nello snapshot `politici-senato-xix` è acquisito
+separatamente dall'endpoint SPARQL ufficiale: `ocd:aderisce` lega il senatore
+all'adesione di legislatura 19 con `osr:inizio` e `osr:fine`; le denominazioni
+sono intervalli datati distinti. La fine dell'intervallo Senato è inclusiva,
+diversamente dalla Camera. Al 23 settembre l'artifact contiene 288 intervalli
+di adesione e 14 denominazioni pertinenti alla legislatura. Il validator
+verifica che ciascuno dei 12.436 voti nominali delle 66 finali incluse abbia
+esattamente un gruppo e una denominazione alla data del voto. Questo non
+equivale a uno storico completo dei mandati o a una misura di presenza al
+lavoro; il roster delle persone resta puntuale alla propria data di osservazione.
+
 1. `phases` — nodi `osr:Ddl` XIX con iniziativa a primo firmatario senatore:
    `idDdl`, `idFase`, `fase`, `ramo`, `progressivoIter`,
    `presentatoTrasmesso`, `statoDdl`, `dataStatoDdl`, `dataPresentazione`,

@@ -60,6 +60,8 @@ type ThemeHistoryData = {
   cameraSourceLabel: string;
   senatoSourceUrl: string;
   senatoSourceLabel: string;
+  senatoGroupSourceUrl: string;
+  senatoGroupSourceLabel: string;
   events: Array<{
     voteId: string;
     chamber: "camera" | "senato";
@@ -76,7 +78,7 @@ type ThemeHistoryData = {
       contrari: EventVoter[];
       astenuti: EventVoter[];
     };
-    groupVotes: GroupVote[] | null;
+    groupVotes: GroupVote[];
   }>;
   years: YearBucket[];
   members: Array<{
@@ -118,7 +120,7 @@ function validGroupVotes(value: unknown): boolean {
 
 function parseHistory(payload: unknown): ThemeHistoryData {
   if (!object(payload) || payload.ok !== true) throw new Error("invalid");
-  if (!["periodLabel", "observedDate", "cameraSourceUrl", "cameraSourceLabel", "senatoSourceUrl", "senatoSourceLabel"].every((key) => text(payload[key]))
+  if (!["periodLabel", "observedDate", "cameraSourceUrl", "cameraSourceLabel", "senatoSourceUrl", "senatoSourceLabel", "senatoGroupSourceUrl", "senatoGroupSourceLabel"].every((key) => text(payload[key]))
     || (payload.chamber !== "tutti" && payload.chamber !== "camera" && payload.chamber !== "senato")
     || typeof payload.expressedOnly !== "boolean"
     || !Array.isArray(payload.events)
@@ -128,9 +130,8 @@ function parseHistory(payload: unknown): ThemeHistoryData {
     || !Array.isArray(payload.caveats)
     || !payload.caveats.every(text)
     || !payload.events.every((event) => object(event) && validVoters(event.voters)
-      && (event.chamber === "camera"
-        ? validGroupVotes(event.groupVotes)
-        : event.chamber === "senato" && event.groupVotes === null))
+      && (event.chamber === "camera" || event.chamber === "senato")
+      && validGroupVotes(event.groupVotes))
     || !payload.years.every((year) => object(year) && isRepublicVoteStateCounts(year))
     || !payload.members.every((member) => object(member) && object(member.summary)
       && count(member.summary.totale) && isRepublicVoteStateCounts(member.summary)
@@ -291,11 +292,11 @@ function VoterGroup({
   </details>;
 }
 
-function GroupVotes({ groups }: { groups: GroupVote[] }) {
+function GroupVotes({ groups, chamber }: { groups: GroupVote[]; chamber: "camera" | "senato" }) {
   if (!groups.length) return null;
   return <details className={extra.voterGroup}>
     <summary>
-      <span className={extra.themeVotePill} data-tone="neutral">Voti espressi per gruppo · Camera intera</span>
+      <span className={extra.themeVotePill} data-tone="neutral">Voti espressi per gruppo · {chamber === "camera" ? "Camera intera" : "Senato intero"}</span>
       <span className={styles.tag}>{groups.length}</span>
     </summary>
     <dl className={extra.groupVoteList}>
@@ -507,7 +508,7 @@ export function ThemeVoteHistoryDirectory({
                       <div><dt>Contrari</dt><dd>{event.contrari}</dd></div>
                       <div><dt>Astenuti</dt><dd>{event.astenuti}</dd></div>
                     </dl>
-                    {event.groupVotes ? <GroupVotes groups={event.groupVotes} /> : null}
+                    <GroupVotes groups={event.groupVotes} chamber={event.chamber} />
                     <a href={event.officialPage} target="_blank" rel="noreferrer">Atto ufficiale <Icon name="arrow" size={14} /></a>
                     <div className={extra.whoVoted}>
                       <p className={extra.whoVotedLead}>
@@ -626,6 +627,7 @@ export function ThemeVoteHistoryDirectory({
         <div className={extra.actSource}>
           <SourceLink href={data.cameraSourceUrl}>{data.cameraSourceLabel}</SourceLink>
           <SourceLink href={data.senatoSourceUrl}>{data.senatoSourceLabel}</SourceLink>
+          <SourceLink href={data.senatoGroupSourceUrl}>{data.senatoGroupSourceLabel}</SourceLink>
         </div>
         <details className={styles.disclosure}>
           <summary>Come è costruito lo storico</summary>

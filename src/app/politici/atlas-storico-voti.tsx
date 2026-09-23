@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useMemo, useState } from "react";
 import { VOTE_THEMES } from "@/lib/politici-voti-tema-catalog";
+import { compareGroupVoteEvents, type GroupChoice } from "@/lib/politici-group-patterns";
 import type { RepublicActVote, RepublicMap } from "@/lib/politici-repubblica";
 import {
   compactRepublicVoteStateCounts,
@@ -308,6 +309,94 @@ function GroupVotes({ groups, chamber }: { groups: GroupVote[]; chamber: "camera
   </details>;
 }
 
+function groupChoiceLabel(choice: GroupChoice): string {
+  if (choice === "pareggio") return "Parità interna";
+  if (choice === "non-determinato") return "Non determinabile";
+  return OWN_VOTE_LABELS[choice];
+}
+
+function GroupPatternComparison({ data }: { data: ThemeHistoryData }) {
+  const [selectedA, setSelectedA] = useState("");
+  const [selectedB, setSelectedB] = useState("");
+  const [selectedYear, setSelectedYear] = useState("");
+  const chamber = data.chamber;
+  const chamberEvents = data.events.filter((event) => event.chamber === chamber);
+  const groupsById = new Map<string, { id: string; label: string; date: string }>();
+  for (const event of chamberEvents) {
+    for (const group of event.groupVotes) {
+      if (!group.groupId) continue;
+      const previous = groupsById.get(group.groupId);
+      if (!previous || event.date > previous.date) {
+        groupsById.set(group.groupId, { id: group.groupId, label: group.groupLabel, date: event.date });
+      }
+    }
+  }
+  const groups = [...groupsById.values()].sort((a, b) => a.label.localeCompare(b.label, "it"));
+  const years = [...new Set(chamberEvents.map((event) => event.date.slice(0, 4)))].sort();
+  const groupAId = groupsById.has(selectedA) ? selectedA : "";
+  const groupBId = groupsById.has(selectedB) ? selectedB : "";
+  const year = years.includes(selectedYear) ? selectedYear : "";
+  const comparison = (chamber === "camera" || chamber === "senato") && groupAId && groupBId
+    ? compareGroupVoteEvents(data.events, chamber, groupAId, groupBId, year || null)
+    : null;
+  const eventsById = new Map(chamberEvents.map((event) => [event.voteId, event]));
+
+  return <section className={extra.yearSection} aria-label="Pattern di voto comune tra gruppi">
+    <div className={styles.sectionHeading}>
+      <h3>Pattern di voto comune tra gruppi</h3>
+    </div>
+    {chamber === "tutti" ? <p className={styles.note}>Seleziona «Solo Camera» o «Solo Senato» per confrontare gruppi dello stesso ramo.</p> : <>
+      <div className={extra.groupPatternFilters}>
+        <label>Primo gruppo
+          <select value={groupAId} onChange={(event) => setSelectedA(event.target.value)}>
+            <option value="">Seleziona un gruppo</option>
+            {groups.map((group) => <option key={group.id} value={group.id}>{group.label}</option>)}
+          </select>
+        </label>
+        <label>Secondo gruppo
+          <select value={groupBId} onChange={(event) => setSelectedB(event.target.value)}>
+            <option value="">Seleziona un gruppo</option>
+            {groups.map((group) => <option key={group.id} value={group.id}>{group.label}</option>)}
+          </select>
+        </label>
+        <label>Periodo
+          <select value={year} onChange={(event) => setSelectedYear(event.target.value)}>
+            <option value="">Tutti gli anni disponibili</option>
+            {years.map((item) => <option key={item} value={item}>{item}</option>)}
+          </select>
+        </label>
+      </div>
+      {groupAId && groupAId === groupBId ? <p className={styles.note}>Scegli due gruppi diversi.</p> : null}
+      {comparison ? <>
+        <p className={styles.note} role="status">
+          {groupsById.get(groupAId)?.label} e {groupsById.get(groupBId)?.label} · {chamber === "camera" ? "Camera" : "Senato"} · {data.theme?.label ?? "ricerca libera"}
+          {data.query ? ` · titolo «${data.query}»` : ""} · {year || "tutti gli anni disponibili"}.
+          {comparison.periodStart && comparison.periodEnd ? ` Voti dal ${longDate(comparison.periodStart)} al ${longDate(comparison.periodEnd)}.` : " Nessuna votazione nel periodo."}
+        </p>
+        <dl className={extra.voteCounts}>
+          <div><dt>Scelta comune</dt><dd>{comparison.commonChoiceEvents}/{comparison.comparableEvents}</dd></div>
+          <div><dt>Eventi confrontabili</dt><dd>{comparison.comparableEvents}/{comparison.events.length}</dd></div>
+          <div><dt>Non confrontabili</dt><dd>{comparison.events.length - comparison.comparableEvents}</dd></div>
+        </dl>
+        {comparison.comparableEvents === 0 ? <p className={styles.note}>Nessuna scelta comune valutabile nel periodo selezionato.</p> : null}
+        <details className={extra.voterGroup}>
+          <summary><span className={extra.themeVotePill} data-tone="neutral">Vedi gli atti e le scelte</span><span className={styles.tag}>{comparison.events.length}</span></summary>
+          <ol className={extra.groupPatternList}>
+            {comparison.events.map((row) => {
+              const event = eventsById.get(row.voteId)!;
+              return <li key={row.voteId}>
+                <a href={`#voto-${event.chamber}-${row.voteId}`}>{actNumberLabel(event.chamber, event.actNumber)} · {longDate(event.date)} · {parseActHeadline(event.actTitle).title}</a>
+                <span>Primo gruppo: {groupChoiceLabel(row.choiceA)} · secondo gruppo: {groupChoiceLabel(row.choiceB)} · {row.agreement === null ? "non confrontabile" : row.agreement ? "scelta comune" : "scelta diversa"}</span>
+              </li>;
+            })}
+          </ol>
+        </details>
+      </> : null}
+      <p className={styles.note}>Il confronto usa gruppi parlamentari, non necessariamente partiti, e solo favorevoli, contrari e astenuti prevalenti. Parità interne e scelte non determinabili non entrano nel denominatore. La ricerca per persona e il filtro «solo chi ha espresso» non modificano il confronto tra gruppi; una scelta comune non dimostra un’alleanza politica.</p>
+    </>}
+  </section>;
+}
+
 export function ThemeVoteHistoryDirectory({
   map,
   query,
@@ -475,6 +564,8 @@ export function ThemeVoteHistoryDirectory({
           </section>
         ) : null}
 
+        <GroupPatternComparison data={data} />
+
         <section className={extra.storicoEvents} aria-label="Cosa si è votato">
           <div className={styles.sectionHeading}>
             <h3>Cosa si è votato</h3>
@@ -490,7 +581,7 @@ export function ThemeVoteHistoryDirectory({
                 const expressedVoters = event.voters.favorevoli.length
                   + event.voters.contrari.length
                   + event.voters.astenuti.length;
-                return <li key={`${event.chamber}-${event.voteId}`} data-approved={event.approved ? "true" : "false"}>
+                return <li key={`${event.chamber}-${event.voteId}`} id={`voto-${event.chamber}-${event.voteId}`} data-approved={event.approved ? "true" : "false"}>
                   <div className={extra.themeTimelineRail}>
                     <time dateTime={event.date}>{longDate(event.date)}</time>
                     <span className={styles.tag}>{event.chamber === "senato" ? "Senato" : "Camera"}</span>

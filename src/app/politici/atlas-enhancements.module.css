@@ -282,6 +282,13 @@
   font-weight: 550;
 }
 .storicoFilters { display: grid; gap: 12px; }
+.groupPatternFilters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.groupPatternFilters label { display: grid; gap: 6px; min-width: 0; font-size: 11px; color: var(--atlas-muted); }
+.groupPatternFilters select { width: 100%; min-width: 0; min-height: 44px; padding: 8px; border: 1px solid var(--atlas-line); border-radius: 8px; background: var(--atlas-panel); color: var(--atlas-ink); font-size: 14px; }
+.groupPatternList { display: grid; gap: 10px; max-height: 320px; overflow: auto; margin: 0; padding: 12px 20px 12px 28px; border-top: 1px solid var(--atlas-line); }
+.groupPatternList li { font-size: 12px; overflow-wrap: anywhere; }
+.groupPatternList a { color: var(--atlas-accent); }
+.groupPatternList span { display: block; margin-top: 3px; color: var(--atlas-muted); }
 .expressedToggle {
   display: inline-flex;
   align-items: center;
@@ -368,6 +375,7 @@
   .legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .directory { grid-template-columns: 1fr; }
   .heading { flex-wrap: wrap; }
+  .groupPatternFilters { grid-template-columns: 1fr; }
 }
 
 .statusContent { font-size: 13px; line-height: 1.7; color: var(--atlas-muted); }

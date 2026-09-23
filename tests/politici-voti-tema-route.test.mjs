@@ -294,3 +294,11 @@ test("Senate vote history attributes members and distributions to their group on
   const vote = event("19-86-14");
   assert.ok(vote.groupVotes.some((group) => group.groupLabel === "Azione-ItaliaViva-RenewEurope"));
 });
+
+test("a final vote linked from multiple acts is counted and rendered once", () => {
+  const history = getThemeVoteHistory({ themeId: "sicurezza", chamber: "senato" });
+  const event = history.events.find((item) => item.voteId === "19-81-9");
+  const voters = [...event.voters.favorevoli, ...event.voters.contrari, ...event.voters.astenuti];
+  assert.equal(new Set(voters.map((voter) => voter.personId)).size, voters.length);
+  assert.ok(history.members.every((member) => member.summary.totale === history.events.length));
+});

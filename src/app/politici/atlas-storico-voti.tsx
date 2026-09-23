@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { VOTE_THEMES } from "@/lib/politici-voti-tema-catalog";
 import { compareGroupVoteEvents, type GroupChoice } from "@/lib/politici-group-patterns";
 import type { RepublicActVote, RepublicMap } from "@/lib/politici-repubblica";
+import type { CuratedComparison } from "@/lib/politici-voti-tema";
 import {
   compactRepublicVoteStateCounts,
   countRepublicVoteStates,
@@ -81,6 +82,7 @@ type ThemeHistoryData = {
     };
     groupVotes: GroupVote[];
   }>;
+  comparisons: CuratedComparison[];
   years: YearBucket[];
   members: Array<{
     personId: string;
@@ -119,12 +121,26 @@ function validGroupVotes(value: unknown): boolean {
     && count(group.astenuti));
 }
 
+function validComparison(value: unknown): boolean {
+  return object(value) && object(value.subject) && object(value.position)
+    && text(value.id)
+    && (value.chamber === "camera" || value.chamber === "senato")
+    && (value.subject.kind === "person" || value.subject.kind === "group")
+    && text(value.subject.id) && text(value.subject.label)
+    && text(value.position.date) && text(value.position.summary)
+    && text(value.position.sourceLabel) && text(value.position.sourceUrl)
+    && text(value.actId) && text(value.voteId) && text(value.voteSourceUrl)
+    && (value.voteState === null || value.voteState === "F" || value.voteState === "C" || value.voteState === "A");
+}
+
 function parseHistory(payload: unknown): ThemeHistoryData {
   if (!object(payload) || payload.ok !== true) throw new Error("invalid");
   if (!["periodLabel", "observedDate", "cameraSourceUrl", "cameraSourceLabel", "senatoSourceUrl", "senatoSourceLabel", "senatoGroupSourceUrl", "senatoGroupSourceLabel"].every((key) => text(payload[key]))
     || (payload.chamber !== "tutti" && payload.chamber !== "camera" && payload.chamber !== "senato")
     || typeof payload.expressedOnly !== "boolean"
     || !Array.isArray(payload.events)
+    || !Array.isArray(payload.comparisons)
+    || !payload.comparisons.every(validComparison)
     || !Array.isArray(payload.years)
     || !Array.isArray(payload.members)
     || !Array.isArray(payload.themes)
@@ -144,6 +160,37 @@ function parseHistory(payload: unknown): ThemeHistoryData {
     throw new Error("invalid");
   }
   return payload as ThemeHistoryData;
+}
+
+function CuratedEvidence({
+  comparison,
+  event,
+}: {
+  comparison: CuratedComparison;
+  event: ThemeHistoryData["events"][number];
+}) {
+  const group = comparison.subject.kind === "group"
+    ? event.groupVotes.find((item) => item.groupId === comparison.subject.id)
+    : null;
+  return <aside className={extra.curatedEvidence} aria-label="Posizione e voto documentati">
+    <p className={extra.curatedEvidenceEyebrow}>
+      Confronto documentato · posizione {comparison.subject.kind === "person" ? "personale" : "del gruppo"}
+    </p>
+    <p><strong>{comparison.subject.label}</strong> · <time dateTime={comparison.position.date}>{longDate(comparison.position.date)}</time></p>
+    <p>{comparison.position.summary}</p>
+    <p>
+      {comparison.subject.kind === "person" && comparison.voteState
+        ? <>Voto finale sull’intero atto: <strong>{OWN_VOTE_LABELS[comparison.voteState]}</strong>.</>
+        : group
+          ? <>Voti espressi dal gruppo sull’intero atto: {group.favorevoli} favorevoli, {group.contrari} contrari, {group.astenuti} astenuti.</>
+          : null}
+    </p>
+    <div className={extra.curatedEvidenceSources}>
+      <SourceLink href={comparison.position.sourceUrl}>Fonte della posizione · {comparison.position.sourceLabel}</SourceLink>
+      <SourceLink href={comparison.voteSourceUrl}>Scheda ufficiale del voto</SourceLink>
+    </div>
+    <small>La posizione riguarda l’atto nel suo insieme; questo confronto non giudica la coerenza né attribuisce un voto alle singole misure.</small>
+  </aside>;
 }
 
 async function loadHistory(
@@ -571,6 +618,7 @@ export function ThemeVoteHistoryDirectory({
             <h3>Cosa si è votato</h3>
             <span className={styles.tag}>{data.events.length}</span>
           </div>
+          <p className={styles.note}>I confronti documentati sono una selezione: se un atto non ne ha, non implica nulla sulla coerenza delle posizioni.</p>
           {!data.events.length ? (
             <Status title="Nessuna votazione per questi filtri">
               Prova un altro tema o togli il raffinamento sul titolo.
@@ -600,6 +648,8 @@ export function ThemeVoteHistoryDirectory({
                       <div><dt>Astenuti</dt><dd>{event.astenuti}</dd></div>
                     </dl>
                     <GroupVotes groups={event.groupVotes} chamber={event.chamber} />
+                    {data.comparisons.filter((comparison) => comparison.chamber === event.chamber && comparison.voteId === event.voteId)
+                      .map((comparison) => <CuratedEvidence key={comparison.id} comparison={comparison} event={event} />)}
                     <a href={event.officialPage} target="_blank" rel="noreferrer">Atto ufficiale <Icon name="arrow" size={14} /></a>
                     <div className={extra.whoVoted}>
                       <p className={extra.whoVotedLead}>

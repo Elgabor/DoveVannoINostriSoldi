@@ -141,6 +141,27 @@
   text-decoration: none;
   font-weight: 550;
 }
+.curatedEvidence {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--atlas-line);
+  border-radius: 10px;
+  background: var(--atlas-bg);
+  overflow-wrap: anywhere;
+}
+.curatedEvidence p { margin: 0; }
+.curatedEvidenceEyebrow {
+  color: var(--atlas-accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.curatedEvidenceSources { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.curatedEvidenceSources a { display: inline-flex; align-items: center; gap: 3px; color: var(--atlas-accent); }
+.curatedEvidence small { color: var(--atlas-muted); line-height: 1.4; }
 .actHeadline { display: grid; gap: 6px; min-width: 0; }
 .actLead {
   margin: 0;

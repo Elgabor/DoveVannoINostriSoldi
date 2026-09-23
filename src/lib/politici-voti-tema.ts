@@ -1,3 +1,4 @@
+import { z } from "zod";
 import {
   parseCameraAttiVotiSnapshot,
 } from "@/lib/data/camera-atti-voti-contract";
@@ -25,6 +26,7 @@ import cameraAttiVotiJson from "@/data/generated/camera-atti-voti-xix.json";
 import cameraPeopleJson from "@/data/generated/politici-camera-xix.json";
 import senatoAttiVotiJson from "@/data/generated/senato-atti-voti-xix.json";
 import senatoPeopleJson from "@/data/generated/politici-senato-xix.json";
+import curatedComparisonsJson from "@/data/politici-confronti-curati.json";
 
 export { VOTE_THEMES, type VoteThemeDefinition } from "@/lib/politici-voti-tema-catalog";
 
@@ -46,6 +48,25 @@ const senatoNamesByGroup = Map.groupBy(
   senatoPeopleSnapshot.groupNames,
   (name) => name.groupId,
 );
+
+const curatedCatalogSchema = z.object({
+  schemaVersion: z.literal(1),
+  allowedPositionHosts: z.array(z.string().regex(/^[a-z0-9.-]+\.[a-z]{2,}$/u)).min(1),
+  comparisons: z.array(z.object({
+    id: z.string().regex(/^[a-z0-9-]+$/u),
+    chamber: z.enum(["camera", "senato"]),
+    subject: z.object({ kind: z.enum(["person", "group"]), id: z.string().trim().min(1) }).strict(),
+    position: z.object({
+      date: z.iso.date(),
+      summary: z.string().trim().min(1),
+      sourceLabel: z.string().trim().min(1),
+      sourceUrl: z.url(),
+    }).strict(),
+    actId: z.string().min(1),
+    voteId: z.string().min(1),
+    voteSourceUrl: z.url(),
+  }).strict()).min(1),
+}).strict();
 
 export type ThemeVoteRow = {
   voteId: string;
@@ -165,6 +186,7 @@ export type ThemeHistoryResult = {
   senatoGroupSourceUrl: string;
   senatoGroupSourceLabel: string;
   events: ThemeHistoryEvent[];
+  comparisons: CuratedComparison[];
   years: ThemeYearBucket[];
   members: ThemeHistoryMember[];
   themes: Array<VoteThemeDefinition & { chamberVotes: number }>;
@@ -317,6 +339,70 @@ function senatoGroupLabel(groupId: string | null, date: string, compact = false)
   return (compact ? labels[0]!.shortLabel : labels[0]!.label) ?? labels[0]!.label;
 }
 
+function trustedHost(url: string, owners: readonly string[]): boolean {
+  const parsed = new URL(url);
+  const host = parsed.hostname.toLowerCase();
+  return parsed.protocol === "https:"
+    && owners.some((owner) => host === owner || host.endsWith(`.${owner}`));
+}
+
+export function parseCuratedComparisonCatalog(input: unknown) {
+  const catalog = curatedCatalogSchema.parse(input);
+  const ids = new Set<string>();
+  const sources = new Set<string>();
+  return catalog.comparisons.map((record) => {
+    if (ids.has(record.id)) throw new Error(`Confronto curato duplicato: ${record.id}`);
+    ids.add(record.id);
+    const sourceKey = `${record.chamber}:${record.subject.kind}:${record.subject.id}:${record.voteId}:${record.position.sourceUrl}`;
+    if (sources.has(sourceKey)) throw new Error(`Fonte duplicata nel confronto ${record.id}`);
+    sources.add(sourceKey);
+    if (!trustedHost(record.position.sourceUrl, catalog.allowedPositionHosts)
+      || !trustedHost(record.voteSourceUrl, [record.chamber === "camera" ? "camera.it" : "senato.it"])) {
+      throw new Error(`Fonte non ammessa nel confronto ${record.id}`);
+    }
+
+    const acts = record.chamber === "camera" ? cameraSnapshot.acts : senatoSnapshot.acts;
+    const vote = (record.chamber === "camera" ? cameraVoteById : senatoVoteById).get(record.voteId);
+    const act = acts.find((item) => item.id === record.actId);
+    if (!vote || !act?.finalVoteIds.includes(record.voteId)) {
+      throw new Error(`Atto o votazione non risolti nel confronto ${record.id}`);
+    }
+
+    let label: string;
+    let voteState: "F" | "C" | "A" | null = null;
+    if (record.subject.kind === "person") {
+      if (record.chamber === "camera") {
+        const person = cameraPeopleSnapshot.deputies.find((item) => `dep-${item.numericId}` === record.subject.id);
+        if (!person) throw new Error(`Persona non risolta nel confronto ${record.id}`);
+        label = person.displayName;
+        const state = vote.votes[person.numericId];
+        if (state === "F" || state === "C" || state === "A") voteState = state;
+      } else {
+        const person = senatoPeopleSnapshot.senators.find((item) => `sen-${item.id}` === record.subject.id);
+        if (!person) throw new Error(`Persona non risolta nel confronto ${record.id}`);
+        label = person.displayName;
+        const state = vote.votes[person.id.slice(1)];
+        if (state === "F" || state === "C" || state === "A") voteState = state;
+      }
+      if (!voteState) throw new Error(`Voto personale non espresso nel confronto ${record.id}`);
+    } else {
+      const group = record.chamber === "camera"
+        ? cameraPeopleSnapshot.groups.find((item) => item.id === record.subject.id)
+        : senatoPeopleSnapshot.groups.find((item) => item.id === record.subject.id);
+      if (!group || !Object.entries(vote.votes).some(([numericId, state]) =>
+        (state === "F" || state === "C" || state === "A")
+        && (record.chamber === "camera" ? cameraGroupAt(numericId, vote.date) : senatoGroupAt(numericId, vote.date)) === record.subject.id)) {
+        throw new Error(`Gruppo senza voti espressi nel confronto ${record.id}`);
+      }
+      label = record.chamber === "camera" ? group.label : senatoGroupLabel(group.id, vote.date);
+    }
+    return { ...record, subject: { ...record.subject, label }, voteState };
+  });
+}
+
+export type CuratedComparison = ReturnType<typeof parseCuratedComparisonCatalog>[number];
+const curatedComparisons = parseCuratedComparisonCatalog(curatedComparisonsJson);
+
 /** Index matching final votes once; reuse vote maps for every parliamentarian. */
 function indexChamberVotes(
   chamber: "camera" | "senato",
@@ -324,7 +410,7 @@ function indexChamberVotes(
   refineNeedles: readonly string[] = [],
 ): IndexedVote[] {
   if (needles.length === 0) return [];
-  const indexed: IndexedVote[] = [];
+  const indexed = new Map<string, IndexedVote>();
   if (chamber === "camera") {
     for (const act of cameraSnapshot.acts) {
       if (!act.title || act.finalVoteIds.length === 0) continue;
@@ -333,7 +419,7 @@ function indexChamberVotes(
       for (const voteId of act.finalVoteIds) {
         const vote = cameraVoteById.get(voteId);
         if (!vote) continue;
-        indexed.push({
+        indexed.set(vote.id, {
           event: {
             voteId: vote.id,
             chamber: "camera",
@@ -353,7 +439,7 @@ function indexChamberVotes(
         });
       }
     }
-    return indexed;
+    return [...indexed.values()];
   }
   for (const act of senatoSnapshot.acts) {
     if (!act.title || act.finalVoteIds.length === 0) continue;
@@ -362,7 +448,7 @@ function indexChamberVotes(
     for (const voteId of act.finalVoteIds) {
       const vote = senatoVoteById.get(voteId);
       if (!vote) continue;
-      indexed.push({
+      indexed.set(vote.id, {
         event: {
           voteId: vote.id,
           chamber: "senato",
@@ -382,7 +468,7 @@ function indexChamberVotes(
       });
     }
   }
-  return indexed;
+  return [...indexed.values()];
 }
 
 function cameraRows(
@@ -738,6 +824,8 @@ export function getThemeVoteHistory(options: {
     senatoGroupSourceUrl: senatoPeopleSnapshot.source.groupHistory.endpointUrl,
     senatoGroupSourceLabel: `Senato · storico gruppi parlamentari (acquisito il ${senatoPeopleSnapshot.source.groupHistory.observedDate})`,
     events,
+    comparisons: curatedComparisons.filter((comparison) => events.some((event) =>
+      event.chamber === comparison.chamber && event.voteId === comparison.voteId)),
     years: yearsFromEvents(events),
     members,
     themes: chamberThemeInventory(),

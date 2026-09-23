@@ -1518,13 +1518,15 @@ export function getRepubblicaLegislativeSources(): {
 }
 
 function profileLegislativeActivity(person: RepublicPerson): RepublicLegislativeActivity | null {
-  const acts = getRepubblicaLegislativeActs(person.id);
-  if (!acts || !person.chamberId) return null;
+  if (person.chamberId !== "camera" && person.chamberId !== "senato") return null;
   const chamber = person.chamberId;
+  if (!person.id.startsWith(chamber === "camera" ? "dep-" : "sen-s")) return null;
   const numericId =
     chamber === "camera" ? person.id.slice("dep-".length) : person.id.slice("sen-s".length);
   const index =
     chamber === "camera" ? getCameraLegislativeIndex() : getSenatoLegislativeIndex();
+  const firstSigned = index.firstActsByNumericId.get(numericId) ?? [];
+  const coSigned = index.coActsByNumericId.get(numericId) ?? [];
   const rosterGroupId =
     chamber === "camera"
       ? deputyByNumericId.get(numericId)?.groupId
@@ -1534,29 +1536,28 @@ function profileLegislativeActivity(person: RepublicPerson): RepublicLegislative
     chamber === "camera" ? cameraAttiVoti.outcomeClasses : senatoAttiVoti.outcomeClasses;
   const chamberSize = chamber === "camera" ? camera.deputies.length : senate.senators.length;
 
-  const all = [...acts.firstSigned, ...acts.coSigned];
   const byOutcome = new Map<string, { firstSigned: number; coSigned: number }>();
-  for (const summary of acts.firstSigned) {
-    if (!summary.outcomeClass) continue;
-    const bucket = byOutcome.get(summary.outcomeClass) ?? { firstSigned: 0, coSigned: 0 };
-    bucket.firstSigned += 1;
-    byOutcome.set(summary.outcomeClass, bucket);
-  }
-  for (const summary of acts.coSigned) {
-    if (!summary.outcomeClass) continue;
-    const bucket = byOutcome.get(summary.outcomeClass) ?? { firstSigned: 0, coSigned: 0 };
-    bucket.coSigned += 1;
-    byOutcome.set(summary.outcomeClass, bucket);
+  let becameLaw = 0;
+  let withFinalVote = 0;
+  for (const [role, items] of [["firstSigned", firstSigned], ["coSigned", coSigned]] as const) {
+    for (const act of items) {
+      if (act.outcomeClass === "legge") becameLaw += 1;
+      if (act.finalVoteIds.length > 0) withFinalVote += 1;
+      if (!act.outcomeClass) continue;
+      const bucket = byOutcome.get(act.outcomeClass) ?? { firstSigned: 0, coSigned: 0 };
+      bucket[role] += 1;
+      byOutcome.set(act.outcomeClass, bucket);
+    }
   }
   const group = index.groupStats.get(rosterGroupId!) ?? null;
   return {
     chamber,
     counts: {
-      firstSigned: acts.firstSigned.length,
-      coSigned: acts.coSigned.length,
-      total: all.length,
-      becameLaw: all.filter((summary) => summary.outcomeClass === "legge").length,
-      withFinalVote: all.filter((summary) => summary.finalVotes.length > 0).length,
+      firstSigned: firstSigned.length,
+      coSigned: coSigned.length,
+      total: firstSigned.length + coSigned.length,
+      becameLaw,
+      withFinalVote,
       byOutcome: outcomeClasses
         .map((outcomeClass) => ({
           outcomeClass: outcomeClass.id,
@@ -1576,8 +1577,11 @@ function profileLegislativeActivity(person: RepublicPerson): RepublicLegislative
     },
     // Phases stay on the /atti route payload; the profile only shows the
     // current state and its branch for the recent acts.
-    recentFirstSigned: acts.firstSigned
-      .slice(0, 3)
+    recentFirstSigned: (chamber === "camera"
+      ? (getCameraLegislativeIndex().firstActsByNumericId.get(numericId) ?? [])
+        .slice(0, 3).map((act) => cameraActSummary(act, "primo-firmatario", numericId))
+      : (getSenatoLegislativeIndex().firstActsByNumericId.get(numericId) ?? [])
+        .slice(0, 3).map((act) => senatoActSummary(act, "primo-firmatario", numericId)))
       .map((summary) => ({ ...summary, phases: undefined })),
   };
 }

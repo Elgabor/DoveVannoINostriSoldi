@@ -1282,27 +1282,26 @@ function buildVotedActsByNumericId<
   V extends { date: string; votes: Record<string, unknown> },
 >(acts: A[], voteById: Map<string, V>, sortNumber: (act: A) => number): Map<string, A[]> {
   const index = new Map<string, Map<string, A>>();
+  const latestVoteDateByActId = new Map<string, string>();
   for (const act of acts) {
+    let latestVoteDate = "";
     for (const voteId of act.finalVoteIds) {
       const vote = voteById.get(voteId);
       require(vote !== undefined, `votazione finale non risolta: ${voteId}`);
+      if (vote!.date > latestVoteDate) latestVoteDate = vote!.date;
       for (const numericId of Object.keys(vote!.votes)) {
         const memberActs = index.get(numericId) ?? new Map<string, A>();
         memberActs.set(act.id, act);
         index.set(numericId, memberActs);
       }
     }
+    if (act.finalVoteIds.length > 0) latestVoteDateByActId.set(act.id, latestVoteDate);
   }
-  const latestVoteDate = (act: A): string => act.finalVoteIds.reduce((latest, voteId) => {
-    const vote = voteById.get(voteId);
-    require(vote !== undefined, `votazione finale non risolta: ${voteId}`);
-    return vote!.date > latest ? vote!.date : latest;
-  }, "");
   return new Map(
     [...index].map(([numericId, memberActs]) => [
       numericId,
       [...memberActs.values()].sort((left, right) =>
-        latestVoteDate(right).localeCompare(latestVoteDate(left)) ||
+        latestVoteDateByActId.get(right.id)!.localeCompare(latestVoteDateByActId.get(left.id)!) ||
         sortNumber(right) - sortNumber(left) ||
         right.number.localeCompare(left.number),
       ),

@@ -25,6 +25,7 @@ import { parseActHeadline } from "./atlas-act-headline";
 import { OfficialActLinks, validLinkedActs } from "./atlas-official-acts";
 import {
   DEFAULT_THEME_ID,
+  countLabel,
   longDate,
   normalizeSearch,
   THEME_CHAMBERS,
@@ -250,7 +251,7 @@ function YearBars({ years, mode }: { years: YearBucket[]; mode: "events" | "vote
         </span>
         <span className={extra.yearMeta}>
           {mode === "events"
-            ? `${year.events} votazioni · Camera ${year.cameraEvents} · Senato ${year.senatoEvents}`
+            ? `${countLabel(year.events, "votazione", "votazioni")} · Camera ${year.cameraEvents} · Senato ${year.senatoEvents}`
             : compactRepublicVoteStateCounts(year)}
         </span>
       </li>;
@@ -568,12 +569,12 @@ export function ThemeVoteHistoryDirectory({
           {data.query ? <>Titolo «{data.query}». </> : null}
           {query.trim() ? <>Persona «{query.trim()}». </> : null}
           {themeChamber === "camera" ? "Solo Camera. " : themeChamber === "senato" ? "Solo Senato. " : null}
-          {" "}{data.events.length} votazioni in aula · {members.length} parlamentari
+          {" "}{countLabel(data.events.length, "votazione", "votazioni")} in aula · {countLabel(members.length, "parlamentare", "parlamentari")}
           {themeExpressedOnly ? " con voto espresso" : " con tutti gli stati disponibili"}.
         </p>
         <section className={styles.note} aria-label="Copertura delle fonti per ramo">
           <p>Camera · {data.coverage.camera.periodLabel}. Osservata il {longDate(data.coverage.camera.observedDate)}, acquisita il {longDate(data.coverage.camera.acquiredAt)}. {data.coverage.camera.included} votazioni finali incluse; {data.coverage.camera.excluded} non incluse dopo la verifica dei collegamenti e dei conteggi.</p>
-          <p>Senato · {data.coverage.senato.periodLabel}. Osservato il {longDate(data.coverage.senato.observedDate)}, acquisito il {longDate(data.coverage.senato.acquiredAt)}. {data.coverage.senato.included} votazioni finali incluse; {data.coverage.senato.excluded} osservate su atti fuori dal perimetro a prima firma di un senatore.</p>
+          <p>Senato · {data.coverage.senato.periodLabel}. Osservato il {longDate(data.coverage.senato.observedDate)}, acquisito il {longDate(data.coverage.senato.acquiredAt)}. {data.coverage.senato.included} votazioni finali incluse sugli atti a prima firma senatore e sulle iniziative governative con fase Senato; {data.coverage.senato.excluded} votazioni osservate su altri atti sono escluse.</p>
         </section>
 
         {data.years.length > 0 ? (
@@ -692,7 +693,7 @@ export function ThemeVoteHistoryDirectory({
                       </span>
                       <span className={styles.convictionMeta}>
                         {member.groupLabel ? `${member.groupLabel} · ` : ""}
-                        {member.expressedVotes} voti espressi · {compactRepublicVoteStateCounts(member.summary)}
+                        {countLabel(member.expressedVotes, "voto espresso", "voti espressi")} · {compactRepublicVoteStateCounts(member.summary)}
                       </span>
                       {member.years.length > 0 ? (
                         <span className={styles.convictionTitle}>
@@ -700,7 +701,7 @@ export function ThemeVoteHistoryDirectory({
                         </span>
                       ) : (
                         <span className={styles.convictionTitle}>
-                          {member.summary.totale} votazioni finali sul tema nello snapshot
+                          {countLabel(member.summary.totale, "votazione finale", "votazioni finali")} sul tema nello snapshot
                         </span>
                       )}
                     </span>

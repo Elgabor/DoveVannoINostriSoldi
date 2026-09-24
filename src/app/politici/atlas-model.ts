@@ -76,6 +76,10 @@ export function initialsOf(name: string): string {
     .map((word) => Array.from(word ?? "")[0] ?? "").join("").toLocaleUpperCase("it-IT");
 }
 
+export function countLabel(value: number, singular: string, plural: string): string {
+  return `${value} ${value === 1 ? singular : plural}`;
+}
+
 export function longDate(value: string | null | undefined): string {
   if (!value) return "Data non disponibile";
   const match = /^(\d{4})-(\d{2})-(\d{2})(?:T|$)/u.exec(value);

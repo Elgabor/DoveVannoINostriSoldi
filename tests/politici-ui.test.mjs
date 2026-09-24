@@ -155,6 +155,8 @@ test("atlas: institutional graph scope restores the radial overview map", async 
   assert.match(storico, /Cosa si è votato/);
   assert.match(storico, /Chi ha votato/);
   assert.match(storico, /Voti espressi per gruppo/);
+  assert.match(storico, /iniziative governative con fase Senato/);
+  assert.doesNotMatch(storico, /fuori dal perimetro a prima firma di un senatore/);
   assert.match(storico, /parseActHeadline/);
   assert.match(storico, /themeTimelineRail/);
   const europa = await read("src/app/politici/europa/page.tsx");

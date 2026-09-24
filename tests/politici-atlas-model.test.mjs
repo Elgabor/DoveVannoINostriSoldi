@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { makeMap } from "./fixtures/politici-atlas.mjs";
-import { atlasUrl, belongsToScope, defaultSelection, filteredPeople, initialsOf, isSafeExternalUrl, longDate, matchesRole, normalizeSearch, readAtlasState, SCOPES, searchAtlas, selectionPeople, validSelection } from "../src/app/politici/atlas-model.ts";
+import { atlasUrl, belongsToScope, countLabel, defaultSelection, filteredPeople, initialsOf, isSafeExternalUrl, longDate, matchesRole, normalizeSearch, readAtlasState, SCOPES, searchAtlas, selectionPeople, validSelection } from "../src/app/politici/atlas-model.ts";
 import { adjacentSeat, allocateRows, buildChamberScene, buildSeatGrid, CHAMBER } from "../src/app/politici/graph-geometry.ts";
 import { buildOverviewGeometry, overviewAnchor } from "../src/app/politici/overview-geometry.ts";
 
@@ -126,6 +126,12 @@ test("missing dates and initials never manufacture facts", () => {
   assert.equal(longDate("2025-02-29"), "Data non disponibile");
   assert.equal(longDate(null), "Data non disponibile");
   assert.equal(longDate("2026-13-05"), "Data non disponibile");
+});
+
+test("vote and event counts use singular only for one", () => {
+  assert.equal(countLabel(0, "voto espresso", "voti espressi"), "0 voti espressi");
+  assert.equal(countLabel(1, "voto espresso", "voti espressi"), "1 voto espresso");
+  assert.equal(countLabel(2, "votazione", "votazioni"), "2 votazioni");
 });
 
 test("only ordinary HTTP(S) external URLs are rendered as links", () => {

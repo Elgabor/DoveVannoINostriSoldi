@@ -13,7 +13,7 @@ import {
 } from "@/lib/politici-vote-states";
 import { VOTE_THEMES } from "@/lib/politici-voti-tema-catalog";
 import { count, object, requestDeadline, text, type Resource } from "./atlas-data";
-import { longDate } from "./atlas-model";
+import { countLabel, longDate } from "./atlas-model";
 import { OfficialActLinks, validLinkedActs } from "./atlas-official-acts";
 import { Icon, SourceLink, Status } from "./atlas-primitives";
 import styles from "./politici.module.css";
@@ -123,8 +123,11 @@ export function ThemeVotes({ personId, initialThemeId = null }: { personId: stri
     <div className={extra.themeChips} role="group" aria-label="Temi disponibili">
       {VOTE_THEMES.map((theme) => {
         const stats = data?.themes.find((item) => item.id === theme.id);
+        const voteCountLabel = stats
+          ? `${countLabel(stats.expressedVotes, "voto espresso", "voti espressi")} su ${countLabel(stats.chamberVotes, "votazione", "votazioni")}`
+          : null;
         const chipTitle = stats
-          ? `${theme.description} · ${stats.expressedVotes} voti espressi su ${stats.chamberVotes} votazioni in aula`
+          ? `${theme.description} · ${voteCountLabel} in aula`
           : theme.description;
         return (
           <button
@@ -136,7 +139,7 @@ export function ThemeVotes({ personId, initialThemeId = null }: { personId: stri
           >
             <span>{theme.label}</span>
             {stats !== undefined ? (
-              <small aria-label={`${stats.expressedVotes} voti espressi su ${stats.chamberVotes} votazioni`}>
+              <small aria-label={voteCountLabel ?? undefined}>
                 {stats.expressedVotes}
                 <span className={extra.themeChipDenom}>/{stats.chamberVotes}</span>
               </small>

@@ -207,6 +207,9 @@ export const senatoAttiVotiSnapshotSchema = z
       ctx.addIssue({ code: "custom", message: "coverage.phases", path: ["coverage", "phases"] });
     }
     const voteIds = new Set(value.finalVotes.map((vote) => vote.id));
+    if (voteIds.size !== value.finalVotes.length) {
+      ctx.addIssue({ code: "custom", message: "votazione duplicata", path: ["finalVotes"] });
+    }
     const actIds = new Set<string>();
     for (const [index, act] of value.acts.entries()) {
       if (actIds.has(act.id)) {
@@ -238,6 +241,16 @@ export const senatoAttiVotiSnapshotSchema = z
           || act.formalProposers.length === 0 || act.governmentLabels.length === 0
         : act.firstSignerId === null || act.formalProposers.length > 0 || act.governmentLabels.length > 0) {
         ctx.addIssue({ code: "custom", message: "attribuzione iniziativa incoerente", path: ["acts", index] });
+      }
+      if (act.initiativeKind === "government") {
+        const labels = act.formalProposers.map((presenter) => {
+          const match = /\(Gov\. ([^)]+)\)$/u.exec(presenter);
+          return match ? `Governo ${match[1]}` : null;
+        });
+        if (labels.includes(null) || JSON.stringify(act.governmentLabels)
+          !== JSON.stringify([...new Set(labels.filter((label): label is string => label !== null))].sort())) {
+          ctx.addIssue({ code: "custom", message: "Governo non riconciliato con i presentatori", path: ["acts", index, "governmentLabels"] });
+        }
       }
       const presented = act.phases.find((phase) => phase.ramo === "S");
       if (

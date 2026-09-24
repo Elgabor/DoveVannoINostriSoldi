@@ -138,3 +138,18 @@ test("tampered snapshot with an unlinked final vote fails the parse", () => {
   linked.finalVoteIds = [];
   assert.throws(() => parseSenatoAttiVotiSnapshot(mutated));
 });
+
+test("tampered snapshot with a duplicate final vote fails the parse", () => {
+  const mutated = structuredClone(attiVotiJson);
+  mutated.finalVotes.push(structuredClone(mutated.finalVotes[0]));
+  mutated.coverage.finalVotes += 1;
+  assert.throws(() => parseSenatoAttiVotiSnapshot(mutated));
+});
+
+test("tampered government attribution fails the parse", () => {
+  const mutated = structuredClone(attiVotiJson);
+  const act = mutated.acts.find((item) => item.initiativeKind === "government");
+  assert.ok(act);
+  act.governmentLabels = ["Governo Inventato"];
+  assert.throws(() => parseSenatoAttiVotiSnapshot(mutated));
+});

@@ -93,6 +93,14 @@ class SenatoAttiVotiXixSnapshotTest(unittest.TestCase):
         with self.assertRaises(SnapshotError):
             validate_snapshot(payload, locks=locks)
 
+    def test_validate_rejects_duplicate_final_vote(self) -> None:
+        payload = committed()
+        payload["finalVotes"].append(copy.deepcopy(payload["finalVotes"][0]))
+        payload["coverage"]["finalVotes"] += 1
+        payload["coverage"]["nominalVotes"] += len(payload["finalVotes"][0]["votes"])
+        with self.assertRaises(SnapshotError):
+            validate_snapshot(payload)
+
     def test_keyset_rejects_repeated_full_page(self) -> None:
         rows = [
             {"ddl": {"value": f"http://dati.senato.it/ddl/{number}"}}

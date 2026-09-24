@@ -1040,6 +1040,7 @@ def validate_snapshot(payload: dict[str, Any], locks: dict[str, Any] | None = No
     for vote in final_votes:
         vid = vote.get("id")
         require(isinstance(vid, str) and re.fullmatch(r"19-\d+-\d+", vid) is not None, f"voto id inatteso {vid!r}")
+        require(vid not in vote_ids, f"voto duplicato {vid}")
         vote_ids.add(vid)
         session_id = vote.get("sessionId")
         require(isinstance(session_id, str) and vid.startswith(f"{session_id}-"), f"{vid}: sessionId incoerente")

@@ -12,10 +12,11 @@ const cssUrl = `data:text/javascript,${encodeURIComponent("export default new Pr
 registerHooks({
   resolve(specifier, context, nextResolve) {
     if (specifier.endsWith(".module.css")) return { url: cssUrl, shortCircuit: true };
+    if (specifier === "./municipality-correction-form") return nextResolve("./municipality-correction-form.tsx", context);
     return nextResolve(specifier, context);
   },
   load(url, context, nextLoad) {
-    if (!url.endsWith("/municipality-offices.tsx")) return nextLoad(url, context);
+    if (!url.endsWith("/municipality-offices.tsx") && !url.endsWith("/municipality-correction-form.tsx")) return nextLoad(url, context);
     return {
       format: "module", shortCircuit: true,
       source: ts.transpileModule(readFileSync(fileURLToPath(url), "utf8"), {
@@ -48,6 +49,27 @@ test("la scheda Mantova distingue copertura, organi, mandati e fonti", () => {
   assert.match(html, /non dimostra che i compensi siano zero/i);
   assert.match(html, /pubblicazioni\.comune\.mantova\.it/);
   assert.doesNotMatch(html, /(?:€|EUR|euro)\s*\d/u);
+  assert.doesNotMatch(html, /Proponi una correzione privata/);
+});
+
+test("il form privato compare solo con gate editoriale e informativa espliciti", () => {
+  process.env.PARTICIPATION_INTAKE_ENABLED = "1";
+  process.env.PARTICIPATION_POLICY_APPROVED = "1";
+  process.env.PARTICIPATION_PRIVACY_NOTICE_PATH = "/privacy#proposte-private";
+  try {
+    const state = getMunicipalOfficesForEntity("c_e897", "00189800204");
+    const html = renderToStaticMarkup(createElement(MunicipalityOffices, { state }));
+    assert.match(html, /Proponi una correzione privata/);
+    assert.match(html, /Che cosa va corretto/);
+    assert.match(html, /Passaggio pertinente della fonte/);
+    assert.match(html, /facoltativa, non pubblica/);
+    assert.match(html, /informativa per le proposte private/);
+    assert.doesNotMatch(html, /value="judicial"/);
+  } finally {
+    delete process.env.PARTICIPATION_INTAKE_ENABLED;
+    delete process.env.PARTICIPATION_POLICY_APPROVED;
+    delete process.env.PARTICIPATION_PRIVACY_NOTICE_PATH;
+  }
 });
 
 test("le altre schede dichiarano il perimetro senza elenchi vuoti", () => {

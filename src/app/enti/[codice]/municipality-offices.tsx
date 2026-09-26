@@ -1,6 +1,8 @@
 import { longDate } from "@/lib/format";
 import type { MunicipalOfficeMember, MunicipalOrgan } from "@/lib/data/municipal-offices-contract";
 import type { MunicipalOfficesState } from "@/lib/municipal-offices";
+import { privateIntakeConfiguration } from "@/lib/participation/intake-gate";
+import { MunicipalityCorrectionForm } from "./municipality-correction-form";
 import styles from "./scheda.module.css";
 
 const organLabels: Record<MunicipalOrgan, string> = {
@@ -46,6 +48,7 @@ export function MunicipalityOffices({ state }: { state: MunicipalOfficesState })
   }
 
   const { snapshot } = state;
+  const privateIntake = privateIntakeConfiguration();
   return (
     <section className={`panel ${styles.economicSection}`} id="dati-amministratori" aria-labelledby="offices-title">
       <div className={styles.sectionHeading}>
@@ -96,6 +99,7 @@ export function MunicipalityOffices({ state }: { state: MunicipalOfficesState })
         </ul>
         <a href={snapshot.sources[0].licenseUrl} target="_blank" rel="noreferrer">Note legali del Comune</a>
       </div>
+      {privateIntake ? <MunicipalityCorrectionForm entity={snapshot.municipality} noticePath={privateIntake.noticePath} /> : null}
     </section>
   );
 }

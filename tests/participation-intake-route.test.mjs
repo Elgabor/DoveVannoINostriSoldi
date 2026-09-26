@@ -33,6 +33,8 @@ function request(body, headers = {}) {
 
 function configure() {
   process.env.PARTICIPATION_INTAKE_ENABLED = "1";
+  process.env.PARTICIPATION_POLICY_APPROVED = "1";
+  process.env.PARTICIPATION_PRIVACY_NOTICE_PATH = "/privacy#proposte-private";
   process.env.PARTICIPATION_SUPABASE_URL = PROJECT;
   process.env.PARTICIPATION_SUPABASE_SECRET_KEY = `sb_secret_${"a".repeat(24)}`;
   process.env.PARTICIPATION_NETWORK_SECRET = "test-network-secret-with-at-least-32-chars";
@@ -40,6 +42,8 @@ function configure() {
 
 function unconfigure() {
   delete process.env.PARTICIPATION_INTAKE_ENABLED;
+  delete process.env.PARTICIPATION_POLICY_APPROVED;
+  delete process.env.PARTICIPATION_PRIVACY_NOTICE_PATH;
   delete process.env.PARTICIPATION_SUPABASE_URL;
   delete process.env.PARTICIPATION_SUPABASE_SECRET_KEY;
   delete process.env.PARTICIPATION_NETWORK_SECRET;
@@ -71,9 +75,44 @@ test("gate spento: nessun invio, nessun contenuto nella risposta e nessun fetch"
   } finally { store.restore(); unconfigure(); }
 });
 
+test("il flag tecnico da solo non apre l'invio prima della policy approvata", async () => {
+  configure();
+  delete process.env.PARTICIPATION_POLICY_APPROVED;
+  const store = interceptStore(() => Response.json({ receipt: RECEIPT, duplicate: false }));
+  try {
+    const response = await POST(request(payload()));
+    assert.equal(response.status, 503);
+    assert.equal(store.calls.length, 0);
+  } finally { store.restore(); unconfigure(); }
+});
+
+test("senza percorso dell'informativa privata l'invio resta chiuso", async () => {
+  configure();
+  delete process.env.PARTICIPATION_PRIVACY_NOTICE_PATH;
+  const store = interceptStore(() => Response.json({ receipt: RECEIPT, duplicate: false }));
+  try {
+    const response = await POST(request(payload()));
+    assert.equal(response.status, 503);
+    assert.equal(store.calls.length, 0);
+  } finally { store.restore(); unconfigure(); }
+});
+
+test("la privacy generica non apre il canale privato", async () => {
+  configure();
+  process.env.PARTICIPATION_PRIVACY_NOTICE_PATH = "/privacy";
+  const store = interceptStore(() => Response.json({ receipt: RECEIPT, duplicate: false }));
+  try {
+    const response = await POST(request(payload()));
+    assert.equal(response.status, 503);
+    assert.equal(store.calls.length, 0);
+  } finally { store.restore(); unconfigure(); }
+});
+
 test("senza configurazione privata risponde 503 senza fallback pubblico", async () => {
   unconfigure();
   process.env.PARTICIPATION_INTAKE_ENABLED = "1";
+  process.env.PARTICIPATION_POLICY_APPROVED = "1";
+  process.env.PARTICIPATION_PRIVACY_NOTICE_PATH = "/privacy#proposte-private";
   const store = interceptStore(() => { throw new Error("fetch inatteso"); });
   try {
     const response = await POST(request(payload()));

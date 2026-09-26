@@ -1,5 +1,6 @@
 import { jsonResponse, readBoundedBody, rejectPublicPost } from "@/lib/http/public-post-guard";
 import { getMunicipalOfficesForEntity } from "@/lib/municipal-offices";
+import { privateIntakeConfiguration } from "@/lib/participation/intake-gate";
 import { submitPrivateDraft } from "@/lib/participation/private-store";
 import { parseParticipationDraft, PARTICIPATION_LIMITS } from "@/lib/participation/submission-contract";
 
@@ -12,7 +13,7 @@ const unavailable = () => jsonResponse({ ok: false, code: "unavailable", message
 
 /** No form or storage is live until the owner explicitly enables this gate. */
 export async function POST(request: Request) {
-  if (process.env.PARTICIPATION_INTAKE_ENABLED !== "1") return unavailable();
+  if (!privateIntakeConfiguration()) return unavailable();
   const rejected = rejectPublicPost(request, GUARD);
   if (rejected) return rejected;
 

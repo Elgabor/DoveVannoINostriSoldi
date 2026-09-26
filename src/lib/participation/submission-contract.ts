@@ -1,6 +1,17 @@
 import { z } from "zod";
 
 /** Only this payload may cross the public form boundary; it does not grant publication. */
+export const PARTICIPATION_ENDPOINT = "/api/partecipazione/proposte";
+export const PARTICIPATION_CATEGORIES = Object.freeze({
+  data: "Correzione di un dato",
+  office: "Organo, ruolo o mandato",
+  compensation: "Incarico o compenso",
+} as const);
+export type ParticipationCategory = keyof typeof PARTICIPATION_CATEGORIES;
+export const PARTICIPATION_CATEGORY_IDS = Object.freeze(
+  Object.keys(PARTICIPATION_CATEGORIES) as [ParticipationCategory, ...ParticipationCategory[]],
+);
+
 export const PARTICIPATION_LIMITS = Object.freeze({
   descriptionMax: 2_000,
   periodMax: 100,
@@ -53,7 +64,7 @@ const entitySchema = z.strictObject({
 const draftSchema = z.strictObject({
   clientKey: z.uuid(),
   entity: entitySchema,
-  category: z.enum(["data", "office", "compensation"]),
+  category: z.enum(PARTICIPATION_CATEGORY_IDS),
   description: requiredText(PARTICIPATION_LIMITS.descriptionMax),
   period: requiredText(PARTICIPATION_LIMITS.periodMax),
   sourceUrl: publicSourceUrl,

@@ -43,6 +43,11 @@ test("la scheda Mantova distingue copertura, organi, mandati e fonti", () => {
   assert.match(html, /CC BY 4\.0/);
   assert.match(html, /www\.comune\.mantova\.it/);
   assert.match(html, /storico non coperto/i);
+  assert.match(html, /Indennità e compensi/);
+  assert.match(html, /importi non verificati/i);
+  assert.match(html, /non dimostra che i compensi siano zero/i);
+  assert.match(html, /pubblicazioni\.comune\.mantova\.it/);
+  assert.doesNotMatch(html, /(?:€|EUR|euro)\s*\d/u);
 });
 
 test("le altre schede dichiarano il perimetro senza elenchi vuoti", () => {

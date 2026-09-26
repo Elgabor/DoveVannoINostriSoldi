@@ -8,6 +8,12 @@ const organLabels: Record<MunicipalOrgan, string> = {
   consiglio: "Consiglio comunale",
 };
 
+const compensationCheck = {
+  checkedAt: "2026-09-26",
+  url: "https://pubblicazioni.comune.mantova.it/web/trasparenza/pas/-/pas/igrid/2009/1215",
+  sha256: "f30065615c66e82d0ec42b1e76cfbd560e1c7a27f562fc803c3323d98e6b57e5",
+} as const;
+
 function MemberList({ members }: { members: readonly MunicipalOfficeMember[] }) {
   return (
     <ul className={styles.officeMembers}>
@@ -63,6 +69,16 @@ export function MunicipalityOffices({ state }: { state: MunicipalOfficesState })
             </details>
           );
         })}
+      </div>
+      <div className={styles.officeCompensation}>
+        <h3>Indennità e compensi</h3>
+        <p>
+          Importi non verificati per il mandato 2026. Al controllo del {longDate(compensationCheck.checkedAt)},
+          la sezione comunale consultata non elencava soggetti. Questo non dimostra che i compensi siano zero:
+          non mostriamo indennità, gettoni, rimborsi o totali senza un atto che ne precisi natura e periodo.
+        </p>
+        <a href={compensationCheck.url} target="_blank" rel="noreferrer">Apri la sezione ufficiale di Amministrazione trasparente</a>
+        <small>SHA-256 della pagina controllata: {compensationCheck.sha256}</small>
       </div>
       <div className={styles.officeSources}>
         <h3>Fonti e riuso</h3>

@@ -55,7 +55,7 @@ La revisione e il merge restano umani.
 | `anac-cig-2007-2025` | non dichiarato nello snapshot | 2026-09-08T12:00:00Z | non dichiarato nel registro | nessuno | nessuno | manuale | `python3 scripts/etl/anac_operator_cig_enrich.py --check` |
 | `anac-entity-procurement-coverage` | 2026-08-06T07:31:40Z | 2026-08-30T21:30:00Z | https://dati.anticorruzione.it/opendata/dataset/stazioni-appaltanti | nessuno | nessuno | manuale | `python3 scripts/etl/anac_entity_procurement_coverage.py --check` |
 | `anac-entity-procurement-page` | non dichiarato nello snapshot | 2026-08-31T14:49:08Z | non dichiarato nel registro | nessuno | nessuno | manuale | `python3 scripts/etl/anac_entity_procurement_page.py --check` |
-| `consulenti-pubblici` | 2026 | 2026-09-25T05:18:31Z | https://consulentipubblici.dfp.gov.it/progetto | `37 */6 * * *` | `.github/workflows/consulenti-refresh.yml` | PR automatica | `python scripts/etl/consulenti_snapshot.py --check` |
+| `consulenti-pubblici` | 2026 | 2026-09-27T17:14:28Z | https://consulentipubblici.dfp.gov.it/progetto | `37 */6 * * *` | `.github/workflows/consulenti-refresh.yml` | PR automatica | `python scripts/etl/consulenti_snapshot.py --check` |
 | `cpt-regional-fiscal` | non dichiarato nello snapshot | non dichiarato | non dichiarato nel registro | nessuno | nessuno | manuale | suite ETL |
 | `indire-pnrr-assignments` | aggiornamento aprile 2026 | 2026-08-23 | non dichiarato nel registro | nessuno | nessuno | manuale | `python scripts/etl/indire_pnrr_assignments.py --validate-committed` |
 | `inps-civil-invalidity` | non dichiarato nello snapshot | 2026-08-20T22:30:00+02:00 | non dichiarato nel registro | nessuno | nessuno | manuale | test Node |
@@ -85,7 +85,7 @@ La revisione e il merge restano umani.
 | `opencivitas-2019` | 2019 | 2026-09-08T02:30:38Z | https://www.opencivitas.it/it/dataset/2019-comuni-servizi-totali-indicatori-e-determinanti | nessuno | nessuno | manuale | `python scripts/etl/opencivitas_2019_snapshot.py --check` |
 | `opencivitas-2021` | 2021 | 2026-09-05T07:41:53Z | non dichiarato nel registro | nessuno | nessuno | manuale | `python scripts/etl/opencivitas_2021_snapshot.py --check` |
 | `opencoesione` | 2026-04-30 | 2026-08-20T08:51:13+00:00 | https://opencoesione.gov.it/it/api/aggregati/ | `17 */6 * * *` | `.github/workflows/opencoesione-refresh.yml` | PR automatica | `python scripts/etl/opencoesione_snapshot.py --check` |
-| `parliament` | non dichiarato nello snapshot | 2026-08-20T14:00:00.000Z | non dichiarato nel registro | `37 */6 * * *` | `.github/workflows/parliament-sources.yml` | solo rilevamento | `python scripts/etl/parliament_sources.py --check` |
+| `parliament` | non dichiarato nello snapshot | 2026-09-26T19:15:00.000Z | non dichiarato nel registro | `37 */6 * * *` | `.github/workflows/parliament-sources.yml` | solo rilevamento | `python scripts/etl/parliament_sources.py --check` |
 | `pcm-financial-2024` | 2024 | 2026-08-22T16:54:00Z | non dichiarato nel registro | nessuno | nessuno | manuale | `python scripts/etl/pcm_financial_account.py --check` |
 | `pnrr-childcare` | 2026-06-13 | 2026-08-21T12:15:00Z | https://www.italiadomani.gov.it/content/sogei-ng/it/it/catalogo-open-data.html | `37 5 * * 1` | `.github/workflows/pnrr-childcare-refresh.yml` | solo rilevamento | `python scripts/etl/pnrr_childcare_snapshot.py --check` |
 | `masaf-logistica-mercati` | 2022-2026 | non dichiarato | https://www.masaf.gov.it/flex/cm/pages/ServeBLOB.php/L/IT/IDPagina/19279 | nessuno | nessuno | manuale | `python3 scripts/etl/masaf_logistica_mercati_snapshot.py --check` |

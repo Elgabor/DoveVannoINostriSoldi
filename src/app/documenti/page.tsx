@@ -3,7 +3,10 @@ import Link from "next/link";
 import {
   ACCESS_LABELS,
   BODY_LABELS,
+  READINESS_LABELS,
   THEME_LABELS,
+  formatClassificationLabel,
+  formatIsoDateIt,
   getDocumentiDeclassificati,
   listDocumentiDeclassificati,
 } from "@/lib/documenti-declassificati";
@@ -50,7 +53,7 @@ export default async function DocumentiPage({ searchParams }: { searchParams: Se
         <p>
           <strong>Declassificare non significa pubblicare online.</strong>{" "}
           {snapshot.coverage.documentsPublished} schede nel pilota · controllato il{" "}
-          {snapshot.coverage.checkedAt}.{" "}
+          {formatIsoDateIt(snapshot.coverage.checkedAt)}.{" "}
           {snapshot.caveats[0]}
         </p>
       </div>
@@ -145,13 +148,22 @@ export default async function DocumentiPage({ searchParams }: { searchParams: Se
                 </Link>
                 <div className={styles.meta}>
                   <span className={styles.badge}>{THEME_LABELS[doc.theme] ?? doc.theme}</span>
+                  <span className={styles.badge}>
+                    {ACCESS_LABELS[doc.accessStatus] ?? doc.accessStatus}
+                  </span>
                   <span>{doc.issuingBodyLabel}</span>
                   <span>
-                    {doc.classificationBefore} → {doc.classificationAfter}
+                    {formatClassificationLabel(doc.classificationBefore)} →{" "}
+                    {formatClassificationLabel(doc.classificationAfter)}
                   </span>
-                  <span>{ACCESS_LABELS[doc.accessStatus] ?? doc.accessStatus}</span>
+                  <span>{doc.eventPeriodLabel}</span>
+                  <span>{READINESS_LABELS[doc.readiness] ?? doc.readiness}</span>
                 </div>
                 <p className={styles.summary}>{doc.summary}</p>
+                <p className={styles.note}>
+                  {doc.keyPoints.length} punti chiave · verificato{" "}
+                  {formatIsoDateIt(doc.verifiedAt)}
+                </p>
               </li>
             ))}
           </ul>

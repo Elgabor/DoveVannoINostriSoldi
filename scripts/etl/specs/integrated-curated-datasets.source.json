@@ -738,6 +738,184 @@
           "https://bdap-opendata.rgs.mef.gov.it/SpodCkanApi/api/3/datastore/dump/f929ec20-e46c-4d33-963b-fbbe8dc2b1bd.csv",
           "https://bdap-opendata.rgs.mef.gov.it/content/2019-distribuzione-territoriale-della-spesa-del-bilancio-dello-stato-spesa-statale?metadati=showall"
         ]
+      },
+      "rgs-conto-annuale-occupazione-tipologia-2010-2024": {
+        "holder": "Ragioneria Generale dello Stato",
+        "referencePeriod": "Rilevazioni 2010-2024; personale al 31 dicembre per tipo di istituzione (tempo pieno e part time) e lavoro flessibile in unità annue",
+        "publicationDate": "2026-03-18",
+        "acquisitionDate": "2026-10-07",
+        "checkedAt": "2026-10-07",
+        "updateFrequency": "annuale; acquisizione e promozione manuali",
+        "canonicalUrls": [
+          "https://bdap-opendata.rgs.mef.gov.it/SpodCkanApi/api/3/action/package_search?q=PCA_OCC_DIP_TENT_001",
+          "https://bdap-opendata.rgs.mef.gov.it/SpodCkanApi/api/3/datastore/dump/956f02ce-eec4-4540-8bcf-e974adb44778.csv",
+          "https://bdap-opendata.rgs.mef.gov.it/content/2024-dipendenti-pubblici-occupazione-complessiva-dati-tipologia-ente?metadati=show",
+          "https://creativecommons.org/licenses/by/3.0/"
+        ]
+      },
+      "rgs-conto-annuale-occupazione-ente-2010-2024": {
+        "holder": "Ragioneria Generale dello Stato",
+        "referencePeriod": "Rilevazioni 2010-2024; personale al 31 dicembre per istituzione (tempo pieno e part time) e lavoro flessibile in unità annue",
+        "publicationDate": "2026-03-18",
+        "acquisitionDate": "2026-10-15",
+        "checkedAt": "2026-10-15",
+        "updateFrequency": "annuale; acquisizione e promozione manuali",
+        "canonicalUrls": [
+          "https://bdap-opendata.rgs.mef.gov.it/SpodCkanApi/api/3/action/package_search?q=PCA_OCC_DIP_ENTE_001",
+          "https://bdap-opendata.rgs.mef.gov.it/SpodCkanApi/api/3/datastore/dump/d9393c78-9cb2-4cb1-95e6-c1c33ffe93af.csv",
+          "https://bdap-opendata.rgs.mef.gov.it/content/2024-dipendenti-pubblici-occupazione-complessiva-dati-analitici-ente?metadati=show",
+          "https://creativecommons.org/licenses/by/3.0/"
+        ]
+      },
+      "rgs-spesa-statale-regionalizzata-consolidata": {
+        "holder": "Ragioneria Generale dello Stato",
+        "referencePeriod": "Esercizi finanziari 2008-2023; spesa consolidata (Bilancio dello Stato, Enti e Fondi oggetto della pubblicazione) per territorio destinatario finale",
+        "publicationDate": "2025-11-21",
+        "acquisitionDate": "2026-10-07",
+        "checkedAt": "2026-10-07",
+        "updateFrequency": "annuale; acquisizione e promozione manuali",
+        "canonicalUrls": [
+          "https://bdap-opendata.rgs.mef.gov.it/SpodCkanApi/api/3/action/package_search?q=SRS_SPE_PAR_SPESR_001",
+          "https://bdap-opendata.rgs.mef.gov.it/SpodCkanApi/api/3/datastore/dump/75132685-9595-45d1-882d-80a912ca017b.csv",
+          "https://bdap-opendata.rgs.mef.gov.it/content/2023-territorio-destinatario-finale-della-spesa-consolidata-spesa-statale-regionalizzata?metadati=showall"
+        ]
+      },
+      "rgs-spesa-statale-regionalizzata-enti": {
+        "holder": "Ragioneria Generale dello Stato",
+        "referencePeriod": "Esercizi finanziari 2008-2023; spesa degli Enti oggetto della pubblicazione per territorio destinatario finale",
+        "publicationDate": "2025-11-21",
+        "acquisitionDate": "2026-10-07",
+        "checkedAt": "2026-10-07",
+        "updateFrequency": "annuale; acquisizione e promozione manuali",
+        "canonicalUrls": [
+          "https://bdap-opendata.rgs.mef.gov.it/SpodCkanApi/api/3/action/package_search?q=SRS_SPE_PAR_SPENT_001",
+          "https://bdap-opendata.rgs.mef.gov.it/SpodCkanApi/api/3/datastore/dump/4a6883cd-e08f-40c7-8db4-d846ecc0e109.csv",
+          "https://bdap-opendata.rgs.mef.gov.it/content/2023-distribuzione-territoriale-della-spesa-degli-enti-oggetto-della-pubblicazione-spesa?metadati=showall"
+        ]
+      },
+      "rgs-spesa-statale-regionalizzata-fondi": {
+        "holder": "Ragioneria Generale dello Stato",
+        "referencePeriod": "Esercizi finanziari 2008-2023; spesa effettuata attraverso i Fondi oggetto della pubblicazione per territorio destinatario finale",
+        "publicationDate": "2025-11-21",
+        "acquisitionDate": "2026-10-07",
+        "checkedAt": "2026-10-07",
+        "updateFrequency": "annuale; acquisizione e promozione manuali",
+        "canonicalUrls": [
+          "https://bdap-opendata.rgs.mef.gov.it/SpodCkanApi/api/3/action/package_search?q=SRS_SPE_PAR_SPFON_001",
+          "https://bdap-opendata.rgs.mef.gov.it/SpodCkanApi/api/3/datastore/dump/411f17b9-0f1d-49b5-b954-12921c60af30.csv",
+          "https://bdap-opendata.rgs.mef.gov.it/content/2023-distribuzione-territoriale-della-spesa-effettuata-attraverso-i-fondi-oggetto-della?metadati=showall"
+        ]
+      },
+      "arera-entrate-2024-2025": {
+        "holder": "Autorità di Regolazione per Energia Reti e Ambiente (ARERA)",
+        "referencePeriod": "Esercizi 2024-2025; rendiconti della gestione ARERA",
+        "publicationDate": "2026-05-05",
+        "acquisitionDate": "2026-10-15",
+        "checkedAt": "2026-10-15",
+        "updateFrequency": "Annuale",
+        "canonicalUrls": [
+          "https://creativecommons.org/licenses/by-sa/4.0/",
+          "https://www.arera.it/atti-e-provvedimenti/dettaglio/25/164-25",
+          "https://www.arera.it/atti-e-provvedimenti/dettaglio/26/137-26",
+          "https://www.arera.it/fileadmin/allegati/docs/25/164-2025-A-ALLEGATO_A.xlsx",
+          "https://www.arera.it/fileadmin/allegati/docs/26/137-2026-A-ALLEGATO_A.xlsx",
+          "https://www.arera.it/termini-e-condizioni-uso-del-sito"
+        ]
+      },
+      "arera-spese-2024-2025": {
+        "holder": "Autorità di Regolazione per Energia Reti e Ambiente (ARERA)",
+        "referencePeriod": "Esercizi 2024-2025; rendiconti della gestione ARERA",
+        "publicationDate": "2026-05-05",
+        "acquisitionDate": "2026-10-15",
+        "checkedAt": "2026-10-15",
+        "updateFrequency": "Annuale",
+        "canonicalUrls": [
+          "https://creativecommons.org/licenses/by-sa/4.0/",
+          "https://www.arera.it/atti-e-provvedimenti/dettaglio/25/164-25",
+          "https://www.arera.it/atti-e-provvedimenti/dettaglio/26/137-26",
+          "https://www.arera.it/fileadmin/allegati/docs/25/164-2025-A-ALLEGATO_A.xlsx",
+          "https://www.arera.it/fileadmin/allegati/docs/26/137-2026-A-ALLEGATO_A.xlsx",
+          "https://www.arera.it/termini-e-condizioni-uso-del-sito"
+        ]
+      },
+      "ade-cinque-per-mille-territori-2024": {
+        "holder": "Agenzia delle Entrate",
+        "referencePeriod": "Anno finanziario 2024; aggregati territoriali degli enti ammessi al 5 per mille e importi erogabili",
+        "publicationDate": "2026-06-17",
+        "acquisitionDate": "2026-10-15",
+        "checkedAt": "2026-10-15",
+        "updateFrequency": "Annuale; acquisizione e promozione manuali",
+        "canonicalUrls": [
+          "https://creativecommons.org/licenses/by/4.0/",
+          "https://www.agenziaentrate.gov.it/portale/elenco-complessivo-dei-beneficiari",
+          "https://www.agid.gov.it/sites/agid/files/2024-05/lg-open-data_v.1.0_1.pdf",
+          "https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:2005-03-07;82~art52!vig="
+        ]
+      },
+      "ade-immobili-prelievo-2015-2024": {
+        "holder": "Agenzia delle Entrate",
+        "referencePeriod": "Prelievo fiscale sugli immobili 2015-2024 (miliardi di euro); tabella 4.4 edizione 2026",
+        "publicationDate": null,
+        "acquisitionDate": "2026-10-23",
+        "checkedAt": "2026-10-23",
+        "updateFrequency": "annuale; acquisizione e promozione manuali",
+        "canonicalUrls": [
+          "https://creativecommons.org/licenses/by/3.0/it/",
+          "https://www.agenziaentrate.gov.it/portale/gli-immobili-in-italia-2026",
+          "https://www1.finanze.gov.it/finanze/immobili/public/api/api.php/get_table?id=2026_04_01_05&cq=1"
+        ]
+      },
+      "ade-immobili-utilizzo-provincia-2023": {
+        "holder": "Agenzia delle Entrate",
+        "referencePeriod": "Anno d'imposta 2023; utilizzo immobiliare per provincia (sigla)",
+        "publicationDate": null,
+        "acquisitionDate": "2026-10-23",
+        "checkedAt": "2026-10-23",
+        "updateFrequency": "annuale; acquisizione e promozione manuali",
+        "canonicalUrls": [
+          "https://creativecommons.org/licenses/by/3.0/it/",
+          "https://www.agenziaentrate.gov.it/portale/gli-immobili-in-italia-2026",
+          "https://www1.finanze.gov.it/finanze/immobili/public/contenuti/opendata.zip"
+        ]
+      },
+      "ade-immobili-tabelle-2026": {
+        "holder": "Agenzia delle Entrate",
+        "referencePeriod": "Edizione 2026; celle delle tabelle API disponibili (anno d'imposta 2023)",
+        "publicationDate": null,
+        "acquisitionDate": "2026-10-23",
+        "checkedAt": "2026-10-23",
+        "updateFrequency": "annuale; acquisizione e promozione manuali",
+        "canonicalUrls": [
+          "https://creativecommons.org/licenses/by/3.0/it/",
+          "https://www.agenziaentrate.gov.it/portale/gli-immobili-in-italia-2026",
+          "https://www1.finanze.gov.it/finanze/immobili/public/#/"
+        ]
+      },
+      "ted-bandi-aperti-italia-2026-10": {
+        "holder": "Ufficio delle pubblicazioni dell'Unione europea",
+        "referencePeriod": "Scadenza presentazione offerte dal 23 ottobre 2026; committenti ITA",
+        "publicationDate": null,
+        "acquisitionDate": "2026-10-23",
+        "checkedAt": "2026-10-23",
+        "updateFrequency": "quotidiana alla fonte; snapshot con acquisizione e promozione manuali",
+        "canonicalUrls": [
+          "https://api.ted.europa.eu/v3/notices/search",
+          "https://docs.ted.europa.eu/ODS/latest/reuse/search-api.html",
+          "https://ted.europa.eu/en/legal-notice"
+        ]
+      },
+      "consip-bandi-gare-programma-2026": {
+        "holder": "Consip S.p.A.",
+        "referencePeriod": "Bandi e gare del programma · anno 2026",
+        "publicationDate": null,
+        "acquisitionDate": "2026-10-23",
+        "checkedAt": "2026-10-23",
+        "updateFrequency": "mensile per l'anno corrente (dichiarato da Consip)",
+        "canonicalUrls": [
+          "https://dati.consip.it/dataset/dataset-bandi-e-gare",
+          "https://dati.consip.it/download/dataset/bandiegare2026.csv",
+          "https://www.acquistinretepa.it/opencms/opencms/vetrina_iniziative.html"
+        ]
       }
     }
   },
@@ -845,6 +1023,92 @@
           "Paesi committenti",
           "Codici CPV",
           "URL avviso"
+        ]
+      }
+    },
+    {
+      "id": "ted-bandi-aperti-italia-2026-10",
+      "title": "Bandi TED aperti · committenti in Italia · ottobre 2026",
+      "domain": "procurement",
+      "relativePath": "ted-bandi-aperti-italia-2026-10.psv",
+      "dataKind": "delimited",
+      "delimiter": "pipe",
+      "authority": "official-primary",
+      "licenseStatus": "verified-open-eu-reuse",
+      "publication": "rows",
+      "evidenceLabel": "documented-fact",
+      "sourceFields": [
+        "URL avviso"
+      ],
+      "privateFields": [],
+      "caveats": [
+        "Unità: avvisi di gara/consultazione/aggiudicazione diretta prevista con scadenza presentazione offerte non precedente al 23 ottobre 2026. Non sono contratti conclusi, ordini MePA o aggiudicazioni ANAC.",
+        "Perimetro: almeno un committente con buyer-country=ITA; include enti UE con sede in Italia e avvisi multinazionali. Non copre gli appalti sotto soglia non pubblicati su TED.",
+        "Stato aperto: la scadenza è quella massima tra i lotti con data pubblicata da TED; senza scadenza la riga non entra. L'importo stimato è in eurocent solo se la fonte dichiara EUR; valute diverse restano vuote.",
+        "Natura contratto (lavori/servizi/forniture) proviene da contract-nature-main-proc. TED e ANAC/Consip possono sovrapporsi: non sommare i perimetri né dedurre opportunità migliori.",
+        "Snapshot acquisito il 23 ottobre 2026; una scadenza passata dopo l'acquisizione non viene aggiornata finché non si rigenera lo snapshot.",
+        "Riuso GUUE come per gli altri dataset TED; © Unione europea; proiezione DVNS."
+      ],
+      "expected": {
+        "bytes": 858176,
+        "sha256": "07b015586ce0039137034de91cf2d18121b6c69b957ebd3ebf4c66cc17c29186",
+        "rows": 1707,
+        "columns": 13,
+        "headers": [
+          "Numero pubblicazione",
+          "Data pubblicazione",
+          "Tipo avviso",
+          "Natura contratto",
+          "Titolo",
+          "Committenti",
+          "Lingua committenti",
+          "Paesi committenti",
+          "Codici CPV",
+          "Scadenza offerte",
+          "Importo stimato eurocent",
+          "Luoghi esecuzione",
+          "URL avviso"
+        ]
+      }
+    },
+    {
+      "id": "consip-bandi-gare-programma-2026",
+      "title": "Bandi e gare Consip · programma · 2026",
+      "domain": "procurement",
+      "relativePath": "consip-bandi-gare-programma-2026.psv",
+      "dataKind": "delimited",
+      "delimiter": "pipe",
+      "authority": "official-primary",
+      "licenseStatus": "verified-open-cc-by-4.0",
+      "publication": "rows",
+      "evidenceLabel": "documented-fact",
+      "sourceFields": [
+        "URL dataset"
+      ],
+      "privateFields": [],
+      "caveats": [
+        "Metadati del file bandiegare2026.csv su dati.consip.it: iniziative/lotti del programma Consip, non la bacheca live di MePA né ordini conclusi.",
+        "737 righe non pubblicano Data_Termine: non vanno presentate come bandi aperti. Solo una Data_Termine ≥ 23 ottobre 2026 indica apertura al momento dell'acquisizione.",
+        "515 righe senza Identificativo_Lotto ricevono un id sintetico senza-id-… per la tabella: non è un link operativo su acquistinretepa.it.",
+        "Tipo strumento distingue MePA, SDA, Convenzione e Accordo Quadro. Importi base asta/massimale sono lower bound quando presenti.",
+        "Non è un ranking di opportunità né un giudizio su operatori economici."
+      ],
+      "expected": {
+        "bytes": 396418,
+        "sha256": "30a7aada679763f511dd2d1d10e94698b1d5204666de46a1542c83a0b46e6888",
+        "rows": 1839,
+        "columns": 10,
+        "headers": [
+          "Identificativo lotto",
+          "Denominazione bando",
+          "Denominazione lotto",
+          "Tipo strumento",
+          "Categoria merceologica",
+          "Data pubblicazione",
+          "Data termine",
+          "Base asta eurocent",
+          "Importo massimale eurocent",
+          "URL dataset"
         ]
       }
     },
@@ -7217,6 +7481,457 @@
           "Categoria",
           "Missione",
           "Misura",
+          "Valore",
+          "URL fonte"
+        ]
+      }
+    },
+    {
+      "id": "rgs-conto-annuale-occupazione-tipologia-2010-2024",
+      "title": "Conto Annuale · occupazione per tipo di istituzione · 2010-2024",
+      "domain": "personnel",
+      "relativePath": "rgs-conto-annuale-occupazione-tipologia-2010-2024.psv",
+      "dataKind": "delimited",
+      "delimiter": "pipe",
+      "authority": "official-primary",
+      "licenseStatus": "verified-open-cc-by-3.0",
+      "publication": "rows",
+      "evidenceLabel": "documented-fact",
+      "sourceFields": [
+        "URL fonte"
+      ],
+      "privateFields": [],
+      "caveats": [
+        "Personale delle amministrazioni pubbliche al 31 dicembre di ogni anno per tipo di istituzione, dal Conto Annuale RGS su OpenBDAP (serie PCA_OCC_DIP_TENT_001), licenza CC BY 3.0; proiezione DVNS. Solo numero di persone: nessun costo del lavoro.",
+        "Personale = tempo pieno + part time fino al 50% + part time oltre il 50%: persone, non equivalenti a tempo pieno. Tempo determinato, formazione lavoro, interinale e LSU sono unità annue di lavoro (frazionarie dal 2021), non persone: non si sommano al personale, anche se l'intestazione della fonte dice «Numero Dipendenti».",
+        "La classificazione cambia nel tempo: da 34 a 45 tipi di istituzione in 8 tipologie (35 nel 2010, 41 nel 2020, 45 nel 2024). Un tipo che compare o scompare non è una variazione di personale: fra anni si confrontano i totali o i tipi presenti in entrambi.",
+        "Un solo dataset per le rilevazioni dal 2010 al 2024, distinte dalla colonna Anno: i valori non vanno sommati fra anni. Valori come pubblicati: interi fino al 2020, con due decimali dal 2021.",
+        "Date distinte: anno di rilevazione, data dei dati osservati dichiarata da RGS (19 aprile 2022 per gli anni 2010-2020), pubblicazione del pacchetto CKAN e acquisizione DVNS del 7 ottobre 2026. RGS può rivedere anni già pubblicati: il lock vincola i byte acquisiti.",
+        "Controlli DVNS fail-closed sul 2020: il personale di ogni tipo coincide con la somma del file RGS per ente (il lavoro flessibile entro l'arrotondamento, con scarti vincolati) e con lo snapshot DFP rgs-conto-annuale-personale-2020, tranne MINISTERI: 38 persone a tempo pieno in più in OpenBDAP, da due amministrazioni."
+      ],
+      "expected": {
+        "bytes": 128289,
+        "sha256": "5f667d3ec3739d533d1ae86bd3220d0e4390f8760561d7c9722b46c639b4952f",
+        "rows": 575,
+        "columns": 18,
+        "headers": [
+          "Anno",
+          "Tipologia amministrazione",
+          "Tipo istituzione",
+          "Numero Dipendenti Donne Tempo Pieno",
+          "Numero Dipendenti Uomini Tempo Pieno",
+          "Numero Dipendenti Donne Part time Inf. 50%",
+          "Numero Dipendenti Uomini Part time Inf. 50%",
+          "Numero Dipendenti Donne Part time Sup. 50%",
+          "Numero Dipendenti Uomini Part time Sup. 50%",
+          "Numero Dipendenti Donne Tempo Determinato",
+          "Numero Dipendenti Uomini Tempo Determinato",
+          "Numero Dipendenti Donne Formazione Lavoro",
+          "Numero Dipendenti Uomini Formazione Lavoro",
+          "Numero Dipendenti Donne Lavoro Interinale",
+          "Numero Dipendenti Uomini Lavoro Interinale",
+          "Numero Dipendenti Donne Lavoro Socialmente Utile",
+          "Numero Dipendenti Uomini Lavoro Socialmente Utile",
+          "URL fonte"
+        ]
+      }
+    },
+    {
+      "id": "rgs-conto-annuale-occupazione-ente-2010-2024",
+      "title": "Conto Annuale · occupazione per istituzione · 2010-2024",
+      "domain": "personnel",
+      "relativePath": "rgs-conto-annuale-occupazione-ente-2010-2024.psv",
+      "dataKind": "delimited",
+      "delimiter": "pipe",
+      "authority": "official-primary",
+      "licenseStatus": "verified-open-cc-by-3.0",
+      "publication": "rows",
+      "evidenceLabel": "documented-fact",
+      "sourceFields": [
+        "URL fonte"
+      ],
+      "privateFields": [],
+      "caveats": [
+        "Personale di ogni istituzione pubblica al 31 dicembre, dal 2010 al 2024, dal Conto Annuale RGS su OpenBDAP (serie PCA_OCC_DIP_ENTE_001), licenza CC BY 3.0; proiezione DVNS: una riga per anno e istituzione, somma delle righe per contratto e categoria pubblicate da RGS. Solo numero di persone: nessun costo del lavoro, nessuna qualifica.",
+        "Personale = tempo pieno + part time fino al 50% + part time oltre il 50%: persone, non equivalenti a tempo pieno. Tempo determinato, formazione lavoro, interinale e LSU sono unità annue di lavoro (frazionarie dal 2021), non persone: non si sommano al personale, anche se l'intestazione della fonte dice «Numero Dipendenti».",
+        "La chiave è Codice istituzione, la stessa dello snapshot DFP 2020 (codi_istituzione); fra anni gli enti nascono, cessano e si accorpano (12.454 codici in tutto, 8.315 presenti in tutti i 15 anni; da 9.770 a 10.915 enti l'anno). Le denominazioni sono quelle pubblicate per l'anno, riscritte da RGS nel 2021 per circa 9.700 enti; 108 codici cambiano tipo di istituzione. Il Codice ente BDAP manca per alcuni enti (87 nel 2010, 2 dal 2021).",
+        "La classificazione dei tipi di istituzione cambia nel tempo (da 34 a 45 tipi): un tipo che compare o scompare non è una variazione di personale. Comparto elenca in ordine alfabetico, separati da « / », i comparti di un ente con personale di più contratti (circa 100 enti l'anno, soprattutto università). Nessun dato territoriale nella fonte.",
+        "Un solo dataset per le rilevazioni dal 2010 al 2024, distinte dalla colonna Anno: i valori non vanno sommati fra anni. Somme scritte nel formato dell'anno: interi fino al 2020, due decimali dal 2021.",
+        "Date distinte: anno di rilevazione, data dei dati osservati dichiarata da RGS (19 aprile 2022 per gli anni 2010-2020, poi dall'8 febbraio 2023 all'8 marzo 2026), pubblicazione del pacchetto CKAN e acquisizione DVNS del 15 ottobre 2026. RGS può rivedere anni già pubblicati: il lock vincola i byte acquisiti.",
+        "Controlli DVNS fail-closed per ogni anno: sommate per tipo, le righe danno il dataset rgs-conto-annuale-occupazione-tipologia-2010-2024 (personale identico; lavoro flessibile identico dal 2021, entro l'arrotondamento fino al 2020, al massimo 69 unità per tipo e misura). Sul 2020 il personale coincide con lo snapshot DFP rgs-conto-annuale-personale-2020 per ogni istituzione comune tranne due (codici 8652 +17 e 10400 +21 persone); le 103 istituzioni presenti solo in OpenBDAP hanno personale zero."
+      ],
+      "expected": {
+        "bytes": 35082780,
+        "sha256": "4689e417cbeb47363b446e6dc22f63265355b5e70339daf0a802347eadf7c48d",
+        "rows": 153121,
+        "columns": 21,
+        "headers": [
+          "Anno",
+          "Codice istituzione",
+          "Codice ente BDAP",
+          "Ente",
+          "Tipo istituzione",
+          "Comparto",
+          "Numero Dipendenti Donne Tempo Pieno",
+          "Numero Dipendenti Uomini Tempo Pieno",
+          "Numero Dipendenti Donne Part time Inf. 50%",
+          "Numero Dipendenti Uomini Part time Inf. 50%",
+          "Numero Dipendenti Donne Part time Sup. 50%",
+          "Numero Dipendenti Uomini Part time Sup. 50%",
+          "Numero Dipendenti Donne Tempo Determinato",
+          "Numero Dipendenti Uomini Tempo Determinato",
+          "Numero Dipendenti Donne Formazione Lavoro",
+          "Numero Dipendenti Uomini Formazione Lavoro",
+          "Numero Dipendenti Donne Lavoro Interinale",
+          "Numero Dipendenti Uomini Lavoro Interinale",
+          "Numero Dipendenti Donne Lavoro Socialmente Utile",
+          "Numero Dipendenti Uomini Lavoro Socialmente Utile",
+          "URL fonte"
+        ]
+      }
+    },
+    {
+      "id": "rgs-spesa-statale-regionalizzata-consolidata",
+      "title": "RGS · spesa statale regionalizzata consolidata 2008-2023",
+      "domain": "state-accounts",
+      "relativePath": "rgs-spesa-statale-regionalizzata-consolidata.psv",
+      "dataKind": "delimited",
+      "delimiter": "pipe",
+      "authority": "official-primary",
+      "licenseStatus": "not-declared",
+      "publication": "rows",
+      "evidenceLabel": "documented-fact",
+      "sourceFields": [
+        "URL fonte"
+      ],
+      "privateFields": [],
+      "caveats": [
+        "Spesa consolidata = Bilancio dello Stato + Enti + Fondi oggetto della pubblicazione, quote regionalizzate (Spesa Statale Regionalizzata RGS, SRS_SPE_PAR_SPESR_001). Non è la spesa delle Regioni come ente, non sono pagamenti di cassa SIOPE e non è la spesa consolidata dei Conti pubblici territoriali.",
+        "La scheda CKAN della serie ripete la descrizione della serie Bilancio («al netto degli interessi sul debito pubblico, dei fondi e degli enti»), ma gli importi comprendono Enti e Fondi: sono da 2,2 a 2,6 volte la sola spesa del Bilancio dello Stato.",
+        "Controllo DVNS fail-closed: per ogni anno e territorio Bilancio dello Stato (SRS_SPE_BIL_SPESR_001, dataset rgs-spesa-statale-regionalizzata-2008 … -2022 e fetta tipizzata 2023) + Enti + Fondi = Consolidata entro 0,15 milioni; lo scarto massimo misurato è 0,13 milioni, l'arrotondamento a due decimali delle componenti.",
+        "Italia, ripartizioni e regioni sono livelli sovrapposti pubblicati dalla fonte: non vanno sommati fra loro e l'Italia non va ricostruita sommando le regioni. La colonna Livello territoriale li distingue.",
+        "Quattro misure separate per ogni territorio e anno: solo «Valori Assoluti (mln)» è un importo, in milioni di euro. Rapporto al PIL, per abitante e per km² sono rapporti calcolati dall'editore con denominatori non versionati nel record.",
+        "Un solo dataset per gli esercizi dal 2008 al 2023, distinti dalla colonna Anno: gli importi non vanno sommati fra anni. I valori sono i decimali pubblicati, senza arrotondamento DVNS.",
+        "Licenza del payload not-declared: i pacchetti CKAN riportano cc-by, ma le pagine della serie e i file non dichiarano una licenza, come per gli altri dataset OpenBDAP nel corpus."
+      ],
+      "expected": {
+        "bytes": 306153,
+        "sha256": "4f077d659fb252cbafe690a733fdf8cf0f4848bc4b4f44feac30f3c1fa32c7cc",
+        "rows": 1664,
+        "columns": 6,
+        "headers": [
+          "Anno",
+          "Territorio",
+          "Livello territoriale",
+          "Misura",
+          "Valore",
+          "URL fonte"
+        ]
+      }
+    },
+    {
+      "id": "rgs-spesa-statale-regionalizzata-enti",
+      "title": "RGS · spesa regionalizzata degli enti 2008-2023",
+      "domain": "state-accounts",
+      "relativePath": "rgs-spesa-statale-regionalizzata-enti.psv",
+      "dataKind": "delimited",
+      "delimiter": "pipe",
+      "authority": "official-primary",
+      "licenseStatus": "not-declared",
+      "publication": "rows",
+      "evidenceLabel": "documented-fact",
+      "sourceFields": [
+        "URL fonte"
+      ],
+      "privateFields": [],
+      "caveats": [
+        "Spesa degli Enti oggetto della pubblicazione, quota regionalizzata (Spesa Statale Regionalizzata RGS, SRS_SPE_PAR_SPENT_001): una delle tre componenti della spesa consolidata, con Bilancio dello Stato e Fondi. Il file non elenca quali enti siano compresi.",
+        "Controllo DVNS fail-closed: per ogni anno e territorio Bilancio dello Stato (SRS_SPE_BIL_SPESR_001, dataset rgs-spesa-statale-regionalizzata-2008 … -2022 e fetta tipizzata 2023) + Enti + Fondi = Consolidata entro 0,15 milioni; lo scarto massimo misurato è 0,13 milioni, l'arrotondamento a due decimali delle componenti.",
+        "Italia, ripartizioni e regioni sono livelli sovrapposti pubblicati dalla fonte: non vanno sommati fra loro e l'Italia non va ricostruita sommando le regioni. La colonna Livello territoriale li distingue.",
+        "Quattro misure separate per ogni territorio e anno: solo «Valori Assoluti (mln)» è un importo, in milioni di euro. Rapporto al PIL, per abitante e per km² sono rapporti calcolati dall'editore con denominatori non versionati nel record.",
+        "Un solo dataset per gli esercizi dal 2008 al 2023, distinti dalla colonna Anno: gli importi non vanno sommati fra anni. I valori sono i decimali pubblicati, senza arrotondamento DVNS.",
+        "Licenza del payload not-declared: i pacchetti CKAN riportano cc-by, ma le pagine della serie e i file non dichiarano una licenza, come per gli altri dataset OpenBDAP nel corpus."
+      ],
+      "expected": {
+        "bytes": 305617,
+        "sha256": "42c28d869251b6304e952daa845c77210501d1fbf3e432f568cdbe0456e134ed",
+        "rows": 1664,
+        "columns": 6,
+        "headers": [
+          "Anno",
+          "Territorio",
+          "Livello territoriale",
+          "Misura",
+          "Valore",
+          "URL fonte"
+        ]
+      }
+    },
+    {
+      "id": "rgs-spesa-statale-regionalizzata-fondi",
+      "title": "RGS · spesa regionalizzata attraverso i fondi 2008-2023",
+      "domain": "state-accounts",
+      "relativePath": "rgs-spesa-statale-regionalizzata-fondi.psv",
+      "dataKind": "delimited",
+      "delimiter": "pipe",
+      "authority": "official-primary",
+      "licenseStatus": "not-declared",
+      "publication": "rows",
+      "evidenceLabel": "documented-fact",
+      "sourceFields": [
+        "URL fonte"
+      ],
+      "privateFields": [],
+      "caveats": [
+        "Spesa effettuata attraverso i Fondi oggetto della pubblicazione, quota regionalizzata (Spesa Statale Regionalizzata RGS, SRS_SPE_PAR_SPFON_001): una delle tre componenti della spesa consolidata, con Bilancio dello Stato ed Enti. Il file non elenca quali fondi siano compresi.",
+        "Controllo DVNS fail-closed: per ogni anno e territorio Bilancio dello Stato (SRS_SPE_BIL_SPESR_001, dataset rgs-spesa-statale-regionalizzata-2008 … -2022 e fetta tipizzata 2023) + Enti + Fondi = Consolidata entro 0,15 milioni; lo scarto massimo misurato è 0,13 milioni, l'arrotondamento a due decimali delle componenti.",
+        "Italia, ripartizioni e regioni sono livelli sovrapposti pubblicati dalla fonte: non vanno sommati fra loro e l'Italia non va ricostruita sommando le regioni. La colonna Livello territoriale li distingue.",
+        "Quattro misure separate per ogni territorio e anno: solo «Valori Assoluti (mln)» è un importo, in milioni di euro. Rapporto al PIL, per abitante e per km² sono rapporti calcolati dall'editore con denominatori non versionati nel record.",
+        "Un solo dataset per gli esercizi dal 2008 al 2023, distinti dalla colonna Anno: gli importi non vanno sommati fra anni. I valori sono i decimali pubblicati, senza arrotondamento DVNS.",
+        "Licenza del payload not-declared: i pacchetti CKAN riportano cc-by, ma le pagine della serie e i file non dichiarano una licenza, come per gli altri dataset OpenBDAP nel corpus."
+      ],
+      "expected": {
+        "bytes": 303766,
+        "sha256": "41d187addd2b81612f298f720432e678b8cf8ce0ecba77823c2c67536c832bed",
+        "rows": 1664,
+        "columns": 6,
+        "headers": [
+          "Anno",
+          "Territorio",
+          "Livello territoriale",
+          "Misura",
+          "Valore",
+          "URL fonte"
+        ]
+      }
+    },
+    {
+      "id": "arera-entrate-2024-2025",
+      "title": "ARERA · entrate e contributi 2024-2025",
+      "domain": "public-revenue",
+      "authority": "official-primary",
+      "licenseStatus": "verified-open-cc-by-sa-4.0",
+      "dataKind": "delimited",
+      "relativePath": "arera-entrate-2024-2025.psv",
+      "delimiter": "pipe",
+      "publication": "rows",
+      "evidenceLabel": "documented-fact",
+      "sourceFields": [
+        "URL fonte"
+      ],
+      "privateFields": [],
+      "caveats": [
+        "Pilota ARERA, esercizi 2024 e 2025. Non rappresenta il totale delle autorità indipendenti né il bilancio dello Stato.",
+        "Previsioni, competenza, residui e cassa sono colonne distinte: non sommarle. Le partite di giro restano incluse e riconoscibili dal codice.",
+        "Entrate: capitoli al V livello con codice ARERA; riepiloghi gerarchici e avanzo di amministrazione esclusi.",
+        "Importi in euro, resi al centesimo come nel formato XLSX; celle vuote mantenute mancanti. Fonte: ARERA; proiezioni derivate distribuite con licenza CC BY-SA 4.0."
+      ],
+      "expected": {
+        "bytes": 11790,
+        "sha256": "8f8cd8e5bf4f156ea9a69772badfbf4559b3c201d639e9e275675f92f904cc70",
+        "rows": 54,
+        "columns": 12,
+        "headers": [
+          "Anno",
+          "Codice",
+          "Capitolo ARERA",
+          "Voce",
+          "Previsioni definitive (euro)",
+          "Riscosso in competenza (euro)",
+          "Da riscuotere in competenza (euro)",
+          "Accertamenti (euro)",
+          "Riscosso su residui (euro)",
+          "Incassi totali (euro)",
+          "Residui attivi finali (euro)",
+          "URL fonte"
+        ]
+      }
+    },
+    {
+      "id": "arera-spese-2024-2025",
+      "title": "ARERA · spese per titolo 2024-2025",
+      "domain": "operations",
+      "authority": "official-primary",
+      "licenseStatus": "verified-open-cc-by-sa-4.0",
+      "dataKind": "delimited",
+      "relativePath": "arera-spese-2024-2025.psv",
+      "delimiter": "pipe",
+      "publication": "rows",
+      "evidenceLabel": "documented-fact",
+      "sourceFields": [
+        "URL fonte"
+      ],
+      "privateFields": [],
+      "caveats": [
+        "Pilota ARERA, esercizi 2024 e 2025. Non rappresenta il totale delle autorità indipendenti né il bilancio dello Stato.",
+        "Previsioni, competenza, residui e cassa sono colonne distinte: non sommarle. Le partite di giro restano incluse e riconoscibili dal codice.",
+        "Uscite: soli titoli al I livello; nessuna somma con i capitoli di dettaglio. Variazioni annuali non misurano efficienza o sprechi.",
+        "Importi in euro, resi al centesimo come nel formato XLSX; celle vuote mantenute mancanti. Fonte: ARERA; proiezioni derivate distribuite con licenza CC BY-SA 4.0."
+      ],
+      "expected": {
+        "bytes": 1423,
+        "sha256": "94194bc7db2735a7eced043f652774764b686606be0a84c6a42af212dcdf397e",
+        "rows": 6,
+        "columns": 11,
+        "headers": [
+          "Anno",
+          "Codice",
+          "Voce",
+          "Previsioni definitive (euro)",
+          "Pagato in competenza (euro)",
+          "Da pagare in competenza (euro)",
+          "Impegni (euro)",
+          "Pagato su residui (euro)",
+          "Pagamenti totali (euro)",
+          "Residui passivi finali (euro)",
+          "URL fonte"
+        ]
+      }
+    },
+    {
+      "id": "ade-cinque-per-mille-territori-2024",
+      "title": "5 per mille AF 2024 · territorio degli enti",
+      "domain": "public-revenue",
+      "authority": "official-primary",
+      "licenseStatus": "verified-open-cad-art52-cc-by-4.0",
+      "dataKind": "delimited",
+      "relativePath": "ade-cinque-per-mille-territori-2024.psv",
+      "delimiter": "pipe",
+      "publication": "rows",
+      "evidenceLabel": "documented-fact",
+      "sourceFields": [
+        "URL fonte"
+      ],
+      "privateFields": [],
+      "caveats": [
+        "Tutti i 90.627 enti ammessi delle sette parti originali AdE sono riconciliati in 22 aggregati: 21 territori come pubblicati (Trento e Bolzano distinti) e una riga per i 323 enti senza regione pubblicata. Non sono 22 regioni e non si somma un totale Italia alle righe.",
+        "Importi erogabili pubblicati, non pagamenti o stanziamenti. Le celle individuali vuote non diventano zero: i conteggi senza importo o numero scelte ne documentano la copertura. Le componenti non si sommano al totale.",
+        "Le categorie di ammissione possono sovrapporsi: ogni ente è contato una sola volta e non è attribuito a ciascuna categoria l’intero importo. Le quote della singola categoria inferiori a 100 euro non erogabili sono escluse secondo la nota AdE.",
+        "Il catalogo/API/MCP espongono gli aggregati territoriali. I sette CSV originali completi sono scaricabili come archivio statico versionato, senza caricarne il dettaglio nelle Functions.",
+        "Riuso: art. 52, comma 2, CAD e requisito 20 Linee guida AgID 2023, CC BY 4.0 per apertura predefinita dei dati pubblici non personali. La pagina AdE non dichiara una licenza specifica: questa base normativa è distinta da una dichiarazione dell’editore."
+      ],
+      "expected": {
+        "bytes": 3818,
+        "sha256": "c1f37c70d0e78fb54977c9189aabbde445f597928bedb1fc5bfde57683aa43d4",
+        "rows": 22,
+        "columns": 12,
+        "headers": [
+          "Anno finanziario",
+          "Territorio",
+          "Enti ammessi",
+          "Enti con importo erogabile pubblicato",
+          "Enti senza importo erogabile pubblicato",
+          "Scelte pubblicate",
+          "Enti senza numero scelte pubblicato",
+          "Scelte espresse (euro)",
+          "Scelte generiche (euro)",
+          "Redistribuzione quote sotto soglia (euro)",
+          "Totale erogabile pubblicato (euro)",
+          "URL fonte"
+        ]
+      }
+    },
+    {
+      "id": "ade-immobili-prelievo-2015-2024",
+      "title": "AdE · prelievo fiscale sugli immobili 2015-2024",
+      "domain": "public-revenue",
+      "authority": "official-primary",
+      "licenseStatus": "verified-open-cc-by-3.0-it",
+      "dataKind": "delimited",
+      "relativePath": "ade-immobili-prelievo-2015-2024.psv",
+      "delimiter": "pipe",
+      "publication": "rows",
+      "evidenceLabel": "documented-fact",
+      "sourceFields": [
+        "URL fonte"
+      ],
+      "privateFields": [],
+      "caveats": [
+        "Serie tabella 4.4 in miliardi di euro: gettito/prelievo pubblicato, non cassa comunale né pagamenti SIOPE.",
+        "IMU, TASI, cedolare secca e IRPEF/IRES immobiliari sono voci distinte: non sommarle senza verificare il perimetro della riga madre.",
+        "L'ultimo anno pubblicato è 2024; non confonderlo con l'anno d'imposta 2023 dello stock open data.",
+        "Licenza CC BY 3.0 IT dal portale open data AdE/MEF."
+      ],
+      "expected": {
+        "bytes": 22969,
+        "sha256": "3ad31107f84f31bb80013b68c6537d477e1d73c658f8d3516c6143fc81ed543a",
+        "rows": 180,
+        "columns": 4,
+        "headers": [
+          "Voce",
+          "Anno",
+          "Importo (mld euro)",
+          "URL fonte"
+        ]
+      }
+    },
+    {
+      "id": "ade-immobili-utilizzo-provincia-2023",
+      "title": "AdE · utilizzo immobiliare per provincia 2023",
+      "domain": "territory",
+      "authority": "official-primary",
+      "licenseStatus": "verified-open-cc-by-3.0-it",
+      "dataKind": "delimited",
+      "relativePath": "ade-immobili-utilizzo-provincia-2023.psv",
+      "delimiter": "pipe",
+      "publication": "rows",
+      "evidenceLabel": "documented-fact",
+      "sourceFields": [
+        "URL fonte"
+      ],
+      "privateFields": [],
+      "caveats": [
+        "Anno d'imposta 2023; province in sigla catastale, non codice ISTAT comunale.",
+        "Numero immobili, rendita catastale e VSM sono nature diverse: non sommarle tra indicatori.",
+        "Persone fisiche e non fisiche restano colonne distinte nella fonte: non inventare totali unificati.",
+        "Open data CSV del portale AdE/MEF; licenza CC BY 3.0 IT."
+      ],
+      "expected": {
+        "bytes": 2437319,
+        "sha256": "0f879887242c223c70faf448de9464782dff4923051a7cdeb287632927496985",
+        "rows": 16632,
+        "columns": 6,
+        "headers": [
+          "Anno imposta",
+          "Provincia (sigla)",
+          "Categoria utilizzo",
+          "Indicatore",
+          "Valore",
+          "URL fonte"
+        ]
+      }
+    },
+    {
+      "id": "ade-immobili-tabelle-2026",
+      "title": "AdE · tabelle «Immobili in Italia 2026» (API)",
+      "domain": "territory",
+      "authority": "official-primary",
+      "licenseStatus": "verified-open-cc-by-3.0-it",
+      "dataKind": "delimited",
+      "relativePath": "ade-immobili-tabelle-2026.psv",
+      "delimiter": "pipe",
+      "publication": "rows",
+      "evidenceLabel": "documented-fact",
+      "sourceFields": [
+        "URL fonte"
+      ],
+      "privateFields": [],
+      "caveats": [
+        "Celle normalizzate dall'API ufficiale get_table dell'edizione 2026; 14 tabelle rispondono null e sono escluse (solo PDF).",
+        "VSM, rendite, numeri e percentuali restano come pubblicati: non convertiamo in euro di bilancio.",
+        "Ogni riga conserva id tabella, titolo e URL puntuale alla fonte.",
+        "Licenza CC BY 3.0 IT dal portale open data AdE/MEF."
+      ],
+      "expected": {
+        "bytes": 747936,
+        "sha256": "e6cf3814566fe7979c745886b158468b7b38aafb70b84ea02ce9e2d3acb0946d",
+        "rows": 3033,
+        "columns": 6,
+        "headers": [
+          "Tabella id",
+          "Titolo tabella",
+          "Riga",
+          "Colonna",
           "Valore",
           "URL fonte"
         ]

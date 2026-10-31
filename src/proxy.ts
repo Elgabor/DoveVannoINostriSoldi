@@ -1,6 +1,16 @@
 import { NextRequest } from "next/server.js";
 import { NextResponse } from "next/server.js";
-import { SNAPSHOT_PREFIX, IPA_CODE, CACHED_ENTITY_VIEWS, publicSnapshotPath } from "@/lib/snapshot-routing";
+import { isLoopbackHost } from "@/lib/http/public-post-guard";
+import {
+  SNAPSHOT_PREFIX,
+  IPA_CODE,
+  DATASET_ID,
+  CACHED_ENTITY_VIEWS,
+  OCCUPAZIONE_INSTITUTION_CODE,
+  entitySnapshotSlug,
+  entitySearchParamsFromSlug,
+  publicSnapshotPath,
+} from "@/lib/snapshot-routing";
 
 const MCP_TRANSPORT_METHODS = new Set(["POST", "OPTIONS", "HEAD"]);
 const TRAINING_CRAWLER = /(?:^|[ (])(?:ClaudeBot|GPTBot|CCBot|Meta-ExternalAgent|Amazonbot|Bytespider|Applebot-Extended)(?:\/|[ );]|$)/i;
@@ -15,6 +25,14 @@ const ENTITY_PER_IP_MAX = 30;
 const GLOBAL_WINDOW_MS = 60_000;
 const GLOBAL_MAX = 600;
 const MAX_TRACKED_IPS = 10_000;
+
+/** High-cardinality ANAC surfaces: rate-limit every client, not only declared crawlers. */
+function isProcurementSurface(pathname: string): boolean {
+  return /^\/enti\/[^/]+\/appalti(?:\/|$)/.test(pathname)
+    || /^\/appalti\/operatori(?:\/|$)/.test(pathname)
+    || /^\/snapshot-pages\/enti\//.test(pathname)
+    || /^\/snapshot-pages\/operatori\//.test(pathname);
+}
 
 type RateState = { ipHits: Map<string, number[]>; globalHits: number[] };
 const apiState: RateState = { ipHits: new Map(), globalHits: [] };
@@ -49,9 +67,24 @@ function getClientIp(request: NextRequest): string {
   return "unknown";
 }
 
+/** Production gates and local `next start` share one loopback client; WAF applies in prod. */
+function bypassProxyRateLimit(request: NextRequest): boolean {
+  if (process.env.VERCEL === "1") return false;
+  try {
+    return isLoopbackHost(new URL(request.url).host);
+  } catch {
+    return false;
+  }
+}
+
 function rateLimit(request: NextRequest, state: RateState, perIpMax: number): NextResponse | null {
+  if (bypassProxyRateLimit(request)) return null;
   const now = Date.now();
   const { ipHits, globalHits } = state;
+  // Vercel always forwards a client address. Without one, do not share a single
+  // "unknown" bucket across local probes and the on-demand renderer.
+  const ip = getClientIp(request);
+  if (ip === "unknown") return null;
 
   slidingCount(globalHits, now, GLOBAL_WINDOW_MS);
   if (globalHits.length >= GLOBAL_MAX) {
@@ -60,7 +93,6 @@ function rateLimit(request: NextRequest, state: RateState, perIpMax: number): Ne
       { status: 429, headers: { "Retry-After": "60", "Cache-Control": "private, no-store" } },
     );
   }
-  const ip = getClientIp(request);
   const timestamps = ipHits.get(ip) ?? [];
   slidingCount(timestamps, now, PER_IP_WINDOW_MS);
   if (timestamps.length >= perIpMax) {
@@ -91,9 +123,14 @@ function snapshotPath(request: NextRequest, path: string): string | null {
   if (!["GET", "HEAD"].includes(request.method) || request.headers.has("authorization")) return null;
   const query = request.nextUrl.searchParams;
   const entity = /^\/enti\/([A-Za-z0-9_]{1,100})\/appalti$/.exec(path);
+  const dataset = /^\/dati\/([a-z0-9-]{1,200})$/.exec(path);
   const operator = /^\/appalti\/operatori\/(op-[0-9]{8})$/.exec(path);
+  const occupationHub = path === "/personale-pa/conto-annuale";
+  const occupationDetail = /^\/personale-pa\/conto-annuale\/(\d{1,10})$/.exec(path);
   const keys = entity ? ["view", "page", "pageSize", "metric", "operator", "cpv", "awardYear", "selection"]
     : operator ? ["year", "authority", "procedure", "minAmount", "maxAmount", "page"]
+    : dataset ? ["q", "limit", "offset", "cursor", "pagina"]
+    : occupationHub ? ["q"]
     : path === "/comuni" ? ["ente", "q"] : [];
   // These pages ignore other parameters (including campaign tags). ISR keys
   // depend on the resolved pathname, while Next retains the RSC query/headers.
@@ -109,14 +146,30 @@ function snapshotPath(request: NextRequest, path: string): string | null {
     || (key === "page" && query.get(key) === "1")
     || (key === "pageSize" && query.get(key) === "25")
     || ((key === "cpv" || key === "awardYear") && query.get(key) === "")
-    || (key === "metric" && query.get(key) === "count"))) {
-    return `${SNAPSHOT_PREFIX}enti/${entity[1]}/${entityView}`;
+    || (key === "metric" && (query.get(key) === "count"
+      || (entityView === "operators" && query.get(key) === "value"))))) {
+    const slug = entitySnapshotSlug(entityView, query.get("metric"));
+    if (!slug) return null;
+    return `${SNAPSHOT_PREFIX}enti/${entity[1]}/${slug}`;
+  }
+  if (dataset && DATASET_ID.test(dataset[1]!) && semantic.every(key =>
+    ((key === "q" || key === "cursor" || key === "offset") && query.get(key) === "")
+    || (key === "limit" && query.get(key) === "50")
+    || (key === "offset" && query.get(key) === "0")
+    || (key === "pagina" && query.get(key) === "1"))) {
+    return `${SNAPSHOT_PREFIX}dati/${dataset[1]}`;
   }
   if (operator && semantic.every(key => query.get(key) === ""
     || (key === "page" && query.get(key) === "1"))) return `${SNAPSHOT_PREFIX}operatori/${operator[1]}`;
   if (path === "/comuni" && semantic.every(key => key === "ente")) {
     const code = query.get("ente") || "c_e897";
     return IPA_CODE.test(code) ? `${SNAPSHOT_PREFIX}comuni/${code}` : null;
+  }
+  if (occupationHub && semantic.every(key => key === "q" && query.get(key) === "")) {
+    return `${SNAPSHOT_PREFIX}personale-pa/conto-annuale`;
+  }
+  if (occupationDetail && OCCUPAZIONE_INSTITUTION_CODE.test(occupationDetail[1]!) && semantic.length === 0) {
+    return `${SNAPSHOT_PREFIX}personale-pa/conto-annuale/${occupationDetail[1]}`;
   }
   return null;
 }
@@ -131,13 +184,20 @@ export function proxy(request: NextRequest) {
     const destination = request.nextUrl.clone();
     destination.pathname = publicPath;
     const parts = pathname.slice(SNAPSHOT_PREFIX.length).split("/");
-    if (parts[0] === "enti" && !destination.searchParams.has("view")) destination.searchParams.set("view", parts[2]!);
+    if (parts[0] === "enti") {
+      const resolved = entitySearchParamsFromSlug(parts[2]!);
+      if (!resolved) return new NextResponse(null, { status: 404 });
+      if (!destination.searchParams.has("view")) destination.searchParams.set("view", resolved.view);
+      if (resolved.metric && !destination.searchParams.has("metric")) {
+        destination.searchParams.set("metric", resolved.metric);
+      }
+    }
     if (parts[0] === "comuni" && !destination.searchParams.has("ente")) destination.searchParams.set("ente", parts[1]!);
     const publicRequest = new NextRequest(destination, { method: request.method, headers: request.headers });
     // Next's on-demand renderer requests this path again. Redirecting a default
     // snapshot here also redirects the public rewrite, producing a loop.
     if (snapshotPath(publicRequest, publicPath) !== pathname) return NextResponse.redirect(destination, 307);
-    if (TRAINING_CRAWLER.test(request.headers.get("user-agent") ?? "")) {
+    if (isProcurementSurface(pathname) || TRAINING_CRAWLER.test(request.headers.get("user-agent") ?? "")) {
       const blocked = rateLimit(request, entityState, ENTITY_PER_IP_MAX);
       if (blocked) return blocked;
     }
@@ -150,12 +210,20 @@ export function proxy(request: NextRequest) {
   if (pathname === "/" && requestHostname(request) === COMUNI_HOST) {
     pathname = "/comuni";
   }
-  if (pathname.startsWith("/api/")) {
+  // Session Boards è un GET leggero chiamato dal chrome su ogni pagina: non
+  // deve consumare il budget condiviso /api né far fallire i browser gate.
+  if (
+    pathname.startsWith("/api/")
+    && pathname !== "/api/boards/auth/session"
+  ) {
     const blocked = rateLimit(request, apiState, API_PER_IP_MAX);
     if (blocked) return blocked;
   }
-  if (/^\/(?:enti|appalti|comuni|dati|progetti|confronti|controlli|patrimonio|politici)(?:\/|$)/.test(pathname)
-    && TRAINING_CRAWLER.test(request.headers.get("user-agent") ?? "")) {
+  // ANAC entity/operator pages dominate Fluid Active CPU: cap every client.
+  // Declared training crawlers keep the broader surface allowance below.
+  if (isProcurementSurface(pathname)
+    || (/^\/(?:enti|appalti|comuni|dati|personale-pa|progetti|confronti|controlli|patrimonio|politici)(?:\/|$)/.test(pathname)
+      && TRAINING_CRAWLER.test(request.headers.get("user-agent") ?? ""))) {
     const blocked = rateLimit(request, entityState, ENTITY_PER_IP_MAX);
     if (blocked) return blocked;
   }
@@ -185,5 +253,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/mcp", "/enti/:path*", "/appalti/:path*", "/comuni/:path*", "/dati/:path*", "/progetti/:path*", "/confronti/:path*", "/controlli/:path*", "/patrimonio/:path*", "/politici/:path*", "/snapshot-pages/:path*", "/api/:path*"],
+  matcher: ["/", "/mcp", "/enti/:path*", "/appalti/:path*", "/comuni/:path*", "/dati/:path*", "/personale-pa/:path*", "/progetti/:path*", "/confronti/:path*", "/controlli/:path*", "/patrimonio/:path*", "/politici/:path*", "/snapshot-pages/:path*", "/api/:path*"],
 };

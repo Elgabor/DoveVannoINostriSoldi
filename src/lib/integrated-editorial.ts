@@ -15,7 +15,16 @@ export type EditorialDatasetPreview = Readonly<{
 }>;
 
 export type EditorialSurfacePreview = Readonly<{
-  surface: "/partecipazioni" | "/spese/sanita" | "/dati" | "/enti" | "/appalti/ted" | "/pnrr" | "/disuguaglianza";
+  surface:
+    | "/partecipazioni"
+    | "/spese/sanita"
+    | "/dati"
+    | "/enti"
+    | "/appalti/ted"
+    | "/appalti/bandi-aperti"
+    | "/appalti/mepa"
+    | "/pnrr"
+    | "/disuguaglianza";
   title: string;
   description: string;
   datasets: readonly EditorialDatasetPreview[];
@@ -34,6 +43,7 @@ export type EditorialTopic = Readonly<{
   facts: readonly EditorialFact[];
   readingNotes: readonly string[];
   datasets: readonly EditorialDatasetPreview[];
+  featuredExploration?: Readonly<{ href: string; title: string; description: string }>;
 }>;
 
 export const EDITORIAL_TOPICS: readonly EditorialTopic[] = [
@@ -400,7 +410,14 @@ export const EDITORIAL_TOPICS: readonly EditorialTopic[] = [
       "I confronti internazionali restano candidati finché unità e perimetri non sono normalizzati.",
       "Piani di gestione, organici e compensi degli organi hanno unità diverse e non vengono sommati.",
       "Il Conto Annuale 2020 è storico: personale al 31 dicembre e costo annuale hanno coperture diverse. Non è SIOPE cassa.",
+      "La serie per tipo di istituzione 2010–2024 conta persone; il lavoro flessibile è in unità annue e non si somma al personale. I tipi cambiano negli anni.",
+      "La serie per istituzione 2010–2024 ha una riga per anno ed ente: enti e denominazioni cambiano negli anni, e la somma per tipo ridà la serie per tipo.",
     ],
+    featuredExploration: {
+      href: "/personale-pa/conto-annuale",
+      title: "Quanti dipendenti ha il tuo ente · 2010-2024",
+      description: "Cerca Comuni, Ministeri e altre istituzioni nel Conto Annuale RGS: serie, variazioni e lavoro flessibile con fonte OpenBDAP.",
+    },
     datasets: [
       {
         id: "personale",
@@ -433,6 +450,27 @@ export const EDITORIAL_TOPICS: readonly EditorialTopic[] = [
           { key: "Descrizione qualifica", label: "Qualifica" },
           { key: "Tempo pieno uomini", label: "Tempo pieno uomini" },
           { key: "Tempo pieno donne", label: "Tempo pieno donne" },
+        ],
+      },
+      {
+        id: "rgs-conto-annuale-occupazione-tipologia-2010-2024",
+        label: "Conto Annuale · personale per tipo di istituzione 2010–2024",
+        columns: [
+          { key: "Anno", label: "Anno" },
+          { key: "Tipo istituzione", label: "Tipo di istituzione" },
+          { key: "Numero Dipendenti Uomini Tempo Pieno", label: "Tempo pieno uomini" },
+          { key: "Numero Dipendenti Donne Tempo Pieno", label: "Tempo pieno donne" },
+        ],
+      },
+      {
+        id: "rgs-conto-annuale-occupazione-ente-2010-2024",
+        label: "Conto Annuale · personale per istituzione 2010–2024",
+        columns: [
+          { key: "Anno", label: "Anno" },
+          { key: "Ente", label: "Istituzione" },
+          { key: "Tipo istituzione", label: "Tipo di istituzione" },
+          { key: "Numero Dipendenti Uomini Tempo Pieno", label: "Tempo pieno uomini" },
+          { key: "Numero Dipendenti Donne Tempo Pieno", label: "Tempo pieno donne" },
         ],
       },
       { id: "staff-funzioni", label: "Staff per funzione" },
@@ -650,6 +688,8 @@ export const EDITORIAL_TOPICS: readonly EditorialTopic[] = [
       },
     ],
     readingNotes: [
+      "Il 5 per mille riporta importi erogabili agli enti, non pagamenti verificati; le categorie di ammissione possono sovrapporsi.",
+      "ARERA è un pilota distinto dal bilancio dello Stato: entrate, spese, competenza e cassa non si sommano tra loro.",
       "Un capitolo è un’unità contabile e non identifica automaticamente beneficiario o singolo contratto.",
       "Il 2026 è una previsione nel perimetro documentato e non viene sommato ai pagamenti 2024-2025.",
       "Il dettaglio CE2/CE3 non si somma alle viste aggregate né agli incarichi nominativi.",
@@ -753,6 +793,66 @@ export const EDITORIAL_TOPICS: readonly EditorialTopic[] = [
           { key: "year", label: "Anno" },
           { key: "month", label: "Mese" },
           { key: "amountCents", label: "Importo in centesimi" },
+        ],
+      },
+      {
+        id: "ade-cinque-per-mille-territori-2024",
+        label: "5 per mille 2024 · importi erogabili",
+        columns: [
+          { key: "Territorio", label: "Territorio" },
+          { key: "Enti ammessi", label: "Enti ammessi" },
+          { key: "Enti senza importo erogabile pubblicato", label: "Senza importo" },
+          { key: "Totale erogabile pubblicato (euro)", label: "Erogabile pubblicato" },
+        ],
+      },
+      {
+        id: "ade-immobili-prelievo-2015-2024",
+        label: "AdE · prelievo fiscale sugli immobili 2015-2024",
+        columns: [
+          { key: "Voce", label: "Voce" },
+          { key: "Anno", label: "Anno" },
+          { key: "Importo (mld euro)", label: "Importo (mld €)" },
+        ],
+      },
+      {
+        id: "ade-immobili-utilizzo-provincia-2023",
+        label: "AdE · utilizzo immobiliare per provincia 2023",
+        columns: [
+          { key: "Provincia (sigla)", label: "Provincia" },
+          { key: "Categoria utilizzo", label: "Categoria" },
+          { key: "Indicatore", label: "Indicatore" },
+          { key: "Valore", label: "Valore" },
+        ],
+      },
+      {
+        id: "ade-immobili-tabelle-2026",
+        label: "AdE · tabelle Immobili in Italia 2026",
+        columns: [
+          { key: "Tabella id", label: "Tabella" },
+          { key: "Titolo tabella", label: "Titolo" },
+          { key: "Riga", label: "Riga" },
+          { key: "Colonna", label: "Colonna" },
+          { key: "Valore", label: "Valore" },
+        ],
+      },
+      {
+        id: "arera-entrate-2024-2025",
+        label: "ARERA · entrate e contributi 2024-2025",
+        columns: [
+          { key: "Anno", label: "Anno" },
+          { key: "Voce", label: "Voce" },
+          { key: "Accertamenti (euro)", label: "Accertamenti" },
+          { key: "Incassi totali (euro)", label: "Incassi" },
+        ],
+      },
+      {
+        id: "arera-spese-2024-2025",
+        label: "ARERA · spese per titolo 2024-2025",
+        columns: [
+          { key: "Anno", label: "Anno" },
+          { key: "Voce", label: "Voce" },
+          { key: "Impegni (euro)", label: "Impegni" },
+          { key: "Pagamenti totali (euro)", label: "Pagamenti" },
         ],
       },
     ],
@@ -1037,6 +1137,18 @@ export const EDITORIAL_SURFACE_PREVIEWS: readonly EditorialSurfacePreview[] = [
     ],
   },
   {
+    surface: "/appalti/bandi-aperti",
+    title: "Bandi aperti con committente in Italia",
+    description: "Avvisi TED con scadenza delle offerte pubblicata e committente in Italia; lavori, servizi e forniture distinguibili.",
+    datasets: [{ id: "ted-bandi-aperti-italia-2026-10", label: "Bandi TED con scadenza futura" }],
+  },
+  {
+    surface: "/appalti/mepa",
+    title: "MePA e bandi del programma Consip",
+    description: "Metadati open data Consip su iniziative e lotti; non sostituisce la bacheca live né gli ordini conclusi.",
+    datasets: [{ id: "consip-bandi-gare-programma-2026", label: "Bandi e gare programma 2026" }],
+  },
+  {
     surface: "/enti",
     title: "Scuole statali nel Comune",
     description: "Le schede comunali collegano i codici scuola MIM alle identità territoriali ufficiali, con copertura e limiti dichiarati.",
@@ -1146,6 +1258,16 @@ export const EDITORIAL_SURFACE_PREVIEWS: readonly EditorialSurfacePreview[] = [
       { id: "rgs-spesa-statale-regionalizzata-2020", label: "Esercizio 2020" },
       { id: "rgs-spesa-statale-regionalizzata-2021", label: "Esercizio 2021" },
       { id: "rgs-spesa-statale-regionalizzata-2022", label: "Esercizio 2022" },
+    ],
+  },
+  {
+    surface: "/dati",
+    title: "Spesa statale consolidata per territorio 2008–2023",
+    description: "Spesa consolidata = Bilancio dello Stato + Enti + Fondi oggetto della pubblicazione, quote regionalizzate: tre dataset con tutti gli esercizi, livelli territoriali sovrapposti da non sommare.",
+    datasets: [
+      { id: "rgs-spesa-statale-regionalizzata-consolidata", label: "Spesa consolidata" },
+      { id: "rgs-spesa-statale-regionalizzata-enti", label: "Componente Enti" },
+      { id: "rgs-spesa-statale-regionalizzata-fondi", label: "Componente Fondi" },
     ],
   },
   {

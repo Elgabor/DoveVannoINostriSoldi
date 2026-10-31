@@ -8,14 +8,15 @@ la CPU della produzione né libera il disco temporaneo di una nuova build.
 
 | Percorso | Risposta | Lavoro e limiti |
 | --- | --- | --- |
-| `/enti/[codice]/appalti` | Snapshot per deployment per riepilogo, operatori, procedure e aggiudicazioni senza filtri | Snapshot ANAC validati; filtri e concentrazione restano dinamici |
+| `/enti/[codice]/appalti` | Snapshot per deployment per riepilogo, operatori (conteggio e valore), procedure e aggiudicazioni senza filtri | Snapshot ANAC validati; CPV, anno, paginazione, dettaglio operatore e concentrazione restano dinamici. Ogni client condivide 30 req/min per IP su queste superfici (non solo i crawler dichiarati). |
 | `/appalti/operatori/[ref]` | Snapshot per deployment per la prima pagina senza filtri | Letture degli intervalli del pack; altre pagine e filtri restano dinamici |
 | `/comuni?ente=...` e radice del sottodominio Comuni | ISR 6 ore per un Comune pubblicato | Profilo finanziario; nessuna scansione di patrimonio o servizi scolastici non visualizzati |
 | `/comuni?q=...` | Dinamica | Ricerca locale; nessun prefetch dei risultati o dei Comuni suggeriti |
 | `/api/comuni/search` | Dinamica, `no-store` | Indice dei nomi normalizzato una volta per istanza dal solo snapshot; ordinamento per pertinenza prima del limite, senza cache delle query |
 | `/api/search` | Dinamica, `no-store` | Campi del catalogo e identità comunali normalizzati una volta per istanza; record IPA elaborati dalla risposta corrente, senza cache delle query |
 | `/enti/[codice]` e API ente | Dinamica dove usa IPA live | Profilo completo, inclusi patrimonio e scuole; identità ufficiali riconciliate |
-| `/dati/[dataset]`, API dati e MCP | Politica del selector/trasporto esistente | Scansione limitata e cursori del rilascio; riuso bounded dei chunk già validati |
+| `/dati/[dataset]` | Snapshot per deployment per la prima pagina senza filtri; altre query dinamiche | Stesso selettore pubblico, righe e aggregazioni validate |
+| API dati e MCP | Politica del selector/trasporto esistente | Scansione limitata e cursori del rilascio; riuso bounded dei chunk già validati |
 | Altre pagine ad alta cardinalità | Politica specifica della route | Crawler dichiarati coperti dal proxy; includere le nuove route nel matcher e nell'inventario |
 
 Le route interne `/snapshot-pages/...` servono esclusivamente i rewrite del proxy.
@@ -53,6 +54,33 @@ La prima visita richiede ancora generazione e validazione; URL nuovi, filtri
 dinamici e varianti HTML/RSC possono ancora produrre miss. Il TTL non acquisisce
 nuove fonti e non corregge questi costi. Prima di cambiare la politica verificare
 anche un aggiornamento dello snapshot in un nuovo deployment.
+
+La prima pagina senza filtri di `/dati/[dataset]` usa lo stesso schema ISR,
+tramite `/snapshot-pages/dati/[dataset]`. Solo i valori equivalenti alla vista
+iniziale (`q`/`cursor` vuoti, `limit=50`, `offset=0`, `pagina=1`) condividono
+la cache; parametri ripetuti, ricerca, altre pagine/limiti e richieste autorizzate
+rimangono dinamici. I controlli sulle righe, hash e provenienza restano nel
+selettore pubblico. Un nuovo deployment invalida il rendering; non parte una
+nuova acquisizione. Il wrapper non precostruisce tutti i dataset durante il build.
+Le sue tracce ereditano i file richiesti dalla pagina pubblica, mantenendo esclusi
+i grandi shard sanitari. Il gate `runtime-cache.mjs` prova HIT, HTML/RSC,
+filtri e dataset inesistenti su produzione locale. Quando aggiungi parametri alla
+pagina, aggiorna l’elenco semantico nel proxy e le prove di esclusione dalla cache.
+
+## OpenBDAP MOP
+
+La vista `/opere?cup=...` prepara solo il dettaglio live richiesto. Riepiloghi,
+scansione e ordinamento delle opere locali appartengono alla pagina elenco:
+non eseguirli quando grafici ed elenco non vengono renderizzati. La ricerca del
+CUP conserva costi, fonte e stati di errore del lookup live.
+
+`/api/opere` conserva la cache CDN di sei ore per le risposte valide. Il campo
+«finanziamenti da reperire» può contenere un saldo negativo pubblicato dalla
+fonte: conservarne i centesimi e segnalare il dato da verificare, senza generare
+un falso finanziamento mancante o scartare tutta la scheda. La fixture del CUP
+`J84C20001920001` riproduce il precedente 502. Gli altri importi, i formati
+malformati e i valori oltre gli interi sicuri restano fail-closed; non
+memorizzare gli errori come risposte valide.
 
 ## Cache dei dati
 
@@ -301,6 +329,17 @@ precisa e verificare browser, lettori assistivi, crawler di ricerca e trasporti.
 Fonti: [cache CDN Next.js](https://nextjs.org/docs/app/guides/cdn-caching),
 [ISR Vercel e costi](https://vercel.com/docs/incremental-static-regeneration/limits-and-pricing),
 [macchine di build](https://vercel.com/docs/builds/managing-builds#build-machines).
+
+## Osservazione produzione, 23 ottobre 2026
+
+In circa 12 ore, Observability ha attribuito ~201k invocazioni e ~3 ore Active CPU
+a `/enti/[codice]/appalti` (route dinamica), contro ~2,5k invocazioni sullo snapshot
+ISR. La vista `operators&metric=value` (linkati dalla scheda ente) restava dinamica:
+ora condivide uno snapshot dedicato `operators-value`. Il proxy applica inoltre il
+tetto di 30 req/min per IP a ogni client sulle superfici ANAC ente/operatore, non
+solo ai crawler dichiarati. Filtri CPV/anno, paginazione e dettaglio operatore
+restano dinamici. Confrontare invocazioni, HIT/MISS e 429 su almeno 24 ore dopo
+il deploy; il WAF resta il limite distribuito.
 
 ## Verifica del consumo residuo, 1 ottobre 2026
 

@@ -18,6 +18,8 @@ const allIntegratedRowRuntimeFiles = [
 // cap once Fluid is off. Keep compact non-medical globs (not thousands of paths:
 // Turbopack Glob::new fails on huge include lists).
 const integratedRowRuntimeFiles = [
+  "src/data/generated/integrated/rows/ade-*.jsonl.gz",
+  "src/data/generated/integrated/rows/arera-*.jsonl.gz",
   "src/data/generated/integrated/rows/affidamenti-*.jsonl.gz",
   "src/data/generated/integrated/rows/affitti-*.jsonl.gz",
   "src/data/generated/integrated/rows/auto-*.jsonl.gz",
@@ -85,6 +87,7 @@ const medicalDeviceIndexRuntimeFiles = [
 const routesWithoutIntegratedRows = [
   "/app/api/assistant/**",
   "/app/mcp",
+  "/app/api/boards/tile-data",
 ];
 
 // Without Fluid Compute, classic serverless caps at 250 MB uncompressed. Keeping
@@ -97,6 +100,7 @@ const corpusRoutesWithoutMedicalDeviceRows = [
 // Next 16.3.4 evaluates exclusions against internal `app/...` entry names.
 // Anchoring here prevents `/dati` from also matching routes such as `/api/.../dati`.
 const routesWithoutMedicalDeviceRows = [
+  "/app/api/boards/**",
   "/app/api/comuni/**",
   "/app/api/enti/**",
   "/app/api/fonti/**",
@@ -111,6 +115,7 @@ const routesWithoutMedicalDeviceRows = [
   "/app/confronti/**",
   "/app/controlli/**",
   "/app/disuguaglianza",
+  "/app/analisi/**",
   "/app/enti/**",
   "/app/fonti/**",
   "/app/incarichi/**",
@@ -134,6 +139,28 @@ const operatorCatalogRuntimeFiles = [
 
 const operatorShardRuntimeFiles = [
   "src/data/generated/anac-operator-awards-index/operators/*",
+];
+
+const occupationEntiRuntimeFiles = [
+  "src/data/generated/rgs-conto-annuale-occupazione-ente-index/resolve.json",
+  "src/data/generated/rgs-conto-annuale-occupazione-ente-index/by-code.json",
+  "src/data/generated/rgs-conto-annuale-occupazione-ente-index/meta.json",
+];
+
+const occupationHubRuntimeFiles = [
+  "src/data/generated/rgs-conto-annuale-occupazione-ente-index/summary.json",
+  "src/data/generated/rgs-conto-annuale-occupazione-ente-index/search.json",
+  "src/data/generated/rgs-conto-annuale-occupazione-ente-index/meta.json",
+];
+
+const occupationSummaryRuntimeFiles = [
+  "src/data/generated/rgs-conto-annuale-occupazione-ente-index/summary.json",
+  "src/data/generated/rgs-conto-annuale-occupazione-ente-index/meta.json",
+];
+
+const occupationDetailRuntimeFiles = [
+  ...occupationSummaryRuntimeFiles,
+  "src/data/generated/rgs-conto-annuale-occupazione-ente-index/shards/*",
 ];
 
 const entityProcurementRuntimeFiles = [
@@ -265,6 +292,10 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        source: "/downloads/cinque-per-mille-af2024-20260617-58e5fc410ce0.zip",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
+      {
         source: "/:path*",
         headers: [
           {
@@ -278,7 +309,7 @@ const nextConfig: NextConfig = {
   // Element-level intake ledgers are checked offline; public MCP reads the
   // receipt, release proofs and validated row chunks, never these CI files.
   outputFileTracingExcludes: {
-    "/*": ["data/source-ledger/elements/**/*"],
+    "/*": ["data/source-ledger/elements/**/*", "public/downloads/cinque-per-mille-af2024-20260617-58e5fc410ce0.zip"],
     // contains:true also matches descendants. !(/**) keeps each hub exact;
     // the procurement, structure and cached procurement routes do not read childcare.
     "/app/enti!(/**)": childcareRuntimeFiles,
@@ -306,6 +337,11 @@ const nextConfig: NextConfig = {
       ...medicalDeviceIndexRuntimeFiles,
       ...operatorShardRuntimeFiles,
     ],
+    "/app/api/boards/tile-data": [
+      ...allIntegratedRowRuntimeFiles,
+      ...medicalDeviceIndexRuntimeFiles,
+      ...operatorShardRuntimeFiles,
+    ],
     "/app/snapshot-pages/operatori/**": [
       "src/data/generated/anac-operator-awards-index/operators/*",
       "src/data/generated/anac-operator-awards-index/search.jsonl.gz",
@@ -326,6 +362,39 @@ const nextConfig: NextConfig = {
       "src/data/generated/anac-operator-browse/*",
     ],
     "/opere": ["docs/**/*", "tests/**/*", "research/**/*"],
+    "/personale-pa/conto-annuale/**": ["research/**/*"],
+    "/app/personale-pa/conto-annuale/**": ["research/**/*"],
+    "/snapshot-pages/personale-pa/conto-annuale/**": ["research/**/*"],
+    "/app/personale-pa/conto-annuale/\\[codice\\]": [
+      "src/data/generated/rgs-conto-annuale-occupazione-ente-index/search.json",
+      "src/data/generated/rgs-conto-annuale-occupazione-ente-index/resolve.json",
+      "src/data/generated/rgs-conto-annuale-occupazione-ente-index/by-code.json",
+    ],
+    "/app/snapshot-pages/personale-pa/conto-annuale/\\[codice\\]": [
+      "src/data/generated/rgs-conto-annuale-occupazione-ente-index/search.json",
+      "src/data/generated/rgs-conto-annuale-occupazione-ente-index/resolve.json",
+      "src/data/generated/rgs-conto-annuale-occupazione-ente-index/by-code.json",
+    ],
+    "/app/personale-pa/conto-annuale!(/**)": [
+      "src/data/generated/rgs-conto-annuale-occupazione-ente-index/resolve.json",
+      "src/data/generated/rgs-conto-annuale-occupazione-ente-index/by-code.json",
+      "src/data/generated/rgs-conto-annuale-occupazione-ente-index/shards/**/*",
+    ],
+    "/app/snapshot-pages/personale-pa/conto-annuale!(/**)": [
+      "src/data/generated/rgs-conto-annuale-occupazione-ente-index/resolve.json",
+      "src/data/generated/rgs-conto-annuale-occupazione-ente-index/by-code.json",
+      "src/data/generated/rgs-conto-annuale-occupazione-ente-index/shards/**/*",
+    ],
+    "/enti/*": [
+      "src/data/generated/rgs-conto-annuale-occupazione-ente-index/shards/**/*",
+      "src/data/generated/rgs-conto-annuale-occupazione-ente-index/search.json",
+      "src/data/generated/rgs-conto-annuale-occupazione-ente-index/summary.json",
+    ],
+    "/app/enti/*": [
+      "src/data/generated/rgs-conto-annuale-occupazione-ente-index/shards/**/*",
+      "src/data/generated/rgs-conto-annuale-occupazione-ente-index/search.json",
+      "src/data/generated/rgs-conto-annuale-occupazione-ente-index/summary.json",
+    ],
   },
   outputFileTracingIncludes: {
     "/snapshot-pages/enti/*/*": entityProcurementRuntimeFiles,
@@ -372,15 +441,19 @@ const nextConfig: NextConfig = {
     "/api/spese/opencivitas-2019-sociale-asili": openCivitas2019SocialeAsiliRuntimeFiles,
     "/api/spese/opencivitas-2019-viabilita": openCivitas2019ViabilitaRuntimeFiles,
 
-    // The hub's literal reads are traced automatically. A hub-wide include also
-    // adds its search/ranking files to detail pages; runtime guards check both.
+    // Hub reads summary/search via static imports; do not use a parent include here
+    // or detail routes inherit search.json into their serverless bundle.
     "/appalti/operatori/\\[ref\\]": [
       "src/data/generated/anac-operator-history/*",
       "src/data/generated/anac-operator-awards-index/meta.json",
       "scripts/etl/specs/anac-operator-awards-index.source.json",
       "scripts/etl/specs/anac-cig-2007-2025.source.json",
     ],
-    "/enti/*": entityProcurementRuntimeFiles,
+    "/enti/*": [...entityProcurementRuntimeFiles, ...occupationEntiRuntimeFiles],
+    "/app/personale-pa/conto-annuale": occupationHubRuntimeFiles,
+    "/app/personale-pa/conto-annuale/\\[codice\\]": occupationDetailRuntimeFiles,
+    "/app/snapshot-pages/personale-pa/conto-annuale": occupationHubRuntimeFiles,
+    "/app/snapshot-pages/personale-pa/conto-annuale/\\[codice\\]": occupationDetailRuntimeFiles,
     "/app/enti/\\[codice\\]!(/**)": childcareRuntimeFiles,
     // /comuni opens ANAC shards by IPA hash; without an include Vercel omits them
     // and the dossier surfaces "shard assente" for large cities such as Roma.
@@ -409,6 +482,7 @@ const nextConfig: NextConfig = {
       "src/data/generated/istat-municipality-geography.json",
     ],
     "/dati/\\[dataset\\]": integratedSourceRuntimeFiles,
+    "/snapshot-pages/dati/*": integratedSourceRuntimeFiles,
     "/api/dati/\\[dataset\\]": integratedSourceRuntimeFiles,
     "/pnrr": integratedSourceRuntimeFilesWithoutRows,
     "/api/pnrr/progetti": integratedSourceRuntimeFilesWithoutRows,
@@ -428,6 +502,10 @@ const nextConfig: NextConfig = {
     "/api/territori/poverta-soglia-relativa": istatPovertaSogliaRelativaRuntimeFiles,
     "/api/territori/poverta-regioni": istatPovertaRegioniRuntimeFiles,
     "/api/spese/arope": eurostatAropeRuntimeFiles,
+    "/analisi/immobili-italia-2026": [
+      "src/data/generated/ade-immobili-italia-2026.data.json",
+      "src/data/generated/ade-immobili-italia-2026.meta.json",
+    ],
     "/poverta": [
       ...istatPovertaSogliaAssolutaRuntimeFiles,
       ...istatPovertaSogliaRelativaRuntimeFiles,

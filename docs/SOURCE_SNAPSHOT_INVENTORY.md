@@ -22,11 +22,11 @@ workflow scrive su `main`.
 
 ## Riepilogo
 
-- Artefatti nel registro: 125
+- Artefatti nel registro: 131
 - PR automatica: 11 (data bot, branch `automation/data/*`, PR)
 - solo rilevamento: 3 (controlla l'upstream, non pubblica)
 - invalidazione cache: 3 (invalida tag, non tocca gli snapshot)
-- manuale: 108 (PR umana dopo revisione)
+- manuale: 114 (PR umana dopo revisione)
 
 ## Rollback per modo
 
@@ -55,14 +55,16 @@ La revisione e il merge restano umani.
 | `anac-cig-2007-2025` | non dichiarato nello snapshot | 2026-09-08T12:00:00Z | non dichiarato nel registro | nessuno | nessuno | manuale | `python3 scripts/etl/anac_operator_cig_enrich.py --check` |
 | `anac-entity-procurement-coverage` | 2026-08-06T07:31:40Z | 2026-08-30T21:30:00Z | https://dati.anticorruzione.it/opendata/dataset/stazioni-appaltanti | nessuno | nessuno | manuale | `python3 scripts/etl/anac_entity_procurement_coverage.py --check` |
 | `anac-entity-procurement-page` | non dichiarato nello snapshot | 2026-08-31T14:49:08Z | non dichiarato nel registro | nessuno | nessuno | manuale | `python3 scripts/etl/anac_entity_procurement_page.py --check` |
-| `consulenti-pubblici` | 2026 | 2026-10-07T08:33:39Z | https://consulentipubblici.dfp.gov.it/progetto | `37 */6 * * *` | `.github/workflows/consulenti-refresh.yml` | PR automatica | `python scripts/etl/consulenti_snapshot.py --check` |
+| `consulenti-pubblici` | 2026 | 2026-10-07T08:33:39Z | https://consulentipubblici.dfp.gov.it/progetto | `37 */6 * * *` | `.github/workflows/consulenti-refresh.yml` | PR automatica | `bash scripts/etl/consulenti_pubblici_check.sh` |
 | `cpt-regional-fiscal` | non dichiarato nello snapshot | non dichiarato | non dichiarato nel registro | nessuno | nessuno | manuale | suite ETL |
 | `indire-pnrr-assignments` | aggiornamento aprile 2026 | 2026-08-23 | non dichiarato nel registro | nessuno | nessuno | manuale | `python scripts/etl/indire_pnrr_assignments.py --validate-committed` |
 | `inps-civil-invalidity` | non dichiarato nello snapshot | 2026-08-20T22:30:00+02:00 | non dichiarato nel registro | nessuno | nessuno | manuale | test Node |
 | `inps-pensions-osservatorio` | non dichiarato nello snapshot | 2026-09-01T12:00:00+02:00 | non dichiarato nel registro | nessuno | nessuno | manuale | test Node |
+| `inps-casellario-sistema` | 2023-2024 | 2026-10-09T21:15:00+02:00 | https://servizi2.inps.it/servizi/osservatoristatistici/4 | nessuno | nessuno | manuale | `python3 scripts/etl/inps_casellario_sistema_snapshot.py --check` |
 | `integrated-catalog` | non dichiarato nello snapshot | 2026-09-07T21:45:00Z | non dichiarato nel registro | solo workflow_dispatch | `.github/workflows/source-refresh.yml` | invalidazione cache | suite ETL |
 | `integrated-rows` | non dichiarato nello snapshot | non dichiarato | non dichiarato nel registro | solo workflow_dispatch | `.github/workflows/source-refresh.yml` | invalidazione cache | suite ETL |
 | `mim-school-services-municipal` | non dichiarato nello snapshot | non dichiarato | https://dati.istruzione.it/opendata/opendata/catalogo/elements1/leaf?area=Scuole&datasetId=DS0400SCUANAGRAFESTAT | nessuno | nessuno | manuale | `node scripts/etl/mim_school_services_municipal_index.mjs` |
+| `rgs-conto-annuale-occupazione-ente-index` | 2024 | non dichiarato | non dichiarato nel registro | nessuno | nessuno | manuale | `node scripts/etl/rgs_conto_annuale_occupazione_ente_index.mjs` |
 | `istat-municipality-geography` | 31/12/2022 | 2026-08-25T00:00:00Z | non dichiarato nel registro | nessuno | nessuno | manuale | `python scripts/etl/istat_municipality_geography.py --validate-committed` |
 | `istat-population-grid-2021` | non dichiarato nello snapshot | 2026-09-26T07:15:00.000Z | https://www.istat.it/notizia/statistiche-sulla-popolazione-per-griglia-regolare/ | nessuno | nessuno | manuale | `python3 scripts/etl/istat_population_grid_2021.py --check` |
 | `istat-regions-2024` | 2024 | 2026-08-22T00:00:00Z | non dichiarato nel registro | nessuno | nessuno | manuale | `python scripts/etl/istat_regions_account.py --validate-committed` |
@@ -92,7 +94,7 @@ La revisione e il merge restano umani.
 | `masaf-logistica-mercati` | 2022-2026 | non dichiarato | https://www.masaf.gov.it/flex/cm/pages/ServeBLOB.php/L/IT/IDPagina/19279 | nessuno | nessuno | manuale | `python3 scripts/etl/masaf_logistica_mercati_snapshot.py --check` |
 | `mop-comparable-browse` | 2026-09-04 | 2026-09-09T10:35:39Z | https://bdap-opendata.rgs.mef.gov.it/content/progetti-opere-pubbliche-mop-totale | nessuno | nessuno | manuale | `python3 scripts/etl/mop_comparable_browse.py --check` |
 | `government-scorecard` | 2024 | 2026-08-29T23:11:43Z | https://economy-finance.ec.europa.eu/economic-research-and-databases/economic-databases/ameco-database/download-annual-data-set-macro-economic-database-ameco_en | `37 7 * * 2` | `.github/workflows/government-scorecard-refresh.yml` | PR automatica | `python3 scripts/ci/check-government-scorecard-artifacts.py` |
-| `public-debt` | 2026-07-31 | 2026-09-17T13:16:17Z | https://www.bancaditalia.it/pubblicazioni/finanza-pubblica/index.html | `17 6 * * *` | `.github/workflows/public-debt-refresh.yml` | PR automatica | `python scripts/etl/public_debt_snapshot.py --check` |
+| `public-debt` | 2026-08-31 | 2026-10-24T07:10:41Z | https://www.bancaditalia.it/pubblicazioni/finanza-pubblica/index.html | `17 6 * * *` | `.github/workflows/public-debt-refresh.yml` | PR automatica | `python scripts/etl/public_debt_snapshot.py --check` |
 | `rgs-consulting-payments` | non dichiarato nello snapshot | 2026-08-22T00:00:00Z | non dichiarato nel registro | nessuno | nessuno | manuale | suite ETL |
 | `rgs-ministries-2025` | 2025 | 2026-08-22T00:00:00Z | non dichiarato nel registro | nessuno | nessuno | manuale | `python scripts/etl/rgs_ministries_account.py --validate-committed` |
 | `rgs-state-budget-territorial-2023` | 2023 | 2026-08-22T00:00:00Z | https://bdap-opendata.rgs.mef.gov.it/content/2023-distribuzione-territoriale-della-spesa-del-bilancio-dello-stato-spesa-statale?metadati=showall | nessuno | nessuno | manuale | suite ETL |
@@ -101,7 +103,7 @@ La revisione e il merge restano umani.
 | `ssn-cce-2024` | 2024 | 2026-08-22T00:00:00Z | https://bdap-opendata.rgs.mef.gov.it/content/2024-modello-di-rilevazione-del-conto-economico-degli-enti-del-ssn | nessuno | nessuno | manuale | `python scripts/etl/ssn_cce_snapshot.py --check` |
 | `ssn-cce-national-history` | non dichiarato nello snapshot | 2026-08-28T12:31:43.000Z | non dichiarato nel registro | nessuno | nessuno | manuale | test Node |
 | `vive-roma-restoration` | non dichiarato nello snapshot | 2026-08-22 | non dichiarato nel registro | nessuno | nessuno | manuale | test Node |
-| `company-atlas` | 2026-09-09 | 2026-09-09T00:00:00.000Z | https://opendata.marche.camcom.it/data/Stock-Imprese-Attive-Italia.json | `41 5 * * *` | `.github/workflows/company-atlas-refresh.yml` | PR automatica | `node scripts/etl/company_atlas_snapshot.mjs --check` |
+| `company-atlas` | 2026-10-22 | 2026-10-22T00:00:00.000Z | https://opendata.marche.camcom.it/data/Stock-Imprese-Attive-Italia.json | `41 5 * * *` | `.github/workflows/company-atlas-refresh.yml` | PR automatica | `node scripts/etl/company_atlas_snapshot.mjs --check` |
 | `istat-pensions-2012-2022` | 2012-2022 | non dichiarato | https://esploradati.istat.it/databrowser/ | nessuno | nessuno | manuale | `python3 scripts/etl/istat_pensions_snapshot.py --check` |
 | `consip-ordini-2024-2026` | 2024-2026 | non dichiarato | https://dati.consip.it/ | nessuno | nessuno | manuale | `python3 scripts/etl/consip_ordini_snapshot.py --check` |
 | `eurostat-hicp-2022-2026` | 2022-01/2026-08 (totale Italia); 2026-07 (confronto e divisioni); pesi 2025-2026 | 2026-09-10 | https://ec.europa.eu/eurostat/databrowser/view/prc_hicp_minr/default/table?lang=en | nessuno | nessuno | manuale | `python3 scripts/etl/eurostat_hicp_snapshot.py --check` |
@@ -157,6 +159,7 @@ La revisione e il merge restano umani.
 | `senato-atti-voti-xix` | non dichiarato nello snapshot | 2026-09-23T08:38:08+00:00 | https://dati.senato.it/ | nessuno | nessuno | manuale | `python3 scripts/etl/senato_atti_voti_xix_snapshot.py --check` |
 | `camera-trattamento-economico` | non dichiarato nello snapshot | 2026-09-18T07:54:38Z | https://www.camera.it/deputati/trattamento-economico | nessuno | nessuno | manuale | `python3 scripts/etl/camera_trattamento_economico_snapshot.py --check` |
 | `parlamento-giudiziario-xix` | XIX legislatura, dal 2022-10-13 | non dichiarato | https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi/issues/555 | nessuno | nessuno | manuale | `python3 scripts/etl/parlamento_giudiziario_xix_snapshot.py --check` |
+| `documenti-declassificati` | Pilota 1970-2024: Commissioni Moro e Terrorismo e stragi, atti Camera XVII, fondi Senato declassificati e guide ACS/archivi | non dichiarato | https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi/issues/799 | nessuno | nessuno | manuale | `python3 scripts/etl/documenti_declassificati_snapshot.py --check` |
 | `opencivitas-2022-polizia` | 2022 | 2026-09-22T13:19:50Z | https://www.opencivitas.it/it/dataset/2022-comuni-polizia-locale-indicatori-e-determinanti | nessuno | nessuno | manuale | `python scripts/etl/opencivitas_2022_polizia_snapshot.py --check` |
 | `opencivitas-2022-istruzione` | 2022 | 2026-09-22T13:37:40Z | https://www.opencivitas.it/it/dataset/2022-comuni-istruzione-indicatori-e-determinanti | nessuno | nessuno | manuale | `python scripts/etl/opencivitas_2022_istruzione_snapshot.py --check` |
 | `opencivitas-2021-sociale-asili` | 2021 | 2026-09-22T14:24:12Z | https://www.opencivitas.it/it/dataset/2021-comuni-sociale-e-asili-nido-indicatori-e-determinanti | nessuno | nessuno | manuale | `python scripts/etl/opencivitas_2021_sociale_asili_snapshot.py --check` |
@@ -168,6 +171,9 @@ La revisione e il merge restano umani.
 | `opencivitas-2019-sociale-asili` | 2019 | 2026-09-30T06:25:35Z | https://www.opencivitas.it/it/dataset/2019-comuni-sociale-e-asili-nido-indicatori-e-determinanti | nessuno | nessuno | manuale | `python scripts/etl/opencivitas_2019_sociale_asili_snapshot.py --check` |
 | `opencivitas-2019-amministrazione` | 2019 | 2026-09-30T06:25:36Z | https://www.opencivitas.it/it/dataset/2019-comuni-amministrazione-indicatori-e-determinanti | nessuno | nessuno | manuale | `python scripts/etl/opencivitas_2019_amministrazione_snapshot.py --check` |
 | `mantova-offices` | non dichiarato nello snapshot | non dichiarato | non dichiarato nel registro | nessuno | nessuno | manuale | test Node |
+| `arera-bilanci-source` | non dichiarato nello snapshot | non dichiarato | non dichiarato nel registro | nessuno | nessuno | manuale | `python3 scripts/etl/arera_bilanci.py --check` |
+| `ade-cinque-per-mille-source` | non dichiarato nello snapshot | non dichiarato | non dichiarato nel registro | nessuno | nessuno | manuale | `python3 scripts/etl/ade_cinque_per_mille.py --check` |
+| `ade-immobili-italia-2026` | 2023 | non dichiarato | https://www.agenziaentrate.gov.it/portale/gli-immobili-in-italia-2026 | nessuno | nessuno | manuale | `python3 scripts/etl/ade_immobili_italia_2026.py --check` |
 
 ## Prossimo passo
 

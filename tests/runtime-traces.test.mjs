@@ -95,7 +95,12 @@ test("assistant and mcp exclude integrated row shards; dati keeps non-medical ro
   assert.equal(matchingRuntimeFile(nextConfig.outputFileTracingExcludes, "api/mcp", medicalIndex), true);
   assert.equal(matchingRuntimeFile(nextConfig.outputFileTracingExcludes, "api/mcp", operatorShard), true);
   assert.equal(explicitRuntimeFile("api/mcp", rowShard), false);
-  for (const route of ["dati/[dataset]", "api/dati/[dataset]"]) {
+  for (const route of ["api/boards/tile-data"]) {
+    assert.equal(matchingRuntimeFile(nextConfig.outputFileTracingExcludes, route, rowShard), true, route);
+    assert.equal(matchingRuntimeFile(nextConfig.outputFileTracingExcludes, route, medicalIndex), true, route);
+    assert.equal(explicitRuntimeFile(route, rowShard), false, route);
+  }
+  for (const route of ["dati/[dataset]", "snapshot-pages/dati/[dataset]", "api/dati/[dataset]"]) {
     assert.equal(explicitRuntimeFile(route, rowShard), true, route);
     assert.equal(matchingRuntimeFile(nextConfig.outputFileTracingIncludes, route, medicalRow), false, route);
     assert.equal(matchingRuntimeFile(nextConfig.outputFileTracingExcludes, route, medicalRow), true, route);
@@ -116,6 +121,39 @@ test("runtime package guard rejects CI intake without dropping proofs or row chu
   assert.throws(() => checkTrace(omitted.root, omitted.manifest, required), /omits runtime files/);
   const intake = fixture(t, [...required, "data/source-ledger/elements/part-00001.jsonl"]);
   assert.throws(() => checkTrace(intake.root, intake.manifest, required), /traces unrelated files/);
+});
+
+const occupationIndex = "src/data/generated/rgs-conto-annuale-occupazione-ente-index";
+const occupationResolve = `${occupationIndex}/resolve.json`;
+const occupationByCode = `${occupationIndex}/by-code.json`;
+const occupationSearch = `${occupationIndex}/search.json`;
+const occupationSummary = `${occupationIndex}/summary.json`;
+const occupationShard = `${occupationIndex}/shards/bucket-000.json`;
+
+test("occupation index tracing matches route consumers", () => {
+  const hubRoutes = ["personale-pa/conto-annuale", "snapshot-pages/personale-pa/conto-annuale"];
+  const detailRoutes = [
+    "personale-pa/conto-annuale/[codice]",
+    "snapshot-pages/personale-pa/conto-annuale/[codice]",
+  ];
+  for (const route of hubRoutes) {
+    assert.equal(explicitRuntimeFile(route, occupationSummary), true, route);
+    assert.equal(explicitRuntimeFile(route, occupationSearch), true, route);
+    assert.equal(explicitRuntimeFile(route, occupationResolve), false, route);
+    assert.equal(explicitRuntimeFile(route, occupationShard), false, route);
+  }
+  for (const route of detailRoutes) {
+    assert.equal(explicitRuntimeFile(route, occupationSummary), true, route);
+    assert.equal(explicitRuntimeFile(route, occupationShard), true, route);
+    assert.equal(explicitRuntimeFile(route, occupationSearch), false, route);
+    assert.equal(explicitRuntimeFile(route, occupationResolve), false, route);
+    assert.equal(explicitRuntimeFile(route, occupationByCode), false, route);
+  }
+  const entiRoute = "enti/8000393";
+  assert.equal(explicitRuntimeFile(entiRoute, occupationResolve), true);
+  assert.equal(explicitRuntimeFile(entiRoute, occupationByCode), true);
+  assert.equal(explicitRuntimeFile(entiRoute, occupationSummary), false);
+  assert.equal(explicitRuntimeFile(entiRoute, occupationShard), false);
 });
 
 test("runtime package guard rejects childcare in nonconsumer entity routes and requires it in consumers", (t) => {

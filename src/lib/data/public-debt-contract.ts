@@ -67,8 +67,13 @@ function monthIndex(value: string) {
   return date.getUTCFullYear() * 12 + date.getUTCMonth();
 }
 
-function shareBasisPoints(numerator: number, denominator: number) {
+export function shareBasisPoints(numerator: number, denominator: number) {
   return Number((BigInt(numerator) * BigInt(10_000) + BigInt(denominator) / BigInt(2)) / BigInt(denominator));
+}
+
+/** Citizen-facing euro-per-hundred figure derived from integer basis points (Eurostat-style one-decimal percent). */
+export function basisPointsToEuroPerHundred(basisPoints: number) {
+  return basisPoints / 100;
 }
 
 function issue(context: z.RefinementCtx, message: string, path: PropertyKey[] = []) {
@@ -141,7 +146,7 @@ export const publicDebtSnapshotSchema = z.object({
   const { stock, change, holders, residualMaturity, annualInterest } = snapshot;
   if (stock.totalCents - stock.previousMonthCents !== stock.changeCents) issue(context, "variazione stock non riconciliata", ["stock"]);
   const instruments = stock.instruments.currencyAndDepositsCents + stock.instruments.securitiesCents + stock.instruments.loansAndOtherLiabilitiesCents;
-  if (instruments !== stock.totalCents) issue(context, "strumenti non riconciliati", ["stock", "instruments"]);
+  if (Math.abs(instruments - stock.totalCents) > TOLERANCE_CENTS) issue(context, "strumenti non riconciliati", ["stock", "instruments"]);
   const dates = stock.history.map((point) => point.referenceDate);
   if (new Set(dates).size !== 13 || dates.some((value, index) => index > 0 && monthIndex(value) - monthIndex(dates[index - 1]!) !== 1) || dates.at(-1) !== stock.referenceDate) {
     issue(context, "storia stock non consecutiva", ["stock", "history"]);

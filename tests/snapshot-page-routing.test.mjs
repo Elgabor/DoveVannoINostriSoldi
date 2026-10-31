@@ -23,6 +23,21 @@ test('filters and duplicate parameters never receive an unfiltered cached page',
   ]) assert.equal(proxy(request(path)).headers.get('x-middleware-rewrite'), null, path);
 });
 
+test('operators ranking by value shares a dedicated deployment snapshot', () => {
+  const rewritten = new URL(proxy(request('/enti/c_e897/appalti?view=operators&metric=value')).headers.get('x-middleware-rewrite'));
+  assert.equal(rewritten.pathname, '/snapshot-pages/enti/c_e897/operators-value');
+  assert.equal(
+    proxy(request('/enti/c_e897/appalti?view=operators&metric=value&utm_source=share')).headers.get('x-middleware-rewrite'),
+    'https://example.test/snapshot-pages/enti/c_e897/operators-value?view=operators&metric=value&utm_source=share',
+  );
+  const internal = proxy(request('/snapshot-pages/enti/c_e897/operators-value'));
+  assert.equal(internal.status, 200);
+  assert.equal(internal.headers.get('x-middleware-next'), '1');
+  const filtered = proxy(request('/snapshot-pages/enti/c_e897/operators-value?cpv=12345678'));
+  assert.equal(filtered.status, 307);
+  assert.equal(filtered.headers.get('location'), 'https://example.test/enti/c_e897/appalti?cpv=12345678&view=operators&metric=value');
+});
+
 test('default pages and tracking parameters do not create uncached rendering variants', () => {
   assert.ok(proxy(request('/enti/c_e897/appalti?view=summary&page=1&pageSize=25&metric=count&utm_source=share')).headers.get('x-middleware-rewrite')?.includes('/snapshot-pages/enti/c_e897/summary'));
   assert.ok(proxy(request('/appalti/operatori/op-00000001?page=1&fbclid=tracking')).headers.get('x-middleware-rewrite')?.includes('/snapshot-pages/operatori/op-00000001'));
@@ -81,4 +96,43 @@ test('default internal snapshots render without redirect loops or bypassing craw
   assert.equal(filtered.status, 307);
   assert.equal(new URL(filtered.headers.get('location')).pathname, '/comuni');
   assert.equal(proxy(request('/snapshot-pages/enti/c_e897/unknown')).status, 404);
+});
+
+test('Conto Annuale occupation hub and institution pages share ISR while search stays dynamic', () => {
+  const hub = '/personale-pa/conto-annuale';
+  for (const query of ['', '?_rsc=proof&utm_source=share', '?q=']) {
+    const response = proxy(request(`${hub}${query}`));
+    assert.equal(response.headers.get('x-middleware-rewrite'), `https://example.test/snapshot-pages/personale-pa/conto-annuale${query}`);
+  }
+  assert.equal(proxy(request(`${hub}?q=Roma`)).headers.get('x-middleware-rewrite'), null);
+  assert.equal(proxy(request(`${hub}?q=&q=`)).headers.get('x-middleware-rewrite'), null);
+  for (const code of ['6144', '8659', '3']) {
+    assert.equal(
+      proxy(request(`${hub}/${code}`)).headers.get('x-middleware-rewrite'),
+      `https://example.test/snapshot-pages/personale-pa/conto-annuale/${code}`,
+    );
+  }
+  assert.equal(proxy(request('/snapshot-pages/personale-pa/conto-annuale')).headers.get('x-middleware-next'), '1');
+  const filtered = proxy(request('/snapshot-pages/personale-pa/conto-annuale?q=Roma'));
+  assert.equal(filtered.status, 307);
+  assert.equal(filtered.headers.get('location'), `https://example.test${hub}?q=Roma`);
+});
+
+test('dataset first pages share ISR while searches, pagination and ambiguous inputs remain dynamic', () => {
+  const path = '/dati/affidamenti-diretti';
+  for (const query of ['', '?_rsc=proof&utm_source=share', '?q=&limit=50&offset=0&cursor=&pagina=1']) {
+    const response = proxy(request(`${path}${query}`));
+    assert.equal(response.headers.get('x-middleware-rewrite'), `https://example.test/snapshot-pages/dati/affidamenti-diretti${query}`);
+  }
+  for (const query of ['q=Roma', 'limit=25', 'offset=50', 'cursor=token', 'pagina=2', 'limit=invalid', 'q=&q=', 'pagina=1&pagina=2']) {
+    assert.equal(proxy(request(`${path}?${query}`)).headers.get('x-middleware-rewrite'), null, query);
+  }
+  for (const options of [{method:'POST'}, {headers:{authorization:'Bearer example'}}]) {
+    assert.equal(proxy(new NextRequest(`https://example.test${path}`, options)).headers.get('x-middleware-rewrite'), null);
+  }
+  assert.equal(proxy(request('/snapshot-pages/dati/affidamenti-diretti')).headers.get('x-middleware-next'), '1');
+  const filtered = proxy(request('/snapshot-pages/dati/affidamenti-diretti?q=Roma'));
+  assert.equal(filtered.status, 307);
+  assert.equal(filtered.headers.get('location'), `https://example.test${path}?q=Roma`);
+  assert.equal(proxy(request('/snapshot-pages/dati/invalid--id')).status, 404);
 });

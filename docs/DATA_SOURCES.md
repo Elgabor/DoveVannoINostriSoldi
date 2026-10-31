@@ -119,8 +119,26 @@ regionale con scaglioni e aliquote MEF 2026 per tutte le Regioni (soglie
 preferenziali Lazio, Umbria, FVG, Valle d'Aosta), addizionale comunale come
 media regionale MEF, mappa coropletica del netto per Regione a parità di RAL,
 e ripartizione illustrativa della sola IRPEF erariale sulle missioni OpenBDAP
-Legge di Bilancio. Card social firmata con tag @DVNSoldi. Non è una busta paga
-reale né cassa SIOPE.
+Legge di Bilancio. Il lordo si inserisce come RAL o come stipendio mensile
+lordo (RAL = mensile × mensilità).
+
+Gli oneri del datore sono voci distinte, non una percentuale unica. INPS:
+IVS datore 23,81% (quota del 33% FPLD), NASpI 1,61%, CUAF 0,68%, malattia
+2,22% dove il profilo la prevede, maternità 0,46%, fondo di garanzia TFR
+0,20%, più CIGO 1,70% (4,70% per gli operai edili) e CIGS quota datore 0,60%
+nei profili industria ed edilizia. Base imponibile tagliata al massimale
+122.295 € della circolare INPS 30 gennaio 2026, n. 6. TFR = retribuzione /
+13,5 (art. 2120 c.c.), di cui 0,50% è il contributo all’INPS (art. 3, L.
+297/1982). INAIL è un tasso per mille illustrativo sulla RAL (tariffe D.I.
+27 febbraio 2019; l’oscillazione 2026 è nel D.I. 2 aprile 2026), non il premio
+della PAT. Il FIS non è nel profilo commercio. Una media giornalistica del
+31% della RAL non è applicata. Il grafico a colonne ha la RAL in euro
+sull’asse orizzontale, da 5.000 a 100.000 € a passi di 5.000, senza filtri:
+ogni passo ha tre colonne annue, RAL dipendente, netto dipendente e costo
+azienda (RAL più INPS, INAIL e TFR). Dal netto mensile o annuo si risale alla
+RAL più vicina. Card
+social firmata con tag @DVNSoldi. Non è una busta paga reale né
+cassa SIOPE.
 
 ## Cuneo fiscale · OECD Taxing Wages
 
@@ -333,6 +351,44 @@ con missione 034 «Debito pubblico» anche se la scheda descrive la spesa al net
 degli interessi: il corpus le conserva come pubblicate. Il pacchetto CKAN riporta
 `cc-by`, ma pagina e file non dichiarano una licenza: lo stato resta
 `not-declared`.
+
+### Spesa statale consolidata, Enti e Fondi per territorio 2008-2023
+
+La stessa pubblicazione RGS («Spesa Statale Regionalizzata - Pagato
+Regionalizzato») ha, accanto alla serie Bilancio, tre serie territoriali con un
+pacchetto CKAN e un file da 104 righe per anno (26 territori per 4 misure):
+`SRS_SPE_PAR_SPESR_001` (spesa consolidata), `SRS_SPE_PAR_SPENT_001` (spesa
+degli Enti oggetto della pubblicazione) e `SRS_SPE_PAR_SPFON_001` (spesa
+effettuata attraverso i Fondi oggetto della pubblicazione). Entrano nel corpus
+come tre dataset, uno per serie con tutti gli esercizi dal 2008 al 2023 e la
+colonna `Anno`: `rgs-spesa-statale-regionalizzata-consolidata`, `-enti` e
+`-fondi`, 1.664 righe l'uno. Con poche righe per anno un dataset per esercizio
+avrebbe moltiplicato ricevute e voci di catalogo senza aggiungere controllo.
+
+La scheda CKAN della consolidata ripete la descrizione della serie Bilancio
+(«al netto degli interessi sul debito pubblico, dei fondi e degli enti»), ma gli
+importi sono da 2,2 a 2,6 volte quelli del Bilancio (#728). Il perimetro è
+quindi verificato sui dati: per ogni anno e per ognuno dei 26 territori,
+Bilancio + Enti + Fondi = Consolidata entro 15 centesimi di milione. Lo scarto
+massimo misurato è 0,13 milioni (Abruzzo 2008, Sardegna 2022), quello nazionale resta entro
+0,12: sono gli arrotondamenti a due decimali delle componenti. La parte
+Bilancio è la somma per territorio delle righe in valori assoluti delle fixture
+2008-2022 e, per il 2023, dello snapshot tipizzato. Se l'identità non torna,
+`scripts/etl/rgs_spesa_regionalizzata_consolidata_corpus.py` si ferma.
+
+Il lock `scripts/etl/specs/rgs-spesa-regionalizzata-consolidata-enti-fondi.source.json`
+vincola per ognuno dei 48 file byte e SHA-256 dell'originale, conservato come
+gzip deterministico in `tests/fixtures/rgs-spesa-regionalizzata/`, date CKAN
+(creazione, ultima modifica, dati osservati), righe, zeri e riconciliazione tra
+Italia, Regioni e ripartizioni (entro 0,05 milioni), oltre ai residui
+dell'identità per anno. `--check` ricostruisce le proiezioni dalla fonte e le
+confronta con il corpus; `--input-dir` accetta i CSV originali con il nome del
+pacchetto CKAN. I file hanno due formati: fino al 2021 importi senza virgolette
+e una quinta colonna vuota, poi importi fra virgolette e, per Consolidata
+2022-2023 ed Enti 2023, nessuna colonna vuota. Per il 2016 la pagina
+`/content/…` non esiste e il lock usa `/opendata/<pacchetto>`, come per il
+Bilancio. Il file non elenca quali enti e quali fondi siano compresi.
+Licenza `not-declared`: i pacchetti riportano `cc-by`, pagine e file no.
 
 ### Conto Economico degli enti del SSN 2024
 
@@ -1189,6 +1245,25 @@ Le distribuzioni ufficiali DFP, CC BY 4.0, aggiungono 244.566 righe di costo e
 chiave amministrazione RGS; coperture distinte, nessun totale sintetico né
 assimilazione a SIOPE cassa. [Fonte, limiti e riproduzione](CONTO_ANNUALE.md).
 
+### Conto Annuale RGS · occupazione per tipo di istituzione 2010-2024
+
+Il catalogo RGS OpenBDAP (serie `PCA_OCC_DIP_TENT_001`, un pacchetto CKAN per
+anno, CC BY 3.0 dichiarata sulle pagine) aggiunge 575 righe: personale al 31
+dicembre e lavoro flessibile in unità annue per tipo di istituzione, dal 2010
+al 2024, in un solo dataset con la colonna `Anno`. Sul 2020 i totali sono
+ricalcolati dal file per ente e riscontrati con lo snapshot DFP; ogni scarto non
+dichiarato ferma l'ETL. [Fonte, limiti e riproduzione](CONTO_ANNUALE.md#occupazione-per-tipo-di-istituzione-2010-2024).
+
+### Conto Annuale RGS · occupazione per istituzione 2010-2024
+
+La serie OpenBDAP per ente (`PCA_OCC_DIP_ENTE_001`, un pacchetto CKAN per anno,
+CC BY 3.0 dichiarata sulle pagine) aggiunge 153.121 righe: una per anno e
+istituzione, con le stesse misure della serie per tipo, sommate dalle righe per
+contratto e categoria. Per ogni anno la somma per tipo deve ridare la serie per
+tipo (personale identico, lavoro flessibile entro l'arrotondamento fino al
+2020). I 15 CSV originali (148 MB) non sono versionati: il lock ne vincola byte
+e SHA-256. [Fonte, limiti e riproduzione](CONTO_ANNUALE.md#occupazione-per-istituzione-2010-2024).
+
 ### ISTAT Bes dei territori · Salute
 
 Il dominio completo `BES_01`, edizione 2025, aggiunge sei indicatori e 46.157
@@ -1313,3 +1388,13 @@ attestato. Chiavi di join `d<numero>_19` e `s<id>`, le stesse dei roster Camera 
 Senato. Snapshot `parlamento-giudiziario-xix`, API
 `/api/politici/giudiziario`, UI nella scheda personale di `/politici`, nessun
 dataset MCP. [Perimetro, regole di evidenza e limiti](PARLAMENTO_GIUDIZIARIO.md).
+
+### Documenti declassificati (pilota)
+
+Raccolta curata secondaria di schede su atti e fondi ufficiali italiani
+declassificati o desecretati (Senato, Camera Commissione Moro, ACS, quadro
+normativo). Ogni scheda ha URL HTTPS ufficiale, stato di accesso, date distinte
+e punti chiave curati; `soldi` è esplicito e di regola assente. Non è un
+archivio ufficiale completo e declassificare ≠ pubblicare online. Snapshot
+`documenti-declassificati`, UI `/documenti`, API `/api/documenti`, nessun dataset
+MCP. [Perimetro e limiti](DOCUMENTI_DECLASSIFICATI.md).

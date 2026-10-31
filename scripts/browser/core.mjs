@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { inspectInequality } from "./inequality.mjs";
+import { inspectContoAnnualeOccupazione } from "./conto-annuale-occupazione.mjs";
 import { inspectInflation } from "./inflation.mjs";
 import { inspectAnnouncements } from "./announcements.mjs";
 import { inspectReceipts } from "./receipts.mjs";
@@ -7,11 +8,14 @@ import { inspectEpea } from "./epea.mjs";
 import { inspectCulture, inspectCultureJourney, inspectInvalidCultureYears } from "./culture.mjs";
 import { inspectOfficialSeries } from "./official-series.mjs";
 import { inspectDefence } from "./defence.mjs";
+import { inspectIncarichiTerritori } from "./incarichi-territori.mjs";
 import { inspectHealthHistory, inspectInvalidHealthYears } from "./health-public-spending.mjs";
 import { inspectInstitutionalPalette } from "./institutional-palette.mjs";
 import { inspectHomeCompositionSpacing } from "./home-composition.mjs";
 import { inspectPnrrProjects } from "./pnrr-projects.mjs";
 import { inspectTedNotices } from "./ted-notices.mjs";
+import { inspectOpenProcurement } from "./open-procurement.mjs";
+import { inspectImmobiliItalia2026 } from "./immobili-italia-2026.mjs";
 import { inspectAnacCpv } from "./anac-cpv.mjs";
 import { inspectAnacConcentration } from "./anac-concentration.mjs";
 import { inspectUniversityResearch } from "./university-research.mjs";
@@ -976,6 +980,17 @@ try {
     const label = `Spesa per la difesa ${width}px`;
     await runScenario(browser, {
       label, pathname: "/", width, validate: inspectDefence,
+    });
+    completed.push(label);
+  }
+
+  for (const width of [390, 1280]) {
+    const label = `Incarichi per territorio ${width}px`;
+    await runScenario(browser, {
+      label,
+      pathname: "/incarichi/territori",
+      width,
+      validate: inspectIncarichiTerritori,
     });
     completed.push(label);
   }
@@ -2594,6 +2609,22 @@ try {
     completed.push(label);
   }
 
+  for (const width of [390, 1280]) {
+    const label = `Bandi aperti e MePA ${width}px`;
+    await runScenario(browser, {
+      label, pathname: "/appalti", width, validate: inspectOpenProcurement,
+    });
+    completed.push(label);
+  }
+
+  for (const width of [390, 1280]) {
+    const label = `AdE immobili Italia 2026 ${width}px`;
+    await runScenario(browser, {
+      label, pathname: "/analisi/immobili-italia-2026", width, validate: inspectImmobiliItalia2026,
+    });
+    completed.push(label);
+  }
+
   for (const width of [320, 390, 768, 1280]) {
     const label = `Catalogo progetti PNRR ${width}px`;
     await runScenario(browser, {
@@ -2606,6 +2637,14 @@ try {
     const label = `Disuguaglianza dei redditi ${width}px`;
     await runScenario(browser, {
       label, pathname: "/disuguaglianza", width, validate: inspectInequality,
+    });
+    completed.push(label);
+  }
+
+  for (const width of [390, 768, 1280]) {
+    const label = `Personale PA Conto Annuale ${width}px`;
+    await runScenario(browser, {
+      label, pathname: "/personale-pa/conto-annuale", width, validate: inspectContoAnnualeOccupazione,
     });
     completed.push(label);
   }

@@ -12,6 +12,8 @@ export const INTEGRATED_DOMAIN_LABELS: Readonly<Record<string, string>> = {
   consultancies: "Consulenze e incarichi",
   appointments: "Incarichi nominativi",
   personnel: "Personale e organi",
+  "public-revenue": "Entrate e contributi",
+  territory: "Territorio e catasto",
   operations: "Spese operative",
   health: "Sanità",
   demography: "Contesto demografico",

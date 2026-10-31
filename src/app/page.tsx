@@ -34,6 +34,8 @@ import {
   completedMonths,
   getSiopeMunicipalSnapshot,
   partialMonth,
+  settledNationalPerCapita,
+  settledTotalPaid,
 } from "@/lib/siope-snapshot";
 import { PUBLIC_COMUNI_URL, PUBLIC_POLITICI_URL } from "@/lib/site";
 import styles from "./home.module.css";
@@ -188,6 +190,9 @@ export default async function HomePage({
   const settledMonths = completedMonths(siope);
   const lastCompleted = settledMonths[settledMonths.length - 1] ?? null;
   const runningMonth = partialMonth(siope);
+  const settledTotal = settledTotalPaid(siope);
+  const settledPerCapita = settledNationalPerCapita(siope);
+  const partialSuffix = runningMonth === null ? "" : " (parziale)";
   const maxFlow = Math.max(...siope.monthly.map((point) => point.flow), 0);
   const valueByCode = new Map(siope.titles.map((title) => [title.code, title.value]));
   const buckets = HOME_SPENDING_BUCKETS.map((bucket, index) => {
@@ -256,6 +261,31 @@ export default async function HomePage({
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className={styles.boardsSection} aria-labelledby="boards-home-title">
+        <Link
+          className={styles.boardsCard}
+          href="/accedi"
+          data-testid="home-boards-entry"
+        >
+          <span className={styles.boardsCardMedia} aria-hidden="true" />
+          <span className={styles.boardsCardBody}>
+            <span className={styles.boardsEyebrow}>Strumento · web</span>
+            <span className={styles.boardsTitle} id="boards-home-title">
+              DVNS Boards
+            </span>
+            <span className={styles.boardsCopy}>
+              Componi viste private sui dataset pubblici già sul sito: grafici, filtri e
+              note sulla stessa lavagna. Accesso con email, senza password. Pensato per
+              desktop e laptop.
+            </span>
+            <span className={styles.boardsCta}>
+              Apri Boards
+              <HugeiconsIcon icon={ArrowRight01Icon} size={18} aria-hidden="true" />
+            </span>
+          </span>
+        </Link>
       </section>
 
       <section className={styles.exploreSection} aria-labelledby="explore-title">
@@ -390,22 +420,26 @@ export default async function HomePage({
               <i aria-hidden="true" />
               Aggiornati al {longDate(siope.source.siopeMovementsLastModified)}
             </p>
-            <strong className={styles.headline}>{compactEuro(siope.totalPaid)}</strong>
+            <strong className={styles.headline}>{compactEuro(settledTotal ?? siope.totalPaid)}</strong>
             <p className={styles.headlineNote}>
-              Da gennaio a {monthLabel} {siope.year}, in tutta Italia
+              {runningMonth !== null && lastCompleted
+                ? `Da gennaio a ${lastCompleted.label.toLocaleLowerCase("it-IT")} ${siope.year}, in tutta Italia. ${siope.latestMonthLabel}, ancora parziale, è escluso.`
+                : `Da gennaio a ${monthLabel} ${siope.year}, in tutta Italia${partialSuffix}`}
             </p>
             <dl className={styles.factRows}>
               <div>
                 <dt>In media per abitante</dt>
                 <dd>
-                  {siope.nationalPerCapita === null
-                    ? "Non disponibile"
-                    : exactEuro(siope.nationalPerCapita)}
+                  {settledPerCapita !== null
+                    ? exactEuro(settledPerCapita)
+                    : siope.nationalPerCapita === null
+                      ? "Non disponibile"
+                      : `${exactEuro(siope.nationalPerCapita)}${partialSuffix}`}
                 </dd>
               </div>
               <div>
                 <dt>Al netto delle partite di giro</dt>
-                <dd>{compactEuro(netPayments)}</dd>
+                <dd>{compactEuro(netPayments)}{partialSuffix}</dd>
               </div>
               <div>
                 <dt>Ultimo mese completo</dt>

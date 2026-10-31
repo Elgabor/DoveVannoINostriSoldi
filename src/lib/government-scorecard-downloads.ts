@@ -77,7 +77,7 @@ const manifestSchema = z.object({
     z.literal("editorial_context"),
   ]),
   downloads: z.array(downloadSchema).length(DOWNLOAD_DEFINITIONS.length),
-  indicators: z.array(indicatorSchema).length(15),
+  indicators: z.array(indicatorSchema).length(17),
   editorial_context: z.object({
     data_role: z.literal("editorial_context"),
     score_impact: z.literal("none"),

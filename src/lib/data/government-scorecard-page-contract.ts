@@ -9,6 +9,7 @@ import { GOVERNMENT_SCORECARD_V6_CHRONOLOGY } from "@/lib/government-scorecard-c
 
 export const GOVERNMENT_SCORECARD_V6_SUPPLEMENTAL_INDICATOR_IDS = [
   "inflation",
+  "energy_inflation",
   "real_compensation",
   "unemployment",
   "employment_rate",
@@ -16,6 +17,7 @@ export const GOVERNMENT_SCORECARD_V6_SUPPLEMENTAL_INDICATOR_IDS = [
   "debt_ratio",
   "debt_per_capita",
   "primary_balance",
+  "long_term_rate",
   "investment_share",
 ] as const;
 
@@ -47,6 +49,20 @@ const contextUrl = httpsUrl.refine((value) => [
   "www.mimit.gov.it",
   "commission.europa.eu",
   "ec.europa.eu",
+  "www.governo.it",
+  "www.mef.gov.it",
+  "www.istat.it",
+  "www.italiadomani.gov.it",
+  "temi.camera.it",
+  "www.consilium.europa.eu",
+  "data.consilium.europa.eu",
+  "eur-lex.europa.eu",
+  "economy-finance.ec.europa.eu",
+  "reforms-investments.ec.europa.eu",
+  "policy.trade.ec.europa.eu",
+  "energy.ec.europa.eu",
+  "www.supremecourt.gov",
+  "www.govinfo.gov",
 ].includes(new URL(value).hostname), "fonte contestuale ufficiale attesa");
 const timestamp = z.string()
   .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})$/)
@@ -160,6 +176,10 @@ const readyContextItemSchema = z.object({
   selection_rule: z.string().min(1),
   score_impact: z.literal("none"),
   sources: z.array(contextSourceSchema).min(1),
+  history: z.object({
+    label: z.string().min(1),
+    rows: z.array(z.object({ date: z.iso.date(), value: z.string().min(1) }).strict()).min(1),
+  }).strict().optional(),
   retrieved_at: timestamp,
   evidence_sha256: sha256,
 }).strict();
@@ -190,19 +210,19 @@ const emptyContextSlideSchema = z.object({
 const contextSlideSchema = z.discriminatedUnion("status", [readyContextSlideSchema, emptyContextSlideSchema]);
 
 export const governmentScorecardV6SupplementalSnapshotSchema = z.object({
-  schema_version: z.literal(4),
-  snapshot_version: z.literal("government-scorecard-page-2026-09-03-r3"),
+  schema_version: z.literal(5),
+  snapshot_version: z.literal("government-scorecard-page-2026-10-31-r1"),
   as_of_date: z.iso.date(),
   coverage: z.object({
     first_period: z.literal("1995"),
     latest_published_periods: z.array(z.object({
       indicator_id: z.enum(GOVERNMENT_SCORECARD_V6_SUPPLEMENTAL_INDICATOR_IDS),
       period: z.string().min(4),
-    }).strict()).length(9),
+    }).strict()).length(GOVERNMENT_SCORECARD_V6_SUPPLEMENTAL_INDICATOR_IDS.length),
     missing_rule: z.literal("omit unavailable source observations; never interpolate"),
   }).strict(),
-  sources: z.array(sourceSchema).length(10),
-  series: z.array(seriesSchema).length(9),
+  sources: z.array(sourceSchema).length(pageSpec.refreshPolicy.approvedSourceIdentities.length),
+  series: z.array(seriesSchema).length(GOVERNMENT_SCORECARD_V6_SUPPLEMENTAL_INDICATOR_IDS.length),
   contexts: z.array(z.object({
     government_id: z.string().regex(/^[a-z0-9-]+$/),
     government_name: z.string().min(1),
@@ -213,17 +233,12 @@ export const governmentScorecardV6SupplementalSnapshotSchema = z.object({
     core_artifact_sha256: z.literal(pageSpec.refreshPolicy.coreArtifactSha256),
   }).strict(),
 }).strict().superRefine((snapshot, context) => {
-  const expectedSourceIds = pageSpec.refreshPolicy.approvedSources.map((source) => source.id);
   snapshot.sources.forEach((source, index) => {
-    const { retrieved_at, ...receipt } = source;
-    void retrieved_at;
-    if (canonicalHash(receipt) !== canonicalHash(pageSpec.refreshPolicy.approvedSources[index])) {
-      context.addIssue({ code: "custom", message: "ricevuta diversa dalla fonte approvata", path: ["sources", index] });
+    const expected = pageSpec.refreshPolicy.approvedSourceIdentities[index];
+    if (!expected || (Object.keys(expected) as (keyof typeof expected)[]).some((key) => source[key] !== expected[key])) {
+      context.addIssue({ code: "custom", message: "identità della fonte diversa dal registro approvato", path: ["sources", index] });
     }
   });
-  if (snapshot.sources.some((source, index) => source.id !== expectedSourceIds[index])) {
-    context.addIssue({ code: "custom", message: "registro fonti divergente", path: ["sources"] });
-  }
   const sourceById = new Map(snapshot.sources.map((source) => [source.id, source]));
   snapshot.series.forEach((series, seriesIndex) => {
     if (series.indicator_id !== GOVERNMENT_SCORECARD_V6_SUPPLEMENTAL_INDICATOR_IDS[seriesIndex]) {
@@ -317,21 +332,9 @@ export const governmentScorecardV6SupplementalSnapshotSchema = z.object({
         context.addIssue({ code: "custom", message: "ordine del contesto divergente", path: ["contexts", governmentIndex, "slides", slideIndex, "category"] });
       }
       slide.items.forEach((item, itemIndex) => {
-        const itemEvidence = {
-          id: item.id,
-          title: item.title,
-          summary: item.summary,
-          period: item.period,
-          start_date: item.start_date,
-          end_date_or_null: item.end_date_or_null,
-          date_precision: item.date_precision,
-          economic_channel: item.economic_channel,
-          mandate_relation: item.mandate_relation,
-          selection_rule: item.selection_rule,
-          score_impact: item.score_impact,
-          sources: item.sources,
-        };
-        if (item.evidence_sha256 !== canonicalHash(itemEvidence)) {
+        const { retrieved_at, evidence_sha256, ...itemEvidence } = item;
+        void retrieved_at;
+        if (evidence_sha256 !== canonicalHash(itemEvidence)) {
           context.addIssue({ code: "custom", message: "hash dell'evento divergente", path: ["contexts", governmentIndex, "slides", slideIndex, "items", itemIndex, "evidence_sha256"] });
         }
       });

@@ -64,6 +64,32 @@ class GovernmentScorecardPageTests(unittest.TestCase):
                 expected = round(derivation["debt_stock_mio_eur"] * 1000 / derivation["population_thousand"], 2)
                 self.assertEqual(point["value"], expected)
 
+    def test_committed_contexts_match_the_reviewed_catalog(self):
+        registry = MODULE._load(MODULE.CHRONOLOGY_PATH)
+        self.assertEqual(MODULE.contexts_from_catalog(self.snapshot["contexts"], registry), self.snapshot["contexts"])
+
+    def test_ecb_rate_history_is_ordered_and_ends_at_the_latest_level(self):
+        meloni = self.snapshot["contexts"][-1]
+        ecb = next(slide for slide in meloni["slides"] if slide["category"] == "eurozone_ecb")
+        history = next(item for item in ecb["items"] if item["id"] == "meloni-i:ecb-rate-cycle")["history"]
+        dates = [row["date"] for row in history["rows"]]
+        self.assertEqual(dates, sorted(set(dates)))
+        self.assertEqual(len(dates), 20)
+        self.assertEqual((history["rows"][0]["value"], history["rows"][-1]["value"]), ("0,00%", "2,50%"))
+
+    def test_item_history_is_part_of_the_evidence_hash(self):
+        changed = copy.deepcopy(self.snapshot)
+        ecb = next(slide for slide in changed["contexts"][-1]["slides"] if slide["category"] == "eurozone_ecb")
+        item = next(item for item in ecb["items"] if item["id"] == "meloni-i:ecb-rate-cycle")
+        item["history"]["rows"][-1]["value"] = "9,99%"
+        with self.assertRaises(MODULE.SupplementalSnapshotError):
+            MODULE.validate(changed)
+
+    def test_bill_not_yet_law_is_never_presented_as_enacted(self):
+        measures = next(slide for slide in self.snapshot["contexts"][-1]["slides"] if slide["category"] == "laws_measures")
+        bill = next(item for item in measures["items"] if item["id"] == "meloni-i:measure-2027-budget-bill")
+        self.assertIn("non è ancora legge", bill["summary"])
+
     def test_score_contract_rejects_a_stale_core_artifact_hash(self):
         stale = copy.deepcopy(self.snapshot)
         stale["score_contract"]["core_artifact_sha256"] = "0" * 64
